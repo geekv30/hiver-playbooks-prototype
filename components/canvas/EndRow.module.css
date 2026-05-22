@@ -1,0 +1,18 @@
+.endCta {
+  margin-top: 28px;
+  padding: 11px 16px;
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--r-sm);
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: .04em;
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--t-fast);
+}
+.endCta:hover {
+  border-color: var(--ink-soft);
+  color: var(--ink);
+  background: var(--surface-soft);
+}
