@@ -91,7 +91,7 @@ export interface ActionDef {
   id: string;
   name: string;
   desc: string;
-  bucket: 'compose' | 'connector' | 'condition' | 'approval' | 'output' | 'meta';
+  bucket: 'read' | 'ticket' | 'external' | 'human' | 'wait' | 'flow';
   connectorSlug?: ConnectorSlug;
   iconKey: string;
   shortcut?: string;
