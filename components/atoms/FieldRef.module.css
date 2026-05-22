@@ -1,0 +1,13 @@
+.ref {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--ink);
+  background: var(--surface-card);
+  padding: 1px 6px;
+  border-radius: var(--r-xs);
+  cursor: pointer;
+  display: inline;
+}
+.ref:hover {
+  background: var(--hairline);
+}

@@ -1,0 +1,21 @@
+.tile {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-sm);
+  background: var(--surface-card);
+  border: 1px solid var(--hairline);
+  display: grid;
+  place-items: center;
+  color: var(--ink-soft);
+  flex: none;
+}
+.tile svg { width: 16px; height: 16px; }
+.lg { width: 36px; height: 36px; }
+.lg svg { width: 20px; height: 20px; }
+.fallback {
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -.005em;
+  line-height: 1;
+}
