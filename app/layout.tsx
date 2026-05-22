@@ -4,7 +4,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Playbooks · Hiver',
-  description: 'Playbooks editor canvas prototype',
+  description: 'Workflow editor prototype for Hiver Playbooks',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

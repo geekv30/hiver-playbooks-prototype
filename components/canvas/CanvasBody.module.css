@@ -1,0 +1,17 @@
+.body {
+  background: var(--canvas);
+  overflow-y: auto;
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+}
+.scrollArea {
+  position: relative;
+  overflow-y: auto;
+  height: calc(100vh - 56px);
+}
+.inner {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+}
