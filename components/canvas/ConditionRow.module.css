@@ -1,0 +1,107 @@
+.cond {
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  margin: 16px 0;
+  padding: 16px 18px 14px;
+  box-shadow: 0 1px 0 var(--hairline-soft);
+}
+.condHead {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.condNum {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+  padding-top: 4px;
+  letter-spacing: .04em;
+  text-align: right;
+}
+.condExpr {
+  font-size: 14px;
+  color: var(--body);
+  line-height: 1.6;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+}
+.checkLabel {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding-right: 6px;
+}
+.branches {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-left: 54px;
+}
+.branch {
+  background: var(--canvas-soft);
+  border-left: 1px solid var(--hairline-strong);
+  padding: 10px 14px 12px 14px;
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+}
+.branchLabel {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.bTag {
+  color: var(--ink);
+  background: var(--surface-card);
+  padding: 1px 6px;
+  border-radius: var(--r-xs);
+  font-weight: 600;
+}
+.bExpr {
+  color: var(--body);
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: -.005em;
+  text-transform: none;
+}
+.branchBody {
+  font-size: 14px;
+  color: var(--body);
+  line-height: 1.6;
+  outline: none;
+  padding: 4px 0;
+}
+.branchActions {
+  display: flex;
+  gap: 8px;
+  padding: 6px 0 0 54px;
+}
+.branchBtn {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  padding: 4px 10px;
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--r-sm);
+  background: transparent;
+  cursor: pointer;
+  letter-spacing: .04em;
+  transition: color var(--t-fast), border-color var(--t-fast);
+}
+.branchBtn:hover {
+  color: var(--ink);
+  border-color: var(--ink-soft);
+}
