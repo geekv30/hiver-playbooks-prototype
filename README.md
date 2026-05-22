@@ -1,36 +1,102 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Hiver Playbooks Prototype
 
-## Getting Started
+Workflow editor canvas prototype for Hiver Playbooks. Production-grade React port of `../lhs/PLAYBOOKS_EDITOR_CANVAS.html`. Built for Rhys (Walk Japan) to drive and understand the Playbooks feature.
 
-First, run the development server:
+The design contract is the source of truth. If this app and the canvas disagree, the canvas wins.
+
+## Local development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000. The editor needs a viewport of at least 1316px wide.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## What's here
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The seeded Walk Japan tour-enquiry playbook loads on first open. Every edit autosaves to `localStorage` on a 600ms debounce. Refresh restores your last state. The overflow kebab menu in the topbar resets to the seeded state.
 
-## Learn More
+- `/` in any step body opens the slash menu at the caret (30 actions across 6 buckets).
+- `@` opens the ref picker (12 default refs across 3 groups).
+- `Cmd+K` (or `Ctrl+K`) opens the global palette centered with a dim backdrop.
+- Click a chip to configure it in the right rail Config tab. Unauthed connectors open Setup mode.
+- Connect button mocks a 1.5s OAuth flash, then validation re-runs.
+- Activate is disabled while any validation rule fails.
 
-To learn more about Next.js, take a look at the following resources:
+## Stack
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Next.js (App Router) on Vercel
+- React 19, TypeScript 5.x strict
+- CSS Modules with global tokens (no Tailwind, no shadcn)
+- `next/font` for Inter + JetBrains Mono
+- `localStorage` persistence (no backend)
+- No auth, no real connectors, no real action execution
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project layout
 
-## Deploy on Vercel
+```
+app/                Next.js App Router
+  page.tsx          Wires every hook to every component
+  layout.tsx        Font + metadata shell
+  globals.css       Design tokens (canvas, hairlines, type scale)
+  fonts.ts          next/font config
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+components/
+  atoms/            Chip, FieldRef, ConnectorTile, Kbd, SectionEyebrow, Toast
+  surfaces/         Picker (unified slash/@/Cmd+K), FieldInput, Output
+  canvas/           EditorShell, Topbar, LeftNav, RightRail (+ 4 tabs + Setup),
+                    CanvasBody, Frontmatter, StepRow, ConditionRow,
+                    ApprovalStep, Inserter, EndRow, Jumplist, ValidationStrip,
+                    Fragments (shared text/chip/ref/code renderer)
+  icons/            connectors/ (5), fields/ (9), ui/ (~35)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+data/               seed (Walk Japan), library (actions), refs, connectors, solved
+hooks/              usePlaybook, usePicker, useCaretAnchor, useRail, useToast,
+                    useGlobalShortcut, useDebounce
+lib/                ids, persistence (localStorage), caret, validation
+types/              playbook (Playbook, Step, Chip, Fragment, etc.)
+```
+
+## Deploy
+
+The app deploys to Vercel from this Git repo.
+
+- Push to `main` → production deploy.
+- Push to any branch → preview URL.
+
+To set up Vercel for the first time:
+
+```bash
+vercel login
+vercel link        # interactive
+vercel --prod      # first production deploy
+```
+
+## Reset state
+
+In the editor, click the kebab menu in the topbar → confirm the reset. Clears `localStorage` and restores the seeded Walk Japan playbook.
+
+## Source of truth
+
+The design contract for every UI element and interaction lives in the parent `ai-playbooks/` repo:
+
+- `lhs/PLAYBOOKS_EDITOR_CANVAS.html` — the canvas being ported (1752 lines)
+- `lhs/PLAYBOOKS_PRODUCTION_TRD.md` — engineering spec for this port
+- `lhs/PLAYBOOKS_PRODUCTION_PLAN.md` — 47-task implementation plan that built this
+- `lhs/PLAYBOOKS_COMPONENT_*.html` — per-component specs (15 components)
+
+If this app and the design contract disagree, the design contract wins.
+
+## What's NOT here (intentionally)
+
+- Real Hiver SSO / auth
+- Real Shopify / HubSpot / Slack / Salesforce / ClickUp OAuth
+- Real action execution (no API calls to connector services)
+- Multiple playbooks / list page / templates page
+- Test workspace / dry-run simulator
+- Mobile / tablet (below 1316px shows a desktop-only notice)
+- Backend persistence (localStorage only)
+- Analytics beyond Vercel's defaults
+
+These are listed in the TRD's "Future work" section.
