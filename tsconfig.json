@@ -7,6 +7,8 @@
     "noImplicitOverride": true,
     "moduleResolution": "bundler",
     "module": "esnext",
+    "noEmit": true,
+    "isolatedModules": true,
     "allowJs": false,
     "esModuleInterop": true,
     "jsx": "preserve",
