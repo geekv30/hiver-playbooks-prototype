@@ -135,19 +135,16 @@ export default function Home() {
 
   const onResolveIssue = useCallback((issue: ValidationIssue) => {
     const targetId = issue.targetId;
-    if (targetId) {
-      const el = document.querySelector(`[data-step-id="${targetId}"]`)
-              ?? document.querySelector(`[data-chip-id="${targetId}"]`);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        el.classList.add('target-pulse');
-        window.setTimeout(() => el.classList.remove('target-pulse'), 2000);
-      }
-    } else {
-      // Scroll frontmatter for name/summary issues
-      const fm = document.querySelector('[data-step-id="__frontmatter__"]');
-      fm?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    // Pick the right element: explicit target for chip-unconfigured / connector-unauthed,
+    // frontmatter for name-empty / summary-empty.
+    const el = targetId
+      ? (document.querySelector(`[data-step-id="${targetId}"]`)
+        ?? document.querySelector(`[data-chip-id="${targetId}"]`))
+      : document.querySelector('[data-step-id="__frontmatter__"]');
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: targetId ? 'center' : 'start' });
+    el.classList.add('target-pulse');
+    window.setTimeout(() => el.classList.remove('target-pulse'), 2000);
   }, []);
 
   const handleOverflow = useCallback(() => {

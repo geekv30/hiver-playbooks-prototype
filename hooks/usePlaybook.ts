@@ -93,10 +93,27 @@ function updateChipInSteps(steps: Step[], chipId: string, patch: Partial<Chip>):
 }
 
 export function usePlaybook() {
-  const [playbook, setPlaybook] = useState<Playbook>(() => loadPlaybook(WALK_JAPAN_PLAYBOOK));
+  // Initial state matches SSR exactly: always the seed. After mount we swap to
+  // localStorage if it has a stored value. Reading localStorage in the useState
+  // initializer causes hydration mismatches because SSR has no localStorage.
+  const [playbook, setPlaybook] = useState<Playbook>(WALK_JAPAN_PLAYBOOK);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
-  const [lastSavedAt, setLastSavedAt] = useState<number | null>(() => playbook.updatedAt || Date.now());
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
   const dirtyRef = useRef(false);
+  const hydratedRef = useRef(false);
+
+  // Post-mount: hydrate from localStorage if present. This intentionally runs
+  // once and swaps state, which causes one re-render. The hydratedRef gate
+  // prevents the debounced-save effect from writing the seed back over the
+  // stored value on the very first render.
+  useEffect(() => {
+    const stored = loadPlaybook(WALK_JAPAN_PLAYBOOK);
+    if (stored !== WALK_JAPAN_PLAYBOOK) {
+      setPlaybook(stored);
+      setLastSavedAt(stored.updatedAt || Date.now());
+    }
+    hydratedRef.current = true;
+  }, []);
 
   const commit = useCallback((next: Playbook) => {
     dirtyRef.current = true;
@@ -105,6 +122,7 @@ export function usePlaybook() {
   }, []);
 
   useDebouncedEffect(() => {
+    if (!hydratedRef.current) return;
     if (!dirtyRef.current) return;
     savePlaybook(playbook);
     setLastSavedAt(Date.now());
