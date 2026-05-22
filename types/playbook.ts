@@ -76,7 +76,7 @@ export type Step = ActionStep | ConditionStep | ApprovalStep | EndStep;
 export interface Frontmatter {
   name: string;
   summary: string;
-  trigger: string;
+  triggerFragments: Fragment[];          // was: trigger: string
 }
 
 export interface ShareMailboxBinding {

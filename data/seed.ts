@@ -183,7 +183,11 @@ export const WALK_JAPAN_PLAYBOOK: Playbook = {
   frontmatter: {
     name: 'Tour enquiry — Walk Japan',
     summary: '',
-    trigger: 'Email arrives in info@walkjapan.com inbox asking about a tour.',
+    triggerFragments: [
+      { kind: 'text', text: 'Email arrives in ' },
+      { kind: 'ref',  refPath: 'info@walkjapan.com' },
+      { kind: 'text', text: ' inbox asking about a tour.' },
+    ],
   },
   steps,
   refs: DEFAULT_REFS,
