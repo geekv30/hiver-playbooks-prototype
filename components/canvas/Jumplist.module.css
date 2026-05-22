@@ -1,0 +1,64 @@
+.list {
+  position: sticky;
+  top: 56px;
+  align-self: start;
+  height: calc(100vh - 56px);
+  width: 32px;
+  background: var(--canvas);
+  border-right: 1px solid var(--hairline-soft);
+  padding: 16px 0 24px;
+  overflow: hidden;
+  transition: width 180ms cubic-bezier(.2,.6,.3,1);
+  display: flex;
+  flex-direction: column;
+  z-index: 5;
+}
+.list.open {
+  width: 220px;
+  background: var(--card);
+  border-right-color: var(--hairline);
+  box-shadow: 1px 0 12px -8px rgba(40, 32, 18, .12);
+}
+.row {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  align-items: center;
+  padding: 6px 0;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 13px;
+  transition: color var(--t-fast), background var(--t-fast);
+  user-select: none;
+}
+.row:hover {
+  color: var(--ink);
+  background: var(--surface-soft);
+}
+.num {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: .04em;
+  text-align: center;
+  color: var(--muted);
+}
+.row:hover .num {
+  color: var(--ink-soft);
+}
+.title {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -.005em;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 16px;
+  opacity: 0;
+  transition: opacity 140ms;
+}
+.list.open .title {
+  opacity: 1;
+}
+.indent {
+  padding-left: 16px;
+}
