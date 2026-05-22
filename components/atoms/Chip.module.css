@@ -1,0 +1,96 @@
+/* LESSON LOCKED (Session 4): chip CSS is UNSCOPED. */
+/* Never qualify .chip by parent selector. The chip atom renders */
+/* identically in step bodies, condition branches, rail config */
+/* preview, picker preview, and anywhere else it appears. */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px 2px 6px;
+  border-radius: var(--r-sm);
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  font-size: 13.5px;
+  font-family: var(--font);
+  line-height: 1.5;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast);
+  user-select: none;
+  white-space: nowrap;
+  max-width: max-content;
+  vertical-align: -2px;
+}
+
+.chip:hover {
+  background: var(--surface-soft);
+  border-color: var(--hairline-strong);
+}
+
+.chipIco {
+  width: 14px;
+  height: 14px;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.chipIco svg {
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+}
+
+.chipBrand {
+  font-weight: 400;
+  color: var(--body);
+  pointer-events: none;
+}
+
+.chipSep {
+  color: var(--muted-soft);
+  margin: 0 1px;
+  pointer-events: none;
+}
+
+.chipVerb {
+  font-weight: 500;
+  color: var(--ink);
+  pointer-events: none;
+}
+
+.chipMeta {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--muted);
+  font-weight: 400;
+  padding-left: 7px;
+  margin-left: 7px;
+  border-left: 1px solid var(--hairline-soft);
+  pointer-events: none;
+}
+
+.chipState {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--state-ok);
+  margin-left: 2px;
+  flex: none;
+  pointer-events: none;
+}
+
+.chipState.draft {
+  background: var(--state-draft);
+}
+
+.chip.isDraft {
+  border-style: dashed;
+  color: var(--muted);
+  background: var(--canvas);
+}
+
+.chip.isDraft .chipVerb {
+  color: var(--ink-soft);
+}
