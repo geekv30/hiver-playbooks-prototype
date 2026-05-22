@@ -32,34 +32,46 @@ export interface Chip {
   outputRefId?: string;
 }
 
+export type Fragment =
+  | { kind: 'text'; text: string }
+  | { kind: 'chip'; chip: Chip }
+  | { kind: 'ref';  refPath: string }   // matches a Ref.path, or a literal display string (e.g. 'info@walkjapan.com')
+  | { kind: 'code'; code: string };     // literal code-formatted span (e.g. '"yes"')
+
 export interface ActionStep {
   kind: 'action';
   id: string;
-  chip: Chip;
-  prose?: string;
+  fragments: Fragment[];
 }
 
 export interface ConditionBranch {
   id: string;
-  kind: 'if' | 'elseif' | 'else';
-  expression?: string;
-  steps: Step[];
+  tag: 'if' | 'elseif' | 'else';
+  exprFragments: Fragment[];            // the per-branch test expression
+  bodyFragments: Fragment[];            // the per-branch body
 }
 
 export interface ConditionStep {
   kind: 'condition';
   id: string;
+  exprFragments: Fragment[];            // the condition's top-level expression
+  meta?: string;                        // display hint like '2 branches'
   branches: ConditionBranch[];
 }
 
 export interface ApprovalStep {
   kind: 'approval';
   id: string;
-  approverRefId: string;
-  prompt: string;
+  approverRefPath: string;              // consistent with Fragment refPath
+  promptFragments: Fragment[];          // fragments-based for symmetry
 }
 
-export type Step = ActionStep | ConditionStep | ApprovalStep;
+export interface EndStep {
+  kind: 'end';
+  id: string;
+}
+
+export type Step = ActionStep | ConditionStep | ApprovalStep | EndStep;
 
 export interface Frontmatter {
   name: string;
