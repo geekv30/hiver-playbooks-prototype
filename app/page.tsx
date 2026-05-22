@@ -71,6 +71,10 @@ export default function Home() {
         pb.insertStep(stepId, step);
         picker.close();
         toast.push(`Inserted ${action.name}`);
+        requestAnimationFrame(() => {
+          const el = document.querySelector(`[data-step-id="${step.id}"]`);
+          el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
       },
     });
   }, [caret, picker, pb, toast]);
