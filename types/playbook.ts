@@ -4,8 +4,6 @@ export type FieldType =
   | 'email' | 'text' | 'longtext' | 'number' | 'date'
   | 'bool' | 'enum' | 'doc' | 'draft';
 
-export type RefSource = 'ticket' | 'customer' | 'connector' | 'previous-step' | 'manual';
-
 export type ConnectorSlug = 'shopify' | 'hubspot' | 'slack' | 'salesforce' | 'clickup';
 
 export interface Ref {
@@ -13,9 +11,8 @@ export interface Ref {
   path: string;
   label: string;
   type: FieldType;
-  source: RefSource;
   desc?: string;
-  group?: string;
+  group: 'ticket' | 'inputs' | 'outputs';
 }
 
 export interface ConnectorId {
