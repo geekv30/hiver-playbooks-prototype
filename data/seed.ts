@@ -6,12 +6,12 @@ import { defaultConnectorIds } from './connectors';
 // Helpers — deterministic ids so localStorage round-trips stay stable
 // ---------------------------------------------------------------------------
 
-function chip(id: string, actionId: string, status: Chip['status'] = 'ok'): Chip {
-  return { id, actionId, status, config: {} };
+function chip(id: string, actionId: string, meta?: string, status: Chip['status'] = 'ok'): Chip {
+  return { id, actionId, status, config: meta ? { meta } : {} };
 }
 
 const T = (text: string): Fragment => ({ kind: 'text', text });
-const C = (id: string, actionId: string): Fragment => ({ kind: 'chip', chip: chip(id, actionId) });
+const C = (id: string, actionId: string, meta?: string): Fragment => ({ kind: 'chip', chip: chip(id, actionId, meta) });
 const R = (refPath: string): Fragment => ({ kind: 'ref', refPath });
 const K = (code: string): Fragment => ({ kind: 'code', code });
 
@@ -30,7 +30,7 @@ const conditionBranches: ConditionBranch[] = [
     ],
     bodyFragments: [
       T('Draft a warm reply '),
-      C('chip-draft-reply-if', 'draft_reply'),
+      C('chip-draft-reply-if', 'draft_reply', 'availability + KB links'),
       T(' with availability, fitness/dietary notes pulled from the right articles, the help-center links, and an invitation to hold the dates.'),
     ],
   },
@@ -42,7 +42,7 @@ const conditionBranches: ConditionBranch[] = [
     ],
     bodyFragments: [
       T('Draft a “sorry it is not open then, here is what is similar” reply '),
-      C('chip-draft-reply-else', 'draft_reply'),
+      C('chip-draft-reply-else', 'draft_reply', 'alternatives + similar tours'),
       T(' with two alternative dates or two similar tours, again with help-center links.'),
     ],
   },
@@ -59,7 +59,7 @@ const steps: Step[] = [
     id: 'step-01',
     fragments: [
       T('First, read the email and tell me in one line: which tour they are asking about, what dates, group size, and any special concerns (fitness, dietary, accessibility) '),
-      C('chip-ai-extract-01', 'ai_extract'),
+      C('chip-ai-extract-01', 'ai_extract', 'tour · dates · group · concerns'),
       T('.'),
     ],
   },
@@ -70,7 +70,7 @@ const steps: Step[] = [
     id: 'step-02',
     fragments: [
       T('Look up the tour and dates in our bookings sheet '),
-      C('chip-http-02', 'http'),
+      C('chip-http-02', 'http', 'GET bookings sheet'),
       T(' — tell me if those dates are available, partially available, or full.'),
     ],
   },
@@ -81,7 +81,7 @@ const steps: Step[] = [
     id: 'step-03',
     fragments: [
       T('Then look up the customer in HubSpot '),
-      C('chip-hubspot-03', 'hubspot_get_contact'),
+      C('chip-hubspot-03', 'hubspot_get_contact', 'by from_email'),
       T(' — are they a repeat guest, new, or have they enquired before?'),
     ],
   },
@@ -92,7 +92,7 @@ const steps: Step[] = [
     id: 'step-04',
     fragments: [
       T('Search our help center '),
-      C('chip-kb-search-04', 'kb_search'),
+      C('chip-kb-search-04', 'kb_search', 'overview · fitness · dietary'),
       T(' for the tour overview article, the fitness-level guide, and the dietary FAQ. Have those handy.'),
     ],
   },
@@ -115,7 +115,7 @@ const steps: Step[] = [
     id: 'step-06',
     fragments: [
       T('Tag the ticket '),
-      C('chip-tag-06', 'tag'),
+      C('chip-tag-06', 'tag', '@tour.name'),
       T(' so we can track interest per tour.'),
     ],
   },
@@ -126,7 +126,7 @@ const steps: Step[] = [
     id: 'step-07',
     fragments: [
       T('Leave a private note '),
-      C('chip-note-07', 'note'),
+      C('chip-note-07', 'note', 'tour · dates · group · concerns'),
       T(' so the person sending the reply has the full picture without re-reading the thread.'),
     ],
   },
@@ -137,7 +137,7 @@ const steps: Step[] = [
     id: 'step-08',
     fragments: [
       T('Log a row in our enquiries tracker '),
-      C('chip-http-08', 'http'),
+      C('chip-http-08', 'http', 'POST Airtable · enquiries'),
       T(': customer name, tour, dates, source, status.'),
     ],
   },
@@ -148,7 +148,7 @@ const steps: Step[] = [
     id: 'step-09',
     fragments: [
       T('Hand the draft to whoever is on inbox duty '),
-      C('chip-assign-09', 'assign'),
+      C('chip-assign-09', 'assign', 'on-shift inbox'),
       T('. They read it, rewrite anything that does not sound like us, add the personal touches, and send.'),
     ],
   },
@@ -159,9 +159,9 @@ const steps: Step[] = [
     id: 'step-10',
     fragments: [
       T('Wait 5 days '),
-      C('chip-wait-10', 'wait'),
+      C('chip-wait-10', 'wait', '5 days'),
       T('. If we have not heard back, flag it '),
-      C('chip-tag-10b', 'tag'),
+      C('chip-tag-10b', 'tag', 'warm-follow-up-needed'),
       T(' and tell the human — we do not auto-send nudges to enquiries.'),
     ],
   },

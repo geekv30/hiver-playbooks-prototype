@@ -40,8 +40,9 @@ export default function Chip({ chip, metaText, onClick }: Props) {
     verbText = action.name;
   }
 
-  // Meta: prefer prop override, then ActionDef.meta default.
-  const meta = metaText ?? action.meta ?? null;
+  // Meta priority: prop override > chip.config.meta (per-chip canvas-seed override) > ActionDef.meta default.
+  const configMeta = typeof chip.config.meta === 'string' ? chip.config.meta : null;
+  const meta = metaText ?? configMeta ?? action.meta ?? null;
 
   const handleClick = onClick ? () => onClick(chip.id) : undefined;
 
