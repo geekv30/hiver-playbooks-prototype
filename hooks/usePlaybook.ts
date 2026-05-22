@@ -95,7 +95,7 @@ function updateChipInSteps(steps: Step[], chipId: string, patch: Partial<Chip>):
 export function usePlaybook() {
   const [playbook, setPlaybook] = useState<Playbook>(() => loadPlaybook(WALK_JAPAN_PLAYBOOK));
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
-  const [lastSavedAt, setLastSavedAt] = useState<number | null>(playbook.updatedAt || Date.now());
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(() => playbook.updatedAt || Date.now());
   const dirtyRef = useRef(false);
 
   const commit = useCallback((next: Playbook) => {
