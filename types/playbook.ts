@@ -91,6 +91,7 @@ export interface ActionDef {
   id: string;
   name: string;
   desc: string;
+  meta?: string;            // default chip-meta text (canvas-spec; preserve verbatim)
   bucket: 'read' | 'ticket' | 'external' | 'human' | 'wait' | 'flow';
   connectorSlug?: ConnectorSlug;
   iconKey: string;
