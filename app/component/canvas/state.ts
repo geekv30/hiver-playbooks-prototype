@@ -1,0 +1,383 @@
+'use client';
+import { useCallback, useEffect, useReducer, useRef } from 'react';
+import type { Playbook, Chip, ChipStatus, TraceEntry, AnyStep, Step } from './data';
+import { WALK_JAPAN_SEED, MOCK_TRACE_OUTPUTS, findAction } from './data';
+
+export type CanvasMode =
+  | 'edit'
+  | 'test-idle'
+  | 'test-running'
+  | 'test-done'
+  | 'run'
+  | 'clean-wipe';
+
+export type ActivationState =
+  | { status: 'draft' }
+  | { status: 'publishing'; mailboxes: string[] }
+  | { status: 'live'; mailboxes: string[] };
+
+export interface CanvasState {
+  playbook: Playbook;
+  mode: CanvasMode;
+  trace: TraceEntry[];
+  history: { past: Playbook[]; future: Playbook[] };
+  cleanWipeSnapshot: Playbook | null;
+  activation: ActivationState;
+  configChipId: string | null;
+  paletteCollapsed: boolean;
+  testOutcome: 'pending' | 'pass' | 'fail' | 'cancelled' | null;
+  chipStatusOverride: Record<string, ChipStatus>;
+  autosaveTick: number;
+}
+
+const HISTORY_CAP = 50;
+
+type Action =
+  | { type: 'mutate'; updater: (pb: Playbook) => Playbook }
+  | { type: 'undo' }
+  | { type: 'redo' }
+  | { type: 'setMode'; mode: CanvasMode }
+  | { type: 'setTrace'; trace: TraceEntry[] }
+  | { type: 'appendTrace'; entry: TraceEntry }
+  | { type: 'setChipStatus'; chipId: string; status: ChipStatus }
+  | { type: 'resetChipStatuses' }
+  | { type: 'setTestOutcome'; outcome: CanvasState['testOutcome'] }
+  | { type: 'enterCleanWipe' }
+  | { type: 'exitCleanWipe' }
+  | { type: 'setConfigChipId'; id: string | null }
+  | { type: 'togglePalette' }
+  | { type: 'setActivation'; activation: ActivationState }
+  | { type: 'autosaveBump' };
+
+function reducer(state: CanvasState, action: Action): CanvasState {
+  switch (action.type) {
+    case 'mutate': {
+      const next = action.updater(state.playbook);
+      if (next === state.playbook) return state;
+      const past = [...state.history.past, state.playbook].slice(-HISTORY_CAP);
+      return {
+        ...state,
+        playbook: next,
+        history: { past, future: [] },
+        autosaveTick: state.autosaveTick + 1,
+      };
+    }
+    case 'undo': {
+      const past = state.history.past;
+      if (!past.length) return state;
+      const prev = past[past.length - 1]!;
+      return {
+        ...state,
+        playbook: prev,
+        history: {
+          past: past.slice(0, -1),
+          future: [state.playbook, ...state.history.future],
+        },
+        autosaveTick: state.autosaveTick + 1,
+      };
+    }
+    case 'redo': {
+      const future = state.history.future;
+      if (!future.length) return state;
+      const next = future[0]!;
+      return {
+        ...state,
+        playbook: next,
+        history: {
+          past: [...state.history.past, state.playbook].slice(-HISTORY_CAP),
+          future: future.slice(1),
+        },
+        autosaveTick: state.autosaveTick + 1,
+      };
+    }
+    case 'setMode':            return { ...state, mode: action.mode };
+    case 'setTrace':           return { ...state, trace: action.trace };
+    case 'appendTrace':        return { ...state, trace: [...state.trace, action.entry] };
+    case 'setChipStatus':
+      return { ...state, chipStatusOverride: { ...state.chipStatusOverride, [action.chipId]: action.status } };
+    case 'resetChipStatuses':  return { ...state, chipStatusOverride: {} };
+    case 'setTestOutcome':     return { ...state, testOutcome: action.outcome };
+    case 'enterCleanWipe': {
+      const snapshot = state.playbook;
+      const wiped: Playbook = {
+        ...state.playbook,
+        steps: [{ id: 'cw-1', kind: 'action', fragments: [{ kind: 'text', text: '' }] }],
+      };
+      return { ...state, mode: 'clean-wipe', cleanWipeSnapshot: snapshot, playbook: wiped };
+    }
+    case 'exitCleanWipe': {
+      if (!state.cleanWipeSnapshot) return state;
+      return { ...state, mode: 'edit', playbook: state.cleanWipeSnapshot, cleanWipeSnapshot: null };
+    }
+    case 'setConfigChipId':    return { ...state, configChipId: action.id };
+    case 'togglePalette':      return { ...state, paletteCollapsed: !state.paletteCollapsed };
+    case 'setActivation':      return { ...state, activation: action.activation };
+    case 'autosaveBump':       return { ...state, autosaveTick: state.autosaveTick + 1 };
+    default:                   return state;
+  }
+}
+
+const INITIAL_STATE: CanvasState = {
+  playbook: WALK_JAPAN_SEED,
+  mode: 'edit',
+  trace: [],
+  history: { past: [], future: [] },
+  cleanWipeSnapshot: null,
+  activation: { status: 'draft' },
+  configChipId: null,
+  paletteCollapsed: false,
+  testOutcome: null,
+  chipStatusOverride: {},
+  autosaveTick: 0,
+};
+
+/* ============================================================ */
+/* Helpers — walk steps                                           */
+/* ============================================================ */
+export function flattenActionSteps(steps: AnyStep[]): { stepId: string; chipIds: string[] }[] {
+  const out: { stepId: string; chipIds: string[] }[] = [];
+  const visit = (s: AnyStep) => {
+    if (s.kind === 'action') {
+      const chipIds = s.fragments.filter((f) => f.kind === 'chip').map((f) => (f as { kind: 'chip'; chip: Chip }).chip.id);
+      if (chipIds.length) out.push({ stepId: s.id, chipIds });
+    } else if (s.kind === 'condition') {
+      for (const b of s.branches) for (const bs of b.steps) visit(bs);
+    }
+  };
+  for (const s of steps) visit(s);
+  return out;
+}
+
+export function findChip(steps: AnyStep[], chipId: string): Chip | null {
+  for (const s of steps) {
+    if (s.kind === 'action') {
+      for (const f of s.fragments) {
+        if (f.kind === 'chip' && f.chip.id === chipId) return f.chip;
+      }
+    } else if (s.kind === 'condition') {
+      for (const b of s.branches) {
+        for (const bs of b.steps) {
+          if (bs.kind === 'action') {
+            for (const f of bs.fragments) if (f.kind === 'chip' && f.chip.id === chipId) return f.chip;
+          }
+        }
+      }
+    }
+  }
+  return null;
+}
+
+export function updateChip(pb: Playbook, chipId: string, patch: Partial<Chip>): Playbook {
+  const mapSteps = (steps: AnyStep[]): AnyStep[] => steps.map((s) => {
+    if (s.kind === 'action') {
+      return {
+        ...s,
+        fragments: s.fragments.map((f) =>
+          f.kind === 'chip' && f.chip.id === chipId ? { ...f, chip: { ...f.chip, ...patch } } : f
+        ),
+      };
+    }
+    if (s.kind === 'condition') {
+      return {
+        ...s,
+        branches: s.branches.map((b) => ({ ...b, steps: mapSteps(b.steps) as Step[] })),
+      };
+    }
+    return s;
+  });
+  return { ...pb, steps: mapSteps(pb.steps) };
+}
+
+/* ============================================================ */
+/* Hook                                                            */
+/* ============================================================ */
+export function useCanvasState() {
+  const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
+  const testTimerRef = useRef<number | null>(null);
+
+  const mutate = useCallback((updater: (pb: Playbook) => Playbook) => {
+    dispatch({ type: 'mutate', updater });
+  }, []);
+
+  const setName = useCallback((name: string) => {
+    mutate((pb) => ({ ...pb, frontmatter: { ...pb.frontmatter, name } }));
+  }, [mutate]);
+
+  const setSummary = useCallback((summary: string) => {
+    mutate((pb) => ({ ...pb, frontmatter: { ...pb.frontmatter, summary } }));
+  }, [mutate]);
+
+  const updateChipById = useCallback((chipId: string, patch: Partial<Chip>) => {
+    mutate((pb) => updateChip(pb, chipId, patch));
+  }, [mutate]);
+
+  const insertAction = useCallback((actionId: string) => {
+    const action = findAction(actionId);
+    if (!action) return;
+    mutate((pb) => {
+      const chipId = `c-${Date.now()}`;
+      const stepId = `step-${Date.now()}`;
+      const newStep: Step = {
+        id: stepId,
+        kind: 'action',
+        fragments: [{ kind: 'chip', chip: { id: chipId, actionId, status: 'idle', meta: action.defaultMeta } }],
+      };
+      // insert before the trailing end step if present
+      const lastIdx = pb.steps.length - 1;
+      const last = pb.steps[lastIdx];
+      if (last && last.kind === 'end') {
+        return { ...pb, steps: [...pb.steps.slice(0, lastIdx), newStep, last] };
+      }
+      return { ...pb, steps: [...pb.steps, newStep] };
+    });
+  }, [mutate]);
+
+  const undo = useCallback(() => dispatch({ type: 'undo' }), []);
+  const redo = useCallback(() => dispatch({ type: 'redo' }), []);
+  const setMode = useCallback((mode: CanvasMode) => dispatch({ type: 'setMode', mode }), []);
+  const setConfigChipId = useCallback((id: string | null) => dispatch({ type: 'setConfigChipId', id }), []);
+  const togglePalette = useCallback(() => dispatch({ type: 'togglePalette' }), []);
+
+  const stopTest = useCallback(() => {
+    if (testTimerRef.current) {
+      window.clearTimeout(testTimerRef.current);
+      testTimerRef.current = null;
+    }
+    dispatch({ type: 'setMode', mode: 'test-done' });
+    dispatch({ type: 'setTestOutcome', outcome: 'cancelled' });
+  }, []);
+
+  const runTest = useCallback(() => {
+    dispatch({ type: 'setTrace', trace: [] });
+    dispatch({ type: 'resetChipStatuses' });
+    dispatch({ type: 'setTestOutcome', outcome: 'pending' });
+    dispatch({ type: 'setMode', mode: 'test-running' });
+
+    // Walk steps sequentially. For Condition steps, simulate taking the YES branch (Walk Japan happy path).
+    // For Wait/End: status reaches `ok` instantly (mocked).
+    // We use a flat ordered list of (stepId, chipId) pairs for simplicity.
+    const order: { stepId: string; chipId: string; isElseSkipped?: boolean }[] = [];
+    const collect = (steps: AnyStep[]) => {
+      for (const s of steps) {
+        if (s.kind === 'action') {
+          const chipFrag = s.fragments.find((f) => f.kind === 'chip');
+          if (chipFrag && chipFrag.kind === 'chip') {
+            order.push({ stepId: s.id, chipId: chipFrag.chip.id });
+          }
+        } else if (s.kind === 'condition') {
+          const yes = s.branches.find((b) => b.label === 'yes' || b.label === 'true');
+          const no  = s.branches.find((b) => b.label === 'no'  || b.label === 'false');
+          if (yes) collect(yes.steps);
+          if (no) {
+            for (const ns of no.steps) {
+              if (ns.kind === 'action') {
+                const cf = ns.fragments.find((f) => f.kind === 'chip');
+                if (cf && cf.kind === 'chip') order.push({ stepId: ns.id, chipId: cf.chip.id, isElseSkipped: true });
+              }
+            }
+          }
+        }
+      }
+    };
+    collect(INITIAL_STATE.playbook.steps); // use snapshot pattern — execute against current playbook
+    // Actually walk the LIVE playbook, not the initial seed
+    order.length = 0;
+    collect(state.playbook.steps);
+
+    let i = 0;
+    const STEP_MS = 500;
+    const tick = () => {
+      if (i >= order.length) {
+        dispatch({ type: 'setMode', mode: 'test-done' });
+        dispatch({ type: 'setTestOutcome', outcome: 'pass' });
+        return;
+      }
+      const cur = order[i]!;
+      if (cur.isElseSkipped) {
+        dispatch({ type: 'setChipStatus', chipId: cur.chipId, status: 'skipped' });
+        dispatch({ type: 'appendTrace', entry: {
+          stepId: cur.stepId, chipId: cur.chipId, status: 'skipped',
+          input: '(branch not taken)', output: '(skipped)',
+        }});
+        i++;
+        testTimerRef.current = window.setTimeout(tick, 100);
+        return;
+      }
+      dispatch({ type: 'setChipStatus', chipId: cur.chipId, status: 'running' });
+      testTimerRef.current = window.setTimeout(() => {
+        // 10% chance of seeded error on step-08 (Airtable HTTP) for realism
+        const isError = cur.chipId === 'c-08' && Math.random() < 0.0; // disabled by default; flip to 0.15 to seed errors
+        const finalStatus: ChipStatus = isError ? 'error' : 'ok';
+        dispatch({ type: 'setChipStatus', chipId: cur.chipId, status: finalStatus });
+        const mock = MOCK_TRACE_OUTPUTS[cur.chipId] || { input: '—', output: '—' };
+        dispatch({ type: 'appendTrace', entry: {
+          stepId: cur.stepId, chipId: cur.chipId, status: finalStatus,
+          durationMs: STEP_MS - 50,
+          input: mock.input, output: mock.output,
+          ...(isError ? { errorMessage: 'mock error: connection timeout' } : {}),
+        }});
+        if (isError) {
+          dispatch({ type: 'setMode', mode: 'test-done' });
+          dispatch({ type: 'setTestOutcome', outcome: 'fail' });
+          return;
+        }
+        i++;
+        testTimerRef.current = window.setTimeout(tick, 100);
+      }, STEP_MS);
+    };
+    testTimerRef.current = window.setTimeout(tick, 200);
+  }, [state.playbook.steps]);
+
+  const replayTest = useCallback(() => {
+    dispatch({ type: 'resetChipStatuses' });
+    dispatch({ type: 'setTrace', trace: [] });
+    runTest();
+  }, [runTest]);
+
+  const exitTest = useCallback(() => {
+    if (testTimerRef.current) {
+      window.clearTimeout(testTimerRef.current);
+      testTimerRef.current = null;
+    }
+    dispatch({ type: 'resetChipStatuses' });
+    dispatch({ type: 'setTrace', trace: [] });
+    dispatch({ type: 'setTestOutcome', outcome: null });
+    dispatch({ type: 'setMode', mode: 'edit' });
+  }, []);
+
+  const enterCleanWipe = useCallback(() => dispatch({ type: 'enterCleanWipe' }), []);
+  const exitCleanWipe  = useCallback(() => dispatch({ type: 'exitCleanWipe' }), []);
+
+  const setActivation = useCallback((activation: ActivationState) => dispatch({ type: 'setActivation', activation }), []);
+
+  // Cleanup test timer on unmount
+  useEffect(() => () => {
+    if (testTimerRef.current) window.clearTimeout(testTimerRef.current);
+  }, []);
+
+  return {
+    ...state,
+    canUndo: state.history.past.length > 0,
+    canRedo: state.history.future.length > 0,
+    setName,
+    setSummary,
+    updateChipById,
+    insertAction,
+    undo,
+    redo,
+    setMode,
+    setConfigChipId,
+    togglePalette,
+    runTest,
+    stopTest,
+    replayTest,
+    exitTest,
+    enterCleanWipe,
+    exitCleanWipe,
+    setActivation,
+  };
+}
+
+export function getChipStatus(state: CanvasState, chip: Chip): ChipStatus {
+  return state.chipStatusOverride[chip.id] ?? chip.status;
+}
