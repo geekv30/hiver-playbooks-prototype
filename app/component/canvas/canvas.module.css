@@ -634,10 +634,10 @@
   transition: box-shadow var(--d-hover) var(--ease-snap), border-color var(--d-hover) var(--ease-snap), background var(--d-hover) var(--ease-snap);
 }
 .stepRow:hover { box-shadow: 0 2px 6px rgba(15,15,17,.04); border-color: var(--hairline-strong); }
-.stepRow:hover .stepActions {
+.stepRow:hover .stepActions,
+.stepRow:focus-within .stepActions {
   opacity: 1;
   transform: translateY(0);
-  pointer-events: auto;
 }
 .stepEmpty {
   background: var(--surface-soft);
@@ -754,7 +754,9 @@
   font-style: normal;
 }
 
-/* Step actions (hover toolbar at right of step row) */
+/* Step actions toolbar at right of step row.
+ * Always rendered + clickable so keyboard users + automation can reach it.
+ * Dimmed at rest, full opacity on row hover/focus-within. */
 .stepActions {
   display: inline-flex;
   align-items: center;
@@ -763,9 +765,8 @@
   background: var(--card);
   border: 1px solid var(--hairline);
   border-radius: var(--r-sm);
-  opacity: 0;
-  transform: translateY(-2px);
-  pointer-events: none;
+  opacity: .35;
+  transform: translateY(0);
   transition: opacity var(--d-hover) var(--ease-snap), transform var(--d-hover) var(--ease-snap);
   align-self: center;
   margin-left: 8px;
