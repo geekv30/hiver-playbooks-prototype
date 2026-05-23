@@ -1,32 +1,63 @@
 :root {
-  --canvas: #faf8f3;
-  --canvas-soft: #f4f1ea;
-  --card: #ffffff;
-  --surface-soft: #f6f3ec;
-  --surface-card: #f1ede4;
-  --hairline: #e6e2d6;
-  --hairline-soft: #efebdf;
-  --hairline-strong: #d4cfc0;
-  --ink: #1a1a17;
-  --ink-soft: #2a2a25;
-  --body: #51504a;
-  --muted: #807d72;
-  --muted-soft: #a09c92;
-  --state-ok: #6fa974;
-  --state-ok-bg: #ecf3ec;
-  --state-draft: #dfa88f;
-  --state-warn: #c08532;
-  --state-error: #b04638;
-  --state-running: #8b6fb8;
-  --primary: #d94e1f;
+  /* ===== Surface (cool-neutral, Linear/Attio base) ===== */
+  --canvas: #FBFBFC;
+  --canvas-soft: #F7F7F8;
+  --card: #FFFFFF;
+  --surface-soft: #F4F4F5;
+  --surface-card: #EFEFF1;
+
+  /* ===== Hairlines (cool) ===== */
+  --hairline: #E8E8EA;
+  --hairline-soft: #EFEFF1;
+  --hairline-strong: #D4D4D8;
+
+  /* ===== Ink ===== */
+  --ink: #0F0F11;
+  --ink-soft: #1F1F23;
+  --body: #48484C;
+  --muted: #71717A;
+  --muted-soft: #A1A1AA;
+
+  /* ===== State (cool-tuned) ===== */
+  --state-ok: #16A34A;
+  --state-ok-bg: #ECFDF3;
+  --state-draft: #D97757;
+  --state-warn: #D97706;
+  --state-warn-bg: #FEF3C7;
+  --state-error: #DC2626;
+  --state-error-bg: #FEE2E2;
+  --state-running: #7C3AED;
+
+  /* ===== Hiver tint (accent only — CTA, focus, active) ===== */
+  --primary: #E15524;
+  --primary-hover: #C8431C;
+  --primary-tint: rgba(225, 85, 36, .08);
+  --primary-tint-strong: rgba(225, 85, 36, .14);
+  --primary-ring: rgba(225, 85, 36, .30);
+
+  /* ===== Radii ===== */
   --r-xs: 4px;
   --r-sm: 6px;
   --r-md: 8px;
   --r-lg: 10px;
   --r-pill: 9999px;
+
+  /* ===== Typography ===== */
   --font: var(--font-inter), 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --mono: var(--font-jetbrains), 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
-  --t-fast: 120ms cubic-bezier(.2,.6,.3,1);
+
+  /* ===== Motion ===== */
+  --ease-snap: cubic-bezier(.2, .8, .2, 1);
+  --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+  --d-hover: 80ms;
+  --d-press: 40ms;
+  --d-enter: 180ms;
+  --d-exit: 120ms;
+  --d-crossfade: 140ms;
+  --d-indicator: 200ms;
+
+  /* Legacy alias - retained for any unmigrated usage. Maps to the new snap timing. */
+  --t-fast: var(--d-hover) var(--ease-snap);
 }
 
 * { box-sizing: border-box; }
@@ -44,7 +75,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-::selection { background: rgba(217, 78, 31, .18); }
+::selection { background: var(--primary-tint-strong); }
 
 /* viewport gate: below 1316px show desktop-only notice */
 @media (max-width: 1315px) {

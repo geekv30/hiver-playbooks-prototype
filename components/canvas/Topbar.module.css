@@ -1,12 +1,11 @@
 .topbar {
   border-bottom: 1px solid var(--hairline);
-  background: rgba(250, 248, 243, .85);
-  backdrop-filter: blur(10px);
+  background: var(--canvas);
   position: sticky;
   top: 0;
   z-index: 50;
   grid-column: 1 / -1;
-  height: 56px;
+  height: 48px;
 }
 .inner {
   display: flex;

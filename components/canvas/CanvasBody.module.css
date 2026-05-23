@@ -8,10 +8,10 @@
 .scrollArea {
   position: relative;
   overflow-y: auto;
-  height: calc(100vh - 56px);
+  height: calc(100vh - 48px);
 }
 .inner {
-  max-width: 880px;
-  margin: 0 auto;
-  padding: 48px 24px 80px;
+  max-width: 980px;
+  margin: 0;
+  padding: 20px 28px 64px;
 }

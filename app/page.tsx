@@ -188,7 +188,7 @@ export default function Home() {
         }
         nav={<LeftNav onItem={(i) => toast.push(`${i} coming soon`)} />}
         canvas={
-          <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', minWidth: 0, height: 'calc(100vh - 56px)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', minWidth: 0, height: 'calc(100vh - 48px)' }}>
             <Jumplist
               steps={pb.playbook.steps}
               onJump={(id) => {

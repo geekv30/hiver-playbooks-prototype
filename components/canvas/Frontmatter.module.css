@@ -1,14 +1,14 @@
 .fm {
-  margin-bottom: 36px;
+  margin-bottom: 28px;
   padding-left: 54px;
 }
 .fmTitle {
-  font-size: 32px;
-  font-weight: 400;
-  line-height: 1.15;
-  letter-spacing: -.024em;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -.015em;
   color: var(--ink);
-  margin: 0 0 12px;
+  margin: 0 0 4px;
   outline: none;
 }
 .fmTitle:focus {
@@ -16,30 +16,32 @@
   border-radius: var(--r-xs);
 }
 .fmTrigger {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--body);
   line-height: 1.6;
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
   align-items: center;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
+  margin-top: 10px;
 }
 .fmTrigger .triglabel {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--muted);
-  letter-spacing: .08em;
+  letter-spacing: .06em;
   text-transform: uppercase;
   padding-right: 6px;
+  font-weight: 500;
 }
 .fmSummary {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--body);
-  line-height: 1.6;
+  line-height: 1.55;
   outline: none;
-  padding: 4px 0;
-  margin-top: 8px;
+  padding: 2px 0;
+  margin-top: 2px;
 }
 .fmSummary:focus {
   background: var(--surface-soft);
