@@ -3,6 +3,118 @@
   background: var(--canvas);
 }
 
+/* ===== Canvas (textured background where cards float) ===== */
+.canvasSurface {
+  position: relative;
+  background-color: var(--canvas);
+  background-image: radial-gradient(circle at 1px 1px, var(--hairline) 1px, transparent 0);
+  background-size: 18px 18px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  padding: 20px;
+  overflow: hidden;
+  min-height: 480px;
+  transition: filter 200ms var(--ease-snap);
+}
+.canvasSurface.runMode {
+  background-color: #0F0F11;
+  background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,.06) 1px, transparent 0);
+}
+.canvasSurface.runMode .card {
+  filter: grayscale(1) opacity(.5);
+}
+.canvasSurface.runMode .cardRunActive {
+  filter: none !important;
+  box-shadow:
+    0 0 0 4px rgba(124, 58, 237, .35),
+    0 4px 12px rgba(124, 58, 237, .15);
+}
+
+.canvasToolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.modeSwitch {
+  display: inline-flex;
+  align-items: center;
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+  padding: 2px;
+  gap: 2px;
+}
+.modeBtn {
+  font-family: var(--font);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap), color var(--d-hover) var(--ease-snap);
+}
+.modeBtn:hover { color: var(--ink); }
+.modeBtnActive {
+  background: var(--ink);
+  color: var(--card);
+}
+.canvasMeta {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--muted);
+  letter-spacing: .04em;
+  margin-left: 6px;
+}
+
+/* ===== Card (the floating island) ===== */
+.card {
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 0 rgba(15, 15, 17, .03);
+  transition: box-shadow var(--d-hover) var(--ease-snap), transform var(--d-press) var(--ease-snap), border-color var(--d-hover) var(--ease-snap), filter 200ms var(--ease-snap);
+  position: relative;
+}
+.card:hover {
+  box-shadow: 0 3px 8px rgba(15, 15, 17, .06), 0 1px 0 rgba(15, 15, 17, .03);
+  border-color: var(--hairline-strong);
+}
+.card:hover .tools {
+  opacity: 1;
+  transform: translateY(0);
+}
+.cardSelected {
+  border-color: var(--primary) !important;
+  background: var(--primary-tint) !important;
+  box-shadow: 0 0 0 1px var(--primary), 0 3px 10px rgba(225, 85, 36, .08) !important;
+}
+.cardEditing {
+  border-color: var(--hairline-strong);
+  box-shadow: 0 3px 8px rgba(15, 15, 17, .06), inset 2px 0 0 var(--primary);
+}
+.cardDragging {
+  box-shadow: 0 12px 28px rgba(15, 15, 17, .15), 0 1px 0 rgba(15, 15, 17, .04);
+  transform: scale(1.01) rotate(-.3deg);
+  border-color: var(--hairline-strong);
+}
+.cardDisabled {
+  opacity: .55;
+}
+.cardDisabled .tools { opacity: 0 !important; }
+.cardError {
+  border-color: rgba(220, 38, 38, .35);
+  background: rgba(220, 38, 38, .025);
+}
+.cardError:hover { box-shadow: 0 3px 8px rgba(220, 38, 38, .08), 0 1px 0 rgba(15, 15, 17, .03); }
+
 .docbar {
   height: 48px;
   background: var(--canvas);
@@ -65,35 +177,14 @@
   gap: 10px;
 }
 
-/* ===== Node row ===== */
+/* ===== Node row (INSIDE a card now) ===== */
 .row {
   display: grid;
   grid-template-columns: 12px 30px 1fr auto;
   gap: 10px;
   align-items: baseline;
-  padding: 6px 8px;
-  border-radius: var(--r-sm);
   position: relative;
-  transition: background var(--d-hover) var(--ease-snap);
 }
-.row:hover { background: var(--surface-soft); }
-.row:hover .tools { opacity: 1; transform: translateY(0); }
-
-.rowSelected { background: var(--primary-tint) !important; }
-.rowEditing { background: var(--card) !important; box-shadow: inset 2px 0 0 var(--hairline-strong); }
-.rowEditing .num { color: var(--muted-soft); }
-.rowDragging {
-  background: var(--card) !important;
-  border: 1px solid var(--hairline);
-  box-shadow: 0 8px 20px rgba(15,15,17,.10);
-  transform: scale(1.01);
-  opacity: .95;
-}
-.rowDisabled {
-  opacity: .55;
-  cursor: not-allowed;
-}
-.rowDisabled .tools { opacity: 0 !important; }
 
 .dot {
   width: 6px;
@@ -154,9 +245,9 @@
 }
 .tool svg { width: 14px; height: 14px; }
 
-/* Visual: simulate hover state for the "default+hovered" canonical row */
-.rowAlwaysHover { background: var(--surface-soft); }
-.rowAlwaysHover .tools { opacity: 1; transform: translateY(0); }
+/* Force-show the toolbar on cards meant to demonstrate the hover state */
+.cardForceHover { box-shadow: 0 3px 8px rgba(15, 15, 17, .06), 0 1px 0 rgba(15, 15, 17, .03); border-color: var(--hairline-strong); }
+.cardForceHover .tools { opacity: 1; transform: translateY(0); }
 
 /* ===== Chip ===== */
 .chip {
@@ -421,44 +512,65 @@
 .tracePop .row .v { font-family: var(--mono); font-size: 11.5px; color: var(--ink); }
 .tracePop:hover { cursor: default; }
 
-/* Inspector mock */
-.inspectorMock {
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-md);
+/* ===== Inspector: real slide-in overlay ===== */
+.inspectorOverlay {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 360px;
   background: var(--card);
-  margin-top: 12px;
+  border-left: 1px solid var(--hairline);
+  box-shadow: -8px 0 24px rgba(15, 15, 17, .06);
+  padding: 18px 20px;
+  transform: translateX(100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 180ms var(--ease-spring), opacity 120ms var(--ease-snap);
+  z-index: 20;
+  overflow-y: auto;
+}
+.inspectorOverlay.open {
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+.inspectorClose {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 24px;
+  height: 24px;
   display: grid;
-  grid-template-columns: 1fr 320px;
-  overflow: hidden;
-  min-height: 220px;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  border-radius: var(--r-xs);
+  cursor: pointer;
 }
-.inspectorMock .inspectorCanvas {
-  background: var(--canvas);
-  padding: 16px;
-  border-right: 1px solid var(--hairline);
-}
-.inspectorMock .inspectorPanel {
-  padding: 14px 16px;
-}
+.inspectorClose:hover { background: var(--surface-soft); color: var(--ink); }
+.inspectorClose svg { width: 14px; height: 14px; }
 .inspectorPanelHead {
   font-size: 10.5px;
   font-weight: 600;
   color: var(--muted);
   letter-spacing: .06em;
   text-transform: uppercase;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 .inspectorPanelTitle {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--ink);
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+  letter-spacing: -.012em;
 }
 .inspectorField {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 .inspectorLabel {
   font-size: 10.5px;
@@ -478,6 +590,12 @@
   outline: none;
 }
 .inspectorInput:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-ring); }
+.inspectorHelp {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 18px;
+  line-height: 1.5;
+}
 
 .footer {
   margin-top: 80px;

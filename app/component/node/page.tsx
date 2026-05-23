@@ -3,12 +3,13 @@ import { useState } from 'react';
 import Link from 'next/link';
 import {
   RiPlayLine, RiDraggable, RiMore2Fill, RiSparklingLine,
-  RiReplyLine, RiPriceTag3Line, RiAddLine, RiArrowRightSLine,
+  RiReplyLine, RiPriceTag3Line, RiAddLine, RiArrowRightSLine, RiCloseLine,
 } from 'react-icons/ri';
 import { SiHubspot, SiShopify } from 'react-icons/si';
 import styles from './node.module.css';
 
 type Status = 'idle' | 'queued' | 'running' | 'ok' | 'error' | 'skipped';
+type Mode = 'edit' | 'test' | 'run';
 
 const DOT_CLASS: Record<Status, string | undefined> = {
   idle: styles.dotIdle,
@@ -28,13 +29,13 @@ const STATUS_TIP: Record<Status, string> = {
   skipped: 'Skipped (branch ELSE)',
 };
 
-function Dot({ status, onClick }: { status: Status; onClick?: () => void }) {
+function Dot({ status, onClick }: { status: Status; onClick?: (e: React.MouseEvent) => void }) {
   return <span className={`${styles.dot} ${DOT_CLASS[status]}`} onClick={onClick} title={STATUS_TIP[status]} />;
 }
 
-function Tools({ visible }: { visible?: boolean }) {
+function Tools() {
   return (
-    <span className={styles.tools} style={visible ? { opacity: 1, transform: 'translateY(0)' } : undefined}>
+    <span className={styles.tools}>
       <button className={styles.tool} title="Test from here"><RiPlayLine /></button>
       <button className={styles.tool} title="Drag"><RiDraggable /></button>
       <button className={styles.tool} title="More"><RiMore2Fill /></button>
@@ -45,12 +46,13 @@ function Tools({ visible }: { visible?: boolean }) {
 function Chip({
   icon, brand, verb, meta, selected, onClick,
 }: {
-  icon?: React.ReactNode; brand?: string; verb: string; meta?: string; selected?: boolean; onClick?: () => void;
+  icon?: React.ReactNode; brand?: string; verb: string; meta?: string; selected?: boolean; onClick?: (e: React.MouseEvent) => void;
 }) {
   return (
     <span
       className={`${styles.chip} ${selected ? styles.chipSelected : ''}`}
       onClick={onClick}
+      data-chip
     >
       {icon && <span className={styles.chipIco}>{icon}</span>}
       {brand && (
@@ -65,45 +67,72 @@ function Chip({
   );
 }
 
-function RefChip({ name, src, onClick }: { name: string; src: string; onClick?: () => void }) {
+function RefChip({ name, src }: { name: string; src: string }) {
   return (
-    <span className={styles.refchip} onClick={onClick}>
+    <span className={styles.refchip}>
       {name}<span className={styles.refSrc}>{src}</span>
     </span>
   );
 }
 
-interface RowProps {
+interface CardProps {
   status: Status;
   num: string;
-  state?: 'default' | 'selected' | 'editing' | 'dragging' | 'disabled' | 'always-hover';
+  selected?: boolean;
+  editing?: boolean;
+  dragging?: boolean;
+  disabled?: boolean;
+  error?: boolean;
+  forceHover?: boolean;
+  runActive?: boolean;
   children: React.ReactNode;
-  onDotClick?: () => void;
+  onDotClick?: (e: React.MouseEvent) => void;
 }
-function NodeRow({ status, num, state = 'default', children, onDotClick }: RowProps) {
-  const cls = [styles.row];
-  if (state === 'selected') cls.push(styles.rowSelected);
-  if (state === 'editing') cls.push(styles.rowEditing);
-  if (state === 'dragging') cls.push(styles.rowDragging);
-  if (state === 'disabled') cls.push(styles.rowDisabled);
-  if (state === 'always-hover') cls.push(styles.rowAlwaysHover);
+function NodeCard({
+  status, num, selected, editing, dragging, disabled, error, forceHover, runActive, children, onDotClick,
+}: CardProps) {
+  const cls = [styles.card];
+  if (selected) cls.push(styles.cardSelected);
+  if (editing) cls.push(styles.cardEditing);
+  if (dragging) cls.push(styles.cardDragging);
+  if (disabled) cls.push(styles.cardDisabled);
+  if (error) cls.push(styles.cardError);
+  if (forceHover) cls.push(styles.cardForceHover);
+  if (runActive) cls.push(styles.cardRunActive);
 
   return (
     <div className={cls.join(' ')}>
-      <Dot status={status} onClick={onDotClick} />
-      <span className={styles.num}>{num}</span>
-      <span className={styles.body}>{children}</span>
-      <Tools />
+      <div className={styles.row}>
+        <Dot status={status} onClick={onDotClick} />
+        <span className={styles.num}>{num}</span>
+        <span className={styles.body}>{children}</span>
+        <Tools />
+      </div>
     </div>
   );
 }
 
 export default function NodeComponentPage() {
-  const [selectedChip, setSelectedChip] = useState<string | null>(null);
+  const [mode, setMode] = useState<Mode>('edit');
+  const [inspectorChip, setInspectorChip] = useState<string | null>(null);
   const [tracePopFor, setTracePopFor] = useState<string | null>(null);
 
+  // Per-mode card status overlays (so Test mode actually animates dots and Run highlights a card)
+  const liveStatus = (defaultStatus: Status, idx: number): Status => {
+    if (mode === 'test') {
+      if (idx === 0) return 'ok';
+      if (idx === 1) return 'running';
+      return 'idle';
+    }
+    if (mode === 'run') {
+      if (idx === 1) return 'running';
+      return defaultStatus;
+    }
+    return defaultStatus;
+  };
+
   return (
-    <div className={styles.page}>
+    <div className={styles.page} onClick={() => { setInspectorChip(null); setTracePopFor(null); }}>
       <header className={styles.docbar}>
         <div className={styles.brand}>P</div>
         <div className={styles.crumb}>
@@ -113,7 +142,7 @@ export default function NodeComponentPage() {
           <span className={styles.csep}>/</span>
           <span className={styles.name}>Node</span>
         </div>
-        <span className={styles.meta}>Extraction · 2026-05-23</span>
+        <span className={styles.meta}>Extraction · v2 · 2026-05-23</span>
         <span className={styles.tbDivider} />
         <span className={styles.meta}>OpenAI Agent Builder × Intercom Fin</span>
         <span className={styles.spacer} />
@@ -125,188 +154,277 @@ export default function NodeComponentPage() {
       <div className={styles.wrap}>
         <div className={styles.hero}>
           <span className={styles.eyebrow}>Component · Node · v2 extraction</span>
-          <h1 className={styles.h1}>The floating-island step card</h1>
+          <h1 className={styles.h1}>Floating islands on a textured canvas</h1>
           <p className={styles.lede}>
-            The smallest reusable unit. Canvas, Inspector, Test mode and Run mode all wrap around it.
-            Every state below uses the real React component you will see in the assembled editor.
-            Each property is tagged with its reference source (OpenAI or Fin) in the paired{' '}
-            <Link href="/component/node" style={{ color: 'inherit' }}>extraction.md</Link>.
+            Each Node is a card with elevation, sitting on a dot-grid canvas.
+            Click the mode toggle to switch between Edit / Test / Run — Test animates the dots live;
+            Run dims the canvas to greyscale and lifts the active card with a glow.
+            Click any chip → contextual Inspector slides in from the right. Click off → it slides out.
           </p>
           <div className={styles.heroMeta}>
             <span><strong>Structure:</strong> OpenAI floating island</span>
             <span><strong>Body:</strong> Fin prose-with-chips</span>
-            <span><strong>Data flow:</strong> source-step badge on refs, not typed edges</span>
-            <span><strong>Mix:</strong> intentional, sourced per property</span>
+            <span><strong>Modes:</strong> Edit · Test · Run</span>
+            <span><strong>Inspector:</strong> contextual slide-in</span>
           </div>
         </div>
 
-        {/* ===== 01 Canonical node ===== */}
+        {/* ===== 01 LIVING CANVAS ===== */}
         <section className={styles.section}>
-          <span className={styles.seclabel}><span className={styles.secnum}>01</span> Canonical Node</span>
-          <h2 className={styles.h2}>The default action variant, in its hovered state</h2>
-          <p className={styles.sub}>Six visible parts: status dot, step number, body, action chip(s), ref chip(s), hover toolbar. Hover to see the toolbar fade in on the other rows below.</p>
+          <span className={styles.seclabel}><span className={styles.secnum}>01</span> Living canvas</span>
+          <h2 className={styles.h2}>One canvas, three modes, real interactions</h2>
+          <p className={styles.sub}>
+            The Walk Japan playbook as Nodes on a textured canvas. Switch modes with the pill toggle.
+            Hover any card → toolbar fades in. Click a chip → Inspector slides in. Click a status dot → trace popover.
+          </p>
 
-          <div className={styles.demoFrame}>
-            <div className={styles.demoFrameHead}>Hovered (toolbar pinned for reference)</div>
-            <NodeRow status="ok" num="02" state="always-hover">
+          <div className={styles.canvasToolbar}>
+            <div className={styles.modeSwitch}>
+              {(['edit', 'test', 'run'] as Mode[]).map((m) => (
+                <button
+                  key={m}
+                  className={`${styles.modeBtn} ${mode === m ? styles.modeBtnActive : ''}`}
+                  onClick={(e) => { e.stopPropagation(); setMode(m); }}
+                  type="button"
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+            <span className={styles.canvasMeta}>
+              {mode === 'edit' && 'authoring · click chips to inspect'}
+              {mode === 'test' && 'running preview · dots animate live'}
+              {mode === 'run' && 'production run · canvas dimmed · active step glows'}
+            </span>
+          </div>
+
+          <div
+            className={`${styles.canvasSurface} ${mode === 'run' ? styles.runMode : ''}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <NodeCard
+              status={liveStatus('ok', 0)}
+              num="01"
+              runActive={mode === 'run' && false}
+              onDotClick={(e) => { e.stopPropagation(); setTracePopFor(tracePopFor === '01' ? null : '01'); }}
+            >
               <Chip
                 icon={<RiSparklingLine />}
+                brand="AI"
+                verb="Extract"
+                meta="tour · dates · group · concerns"
+                selected={inspectorChip === 'extract'}
+                onClick={(e) => { e.stopPropagation(); setInspectorChip(inspectorChip === 'extract' ? null : 'extract'); }}
+              />
+              {' '}from the email body.
+              {tracePopFor === '01' && (
+                <span
+                  className={styles.tracePop}
+                  style={{ left: -8, top: 30 }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className={styles.row}><span className="k">Status</span><span className="v">ok</span></div>
+                  <div className={styles.row}><span className="k">Last run</span><span className="v">2h ago</span></div>
+                  <div className={styles.row}><span className="k">Duration</span><span className="v">1.4s</span></div>
+                  <div className={styles.row}><span className="k">Output</span><span className="v">{`{ tour:"Kumano Kodo", dates:"13-20 Oct" }`}</span></div>
+                </span>
+              )}
+            </NodeCard>
+
+            <NodeCard
+              status={liveStatus('ok', 1)}
+              num="02"
+              runActive={mode === 'run'}
+            >
+              <Chip
+                icon={<SiShopify />}
                 brand="Sheets"
                 verb="Get rows"
                 meta="bookings sheet"
+                selected={inspectorChip === 'sheets'}
+                onClick={(e) => { e.stopPropagation(); setInspectorChip(inspectorChip === 'sheets' ? null : 'sheets'); }}
               />
-              {' '}to check availability for{' '}
-              <RefChip name="tour.dates" src="01" />.
-            </NodeRow>
-          </div>
-
-          <div className={styles.demoFrame} style={{ marginTop: 16 }}>
-            <div className={styles.demoFrameHead}>Default → hover (move your pointer over each row)</div>
-            <NodeRow status="ok" num="01">
-              <Chip icon={<RiSparklingLine />} brand="AI" verb="Extract" meta="tour · dates · group · concerns" />
-              {' '}from the email body.
-            </NodeRow>
-            <NodeRow status="ok" num="02">
-              <Chip icon={<SiShopify />} brand="Sheets" verb="Get rows" meta="bookings sheet" />
               {' '}to check availability for <RefChip name="tour.dates" src="01" />.
-            </NodeRow>
-            <NodeRow status="running" num="03">
+            </NodeCard>
+
+            <NodeCard status={liveStatus('idle', 2)} num="03">
               <Chip icon={<SiHubspot />} brand="HubSpot" verb="Find contact" meta="by from_email" />
               {' '}to attach the lead history.
-            </NodeRow>
+            </NodeCard>
+
+            <NodeCard status={liveStatus('idle', 3)} num="04">
+              <Chip
+                icon={<RiPriceTag3Line />}
+                verb="Tag"
+                meta="@tour.name"
+                selected={inspectorChip === 'tag'}
+                onClick={(e) => { e.stopPropagation(); setInspectorChip(inspectorChip === 'tag' ? null : 'tag'); }}
+              />
+              {' '}the conversation for routing.
+            </NodeCard>
+
+            <NodeCard status={liveStatus('idle', 4)} num="05">
+              Send <Chip icon={<RiReplyLine />} verb="Draft reply" meta="availability + KB" /> using <RefChip name="tour.dates" src="01" /> and <RefChip name="customer.history" src="03" />.
+            </NodeCard>
+
+            {/* Slide-in inspector overlay */}
+            <aside
+              className={`${styles.inspectorOverlay} ${inspectorChip ? styles.open : ''}`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                className={styles.inspectorClose}
+                onClick={(e) => { e.stopPropagation(); setInspectorChip(null); }}
+                title="Close inspector"
+              >
+                <RiCloseLine />
+              </button>
+              <div className={styles.inspectorPanelHead}>Inspector</div>
+              <div className={styles.inspectorPanelTitle}>
+                {inspectorChip === 'extract' && 'AI Extract · configure'}
+                {inspectorChip === 'sheets' && 'Sheets · Get rows'}
+                {inspectorChip === 'tag' && 'Tag · configure'}
+                {!inspectorChip && '—'}
+              </div>
+
+              {inspectorChip === 'extract' && (
+                <>
+                  <div className={styles.inspectorField}>
+                    <span className={styles.inspectorLabel}>Source</span>
+                    <input className={styles.inspectorInput} defaultValue="Email body" />
+                  </div>
+                  <div className={styles.inspectorField}>
+                    <span className={styles.inspectorLabel}>Fields to extract</span>
+                    <input className={styles.inspectorInput} defaultValue="tour, dates, group, concerns" />
+                  </div>
+                  <div className={styles.inspectorField}>
+                    <span className={styles.inspectorLabel}>Model</span>
+                    <input className={styles.inspectorInput} defaultValue="claude-sonnet-4.6" />
+                  </div>
+                </>
+              )}
+
+              {inspectorChip === 'sheets' && (
+                <>
+                  <div className={styles.inspectorField}>
+                    <span className={styles.inspectorLabel}>Sheet</span>
+                    <input className={styles.inspectorInput} defaultValue="bookings 2026" />
+                  </div>
+                  <div className={styles.inspectorField}>
+                    <span className={styles.inspectorLabel}>Filter</span>
+                    <input className={styles.inspectorInput} defaultValue="tour == @tour.name && dates overlap @tour.dates" />
+                  </div>
+                </>
+              )}
+
+              {inspectorChip === 'tag' && (
+                <>
+                  <div className={styles.inspectorField}>
+                    <span className={styles.inspectorLabel}>Tags to apply</span>
+                    <input className={styles.inspectorInput} defaultValue="@tour.name" />
+                  </div>
+                  <div className={styles.inspectorField}>
+                    <span className={styles.inspectorLabel}>Apply mode</span>
+                    <input className={styles.inspectorInput} defaultValue="Append" />
+                  </div>
+                </>
+              )}
+
+              <div className={styles.inspectorHelp}>
+                Inspector content depends on the selected chip&apos;s action type. Click another chip to swap, or click off the canvas to dismiss.
+              </div>
+            </aside>
           </div>
         </section>
 
-        {/* ===== 02 Status dot states ===== */}
+        {/* ===== 02 STATUS DOT STATES ===== */}
         <section className={styles.section}>
           <span className={styles.seclabel}><span className={styles.secnum}>02</span> Status dot states</span>
-          <h2 className={styles.h2}>Six states · click a dot to see its run trace</h2>
-          <p className={styles.sub}>Click any status dot to open a trace popover (OpenAI pattern). Hover for a quick tooltip.</p>
+          <h2 className={styles.h2}>Six states · click a dot for trace</h2>
+          <p className={styles.sub}>Each dot has a hover tooltip and an on-click trace popover.</p>
 
-          <div className={styles.demoFrame}>
-            <div style={{ position: 'relative' }}>
-              {([
-                ['idle', '01', 'idle — never run'],
-                ['queued', '02', 'queued — scheduled, waiting'],
-                ['running', '03', 'running — currently executing (pulse 1.4s)'],
-                ['ok', '04', 'ok — last run succeeded'],
-                ['error', '05', 'error — last run failed'],
-                ['skipped', '06', 'skipped — a branch chose another path (hollow ring)'],
-              ] as const).map(([s, n, label]) => (
-                <NodeRow
-                  key={s}
-                  status={s}
-                  num={n}
-                  onDotClick={() => setTracePopFor(tracePopFor === s ? null : s)}
-                >
-                  {label}
-                  {tracePopFor === s && (
-                    <span
-                      className={styles.tracePop}
-                      style={{ left: -8, top: 26 }}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className={styles.row}><span className="k">Status</span><span className="v">{s}</span></div>
-                      <div className={styles.row}><span className="k">Last run</span><span className="v">2h ago</span></div>
-                      <div className={styles.row}><span className="k">Duration</span><span className="v">{s === 'error' ? 'timeout' : '1.4s'}</span></div>
-                      <div className={styles.row}><span className="k">Input</span><span className="v">{`{ from_email: "..." }`}</span></div>
-                      <div className={styles.row}><span className="k">Output</span><span className="v">{s === 'error' ? '—' : `{ rows: 1 }`}</span></div>
-                    </span>
-                  )}
-                </NodeRow>
-              ))}
-            </div>
+          <div className={styles.canvasSurface} onClick={(e) => e.stopPropagation()}>
+            {([
+              ['idle', '01', 'idle — never run'],
+              ['queued', '02', 'queued — scheduled, waiting'],
+              ['running', '03', 'running — currently executing (pulse 1.4s)'],
+              ['ok', '04', 'ok — last run succeeded'],
+              ['error', '05', 'error — last run failed'],
+              ['skipped', '06', 'skipped — a branch chose another path (hollow ring)'],
+            ] as const).map(([s, n, label]) => (
+              <NodeCard
+                key={s}
+                status={s}
+                num={n}
+                error={s === 'error'}
+                onDotClick={(e) => { e.stopPropagation(); setTracePopFor(tracePopFor === s ? null : s); }}
+              >
+                {label}
+                {tracePopFor === s && (
+                  <span className={styles.tracePop} style={{ left: -8, top: 30 }} onClick={(e) => e.stopPropagation()}>
+                    <div className={styles.row}><span className="k">Status</span><span className="v">{s}</span></div>
+                    <div className={styles.row}><span className="k">Last run</span><span className="v">{s === 'idle' ? 'never' : '2h ago'}</span></div>
+                    <div className={styles.row}><span className="k">Duration</span><span className="v">{s === 'error' ? 'timeout' : '1.4s'}</span></div>
+                    <div className={styles.row}><span className="k">Output</span><span className="v">{s === 'error' || s === 'idle' ? '—' : `{ rows: 1 }`}</span></div>
+                  </span>
+                )}
+              </NodeCard>
+            ))}
           </div>
         </section>
 
-        {/* ===== 03 Row states ===== */}
+        {/* ===== 03 CARD STATES ===== */}
         <section className={styles.section}>
-          <span className={styles.seclabel}><span className={styles.secnum}>03</span> Row states</span>
-          <h2 className={styles.h2}>Default · hover · editing · selected · dragging · disabled</h2>
+          <span className={styles.seclabel}><span className={styles.secnum}>03</span> Card states</span>
+          <h2 className={styles.h2}>Default · hover · editing · selected · dragging · disabled · error</h2>
 
-          <div className={styles.demoFrame}>
-            <NodeRow status="ok" num="01">
+          <div className={styles.canvasSurface} onClick={(e) => e.stopPropagation()}>
+            <NodeCard status="ok" num="01">
               <em style={{ color: 'var(--muted)', fontStyle: 'normal' }}>default — </em>
-              <Chip verb="Run action" /> resting, hover toolbar hidden.
-            </NodeRow>
-            <NodeRow status="ok" num="02" state="always-hover">
+              <Chip verb="Run action" /> hover toolbar hidden.
+            </NodeCard>
+            <NodeCard status="ok" num="02" forceHover>
               <em style={{ color: 'var(--muted)', fontStyle: 'normal' }}>hover (pinned) — </em>
-              <Chip verb="Run action" /> bg shifts, toolbar fades in.
-            </NodeRow>
-            <NodeRow status="ok" num="03" state="editing">
+              <Chip verb="Run action" /> shadow lifts, toolbar fades in.
+            </NodeCard>
+            <NodeCard status="ok" num="03" editing>
               <em style={{ color: 'var(--muted)', fontStyle: 'normal' }}>editing — </em>
-              <span style={{ outline: 'none' }}>body has focus, status dimmed. <Chip verb="Inline edit" /></span>
-            </NodeRow>
-            <NodeRow status="ok" num="04" state="selected">
+              body has focus, left edge marker. <Chip verb="Inline edit" />
+            </NodeCard>
+            <NodeCard status="ok" num="04" selected>
               <em style={{ color: 'var(--muted)', fontStyle: 'normal' }}>selected — </em>
-              a chip inside is being configured. <Chip verb="Tag" meta="tour.name" selected />
-            </NodeRow>
-            <NodeRow status="ok" num="05" state="dragging">
+              chip configured. <Chip verb="Tag" meta="tour.name" selected />
+            </NodeCard>
+            <NodeCard status="ok" num="05" dragging>
               <em style={{ color: 'var(--muted)', fontStyle: 'normal' }}>dragging — </em>
-              lifted, shadowed, scale(1.01). <Chip verb="Reorder me" />
-            </NodeRow>
-            <NodeRow status="idle" num="06" state="disabled">
+              lifted, rotated 0.3°, deep shadow. <Chip verb="Reorder me" />
+            </NodeCard>
+            <NodeCard status="idle" num="06" disabled>
               <em style={{ color: 'var(--muted)', fontStyle: 'normal' }}>disabled — </em>
-              <Chip verb="Inactive step" /> opacity .55, no interaction.
-            </NodeRow>
+              <Chip verb="Inactive" /> opacity .55.
+            </NodeCard>
+            <NodeCard status="error" num="07" error>
+              <em style={{ color: 'var(--muted)', fontStyle: 'normal' }}>error — </em>
+              soft red bg + border tint. <Chip verb="Failed run" meta="timeout" />
+            </NodeCard>
           </div>
         </section>
 
-        {/* ===== 04 Mode states ===== */}
+        {/* ===== 04 VARIANTS ===== */}
         <section className={styles.section}>
-          <span className={styles.seclabel}><span className={styles.secnum}>04</span> Mode states</span>
-          <h2 className={styles.h2}>How the Node responds to canvas-level modes</h2>
-          <p className={styles.sub}>Edit (default) · Test (dots animate live) · Run (canvas dims to greyscale, active step lifts out).</p>
-
-          <div className={styles.modeGrid}>
-            <div className={styles.modePanel}>
-              <div className={styles.modeLabel}>Edit mode</div>
-              <NodeRow status="ok" num="01">
-                <Chip icon={<RiSparklingLine />} verb="AI Extract" meta="tour · dates" />
-              </NodeRow>
-              <div className={styles.modeDesc}>Full colour. Hover affordances active. Inline editing allowed.</div>
-            </div>
-
-            <div className={styles.modePanel}>
-              <div className={styles.modeLabel}>Test mode</div>
-              <NodeRow status="running" num="01">
-                <Chip icon={<RiSparklingLine />} verb="AI Extract" meta="tour · dates" />
-                <em style={{ color: 'var(--muted)', fontStyle: 'normal' }}> · running</em>
-              </NodeRow>
-              <div className={styles.modeDesc}>Same palette. Status dots animate live as test progresses. Toolbar still visible.</div>
-            </div>
-
-            <div className={`${styles.modePanel} ${styles.modeDark}`}>
-              <div className={styles.modeLabel}>Run mode</div>
-              <div className={`${styles.row} ${styles.runDim}`}>
-                <Dot status="ok" /><span className={styles.num}>01</span>
-                <span className={styles.body}>step 01 — greyscale</span>
-              </div>
-              <div className={`${styles.row} ${styles.runActive}`}>
-                <Dot status="running" /><span className={styles.num}>02</span>
-                <span className={styles.body}>step 02 — focused</span>
-              </div>
-              <div className={`${styles.row} ${styles.runDim}`}>
-                <Dot status="idle" /><span className={styles.num}>03</span>
-                <span className={styles.body}>step 03 — greyscale</span>
-              </div>
-              <div className={styles.modeDesc}>Canvas dims to greyscale. Active step lifts with 4px running-glow. Authoring locked.</div>
-            </div>
-          </div>
-        </section>
-
-        {/* ===== 05 Variants ===== */}
-        <section className={styles.section}>
-          <span className={styles.seclabel}><span className={styles.secnum}>05</span> Variants</span>
+          <span className={styles.seclabel}><span className={styles.secnum}>04</span> Variants</span>
           <h2 className={styles.h2}>Condition · Sub-procedure · End</h2>
-          <p className={styles.sub}>Same gutter (dot + number) but body shape differs by kind.</p>
+          <p className={styles.sub}>Same gutter (dot + number) but body shape differs by kind. All sit as cards on the canvas.</p>
 
-          <div className={styles.demoFrame}>
-            <div className={styles.demoFrameHead}>Condition Node</div>
-            <div className={styles.condition}>
+          <div className={styles.canvasSurface} onClick={(e) => e.stopPropagation()}>
+            <NodeCard status="ok" num="01">
+              Plain action card for context.
+            </NodeCard>
+
+            <div className={styles.card}>
               <div className={styles.condHead}>
                 <Dot status="ok" />
-                <span className={styles.num}>04</span>
+                <span className={styles.num}>02</span>
                 <div className={styles.condExpr}>
                   <span className={styles.condLabel}>Check</span>
                   tour is available on <RefChip name="tour.dates" src="01" />
@@ -323,11 +441,8 @@ export default function NodeComponentPage() {
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className={styles.demoFrame} style={{ marginTop: 16 }}>
-            <div className={styles.demoFrameHead}>Sub-procedure Node</div>
-            <NodeRow status="idle" num="05">
+            <NodeCard status="idle" num="03">
               <span className={styles.subproc}>
                 <span className={styles.subprocArrow}>↪</span>
                 <span className={styles.subprocLabel}>SUB</span>
@@ -338,62 +453,11 @@ export default function NodeComponentPage() {
                 <button className={styles.tool}><RiArrowRightSLine /></button>
               </span>
               once we have a probable lead.
-            </NodeRow>
-          </div>
+            </NodeCard>
 
-          <div className={styles.demoFrame} style={{ marginTop: 16 }}>
-            <div className={styles.demoFrameHead}>End Node</div>
             <div className={styles.endDivider}>
               <span className={styles.label}>END</span>
               <button className={styles.endAdd}><RiAddLine /> Add step</button>
-            </div>
-          </div>
-        </section>
-
-        {/* ===== 06 Click-chip → Inspector ===== */}
-        <section className={styles.section}>
-          <span className={styles.seclabel}><span className={styles.secnum}>06</span> Click chip → Inspector</span>
-          <h2 className={styles.h2}>The contextual right panel opens on chip click, not on Node click</h2>
-          <p className={styles.sub}>Click the <Chip verb="Tag" meta="@tour.name" /> chip below. Inspector slides into view. Click off to dismiss.</p>
-
-          <div className={styles.inspectorMock}>
-            <div className={styles.inspectorCanvas}>
-              <NodeRow status="ok" num="07" state={selectedChip === 'tag' ? 'selected' : 'default'}>
-                <Chip
-                  icon={<RiPriceTag3Line />}
-                  verb="Tag"
-                  meta="@tour.name"
-                  selected={selectedChip === 'tag'}
-                  onClick={() => setSelectedChip(selectedChip === 'tag' ? null : 'tag')}
-                />
-                {' '}the conversation for routing.
-              </NodeRow>
-              <div style={{ marginTop: 8, fontSize: 12, color: 'var(--muted)' }}>
-                Click the chip → Inspector opens. Click chip again or click outside → Inspector closes.
-              </div>
-            </div>
-            <div className={styles.inspectorPanel}>
-              {selectedChip === 'tag' ? (
-                <>
-                  <div className={styles.inspectorPanelHead}>Inspector</div>
-                  <div className={styles.inspectorPanelTitle}>Tag · configure</div>
-                  <div className={styles.inspectorField}>
-                    <span className={styles.inspectorLabel}>Tags to apply</span>
-                    <input className={styles.inspectorInput} defaultValue="@tour.name" />
-                  </div>
-                  <div className={styles.inspectorField}>
-                    <span className={styles.inspectorLabel}>Apply mode</span>
-                    <input className={styles.inspectorInput} defaultValue="Replace existing" />
-                  </div>
-                  <div style={{ fontSize: 11.5, color: 'var(--muted)', marginTop: 18 }}>
-                    Inspector content depends on the selected chip's action type.
-                  </div>
-                </>
-              ) : (
-                <div style={{ fontSize: 12.5, color: 'var(--muted-soft)', padding: '16px 0' }}>
-                  No chip selected. Inspector reclaims space when nothing is being configured.
-                </div>
-              )}
             </div>
           </div>
         </section>
