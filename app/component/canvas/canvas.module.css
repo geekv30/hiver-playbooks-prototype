@@ -684,6 +684,21 @@
   color: var(--body);
   line-height: 1.7;
   word-break: break-word;
+  outline: none;
+  min-height: 22px;
+}
+.stepBodyEditable {
+  cursor: text;
+}
+.stepBodyEditable:focus { /* no outline; selection state communicated via row hover/edit */ }
+.stepBody[data-empty="true"]::before {
+  content: 'Click here and press / to add an action';
+  color: var(--muted-soft);
+  font-style: italic;
+}
+.stepBody[data-empty="true"]:focus::before {
+  content: 'Press / to open the action picker';
+  color: var(--muted);
 }
 
 /* End row — redesigned: single horizontal row, centered content, no num column */
@@ -796,6 +811,112 @@
   color: var(--state-error);
 }
 
+/* ============================================================ */
+/* Slash picker (action picker at caret)                          */
+/* ============================================================ */
+.slashPicker {
+  position: fixed;
+  z-index: 80;
+  width: 360px;
+  max-height: 340px;
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  box-shadow: 0 16px 40px rgba(15,15,17,.18), 0 2px 4px rgba(15,15,17,.06);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.slashHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--hairline-soft);
+}
+.slashHint {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--muted);
+  font-weight: 600;
+}
+.slashKbdHint {
+  font-size: 10px;
+  color: var(--muted-soft);
+}
+.slashInput {
+  border: 0;
+  outline: 0;
+  padding: 10px 12px;
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--ink);
+  letter-spacing: -.005em;
+  border-bottom: 1px solid var(--hairline-soft);
+  background: var(--card);
+}
+.slashInput::placeholder { color: var(--muted-soft); }
+.slashList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px;
+}
+.slashEmpty {
+  padding: 14px 16px;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+}
+.slashBucket { margin-bottom: 4px; }
+.slashBucketLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--muted-soft);
+  font-weight: 600;
+  padding: 4px 8px;
+}
+.slashItem {
+  display: grid;
+  grid-template-columns: 18px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  padding: 6px 8px;
+  background: transparent;
+  border: 0;
+  border-radius: var(--r-xs);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font);
+}
+.slashItemActive {
+  background: var(--surface-soft);
+}
+.slashItemIco {
+  width: 18px; height: 18px;
+  display: grid; place-items: center;
+  color: var(--ink);
+}
+.slashItemIco svg { width: 13px; height: 13px; }
+.slashItemText {
+  font-size: 12.5px;
+  color: var(--ink);
+  letter-spacing: -.005em;
+}
+.slashItemBrand { color: var(--muted); font-weight: 400; }
+.slashItemName { color: var(--ink); font-weight: 500; }
+.slashItemDesc {
+  font-size: 10.5px;
+  color: var(--muted);
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+
 /* Add step button — sits below the last actionable step, before End */
 .addStepBtn {
   display: flex;
@@ -891,24 +1012,31 @@
 }
 
 /* ============================================================ */
-/* Chip atom                                                       */
+/* Chip atom — fixed-height so it flows inline with prose         */
+/* Total height locked at 22px so it sits on the same line as     */
+/* the parent's 13.5px body text (line-height 1.7 ≈ 23px).        */
+/* line-height: 1 inside the chip prevents the parent's 1.7 from  */
+/* inflating the chip vertically.                                 */
 /* ============================================================ */
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 2px 8px 2px 6px;
+  gap: 5px;
+  height: 22px;
+  padding: 0 8px 0 6px;
   border-radius: var(--r-sm);
   background: var(--card);
   border: 1px solid var(--hairline);
   font-family: var(--font);
   font-size: 12.5px;
+  line-height: 1;
   color: var(--ink);
   cursor: pointer;
   user-select: none;
-  vertical-align: middle;
+  vertical-align: -6px;
   transition: background var(--d-hover) var(--ease-snap), border-color var(--d-hover) var(--ease-snap), box-shadow var(--d-hover) var(--ease-snap);
   margin: 0 1px;
+  white-space: nowrap;
 }
 .chip:hover { background: var(--surface-soft); border-color: var(--hairline-strong); }
 .chip:focus-visible { outline: 0; box-shadow: 0 0 0 2px var(--primary-ring); }
@@ -922,19 +1050,20 @@
   background: rgba(223, 168, 143, .08);
   border-color: rgba(223, 168, 143, .55);
 }
-.chipIco { width: 16px; height: 16px; display: inline-grid; place-items: center; color: var(--ink); line-height: 1; }
-.chipIco svg { width: 13px; height: 13px; }
-.chipBrand { color: var(--muted); font-weight: 400; }
-.chipSep { color: var(--muted-soft); }
-.chipVerb { color: var(--ink); font-weight: 500; letter-spacing: -.005em; }
+.chipIco { width: 14px; height: 14px; display: inline-grid; place-items: center; color: var(--ink); line-height: 1; flex: none; }
+.chipIco svg { width: 12px; height: 12px; }
+.chipBrand { color: var(--muted); font-weight: 400; line-height: 1; }
+.chipSep { color: var(--muted-soft); line-height: 1; }
+.chipVerb { color: var(--ink); font-weight: 500; letter-spacing: -.005em; line-height: 1; }
 .chipMeta {
   font-family: var(--mono);
-  font-size: 10.5px;
+  font-size: 10px;
   color: var(--muted);
   padding-left: 7px;
   margin-left: 1px;
   border-left: 1px solid var(--hairline);
   letter-spacing: .01em;
+  line-height: 1;
 }
 .chipStatusDot {
   width: 7px;
@@ -942,6 +1071,7 @@
   display: inline-grid;
   place-items: center;
   margin-left: 2px;
+  line-height: 1;
 }
 
 /* ============================================================ */

@@ -16,6 +16,7 @@ import {
 } from './data';
 import { useCanvasState, getChipStatus } from './state';
 import { ConfigureBody } from './bodies';
+import { parseFragmentsFromDom, getCaretTextOffset, getCaretAnchor } from './dom-parse';
 
 /* ============================================================ */
 /* Fragment renderer                                              */
@@ -28,9 +29,20 @@ function FragmentSpan({
   onChipClick?: (chipId: string) => void;
   selected?: boolean;
 }) {
-  if (frag.kind === 'text') return <span>{frag.text}</span>;
-  if (frag.kind === 'ref')  return <span className={styles.refchip}>{frag.refPath}</span>;
-  if (frag.kind === 'code') return <code className={styles.codeFrag}>{frag.code}</code>;
+  if (frag.kind === 'text') {
+    // empty text fragments are NOT rendered so the stepBody can match
+    // :empty for the placeholder pseudo-element
+    if (!frag.text) return null;
+    return <>{frag.text}</>;
+  }
+  if (frag.kind === 'ref') {
+    return (
+      <span className={styles.refchip} contentEditable={false} data-ref-path={frag.refPath}>{frag.refPath}</span>
+    );
+  }
+  if (frag.kind === 'code') {
+    return <code className={styles.codeFrag} contentEditable={false}>{frag.code}</code>;
+  }
   // chip
   return (
     <ChipInline
@@ -67,7 +79,13 @@ function ChipInline({
     chip.status === 'draft' && styles.chipDraft,
   ].filter(Boolean).join(' ');
   return (
-    <span className={cls} onClick={onClick} data-chip-id={chip.id} tabIndex={0}>
+    <span
+      className={cls}
+      onClick={onClick}
+      data-chip-id={chip.id}
+      contentEditable={false}
+      tabIndex={0}
+    >
       <span className={styles.chipIco}>{Icon ? <Icon /> : null}</span>
       {action.brand && (
         <>
@@ -126,7 +144,7 @@ function StepActions({
 
 function StepRow({
   step, num, statuses, onChipClick, selectedChipId, highlight,
-  actions, canUp, canDown,
+  actions, canUp, canDown, editable, onFragmentsChange, onSlash,
 }: {
   step: AnyStep;
   num: string;
@@ -142,7 +160,11 @@ function StepRow({
   };
   canUp?: boolean;
   canDown?: boolean;
+  editable?: boolean;
+  onFragmentsChange?: (stepId: string, fragments: Frag[]) => void;
+  onSlash?: (stepId: string, anchor: { top: number; left: number }, textOffset: number) => void;
 }) {
+  const bodyRef = useRef<HTMLSpanElement | null>(null);
   if (step.kind === 'end') {
     return (
       <div className={`${styles.stepRow} ${styles.stepEnd}`} data-step-id={step.id}>
@@ -208,27 +230,53 @@ function StepRow({
   const firstChip = step.fragments.find((f) => f.kind === 'chip');
   const chipStatus = firstChip && firstChip.kind === 'chip' ? (statuses[firstChip.chip.id] ?? firstChip.chip.status) : 'idle';
   const isEmpty = !step.fragments.some((f) => f.kind === 'chip') &&
-                   !step.fragments.some((f) => f.kind === 'text' && f.text.trim().length > 0);
+                   !step.fragments.some((f) => f.kind === 'text' && f.text.trim().length > 0) &&
+                   !step.fragments.some((f) => f.kind === 'ref' || f.kind === 'code');
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLSpanElement>) => {
+    if (!editable) return;
+    if (e.key === '/') {
+      e.preventDefault();
+      if (bodyRef.current) {
+        const anchor = getCaretAnchor(bodyRef.current);
+        const offset = getCaretTextOffset(bodyRef.current);
+        if (anchor) onSlash?.(step.id, anchor, offset);
+      }
+    }
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLSpanElement>) => {
+    if (!editable) return;
+    if (!bodyRef.current) return;
+    // skip blur if focus moved to the slash picker
+    const next = e.relatedTarget as HTMLElement | null;
+    if (next?.closest?.('[data-slash-picker]')) return;
+    const fragments = parseFragmentsFromDom(bodyRef.current, step.fragments);
+    onFragmentsChange?.(step.id, fragments);
+  };
+
   return (
     <div className={`${styles.stepRow} ${highlight ? styles.stepHighlight : ''} ${isEmpty ? styles.stepEmpty : ''}`} data-step-id={step.id}>
       <span className={styles.stepDot}><StatusDot status={isEmpty ? 'draft' : chipStatus} /></span>
       <span className={styles.stepNum}>{num}</span>
-      <span className={styles.stepBody}>
-        {isEmpty ? (
-          <span className={styles.emptyHint}>
-            Pick an action from the palette to start, or press <kbd className={styles.kbd}>/</kbd> to insert here
-          </span>
-        ) : (
-          step.fragments.map((f, fi) => (
-            <FragmentSpan
-              key={fi}
-              frag={f}
-              status={f.kind === 'chip' ? statuses[f.chip.id] : undefined}
-              onChipClick={onChipClick}
-              selected={f.kind === 'chip' && f.chip.id === selectedChipId}
-            />
-          ))
-        )}
+      <span
+        ref={bodyRef}
+        className={`${styles.stepBody} ${editable ? styles.stepBodyEditable : ''}`}
+        contentEditable={editable}
+        suppressContentEditableWarning
+        onKeyDown={handleKeyDown}
+        onBlur={handleBlur}
+        data-empty={isEmpty ? 'true' : undefined}
+      >
+        {step.fragments.map((f, fi) => (
+          <FragmentSpan
+            key={fi}
+            frag={f}
+            status={f.kind === 'chip' ? statuses[f.chip.id] : undefined}
+            onChipClick={onChipClick}
+            selected={f.kind === 'chip' && f.chip.id === selectedChipId}
+          />
+        ))}
       </span>
       {actions && (
         <StepActions
@@ -679,6 +727,128 @@ function findChipInState(steps: AnyStep[], chipId: string): Chip | null {
 }
 
 /* ============================================================ */
+/* Slash picker (popup at caret with action list)                 */
+/* ============================================================ */
+function SlashPicker({
+  state, onPick, onClose,
+}: {
+  state: ReturnType<typeof useCanvasState>;
+  onPick: (actionId: string) => void;
+  onClose: () => void;
+}) {
+  const slash = state.slash!;
+  const [idx, setIdx] = useState(0);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    // autofocus the picker input
+    const t = window.setTimeout(() => inputRef.current?.focus(), 0);
+    return () => window.clearTimeout(t);
+  }, []);
+
+  const filtered = useMemo(() => {
+    const q = slash.query.trim().toLowerCase();
+    if (!q) return ACTIONS;
+    return ACTIONS.filter((a) =>
+      a.name.toLowerCase().includes(q) ||
+      a.verb.toLowerCase().includes(q) ||
+      a.bucket.toLowerCase().includes(q)
+    );
+  }, [slash.query]);
+
+  const grouped = useMemo(() => {
+    return BUCKET_ORDER.reduce<Record<Bucket, typeof ACTIONS>>((acc, b) => {
+      acc[b] = filtered.filter((a) => a.bucket === b);
+      return acc;
+    }, {} as Record<Bucket, typeof ACTIONS>);
+  }, [filtered]);
+
+  const flat = useMemo(() => Object.values(grouped).flat(), [grouped]);
+
+  useEffect(() => {
+    if (idx >= flat.length) setIdx(Math.max(0, flat.length - 1));
+  }, [flat.length, idx]);
+
+  const handleKey = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setIdx((i) => Math.min(flat.length - 1, i + 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setIdx((i) => Math.max(0, i - 1));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const a = flat[idx];
+      if (a) onPick(a.id);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      onClose();
+    }
+  };
+
+  // Position so popup top doesn't overflow viewport
+  const top = Math.min(slash.anchor.top, window.innerHeight - 360);
+
+  return (
+    <div
+      className={styles.slashPicker}
+      data-slash-picker="true"
+      style={{ top, left: slash.anchor.left }}
+      onMouseDown={(e) => e.preventDefault()}
+    >
+      <div className={styles.slashHead}>
+        <span className={styles.slashHint}>Insert action</span>
+        <span className={styles.slashKbdHint}>↑↓ to navigate · ↩ select · esc close</span>
+      </div>
+      <input
+        ref={inputRef}
+        className={styles.slashInput}
+        placeholder="Type to filter…"
+        value={slash.query}
+        onChange={(e) => state.updateSlashQuery(e.target.value)}
+        onKeyDown={handleKey}
+      />
+      <div className={styles.slashList}>
+        {flat.length === 0 && (
+          <div className={styles.slashEmpty}>No actions match &quot;{slash.query}&quot;.</div>
+        )}
+        {BUCKET_ORDER.map((b) => {
+          const items = grouped[b];
+          if (!items.length) return null;
+          return (
+            <div key={b} className={styles.slashBucket}>
+              <div className={styles.slashBucketLabel}>{BUCKET_TITLES[b]}</div>
+              {items.map((a) => {
+                const globalIdx = flat.findIndex((x) => x.id === a.id);
+                const active = globalIdx === idx;
+                const Icon = ICONS[a.iconKey];
+                return (
+                  <button
+                    key={a.id}
+                    className={`${styles.slashItem} ${active ? styles.slashItemActive : ''}`}
+                    onClick={() => onPick(a.id)}
+                    onMouseEnter={() => setIdx(globalIdx)}
+                    data-slash-action={a.id}
+                    type="button"
+                  >
+                    <span className={styles.slashItemIco}>{Icon ? <Icon /> : null}</span>
+                    <span className={styles.slashItemText}>
+                      {a.brand && <span className={styles.slashItemBrand}>{a.brand} · </span>}
+                      <span className={styles.slashItemName}>{a.verb}</span>
+                    </span>
+                    <span className={styles.slashItemDesc}>{a.desc}</span>
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================ */
 /* Overflow menu                                                  */
 /* ============================================================ */
 function OverflowMenu({
@@ -1034,6 +1204,9 @@ export default function CanvasPage() {
                         onChipClick={(id) => state.setConfigChipId(id)}
                         selectedChipId={state.configChipId}
                         highlight={highlightStepId === step.id}
+                        editable={editable && step.kind !== 'end'}
+                        onFragmentsChange={(id, fragments) => state.setStepFragments(id, fragments)}
+                        onSlash={(id, anchor, offset) => state.openSlash({ stepId: id, anchor, textOffset: offset, query: '' })}
                         actions={
                           editable && step.kind !== 'end'
                             ? {
@@ -1071,6 +1244,18 @@ export default function CanvasPage() {
       </main>
 
       <ValidationStrip state={state} />
+
+      {state.slash && (
+        <SlashPicker
+          state={state}
+          onClose={state.closeSlash}
+          onPick={(actionId) => {
+            const s = state.slash!;
+            state.insertChipInStepAtOffset(s.stepId, actionId, s.textOffset);
+            state.closeSlash();
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -1,7 +1,8 @@
 'use client';
 import { useCallback, useEffect, useReducer, useRef } from 'react';
-import type { Playbook, Chip, ChipStatus, TraceEntry, AnyStep, Step } from './data';
+import type { Playbook, Chip, ChipStatus, TraceEntry, AnyStep, Step, Frag } from './data';
 import { WALK_JAPAN_SEED, MOCK_TRACE_OUTPUTS, findAction } from './data';
+import { insertChipAtTextOffset } from './dom-parse';
 
 export type CanvasMode =
   | 'edit'
@@ -16,6 +17,13 @@ export type ActivationState =
   | { status: 'publishing'; mailboxes: string[] }
   | { status: 'live'; mailboxes: string[] };
 
+export interface SlashState {
+  stepId: string;
+  anchor: { top: number; left: number };
+  textOffset: number;
+  query: string;
+}
+
 export interface CanvasState {
   playbook: Playbook;
   mode: CanvasMode;
@@ -28,6 +36,7 @@ export interface CanvasState {
   testOutcome: 'pending' | 'pass' | 'fail' | 'cancelled' | null;
   chipStatusOverride: Record<string, ChipStatus>;
   autosaveTick: number;
+  slash: SlashState | null;
 }
 
 const HISTORY_CAP = 50;
@@ -47,7 +56,10 @@ type Action =
   | { type: 'setConfigChipId'; id: string | null }
   | { type: 'togglePalette' }
   | { type: 'setActivation'; activation: ActivationState }
-  | { type: 'autosaveBump' };
+  | { type: 'autosaveBump' }
+  | { type: 'openSlash'; payload: SlashState }
+  | { type: 'updateSlashQuery'; query: string }
+  | { type: 'closeSlash' };
 
 function reducer(state: CanvasState, action: Action): CanvasState {
   switch (action.type) {
@@ -113,6 +125,9 @@ function reducer(state: CanvasState, action: Action): CanvasState {
     case 'togglePalette':      return { ...state, paletteCollapsed: !state.paletteCollapsed };
     case 'setActivation':      return { ...state, activation: action.activation };
     case 'autosaveBump':       return { ...state, autosaveTick: state.autosaveTick + 1 };
+    case 'openSlash':          return { ...state, slash: action.payload };
+    case 'updateSlashQuery':   return { ...state, slash: state.slash ? { ...state.slash, query: action.query } : null };
+    case 'closeSlash':         return { ...state, slash: null };
     default:                   return state;
   }
 }
@@ -129,6 +144,7 @@ const INITIAL_STATE: CanvasState = {
   testOutcome: null,
   chipStatusOverride: {},
   autosaveTick: 0,
+  slash: null,
 };
 
 /* ============================================================ */
@@ -295,6 +311,48 @@ export function useCanvasState() {
       return { ...pb, steps: arr };
     });
   }, [mutate]);
+
+  const setStepFragments = useCallback((stepId: string, fragments: Frag[]) => {
+    mutate((pb) => ({
+      ...pb,
+      steps: pb.steps.map((s) =>
+        s.id === stepId && s.kind === 'action' ? { ...s, fragments } : s
+      ),
+    }));
+  }, [mutate]);
+
+  const insertChipInStepAtOffset = useCallback((stepId: string, actionId: string, textOffset: number) => {
+    const action = findAction(actionId);
+    if (!action) return;
+    const chip: Chip = {
+      id: `c-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      actionId,
+      status: 'idle',
+      meta: action.defaultMeta,
+    };
+    mutate((pb) => ({
+      ...pb,
+      steps: pb.steps.map((s) => {
+        if (s.id !== stepId || s.kind !== 'action') return s;
+        const fragmentTextLen = (f: Frag) => {
+          if (f.kind === 'text') return f.text.length;
+          if (f.kind === 'chip') {
+            const a = findAction(f.chip.actionId);
+            const brand = a?.brand ? `${a.brand} · ` : '';
+            return `${brand}${a?.verb ?? ''}${f.chip.meta ?? ''}`.length;
+          }
+          if (f.kind === 'ref')  return f.refPath.length;
+          if (f.kind === 'code') return f.code.length;
+          return 0;
+        };
+        return { ...s, fragments: insertChipAtTextOffset(s.fragments, chip, textOffset, fragmentTextLen) };
+      }),
+    }));
+  }, [mutate]);
+
+  const openSlash = useCallback((payload: SlashState) => dispatch({ type: 'openSlash', payload }), []);
+  const updateSlashQuery = useCallback((query: string) => dispatch({ type: 'updateSlashQuery', query }), []);
+  const closeSlash = useCallback(() => dispatch({ type: 'closeSlash' }), []);
 
   const duplicateStep = useCallback((stepId: string) => {
     mutate((pb) => {
@@ -476,6 +534,11 @@ export function useCanvasState() {
     moveStepUp,
     moveStepDown,
     duplicateStep,
+    setStepFragments,
+    insertChipInStepAtOffset,
+    openSlash,
+    updateSlashQuery,
+    closeSlash,
     undo,
     redo,
     setMode,
