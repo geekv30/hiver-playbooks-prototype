@@ -17,6 +17,8 @@ export default function FieldRef({ refPath, onClick, prefix = true }: Props) {
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
       data-ref-path={refPath}
+      contentEditable={false}
+      suppressContentEditableWarning
     >
       {prefix && '@'}{refPath}
     </span>

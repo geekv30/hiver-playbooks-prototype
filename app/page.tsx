@@ -15,7 +15,6 @@ import Topbar from '@/components/canvas/Topbar';
 import LeftNav from '@/components/canvas/LeftNav';
 import CanvasBody from '@/components/canvas/CanvasBody';
 import RightRail from '@/components/canvas/RightRail';
-import Jumplist from '@/components/canvas/Jumplist';
 import Picker from '@/components/surfaces/Picker';
 import { ToastStack } from '@/components/atoms/Toast';
 
@@ -188,29 +187,19 @@ export default function Home() {
         }
         nav={<LeftNav onItem={(i) => toast.push(`${i} coming soon`)} />}
         canvas={
-          <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', minWidth: 0, height: 'calc(100vh - 48px)' }}>
-            <Jumplist
-              steps={pb.playbook.steps}
-              onJump={(id) => {
-                const sel = id === '__frontmatter__'
-                  ? `[data-step-id="__frontmatter__"]`
-                  : `[data-step-id="${id}"]`;
-                document.querySelector(sel)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }}
-            />
-            <CanvasBody
-              playbook={pb.playbook}
-              issues={issues}
-              onFmChange={pb.setFrontmatter}
-              onSlash={onSlash}
-              onAt={onAt}
-              onChipClick={onChipClick}
-              onDeleteStep={pb.removeStep}
-              onInsertBetween={handleInsertBetween}
-              onAddBranch={pb.addBranch}
-              onResolveIssue={onResolveIssue}
-            />
-          </div>
+          <CanvasBody
+            playbook={pb.playbook}
+            issues={issues}
+            onFmChange={pb.setFrontmatter}
+            onSlash={onSlash}
+            onAt={onAt}
+            onChipClick={onChipClick}
+            onDeleteStep={pb.removeStep}
+            onInsertBetween={handleInsertBetween}
+            onAddBranch={pb.addBranch}
+            onSetCondExpr={pb.setCondExpr}
+            onResolveIssue={onResolveIssue}
+          />
         }
         rail={
           <RightRail

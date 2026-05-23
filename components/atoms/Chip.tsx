@@ -53,6 +53,8 @@ export default function Chip({ chip, metaText, onClick }: Props) {
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
       data-chip-id={chip.id}
+      contentEditable={false}
+      suppressContentEditableWarning
     >
       {Icon && (
         <span className={styles.chipIco}>
