@@ -329,7 +329,7 @@ export default function PreviewPage() {
                 </div>
                 <div className={styles.scell}>
                   <span className={styles.scellLabel}>Picker foot</span>
-                  <div className={styles.scellStage} style={{ fontSize: 11, color: 'var(--muted)', fontFamily: 'var(--mono)' }}>
+                  <div className={styles.scellStage} style={{ fontSize: 11, color: 'var(--muted)' }}>
                     <Kbd>↑↓</Kbd> navigate · <Kbd>↩</Kbd> insert
                   </div>
                 </div>

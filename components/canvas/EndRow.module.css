@@ -3,10 +3,11 @@
   padding: 11px 16px;
   border: 1px dashed var(--hairline-strong);
   border-radius: var(--r-sm);
-  font-family: var(--mono);
-  font-size: 12px;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 500;
   color: var(--muted);
-  letter-spacing: .04em;
+  letter-spacing: -.003em;
   text-align: center;
   cursor: pointer;
   transition: all var(--t-fast);

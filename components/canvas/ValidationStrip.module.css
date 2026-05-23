@@ -18,17 +18,17 @@
   font-weight: 500;
 }
 .more {
-  font-family: var(--mono);
-  font-size: 11px;
+  font-family: var(--font);
+  font-size: 12px;
   color: #6f3f29;
-  letter-spacing: .04em;
+  letter-spacing: -.003em;
   opacity: .7;
 }
 .resolve {
   margin-left: auto;
-  font-family: var(--mono);
+  font-family: var(--font);
   font-size: 11px;
-  letter-spacing: .08em;
+  letter-spacing: .06em;
   text-transform: uppercase;
   color: #6f3f29;
   cursor: pointer;

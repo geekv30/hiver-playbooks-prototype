@@ -31,10 +31,11 @@
   align-items: center;
 }
 .checkLabel {
-  font-family: var(--mono);
-  font-size: 11px;
+  font-family: var(--font);
+  font-size: 10.5px;
+  font-weight: 600;
   color: var(--muted);
-  letter-spacing: .08em;
+  letter-spacing: .06em;
   text-transform: uppercase;
   padding-right: 6px;
 }
@@ -51,10 +52,10 @@
   border-radius: 0 var(--r-sm) var(--r-sm) 0;
 }
 .branchLabel {
-  font-family: var(--mono);
-  font-size: 11px;
+  font-family: var(--font);
+  font-size: 10.5px;
   font-weight: 600;
-  letter-spacing: .08em;
+  letter-spacing: .06em;
   text-transform: uppercase;
   color: var(--muted);
   margin-bottom: 8px;
@@ -90,15 +91,16 @@
   padding: 6px 0 0 54px;
 }
 .branchBtn {
-  font-family: var(--mono);
-  font-size: 11px;
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 500;
   color: var(--muted);
   padding: 4px 10px;
   border: 1px dashed var(--hairline-strong);
   border-radius: var(--r-sm);
   background: transparent;
   cursor: pointer;
-  letter-spacing: .04em;
+  letter-spacing: -.003em;
   transition: color var(--t-fast), border-color var(--t-fast);
 }
 .branchBtn:hover {

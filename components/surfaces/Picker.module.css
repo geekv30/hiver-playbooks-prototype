@@ -48,10 +48,10 @@
   padding: 2px 8px;
   background: var(--surface-card);
   border-radius: var(--r-xs);
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: .04em;
+  font-family: var(--font);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .06em;
   text-transform: uppercase;
   color: var(--body);
   flex: none;
@@ -63,10 +63,10 @@
   display: flex;
   align-items: baseline;
   gap: 8px;
-  font-family: var(--mono);
-  font-size: 11px;
+  font-family: var(--font);
+  font-size: 10.5px;
   font-weight: 600;
-  letter-spacing: .08em;
+  letter-spacing: .06em;
   text-transform: uppercase;
   color: var(--muted);
   padding: 12px 10px 4px;
@@ -164,10 +164,10 @@
 .popEmpty { padding: 36px 14px 28px; text-align: center; }
 .popEmptyMsg { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
 .popEmptyHint {
-  font-family: var(--mono);
-  font-size: 11px;
+  font-family: var(--font);
+  font-size: 12px;
   color: var(--muted-soft);
-  letter-spacing: .04em;
+  letter-spacing: -.003em;
 }
 .popEmptyCreate {
   display: inline-block;
@@ -198,9 +198,10 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: .04em;
+  font-family: var(--font);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: -.003em;
   color: var(--muted);
 }
 .popLegendKbd {

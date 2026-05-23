@@ -67,10 +67,11 @@
   padding: 0 4px;
 }
 .save {
-  font-family: var(--mono);
+  font-family: var(--font);
   font-size: 11px;
+  font-weight: 500;
   color: var(--state-ok);
-  letter-spacing: .04em;
+  letter-spacing: .02em;
   margin-left: 4px;
   display: inline-flex;
   align-items: center;
@@ -99,9 +100,10 @@
 .spacer { flex: 1; }
 
 .statusPill {
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: .08em;
+  font-family: var(--font);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .06em;
   text-transform: uppercase;
   padding: 4px 9px;
   border-radius: var(--r-pill);
