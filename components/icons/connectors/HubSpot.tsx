@@ -1,9 +1,2 @@
-import type { SVGProps } from 'react';
-
-export function HubSpotIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" {...props}>
-      <path fill="currentColor" d="M18.165 7.93V5.122a2.158 2.158 0 0 0 1.245-1.94v-.073A2.16 2.16 0 0 0 17.255 1h-.075a2.16 2.16 0 0 0-2.157 2.158v.075A2.16 2.16 0 0 0 16.27 5.12v2.81a6.119 6.119 0 0 0-2.912 1.281L5.66 3.218a2.434 2.434 0 1 0-1.144 1.532l7.568 5.892a6.142 6.142 0 0 0 .093 6.928l-2.303 2.302a1.989 1.989 0 0 0-.572-.089 1.999 1.999 0 1 0 1.999 1.999c0-.198-.04-.388-.092-.572l2.279-2.279a6.146 6.146 0 1 0 4.679-11.001zm-.952 9.181a3.156 3.156 0 1 1 0-6.31 3.156 3.156 0 0 1 0 6.31z" />
-    </svg>
-  );
-}
+import { SiHubspot } from 'react-icons/si';
+export const HubSpotIcon = SiHubspot;
