@@ -263,6 +263,10 @@ function Topbar({ state, onOpenOverflow, overflowOpen, onOpenActivate, activateO
         <button className={`${styles.testBtn} ${styles.testBtnStop}`} onClick={state.stopTest} type="button">
           <RiStopCircleLine /> Stop
         </button>
+      ) : state.mode === 'test-idle' ? (
+        <button className={`${styles.testBtn} ${styles.testBtnPrimary}`} onClick={state.exitTest} type="button">
+          <RiCloseLine /> Exit test
+        </button>
       ) : (
         <>
           <button className={styles.testBtn} onClick={state.replayTest} type="button">
@@ -914,19 +918,21 @@ export default function CanvasPage() {
         <section className={styles.canvasArea}>
           {inTest && <TestBanner state={state} />}
           <div className={styles.canvasScroll}>
-            <FrontmatterCard state={state} />
-            <div className={styles.stepList}>
-              {state.playbook.steps.map((step, i) => (
-                <StepRow
-                  key={step.id}
-                  step={step}
-                  num={stepNumbers[i] ?? '—'}
-                  statuses={statuses}
-                  onChipClick={(id) => state.setConfigChipId(id)}
-                  selectedChipId={state.configChipId}
-                  highlight={highlightStepId === step.id}
-                />
-              ))}
+            <div className={styles.canvasScrollInner}>
+              <FrontmatterCard state={state} />
+              <div className={styles.stepList}>
+                {state.playbook.steps.map((step, i) => (
+                  <StepRow
+                    key={step.id}
+                    step={step}
+                    num={stepNumbers[i] ?? '—'}
+                    statuses={statuses}
+                    onChipClick={(id) => state.setConfigChipId(id)}
+                    selectedChipId={state.configChipId}
+                    highlight={highlightStepId === step.id}
+                  />
+                ))}
+              </div>
             </div>
           </div>
           {inTest && <TracePanel state={state} scrollToStep={scrollToStep} />}
