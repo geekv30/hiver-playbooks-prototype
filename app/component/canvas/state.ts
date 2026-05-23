@@ -211,7 +211,7 @@ export function useCanvasState() {
     mutate((pb) => updateChip(pb, chipId, patch));
   }, [mutate]);
 
-  const insertAction = useCallback((actionId: string) => {
+  const insertAction = useCallback((actionId: string, afterStepId?: string) => {
     const action = findAction(actionId);
     if (!action) return;
     mutate((pb) => {
@@ -222,13 +222,121 @@ export function useCanvasState() {
         kind: 'action',
         fragments: [{ kind: 'chip', chip: { id: chipId, actionId, status: 'idle', meta: action.defaultMeta } }],
       };
-      // insert before the trailing end step if present
+      if (afterStepId) {
+        const idx = pb.steps.findIndex((s) => s.id === afterStepId);
+        if (idx >= 0) {
+          return { ...pb, steps: [...pb.steps.slice(0, idx + 1), newStep, ...pb.steps.slice(idx + 1)] };
+        }
+      }
+      // default: insert before the trailing end step if present
       const lastIdx = pb.steps.length - 1;
       const last = pb.steps[lastIdx];
       if (last && last.kind === 'end') {
         return { ...pb, steps: [...pb.steps.slice(0, lastIdx), newStep, last] };
       }
       return { ...pb, steps: [...pb.steps, newStep] };
+    });
+  }, [mutate]);
+
+  const insertEmptyStep = useCallback((afterStepId?: string) => {
+    mutate((pb) => {
+      const stepId = `step-${Date.now()}`;
+      const newStep: Step = {
+        id: stepId,
+        kind: 'action',
+        fragments: [{ kind: 'text', text: '' }],
+      };
+      if (afterStepId) {
+        const idx = pb.steps.findIndex((s) => s.id === afterStepId);
+        if (idx >= 0) {
+          return { ...pb, steps: [...pb.steps.slice(0, idx + 1), newStep, ...pb.steps.slice(idx + 1)] };
+        }
+      }
+      const lastIdx = pb.steps.length - 1;
+      const last = pb.steps[lastIdx];
+      if (last && last.kind === 'end') {
+        return { ...pb, steps: [...pb.steps.slice(0, lastIdx), newStep, last] };
+      }
+      return { ...pb, steps: [...pb.steps, newStep] };
+    });
+  }, [mutate]);
+
+  const removeStep = useCallback((stepId: string) => {
+    mutate((pb) => ({ ...pb, steps: pb.steps.filter((s) => s.id !== stepId) }));
+  }, [mutate]);
+
+  const moveStepUp = useCallback((stepId: string) => {
+    mutate((pb) => {
+      const idx = pb.steps.findIndex((s) => s.id === stepId);
+      if (idx <= 0) return pb;
+      const arr = [...pb.steps];
+      const prev = arr[idx - 1]!;
+      const cur = arr[idx]!;
+      arr[idx - 1] = cur;
+      arr[idx] = prev;
+      return { ...pb, steps: arr };
+    });
+  }, [mutate]);
+
+  const moveStepDown = useCallback((stepId: string) => {
+    mutate((pb) => {
+      const idx = pb.steps.findIndex((s) => s.id === stepId);
+      if (idx < 0) return pb;
+      // cannot move past the trailing end marker
+      const lastIdx = pb.steps.length - 1;
+      const last = pb.steps[lastIdx];
+      const stopAt = last && last.kind === 'end' ? lastIdx - 1 : lastIdx;
+      if (idx >= stopAt) return pb;
+      const arr = [...pb.steps];
+      const cur = arr[idx]!;
+      const next = arr[idx + 1]!;
+      arr[idx] = next;
+      arr[idx + 1] = cur;
+      return { ...pb, steps: arr };
+    });
+  }, [mutate]);
+
+  const duplicateStep = useCallback((stepId: string) => {
+    mutate((pb) => {
+      const idx = pb.steps.findIndex((s) => s.id === stepId);
+      if (idx < 0) return pb;
+      const source = pb.steps[idx]!;
+      if (source.kind === 'end') return pb;
+      // clone with new ids
+      const newId = `step-${Date.now()}`;
+      let clone: AnyStep;
+      if (source.kind === 'action') {
+        clone = {
+          ...source,
+          id: newId,
+          fragments: source.fragments.map((f) => {
+            if (f.kind === 'chip') {
+              return { kind: 'chip', chip: { ...f.chip, id: `c-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, status: 'idle' } };
+            }
+            return f;
+          }),
+        };
+      } else {
+        // condition
+        clone = {
+          ...source,
+          id: newId,
+          branches: source.branches.map((b) => ({
+            ...b,
+            id: `b-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+            steps: b.steps.map((bs) => ({
+              ...bs,
+              id: `step-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+              fragments: bs.fragments.map((f) =>
+                f.kind === 'chip'
+                  ? { kind: 'chip' as const, chip: { ...f.chip, id: `c-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, status: 'idle' as const } }
+                  : f
+              ),
+            })),
+          })),
+        };
+      }
+      return { ...pb, steps: [...pb.steps.slice(0, idx + 1), clone, ...pb.steps.slice(idx + 1)] };
     });
   }, [mutate]);
 
@@ -363,6 +471,11 @@ export function useCanvasState() {
     setSummary,
     updateChipById,
     insertAction,
+    insertEmptyStep,
+    removeStep,
+    moveStepUp,
+    moveStepDown,
+    duplicateStep,
     undo,
     redo,
     setMode,

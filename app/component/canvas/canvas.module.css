@@ -197,18 +197,18 @@
   top: 60px;
   right: 16px;
   z-index: 70;
-  width: 280px;
+  width: 260px;
   background: var(--card);
   border: 1px solid var(--hairline);
   border-radius: var(--r-md);
   box-shadow: 0 12px 32px rgba(15, 15, 17, .12);
-  padding: 6px;
+  padding: 4px;
 }
 .overflowItem {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 8px;
+  align-items: start;
   width: 100%;
   padding: 8px 10px;
   background: transparent;
@@ -217,18 +217,55 @@
   cursor: pointer;
   text-align: left;
   font-family: var(--font);
-  font-size: 13px;
   color: var(--ink);
   transition: background var(--d-hover) var(--ease-snap);
 }
 .overflowItem:hover:not(:disabled) { background: var(--surface-soft); }
 .overflowItem:disabled { color: var(--muted-soft); cursor: not-allowed; }
-.overflowItem svg { width: 14px; height: 14px; margin-right: 6px; vertical-align: middle; }
+.overflowItemIco {
+  display: grid; place-items: center;
+  width: 16px; height: 16px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+.overflowItemIco svg { width: 13px; height: 13px; }
+.overflowItem:hover:not(:disabled) .overflowItemIco { color: var(--ink); }
+.overflowItemMain {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.overflowItemName {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: inherit;
+  letter-spacing: -.005em;
+}
+.overflowItemTag {
+  font-family: var(--mono);
+  font-size: 9px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  padding: 0 4px;
+  border-radius: 999px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
 .overflowItemHint {
   font-size: 11px;
   color: var(--muted);
   font-weight: 400;
-  padding-left: 22px;
+  line-height: 1.4;
+}
+.overflowDivider {
+  height: 1px;
+  background: var(--hairline-soft);
+  margin: 4px 6px;
 }
 
 .activateDropdown {
@@ -582,9 +619,12 @@
   flex-direction: column;
   gap: 4px;
 }
+.stepRowWrap {
+  position: relative;
+}
 .stepRow {
   display: grid;
-  grid-template-columns: 14px 30px 1fr;
+  grid-template-columns: 14px 30px 1fr auto;
   gap: 10px;
   align-items: baseline;
   padding: 8px 14px;
@@ -594,6 +634,16 @@
   transition: box-shadow var(--d-hover) var(--ease-snap), border-color var(--d-hover) var(--ease-snap), background var(--d-hover) var(--ease-snap);
 }
 .stepRow:hover { box-shadow: 0 2px 6px rgba(15,15,17,.04); border-color: var(--hairline-strong); }
+.stepRow:hover .stepActions {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.stepEmpty {
+  background: var(--surface-soft);
+  border-style: dashed;
+}
+.stepEmpty:hover { background: var(--card); }
 .stepHighlight {
   border-color: var(--primary) !important;
   background: var(--primary-tint) !important;
@@ -636,25 +686,140 @@
   word-break: break-word;
 }
 
-/* End row */
+/* End row — redesigned: single horizontal row, centered content, no num column */
 .stepEnd {
-  background: var(--surface-soft);
-  border-style: dashed;
-  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: transparent;
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--r-md);
+  margin-top: 14px;
+  margin-bottom: 14px;
+  grid-template-columns: none;
 }
-.stepEnd .stepDot svg { width: 13px; height: 13px; color: var(--muted); margin-top: 4px; }
+.stepEnd:hover {
+  border-color: var(--muted-soft);
+  box-shadow: none;
+}
+.endIcon {
+  display: inline-grid;
+  place-items: center;
+  width: 18px; height: 18px;
+  color: var(--muted-soft);
+  line-height: 1;
+}
+.endIcon svg { width: 14px; height: 14px; }
 .endLabel {
-  font-size: 12.5px;
+  font-size: 10.5px;
   color: var(--muted);
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: .04em;
+  letter-spacing: .08em;
 }
 .endReason {
   font-family: var(--mono);
-  font-size: 11px;
-  color: var(--muted);
+  font-size: 10.5px;
+  color: var(--muted-soft);
+  letter-spacing: .01em;
+  padding-left: 6px;
+  margin-left: 4px;
+  border-left: 1px solid var(--hairline);
 }
+
+/* Empty step placeholder */
+.emptyHint {
+  font-size: 12.5px;
+  color: var(--muted);
+  letter-spacing: -.005em;
+  font-style: italic;
+}
+.kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--ink-soft);
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  margin: 0 2px;
+  vertical-align: middle;
+  font-style: normal;
+}
+
+/* Step actions (hover toolbar at right of step row) */
+.stepActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  padding: 1px;
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-sm);
+  opacity: 0;
+  transform: translateY(-2px);
+  pointer-events: none;
+  transition: opacity var(--d-hover) var(--ease-snap), transform var(--d-hover) var(--ease-snap);
+  align-self: center;
+  margin-left: 8px;
+}
+.stepActionBtn {
+  width: 22px; height: 22px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  display: grid; place-items: center;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap), color var(--d-hover) var(--ease-snap);
+}
+.stepActionBtn:hover:not(:disabled) {
+  background: var(--surface-soft);
+  color: var(--ink);
+}
+.stepActionBtn svg { width: 13px; height: 13px; }
+.stepActionBtnDisabled {
+  color: var(--muted-soft) !important;
+  cursor: not-allowed;
+}
+.stepActionBtnDisabled:hover { background: transparent !important; color: var(--muted-soft) !important; }
+.stepActionBtnDanger:hover:not(:disabled) {
+  background: rgba(220, 38, 38, .08);
+  color: var(--state-error);
+}
+
+/* Add step button — sits below the last actionable step, before End */
+.addStepBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 6px;
+  padding: 8px 14px;
+  background: transparent;
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--r-md);
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap), border-color var(--d-hover) var(--ease-snap), color var(--d-hover) var(--ease-snap);
+}
+.addStepBtn:hover {
+  background: var(--card);
+  border-color: var(--ink);
+  color: var(--ink);
+}
+.addStepBtn svg { width: 13px; height: 13px; }
 
 /* Condition step */
 .condLabel {

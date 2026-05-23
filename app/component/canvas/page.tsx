@@ -5,7 +5,8 @@ import {
   RiArrowGoBackLine, RiArrowGoForwardLine, RiPlayLine,
   RiArrowDownSLine, RiMore2Fill, RiCloseLine, RiSearchLine,
   RiArrowLeftSLine, RiArrowRightSLine, RiCheckLine, RiStopCircleLine,
-  RiRefreshLine, RiSparklingLine,
+  RiRefreshLine, RiSparklingLine, RiArrowUpSLine, RiArrowDownLine,
+  RiDeleteBinLine, RiFileCopyLine, RiAddLine,
 } from 'react-icons/ri';
 import type { IconType } from 'react-icons';
 import styles from './canvas.module.css';
@@ -86,8 +87,46 @@ function ChipInline({
 /* ============================================================ */
 /* Step row                                                       */
 /* ============================================================ */
+function StepActions({
+  stepId, canUp, canDown, onUp, onDown, onDuplicate, onDelete,
+}: {
+  stepId: string;
+  canUp: boolean;
+  canDown: boolean;
+  onUp: () => void;
+  onDown: () => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <span className={styles.stepActions} data-step-actions-for={stepId} onClick={(e) => e.stopPropagation()}>
+      <button
+        className={`${styles.stepActionBtn} ${!canUp ? styles.stepActionBtnDisabled : ''}`}
+        onClick={onUp}
+        disabled={!canUp}
+        title="Move up"
+        type="button"
+      ><RiArrowUpSLine /></button>
+      <button
+        className={`${styles.stepActionBtn} ${!canDown ? styles.stepActionBtnDisabled : ''}`}
+        onClick={onDown}
+        disabled={!canDown}
+        title="Move down"
+        type="button"
+      ><RiArrowDownLine /></button>
+      <button className={styles.stepActionBtn} onClick={onDuplicate} title="Duplicate" type="button">
+        <RiFileCopyLine />
+      </button>
+      <button className={`${styles.stepActionBtn} ${styles.stepActionBtnDanger}`} onClick={onDelete} title="Delete" type="button">
+        <RiDeleteBinLine />
+      </button>
+    </span>
+  );
+}
+
 function StepRow({
   step, num, statuses, onChipClick, selectedChipId, highlight,
+  actions, canUp, canDown,
 }: {
   step: AnyStep;
   num: string;
@@ -95,16 +134,21 @@ function StepRow({
   onChipClick: (chipId: string) => void;
   selectedChipId: string | null;
   highlight?: boolean;
+  actions?: {
+    onUp: () => void;
+    onDown: () => void;
+    onDuplicate: () => void;
+    onDelete: () => void;
+  };
+  canUp?: boolean;
+  canDown?: boolean;
 }) {
   if (step.kind === 'end') {
     return (
       <div className={`${styles.stepRow} ${styles.stepEnd}`} data-step-id={step.id}>
-        <span className={styles.stepDot}><RiStopCircleLine /></span>
-        <span className={styles.stepNum}>end</span>
-        <span className={styles.stepBody}>
-          <span className={styles.endLabel}>End playbook</span>
-          {step.reason && <span className={styles.endReason}> · {step.reason}</span>}
-        </span>
+        <span className={styles.endIcon}><RiStopCircleLine /></span>
+        <span className={styles.endLabel}>End playbook</span>
+        {step.reason && <span className={styles.endReason}>{step.reason}</span>}
       </div>
     );
   }
@@ -146,27 +190,57 @@ function StepRow({
             ))}
           </div>
         </span>
+        {actions && (
+          <StepActions
+            stepId={step.id}
+            canUp={!!canUp}
+            canDown={!!canDown}
+            onUp={actions.onUp}
+            onDown={actions.onDown}
+            onDuplicate={actions.onDuplicate}
+            onDelete={actions.onDelete}
+          />
+        )}
       </div>
     );
   }
   // action step
   const firstChip = step.fragments.find((f) => f.kind === 'chip');
   const chipStatus = firstChip && firstChip.kind === 'chip' ? (statuses[firstChip.chip.id] ?? firstChip.chip.status) : 'idle';
+  const isEmpty = !step.fragments.some((f) => f.kind === 'chip') &&
+                   !step.fragments.some((f) => f.kind === 'text' && f.text.trim().length > 0);
   return (
-    <div className={`${styles.stepRow} ${highlight ? styles.stepHighlight : ''}`} data-step-id={step.id}>
-      <span className={styles.stepDot}><StatusDot status={chipStatus} /></span>
+    <div className={`${styles.stepRow} ${highlight ? styles.stepHighlight : ''} ${isEmpty ? styles.stepEmpty : ''}`} data-step-id={step.id}>
+      <span className={styles.stepDot}><StatusDot status={isEmpty ? 'draft' : chipStatus} /></span>
       <span className={styles.stepNum}>{num}</span>
       <span className={styles.stepBody}>
-        {step.fragments.map((f, fi) => (
-          <FragmentSpan
-            key={fi}
-            frag={f}
-            status={f.kind === 'chip' ? statuses[f.chip.id] : undefined}
-            onChipClick={onChipClick}
-            selected={f.kind === 'chip' && f.chip.id === selectedChipId}
-          />
-        ))}
+        {isEmpty ? (
+          <span className={styles.emptyHint}>
+            Pick an action from the palette to start, or press <kbd className={styles.kbd}>/</kbd> to insert here
+          </span>
+        ) : (
+          step.fragments.map((f, fi) => (
+            <FragmentSpan
+              key={fi}
+              frag={f}
+              status={f.kind === 'chip' ? statuses[f.chip.id] : undefined}
+              onChipClick={onChipClick}
+              selected={f.kind === 'chip' && f.chip.id === selectedChipId}
+            />
+          ))
+        )}
       </span>
+      {actions && (
+        <StepActions
+          stepId={step.id}
+          canUp={!!canUp}
+          canDown={!!canDown}
+          onUp={actions.onUp}
+          onDown={actions.onDown}
+          onDuplicate={actions.onDuplicate}
+          onDelete={actions.onDelete}
+        />
+      )}
     </div>
   );
 }
@@ -613,20 +687,31 @@ function OverflowMenu({
   return (
     <div className={styles.overflowMenu}>
       <button className={styles.overflowItem} onClick={() => { onEnterCleanWipe(); onClose(); }} type="button">
-        <RiRefreshLine /> Clean Wipe Test mode
-        <span className={styles.overflowItemHint}>Wipe steps, keep Frontmatter, restore on exit</span>
+        <span className={styles.overflowItemIco}><RiRefreshLine /></span>
+        <span className={styles.overflowItemMain}>
+          <span className={styles.overflowItemName}>Clean Wipe Test mode</span>
+          <span className={styles.overflowItemHint}>Wipe steps, keep Frontmatter, restore on exit</span>
+        </span>
       </button>
       <button className={styles.overflowItem} onClick={() => { onReset(); onClose(); }} type="button">
-        <RiSparklingLine /> Reset to Walk Japan seed
-        <span className={styles.overflowItemHint}>Discard all changes and reload the demo</span>
+        <span className={styles.overflowItemIco}><RiSparklingLine /></span>
+        <span className={styles.overflowItemMain}>
+          <span className={styles.overflowItemName}>Reset to seed</span>
+          <span className={styles.overflowItemHint}>Discard all changes and reload Walk Japan</span>
+        </span>
+      </button>
+      <div className={styles.overflowDivider} />
+      <button className={styles.overflowItem} disabled type="button">
+        <span className={styles.overflowItemIco} />
+        <span className={styles.overflowItemMain}>
+          <span className={styles.overflowItemName}>Export<span className={styles.overflowItemTag}>v2</span></span>
+        </span>
       </button>
       <button className={styles.overflowItem} disabled type="button">
-        Export
-        <span className={styles.overflowItemHint}>(v2)</span>
-      </button>
-      <button className={styles.overflowItem} disabled type="button">
-        Settings
-        <span className={styles.overflowItemHint}>(v2)</span>
+        <span className={styles.overflowItemIco} />
+        <span className={styles.overflowItemMain}>
+          <span className={styles.overflowItemName}>Settings<span className={styles.overflowItemTag}>v2</span></span>
+        </span>
       </button>
     </div>
   );
@@ -873,15 +958,20 @@ export default function CanvasPage() {
   // Build statuses map for chip rendering
   const statuses: Record<string, ChipStatus> = state.chipStatusOverride;
 
-  // Number the steps
-  const stepNumbers = useMemo(() => {
+  // Number the steps + compute last action-step index for capping move-down
+  const { stepNumbers, lastActionableIdx } = useMemo(() => {
     let n = 0;
-    return state.playbook.steps.map((s) => {
-      if (s.kind === 'end') return 'end';
-      n += 1;
-      return String(n).padStart(2, '0');
+    const nums: string[] = [];
+    let lastIdx = -1;
+    state.playbook.steps.forEach((s, i) => {
+      if (s.kind === 'end') { nums.push('end'); }
+      else { n += 1; nums.push(String(n).padStart(2, '0')); lastIdx = i; }
     });
+    return { stepNumbers: nums, lastActionableIdx: lastIdx };
   }, [state.playbook.steps]);
+
+  const inTestMode = state.mode === 'test-idle' || state.mode === 'test-running' || state.mode === 'test-done';
+  const editable = state.mode === 'edit' || state.mode === 'clean-wipe';
 
   return (
     <div className={styles.page}>
@@ -923,17 +1013,52 @@ export default function CanvasPage() {
             <div className={styles.canvasScrollInner}>
               <FrontmatterCard state={state} />
               <div className={styles.stepList}>
-                {state.playbook.steps.map((step, i) => (
-                  <StepRow
-                    key={step.id}
-                    step={step}
-                    num={stepNumbers[i] ?? '—'}
-                    statuses={statuses}
-                    onChipClick={(id) => state.setConfigChipId(id)}
-                    selectedChipId={state.configChipId}
-                    highlight={highlightStepId === step.id}
-                  />
-                ))}
+                {editable && lastActionableIdx === -1 && (
+                  <button
+                    className={styles.addStepBtn}
+                    onClick={() => state.insertEmptyStep()}
+                    type="button"
+                  >
+                    <RiAddLine /> Add the first step
+                  </button>
+                )}
+                {state.playbook.steps.map((step, i) => {
+                  const isLastBeforeEnd = i === lastActionableIdx;
+                  const showAddBelow = editable && isLastBeforeEnd;
+                  return (
+                    <div key={step.id} className={styles.stepRowWrap}>
+                      <StepRow
+                        step={step}
+                        num={stepNumbers[i] ?? '—'}
+                        statuses={statuses}
+                        onChipClick={(id) => state.setConfigChipId(id)}
+                        selectedChipId={state.configChipId}
+                        highlight={highlightStepId === step.id}
+                        actions={
+                          editable && step.kind !== 'end'
+                            ? {
+                                onUp:        () => state.moveStepUp(step.id),
+                                onDown:      () => state.moveStepDown(step.id),
+                                onDuplicate: () => state.duplicateStep(step.id),
+                                onDelete:    () => state.removeStep(step.id),
+                              }
+                            : undefined
+                        }
+                        canUp={i > 0}
+                        canDown={i < lastActionableIdx}
+                      />
+                      {showAddBelow && (
+                        <button
+                          className={styles.addStepBtn}
+                          onClick={() => state.insertEmptyStep(step.id)}
+                          type="button"
+                        >
+                          <RiAddLine /> Add step
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
