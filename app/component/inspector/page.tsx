@@ -645,7 +645,10 @@ export default function InspectorPage() {
             </div>
           </div>
 
-          <div className={`${styles.canvasWrap} ${mode === 'run' ? styles.canvasRun : ''}`}>
+          <div
+            className={`${styles.canvasWrap} ${mode === 'run' ? styles.canvasRun : ''}`}
+            data-inspector-open={openChip ? 'true' : 'false'}
+          >
             <div className={styles.canvasSurface}>
               <div className={styles.cardGrid}>
                 {DEMO_CHIPS.map((chip) => (
