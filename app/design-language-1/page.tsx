@@ -10,7 +10,7 @@ import Frontmatter from '@/components/canvas/Frontmatter';
 import { ToastStack } from '@/components/atoms/Toast';
 import type { Chip as ChipModel, ChipStatus, ConnectorSlug, Frontmatter as FM, FieldType } from '@/types/playbook';
 import type { ToastItem } from '@/hooks/useToast';
-import styles from './preview.module.css';
+import styles from './design-language-1.module.css';
 
 function mkChip(id: string, actionId: string, status: ChipStatus = 'ok', meta?: string): ChipModel {
   return { id, actionId, status, config: meta ? { meta } : {} };
@@ -469,7 +469,7 @@ export default function PreviewPage() {
           <ul>
             <li><a href="/">/ — assembled workspace</a></li>
             <li><a href="https://github.com/geekv30/hiver-playbooks-prototype" target="_blank" rel="noreferrer">Repo</a></li>
-            <li><a href="/preview">/preview — this page</a></li>
+            <li><a href="/design-language-1">/design-language-1 — this page</a></li>
           </ul>
         </footer>
 
