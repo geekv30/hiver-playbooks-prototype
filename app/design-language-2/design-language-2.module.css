@@ -3,13 +3,14 @@
   display: grid;
   grid-template-columns: 56px 1fr 380px;
   grid-template-rows: 48px 1fr;
-  min-height: 100vh;
+  height: 100vh;
   background: var(--canvas);
+  overflow: hidden;
 }
-.shell > .topbar { grid-column: 1 / -1; }
-.shell > .nav    { grid-column: 1; grid-row: 2; }
-.shell > .canvas { grid-column: 2; grid-row: 2; overflow: hidden; }
-.shell > .rail   { grid-column: 3; grid-row: 2; }
+.shell > .topbar { grid-column: 1 / -1; grid-row: 1; }
+.shell > .nav    { grid-column: 1; grid-row: 2; min-width: 0; min-height: 0; }
+.shell > .canvas { grid-column: 2; grid-row: 2; min-width: 0; min-height: 0; }
+.shell > .rail   { grid-column: 3; grid-row: 2; min-width: 0; min-height: 0; }
 
 /* ===== Topbar ===== */
 .topbar {
@@ -150,6 +151,8 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  overflow: hidden;
+  height: 100%;
 }
 .navItem {
   width: 40px;
@@ -185,8 +188,8 @@
 /* ===== Canvas ===== */
 .canvas {
   overflow-y: auto;
+  overflow-x: hidden;
   position: relative;
-  height: calc(100vh - 48px);
 }
 .canvasInner {
   max-width: 1080px;
@@ -570,6 +573,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  height: 100%;
 }
 .railTabs {
   display: flex;

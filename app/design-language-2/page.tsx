@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   RiArrowLeftLine,
@@ -81,21 +81,42 @@ function RefChip({ name, src }: { name: string; src: string }) {
   );
 }
 
+type RailTab = 'playbook' | 'config' | 'test' | 'history';
+
 export default function DesignLanguage2Editor() {
   const [triggerOpen, setTriggerOpen] = useState(true);
-  const [tab, setTab] = useState<'playbook' | 'config' | 'test' | 'history'>('test');
-  const tabs: Array<{ id: typeof tab; label: string }> = [
+  const [tab, setTab] = useState<RailTab>('test');
+  const tabs: Array<{ id: RailTab; label: string }> = [
     { id: 'playbook', label: 'Playbook' },
     { id: 'config',   label: 'Config' },
     { id: 'test',     label: 'Test' },
     { id: 'history',  label: 'History' },
   ];
-  const tabPositions: Record<typeof tab, { x: number; w: number }> = {
-    playbook: { x: 14, w: 68 },
-    config:   { x: 88, w: 58 },
-    test:     { x: 152, w: 46 },
-    history:  { x: 204, w: 66 },
+
+  // Measure-based indicator: positions itself under the active button
+  const tabsContainerRef = useRef<HTMLDivElement | null>(null);
+  const tabBtnRefs = useRef<Record<RailTab, HTMLButtonElement | null>>({
+    playbook: null, config: null, test: null, history: null,
+  });
+  const [indicator, setIndicator] = useState<{ x: number; w: number }>({ x: 0, w: 0 });
+
+  const measureIndicator = () => {
+    const container = tabsContainerRef.current;
+    const btn = tabBtnRefs.current[tab];
+    if (!container || !btn) return;
+    const c = container.getBoundingClientRect();
+    const b = btn.getBoundingClientRect();
+    setIndicator({ x: b.left - c.left, w: b.width });
   };
+
+  useLayoutEffect(measureIndicator, [tab]);
+
+  useEffect(() => {
+    const onResize = () => measureIndicator();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab]);
 
   return (
     <div className={styles.shell}>
@@ -259,10 +280,11 @@ export default function DesignLanguage2Editor() {
 
       {/* ===== Right rail ===== */}
       <aside className={styles.rail}>
-        <div className={styles.railTabs}>
+        <div className={styles.railTabs} ref={tabsContainerRef}>
           {tabs.map((t) => (
             <button
               key={t.id}
+              ref={(el) => { tabBtnRefs.current[t.id] = el; }}
               className={`${styles.railTab} ${tab === t.id ? styles.railTabActive : ''}`}
               onClick={() => setTab(t.id)}
               type="button"
@@ -272,7 +294,7 @@ export default function DesignLanguage2Editor() {
           ))}
           <span
             className={styles.railInd}
-            style={{ width: tabPositions[tab].w, transform: `translateX(${tabPositions[tab].x - 14}px)`, left: 14 }}
+            style={{ width: indicator.w, transform: `translateX(${indicator.x}px)`, left: 0 }}
           />
         </div>
 
