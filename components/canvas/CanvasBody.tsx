@@ -4,7 +4,6 @@ import FrontmatterCmp from './Frontmatter';
 import StepRow from './StepRow';
 import ConditionRow from './ConditionRow';
 import ApprovalStep from './ApprovalStep';
-import Inserter from './Inserter';
 import EndRow from './EndRow';
 import ValidationStrip from './ValidationStrip';
 import type { ValidationIssue } from '@/lib/validation';
@@ -29,18 +28,22 @@ export default function CanvasBody(p: Props) {
     <div className={styles.scrollArea}>
       <main className={styles.inner}>
         <FrontmatterCmp fm={p.playbook.frontmatter} onChange={p.onFmChange} />
-        <Inserter onClick={() => p.onInsertBetween(null)} />
         {p.playbook.steps.map((s, idx) => (
-          <div key={s.id}>
-            {renderStep(s, idx, p)}
-            <Inserter onClick={() => p.onInsertBetween(s.id)} />
-          </div>
+          <div key={s.id}>{renderStep(s, idx, p)}</div>
         ))}
-        <EndRow onClick={() => p.onInsertBetween(p.playbook.steps.at(-1)?.id ?? null)} />
+        <EndRow onClick={() => p.onInsertBetween(lastContentStepId(p.playbook.steps))} />
       </main>
       <ValidationStrip issues={p.issues} onResolve={p.onResolveIssue} />
     </div>
   );
+}
+
+function lastContentStepId(steps: Step[]): string | null {
+  for (let i = steps.length - 1; i >= 0; i--) {
+    const s = steps[i];
+    if (s && s.kind !== 'end') return s.id;
+  }
+  return null;
 }
 
 function renderStep(s: Step, idx: number, p: Props): React.ReactNode {
