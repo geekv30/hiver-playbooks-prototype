@@ -1,8 +1,8 @@
 .list {
   position: sticky;
-  top: 56px;
+  top: 48px;
   align-self: start;
-  height: calc(100vh - 56px);
+  height: calc(100vh - 48px);
   width: 32px;
   background: var(--canvas);
   border-right: 1px solid var(--hairline-soft);

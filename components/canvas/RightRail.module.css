@@ -2,8 +2,8 @@
   border-left: 1px solid var(--hairline);
   background: var(--canvas);
   position: sticky;
-  top: 56px;
-  height: calc(100vh - 56px);
+  top: 48px;
+  height: calc(100vh - 48px);
   overflow: hidden;
   display: flex;
   flex-direction: column;

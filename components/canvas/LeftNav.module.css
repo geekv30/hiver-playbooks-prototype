@@ -2,8 +2,8 @@
   border-right: 1px solid var(--hairline);
   background: var(--canvas);
   position: sticky;
-  top: 56px;
-  height: calc(100vh - 56px);
+  top: 48px;
+  height: calc(100vh - 48px);
   overflow-y: auto;
   width: 56px;
   flex: none;
