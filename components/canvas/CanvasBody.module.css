@@ -11,7 +11,7 @@
   height: calc(100vh - 48px);
 }
 .inner {
-  max-width: 980px;
-  margin: 0;
-  padding: 20px 28px 64px;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 28px 40px 80px;
 }

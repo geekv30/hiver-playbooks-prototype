@@ -166,6 +166,16 @@ export function usePlaybook() {
     return res ? res.chip : null;
   }, [playbook]);
 
+  const setCondExpr = useCallback((condId: string, exprFragments: Fragment[]) => {
+    commit({
+      ...playbook,
+      steps: playbook.steps.map((s) => {
+        if (s.kind !== 'condition' || s.id !== condId) return s;
+        return { ...s, exprFragments };
+      }),
+    });
+  }, [playbook, commit]);
+
   const setBranchExpression = useCallback((condId: string, branchId: string, exprFragments: Fragment[]) => {
     commit({
       ...playbook,
@@ -255,6 +265,7 @@ export function usePlaybook() {
     removeStep,
     updateChip,
     findChip,
+    setCondExpr,
     setBranchExpression,
     addBranch,
     removeBranch,

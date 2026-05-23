@@ -1,5 +1,5 @@
 'use client';
-import type { Playbook, Step, Frontmatter as FM } from '@/types/playbook';
+import type { Playbook, Step, Frontmatter as FM, Fragment } from '@/types/playbook';
 import FrontmatterCmp from './Frontmatter';
 import StepRow from './StepRow';
 import ConditionRow from './ConditionRow';
@@ -20,6 +20,7 @@ interface Props {
   onDeleteStep: (stepId: string) => void;
   onInsertBetween: (afterStepId: string | null) => void;
   onAddBranch: (condId: string, tag: 'elseif' | 'else') => void;
+  onSetCondExpr?: (condId: string, fragments: Fragment[]) => void;
   onResolveIssue: (issue: ValidationIssue) => void;
 }
 
@@ -68,6 +69,7 @@ function renderStep(s: Step, idx: number, p: Props): React.ReactNode {
         onAddBranch={p.onAddBranch}
         onChipClick={p.onChipClick}
         onRefClick={p.onRefClick}
+        onSetCondExpr={p.onSetCondExpr}
       />
     );
   }

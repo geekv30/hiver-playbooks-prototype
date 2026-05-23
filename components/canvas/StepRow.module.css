@@ -1,8 +1,8 @@
 .step {
   display: grid;
-  grid-template-columns: 40px 1fr 28px;
-  gap: 14px;
-  padding: 6px 0;
+  grid-template-columns: 32px 1fr 28px;
+  gap: 12px;
+  padding: 3px 0;
   align-items: baseline;
   position: relative;
 }
@@ -17,9 +17,9 @@
   text-align: right;
 }
 .stepBody {
-  font-size: 14px;
+  font-size: 13.5px;
   color: var(--body);
-  line-height: 1.7;
+  line-height: 1.65;
   outline: none;
 }
 .stepBody:focus {
