@@ -119,8 +119,10 @@ function StepRow({
           <div className={styles.branches}>
             {step.branches.map((b, bi) => (
               <div key={b.id} className={styles.branch}>
-                <span className={styles.branchLabel}>{`${String(bi + 1).padStart(2, '0')}.${b.label}`}</span>
-                {b.predicate && <code className={styles.branchPredInline}>{b.predicate}</code>}
+                <div className={styles.branchHead}>
+                  <span className={styles.branchLabel}>{`${String(bi + 1).padStart(2, '0')}.${b.label}`}</span>
+                  {b.predicate && <code className={styles.branchPredInline}>{b.predicate}</code>}
+                </div>
                 {b.steps.map((bs, si) => {
                   if (bs.kind !== 'action') return null;
                   return (

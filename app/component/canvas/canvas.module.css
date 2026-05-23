@@ -100,7 +100,9 @@
   gap: 6px;
   font-size: 11px;
   color: var(--muted);
-  margin-left: 8px;
+  margin-left: 16px;
+  padding-left: 16px;
+  border-left: 1px solid var(--hairline);
 }
 .savedIndicator {
   width: 6px; height: 6px;
@@ -491,7 +493,7 @@
 /* Frontmatter                                                     */
 /* ============================================================ */
 .fm {
-  padding-left: 40px;
+  padding-left: 78px;
   border-bottom: 1px solid var(--hairline);
   padding-bottom: 20px;
   margin-bottom: 18px;
@@ -668,21 +670,27 @@
 .branches {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-top: 8px;
-  padding-left: 6px;
-  border-left: 1px dashed var(--hairline-strong);
+  gap: 4px;
+  margin-top: 10px;
+  padding-left: 8px;
+  border-left: 1px dashed rgba(124, 58, 237, .35);
 }
 .branch {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 6px 0 6px 10px;
+  padding: 4px 0 4px 10px;
+}
+.branchHead {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 2px;
 }
 .branchLabel {
   font-family: var(--mono);
   font-size: 10.5px;
-  color: var(--muted);
+  color: var(--state-running);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: .04em;
@@ -692,9 +700,9 @@
   font-size: 11px;
   color: var(--ink-soft);
   background: var(--surface-soft);
-  padding: 1px 5px;
+  padding: 2px 7px;
   border-radius: 4px;
-  margin-left: 6px;
+  display: inline-block;
 }
 .branchSubrow {
   display: grid;
