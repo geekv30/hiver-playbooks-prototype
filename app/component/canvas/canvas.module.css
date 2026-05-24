@@ -677,7 +677,12 @@
   100% { box-shadow: 0 0 0 12px rgba(225, 85, 36, 0), 0 3px 10px rgba(225, 85, 36, .12); }
 }
 
-.stepDot { align-self: start; margin-top: 6px; }
+.stepDot {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
 .statusDot {
   display: inline-block;
   width: 7px; height: 7px;
@@ -698,8 +703,8 @@
   color: var(--muted);
   text-align: right;
   padding-right: 2px;
-  padding-top: 2px;
   letter-spacing: .04em;
+  align-self: center;
 }
 .stepBody {
   font-size: 13.5px;
