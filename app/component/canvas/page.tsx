@@ -110,33 +110,70 @@ function StepActions({
   stepId: string;
   canUp: boolean;
   canDown: boolean;
-  onUp: () => void;
-  onDown: () => void;
-  onDuplicate: () => void;
+  onUp?: () => void;
+  onDown?: () => void;
+  onDuplicate?: () => void;
   onDelete: () => void;
 }) {
+  const [open, setOpen] = useState(false);
+  const btnRef = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onMouse = (e: MouseEvent) => {
+      const t = e.target as Node | null;
+      if (!t) return;
+      if (menuRef.current?.contains(t)) return;
+      if (btnRef.current?.contains(t)) return;
+      setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    const id = window.setTimeout(() => document.addEventListener('mousedown', onMouse), 0);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      window.clearTimeout(id);
+      document.removeEventListener('mousedown', onMouse);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  const run = (fn?: () => void) => () => { fn?.(); setOpen(false); };
+
   return (
     <span className={styles.stepActions} data-step-actions-for={stepId} onClick={(e) => e.stopPropagation()}>
       <button
-        className={`${styles.stepActionBtn} ${!canUp ? styles.stepActionBtnDisabled : ''}`}
-        onClick={onUp}
-        disabled={!canUp}
-        title="Move up"
+        ref={btnRef}
+        className={`${styles.stepKebabBtn} ${open ? styles.stepKebabBtnOpen : ''}`}
+        onClick={() => setOpen((o) => !o)}
+        title="More"
         type="button"
-      ><RiArrowUpSLine /></button>
-      <button
-        className={`${styles.stepActionBtn} ${!canDown ? styles.stepActionBtnDisabled : ''}`}
-        onClick={onDown}
-        disabled={!canDown}
-        title="Move down"
-        type="button"
-      ><RiArrowDownLine /></button>
-      <button className={styles.stepActionBtn} onClick={onDuplicate} title="Duplicate" type="button">
-        <RiFileCopyLine />
-      </button>
-      <button className={`${styles.stepActionBtn} ${styles.stepActionBtnDanger}`} onClick={onDelete} title="Delete" type="button">
-        <RiDeleteBinLine />
-      </button>
+        aria-haspopup="menu"
+        aria-expanded={open}
+      ><RiMore2Fill /></button>
+      {open && (
+        <div ref={menuRef} className={styles.stepKebabMenu} role="menu">
+          {onUp && (
+            <button className={styles.stepKebabItem} onClick={run(onUp)} disabled={!canUp} type="button" role="menuitem">
+              <RiArrowUpSLine /> Move up
+            </button>
+          )}
+          {onDown && (
+            <button className={styles.stepKebabItem} onClick={run(onDown)} disabled={!canDown} type="button" role="menuitem">
+              <RiArrowDownLine /> Move down
+            </button>
+          )}
+          {onDuplicate && (
+            <button className={styles.stepKebabItem} onClick={run(onDuplicate)} type="button" role="menuitem">
+              <RiFileCopyLine /> Duplicate
+            </button>
+          )}
+          {(onUp || onDown || onDuplicate) && <div className={styles.stepKebabDivider} />}
+          <button className={`${styles.stepKebabItem} ${styles.stepKebabItemDanger}`} onClick={run(onDelete)} type="button" role="menuitem">
+            <RiDeleteBinLine /> Delete
+          </button>
+        </div>
+      )}
     </span>
   );
 }
@@ -224,11 +261,14 @@ function BranchSubRow({
         ))}
       </span>
       {actions && (
-        <span className={styles.stepActions} onClick={(e) => e.stopPropagation()}>
-          <button className={`${styles.stepActionBtn} ${!canUp ? styles.stepActionBtnDisabled : ''}`} onClick={actions.onUp} disabled={!canUp} title="Move up" type="button"><RiArrowUpSLine /></button>
-          <button className={`${styles.stepActionBtn} ${!canDown ? styles.stepActionBtnDisabled : ''}`} onClick={actions.onDown} disabled={!canDown} title="Move down" type="button"><RiArrowDownLine /></button>
-          <button className={`${styles.stepActionBtn} ${styles.stepActionBtnDanger}`} onClick={actions.onDelete} title="Delete" type="button"><RiDeleteBinLine /></button>
-        </span>
+        <StepActions
+          stepId={subStep.id}
+          canUp={!!canUp}
+          canDown={!!canDown}
+          onUp={actions.onUp}
+          onDown={actions.onDown}
+          onDelete={actions.onDelete}
+        />
       )}
     </div>
   );
@@ -274,24 +314,16 @@ function StepRow({
         <span className={styles.stepDot}><StatusDot status="idle" /></span>
         <span className={styles.stepNum}>{num}</span>
         <span className={styles.stepBody}>
-          <span className={styles.condLabel}>Condition</span>
-          <span className={styles.condExpr}>{step.exprText}</span>
+          <span className={styles.condExpr}>If {step.exprText}</span>
           <div className={styles.branches}>
             {step.branches.map((b, bi) => {
               const isDefault = b.label === 'else' || !b.predicate;
+              const branchHeader = isDefault ? 'Otherwise' : (bi === 0 ? `If ${b.label}` : `If ${b.label}`);
               return (
                 <div key={b.id} className={styles.branch}>
                   <div className={styles.branchHead}>
-                    <span className={styles.branchLabel}>{`${String(bi + 1).padStart(2, '0')}.${b.label}`}</span>
-                    {b.predicate && <code className={styles.branchPredInline}>{b.predicate}</code>}
-                    {!isDefault && editable && condActions && (
-                      <button
-                        className={styles.branchRemoveBtn}
-                        onClick={(e) => { e.stopPropagation(); condActions.onRemoveBranch(b.id); }}
-                        title="Remove branch"
-                        type="button"
-                      ><RiCloseLine /></button>
-                    )}
+                    <span className={styles.branchLabel}>{branchHeader}</span>
+                    {b.predicate && !isDefault && <code className={styles.branchPredInline}>{b.predicate}</code>}
                   </div>
                   {b.steps.map((bs, si) => {
                     if (bs.kind !== 'action') return null;
@@ -320,23 +352,9 @@ function StepRow({
                       />
                     );
                   })}
-                  {editable && condActions && (
-                    <button
-                      className={styles.branchAddStepBtn}
-                      onClick={() => condActions.onAddStepInBranch(b.id)}
-                      type="button"
-                    ><RiAddLine /> Add step in this branch</button>
-                  )}
                 </div>
               );
             })}
-            {editable && condActions && (
-              <button
-                className={styles.branchAddBranchBtn}
-                onClick={() => condActions.onAddBranch()}
-                type="button"
-              ><RiAddLine /> Add branch</button>
-            )}
           </div>
         </span>
         {actions && (
