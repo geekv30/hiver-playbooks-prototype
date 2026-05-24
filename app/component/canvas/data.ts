@@ -189,6 +189,29 @@ export function findAction(id: string): ActionDef | undefined {
 /* ============================================================ */
 /* Ref library                                                    */
 /* ============================================================ */
+/* ============================================================ */
+/* Walk Japan tag library — what Tag's inline picker picks from   */
+/* ============================================================ */
+export interface TagDef {
+  id: string;
+  name: string;
+  usage: number;       // mock count for sorting Recents
+  group: 'recent' | 'all';
+}
+export const TAGS_DEFAULT: TagDef[] = [
+  { id: 't1', name: 'tour-enquiry',     usage: 142, group: 'recent' },
+  { id: 't2', name: 'vip-customer',     usage: 28,  group: 'recent' },
+  { id: 't3', name: 'awaiting-customer', usage: 51, group: 'recent' },
+  { id: 't4', name: 'refund-needed',    usage: 9,   group: 'all'    },
+  { id: 't5', name: 'urgent',           usage: 17,  group: 'all'    },
+  { id: 't6', name: 'escalated',        usage: 6,   group: 'all'    },
+  { id: 't7', name: 'low-priority',     usage: 12,  group: 'all'    },
+  { id: 't8', name: 'group-of-4-plus',  usage: 33,  group: 'all'    },
+  { id: 't9', name: 'kumano-kodo',      usage: 87,  group: 'all'    },
+  { id: 't10', name: 'shikoku',         usage: 41,  group: 'all'    },
+  { id: 't11', name: 'spring-2026',     usage: 22,  group: 'all'    },
+];
+
 export const REFS: Ref[] = [
   { id: 'r1',  path: 'from.email',                label: 'Sender email',       type: 'email',    group: 'ticket'  },
   { id: 'r2',  path: 'from.name',                 label: 'Sender name',        type: 'text',     group: 'ticket'  },

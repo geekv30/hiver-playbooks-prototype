@@ -11,7 +11,7 @@ import {
 import type { IconType } from 'react-icons';
 import styles from './canvas.module.css';
 import {
-  ACTIONS, BUCKET_TITLES, BUCKET_HINTS, BUCKET_ORDER, REFS,
+  ACTIONS, BUCKET_TITLES, BUCKET_HINTS, BUCKET_ORDER, REFS, TAGS_DEFAULT,
   ICONS, findAction, type Bucket, type Chip, type AnyStep, type Frag, type ChipStatus,
 } from './data';
 import { useCanvasState, getChipStatus } from './state';
@@ -1161,6 +1161,168 @@ function RefPicker({
 }
 
 /* ============================================================ */
+/* TagPickerInline — Fin-style chip-on-chip drill-down            */
+/* Replaces right-rail Configure for Tag verb (v1 pattern test)   */
+/* ============================================================ */
+function TagPickerInline({
+  chipId, state, onClose,
+}: {
+  chipId: string;
+  state: ReturnType<typeof useCanvasState>;
+  onClose: () => void;
+}) {
+  const chip = findChipInState(state.playbook.steps, chipId);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const popoverRef = useRef<HTMLDivElement | null>(null);
+  const [query, setQuery] = useState('');
+  const [idx, setIdx] = useState(0);
+  const [anchor, setAnchor] = useState<{ top: number; left: number } | null>(null);
+
+  // Anchor to chip element via getBoundingClientRect — read once when picker opens.
+  useEffect(() => {
+    const el = document.querySelector<HTMLElement>(`[data-chip-id="${chipId}"]`);
+    if (!el) { onClose(); return; }
+    const r = el.getBoundingClientRect();
+    const top = Math.min(r.bottom + 6, window.innerHeight - 380);
+    const left = Math.min(r.left, window.innerWidth - 300);
+    setAnchor({ top, left });
+    const t = window.setTimeout(() => inputRef.current?.focus(), 0);
+    return () => window.clearTimeout(t);
+  }, [chipId, onClose]);
+
+  const q = query.trim().toLowerCase();
+  const filtered = useMemo(() => {
+    if (!q) return TAGS_DEFAULT;
+    return TAGS_DEFAULT.filter((t) => t.name.toLowerCase().includes(q));
+  }, [q]);
+  const recents = useMemo(() => filtered.filter((t) => t.group === 'recent'), [filtered]);
+  const all = useMemo(() => filtered.filter((t) => t.group !== 'recent'), [filtered]);
+  const flat = useMemo(() => [...recents, ...all], [recents, all]);
+  const exactMatch = q && flat.some((t) => t.name === q);
+  const showCreate = q.length > 0 && !exactMatch;
+
+  useEffect(() => {
+    if (idx >= flat.length + (showCreate ? 1 : 0)) {
+      setIdx(Math.max(0, flat.length + (showCreate ? 1 : 0) - 1));
+    }
+  }, [flat.length, idx, showCreate]);
+
+  // Outside-click + Esc
+  useEffect(() => {
+    const onMouse = (e: MouseEvent) => {
+      const t = e.target as Element | null;
+      if (!t) return;
+      if (popoverRef.current?.contains(t)) return;
+      if (t.closest?.(`[data-chip-id="${chipId}"]`)) return;
+      onClose();
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.preventDefault(); onClose(); } };
+    const id = window.setTimeout(() => document.addEventListener('mousedown', onMouse), 0);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      window.clearTimeout(id);
+      document.removeEventListener('mousedown', onMouse);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [chipId, onClose]);
+
+  if (!chip || !anchor) return null;
+
+  const pickTag = (name: string) => {
+    state.updateChipById(chipId, { meta: name });
+    onClose();
+  };
+
+  const handleKey = (e: React.KeyboardEvent) => {
+    const total = flat.length + (showCreate ? 1 : 0);
+    if (e.key === 'ArrowDown') { e.preventDefault(); setIdx((i) => Math.min(total - 1, i + 1)); }
+    else if (e.key === 'ArrowUp')   { e.preventDefault(); setIdx((i) => Math.max(0, i - 1)); }
+    else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (idx < flat.length) {
+        pickTag(flat[idx]!.name);
+      } else if (showCreate) {
+        pickTag(q);
+      }
+    } else if (e.key === 'Escape') { e.preventDefault(); onClose(); }
+  };
+
+  return (
+    <div
+      ref={popoverRef}
+      className={styles.tagPicker}
+      style={{ top: anchor.top, left: anchor.left }}
+      onMouseDown={(e) => e.stopPropagation()}
+    >
+      <div className={styles.tagPickHead}>
+        <span className={styles.tagPickHint}>Tag the conversation</span>
+        <span className={styles.tagPickKbd}>↑↓ ↩ esc</span>
+      </div>
+      <input
+        ref={inputRef}
+        className={styles.tagPickInput}
+        placeholder="Search or create a tag…"
+        value={query}
+        onChange={(e) => { setQuery(e.target.value); setIdx(0); }}
+        onKeyDown={handleKey}
+      />
+      <div className={styles.tagPickList}>
+        {recents.length > 0 && (
+          <div className={styles.tagPickGroup}>
+            <div className={styles.tagPickGroupLabel}>Recent</div>
+            {recents.map((t, i) => (
+              <button
+                key={t.id}
+                type="button"
+                className={`${styles.tagPickItem} ${i === idx ? styles.tagPickItemActive : ''}`}
+                onClick={() => pickTag(t.name)}
+                onMouseEnter={() => setIdx(i)}
+              >
+                <span className={styles.tagPickItemName}>#{t.name}</span>
+                <span className={styles.tagPickItemUsage}>{t.usage} tickets</span>
+              </button>
+            ))}
+          </div>
+        )}
+        {all.length > 0 && (
+          <div className={styles.tagPickGroup}>
+            <div className={styles.tagPickGroupLabel}>All tags</div>
+            {all.map((t, i) => {
+              const globalIdx = recents.length + i;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  className={`${styles.tagPickItem} ${globalIdx === idx ? styles.tagPickItemActive : ''}`}
+                  onClick={() => pickTag(t.name)}
+                  onMouseEnter={() => setIdx(globalIdx)}
+                >
+                  <span className={styles.tagPickItemName}>#{t.name}</span>
+                  <span className={styles.tagPickItemUsage}>{t.usage} tickets</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+        {flat.length === 0 && !showCreate && (
+          <div className={styles.tagPickEmpty}>Type to create a new tag.</div>
+        )}
+        {showCreate && (
+          <button
+            type="button"
+            className={`${styles.tagPickCreate} ${idx === flat.length ? styles.tagPickItemActive : ''}`}
+            onClick={() => pickTag(q)}
+            onMouseEnter={() => setIdx(flat.length)}
+          >
+            <RiAddLine /> Create <strong>#{q}</strong>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================ */
 /* Overflow menu                                                  */
 /* ============================================================ */
 function OverflowMenu({
@@ -1590,8 +1752,11 @@ export default function CanvasPage() {
                         step={step}
                         num={stepNumbers[i] ?? '—'}
                         statuses={statuses}
-                        onChipClick={(id) => state.setConfigChipId(id)}
-                        selectedChipId={state.configChipId}
+                        onChipClick={(id) => {
+                          const c = findChipInState(state.playbook.steps, id);
+                          if (c?.actionId === 'tag') state.setTagPickerChipId(id);
+                        }}
+                        selectedChipId={state.tagPickerChipId}
                         highlight={highlightStepId === step.id}
                         editable={editable && step.kind !== 'end'}
                         onFragmentsChange={(id, fragments) => state.setStepFragments(id, fragments)}
@@ -1641,8 +1806,12 @@ export default function CanvasPage() {
           {inTest && <TracePanel state={state} scrollToStep={scrollToStep} />}
         </section>
 
-        {configChip && (
-          <ConfigurePanel chip={configChip} state={state} panelRef={configPanelRef} />
+        {state.tagPickerChipId && (
+          <TagPickerInline
+            chipId={state.tagPickerChipId}
+            state={state}
+            onClose={() => state.setTagPickerChipId(null)}
+          />
         )}
       </main>
 

@@ -40,6 +40,7 @@ export interface CanvasState {
   cleanWipeSnapshot: Playbook | null;
   activation: ActivationState;
   configChipId: string | null;
+  tagPickerChipId: string | null;
   paletteCollapsed: boolean;
   testOutcome: 'pending' | 'pass' | 'fail' | 'cancelled' | null;
   chipStatusOverride: Record<string, ChipStatus>;
@@ -63,6 +64,7 @@ type Action =
   | { type: 'enterCleanWipe' }
   | { type: 'exitCleanWipe' }
   | { type: 'setConfigChipId'; id: string | null }
+  | { type: 'setTagPickerChipId'; id: string | null }
   | { type: 'togglePalette' }
   | { type: 'setActivation'; activation: ActivationState }
   | { type: 'autosaveBump' }
@@ -134,6 +136,7 @@ function reducer(state: CanvasState, action: Action): CanvasState {
       return { ...state, mode: 'edit', playbook: state.cleanWipeSnapshot, cleanWipeSnapshot: null };
     }
     case 'setConfigChipId':    return { ...state, configChipId: action.id };
+    case 'setTagPickerChipId': return { ...state, tagPickerChipId: action.id };
     case 'togglePalette':      return { ...state, paletteCollapsed: !state.paletteCollapsed };
     case 'setActivation':      return { ...state, activation: action.activation };
     case 'autosaveBump':       return { ...state, autosaveTick: state.autosaveTick + 1 };
@@ -155,6 +158,7 @@ const INITIAL_STATE: CanvasState = {
   cleanWipeSnapshot: null,
   activation: { status: 'draft' },
   configChipId: null,
+  tagPickerChipId: null,
   paletteCollapsed: false,
   testOutcome: null,
   chipStatusOverride: {},
@@ -670,6 +674,7 @@ export function useCanvasState() {
   const redo = useCallback(() => dispatch({ type: 'redo' }), []);
   const setMode = useCallback((mode: CanvasMode) => dispatch({ type: 'setMode', mode }), []);
   const setConfigChipId = useCallback((id: string | null) => dispatch({ type: 'setConfigChipId', id }), []);
+  const setTagPickerChipId = useCallback((id: string | null) => dispatch({ type: 'setTagPickerChipId', id }), []);
   const togglePalette = useCallback(() => dispatch({ type: 'togglePalette' }), []);
 
   const stopTest = useCallback(() => {
@@ -824,6 +829,7 @@ export function useCanvasState() {
     redo,
     setMode,
     setConfigChipId,
+    setTagPickerChipId,
     togglePalette,
     runTest,
     stopTest,
