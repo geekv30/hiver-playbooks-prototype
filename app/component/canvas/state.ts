@@ -505,6 +505,123 @@ export function useCanvasState() {
     });
   }, [mutate]);
 
+  /* ============================================================ */
+  /* Condition branch + sub-step mutations                          */
+  /* ============================================================ */
+
+  const addBranch = useCallback((condStepId: string) => {
+    mutate((pb) => ({
+      ...pb,
+      steps: pb.steps.map((s) => {
+        if (s.id !== condStepId || s.kind !== 'condition') return s;
+        const newBranch = {
+          id: `b-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          label: 'else if',
+          predicate: 'new_field == "value"',
+          steps: [] as Step[],
+        };
+        // Insert new branch BEFORE the existing default ("else") branch if present
+        const branches = [...s.branches];
+        const elseIdx = branches.findIndex((b) => b.label === 'else' || !b.predicate);
+        if (elseIdx >= 0) {
+          branches.splice(elseIdx, 0, newBranch);
+        } else {
+          branches.push(newBranch);
+        }
+        return { ...s, branches };
+      }),
+    }));
+  }, [mutate]);
+
+  const removeBranch = useCallback((condStepId: string, branchId: string) => {
+    mutate((pb) => ({
+      ...pb,
+      steps: pb.steps.map((s) => {
+        if (s.id !== condStepId || s.kind !== 'condition') return s;
+        // can't remove default branch
+        const branch = s.branches.find((b) => b.id === branchId);
+        if (!branch || branch.label === 'else') return s;
+        return { ...s, branches: s.branches.filter((b) => b.id !== branchId) };
+      }),
+    }));
+  }, [mutate]);
+
+  const addStepInBranch = useCallback((condStepId: string, branchId: string) => {
+    mutate((pb) => ({
+      ...pb,
+      steps: pb.steps.map((s) => {
+        if (s.id !== condStepId || s.kind !== 'condition') return s;
+        return {
+          ...s,
+          branches: s.branches.map((b) => {
+            if (b.id !== branchId) return b;
+            const newStep: Step = {
+              id: `step-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+              kind: 'action',
+              fragments: [{ kind: 'text', text: '' }],
+            };
+            return { ...b, steps: [...b.steps, newStep] };
+          }),
+        };
+      }),
+    }));
+  }, [mutate]);
+
+  const removeStepInBranch = useCallback((condStepId: string, branchId: string, stepId: string) => {
+    mutate((pb) => ({
+      ...pb,
+      steps: pb.steps.map((s) => {
+        if (s.id !== condStepId || s.kind !== 'condition') return s;
+        return {
+          ...s,
+          branches: s.branches.map((b) =>
+            b.id !== branchId ? b : { ...b, steps: b.steps.filter((bs) => bs.id !== stepId) }
+          ),
+        };
+      }),
+    }));
+  }, [mutate]);
+
+  const moveStepInBranch = useCallback((condStepId: string, branchId: string, stepId: string, dir: -1 | 1) => {
+    mutate((pb) => ({
+      ...pb,
+      steps: pb.steps.map((s) => {
+        if (s.id !== condStepId || s.kind !== 'condition') return s;
+        return {
+          ...s,
+          branches: s.branches.map((b) => {
+            if (b.id !== branchId) return b;
+            const idx = b.steps.findIndex((bs) => bs.id === stepId);
+            if (idx < 0) return b;
+            const next = idx + dir;
+            if (next < 0 || next >= b.steps.length) return b;
+            const arr = [...b.steps];
+            const a = arr[idx]!;
+            const c = arr[next]!;
+            arr[idx] = c;
+            arr[next] = a;
+            return { ...b, steps: arr };
+          }),
+        };
+      }),
+    }));
+  }, [mutate]);
+
+  const setStepFragmentsInBranch = useCallback((condStepId: string, branchId: string, stepId: string, fragments: Frag[]) => {
+    mutate((pb) => ({
+      ...pb,
+      steps: pb.steps.map((s) => {
+        if (s.id !== condStepId || s.kind !== 'condition') return s;
+        return {
+          ...s,
+          branches: s.branches.map((b) =>
+            b.id !== branchId ? b : { ...b, steps: b.steps.map((bs) => bs.id === stepId ? { ...bs, fragments } : bs) }
+          ),
+        };
+      }),
+    }));
+  }, [mutate]);
+
   const duplicateStep = useCallback((stepId: string) => {
     mutate((pb) => {
       const idx = pb.steps.findIndex((s) => s.id === stepId);
@@ -688,6 +805,12 @@ export function useCanvasState() {
     duplicateStep,
     setStepFragments,
     setTriggerFragments,
+    addBranch,
+    removeBranch,
+    addStepInBranch,
+    removeStepInBranch,
+    moveStepInBranch,
+    setStepFragmentsInBranch,
     insertChipInStepAtOffset,
     insertRefInStepAtOffset,
     insertRefInTriggerAtOffset,

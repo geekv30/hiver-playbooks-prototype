@@ -141,9 +141,102 @@ function StepActions({
   );
 }
 
+interface CondActions {
+  onAddBranch: () => void;
+  onRemoveBranch: (branchId: string) => void;
+  onAddStepInBranch: (branchId: string) => void;
+  onRemoveSub: (branchId: string, subStepId: string) => void;
+  onMoveSubUp: (branchId: string, subStepId: string) => void;
+  onMoveSubDown: (branchId: string, subStepId: string) => void;
+  onSetSubFragments: (branchId: string, subStepId: string, fragments: Frag[]) => void;
+}
+
+function BranchSubRow({
+  condStepId, branchId, subStep, subnum, statuses, onChipClick, selectedChipId,
+  editable, actions, canUp, canDown, onFragmentsChange, onSlash, onAt,
+}: {
+  condStepId: string;
+  branchId: string;
+  subStep: AnyStep;
+  subnum: string;
+  statuses: Record<string, ChipStatus>;
+  onChipClick: (chipId: string) => void;
+  selectedChipId: string | null;
+  editable: boolean;
+  actions?: { onUp: () => void; onDown: () => void; onDelete: () => void };
+  canUp?: boolean;
+  canDown?: boolean;
+  onFragmentsChange?: (fragments: Frag[]) => void;
+  onSlash?: (stepId: string, anchor: { top: number; left: number }, textOffset: number) => void;
+  onAt?: (stepId: string, anchor: { top: number; left: number }, textOffset: number) => void;
+}) {
+  const bodyRef = useRef<HTMLSpanElement | null>(null);
+  if (subStep.kind !== 'action') return null;
+  const isEmpty = !subStep.fragments.some((f) => f.kind === 'chip') &&
+                  !subStep.fragments.some((f) => f.kind === 'text' && f.text.trim().length > 0) &&
+                  !subStep.fragments.some((f) => f.kind === 'ref' || f.kind === 'code');
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLSpanElement>) => {
+    if (!editable) return;
+    if (e.key === '/') {
+      e.preventDefault();
+      if (bodyRef.current) {
+        const anchor = getCaretAnchor(bodyRef.current);
+        const offset = getCaretTextOffset(bodyRef.current);
+        if (anchor) onSlash?.(subStep.id, anchor, offset);
+      }
+    } else if (e.key === '@') {
+      e.preventDefault();
+      if (bodyRef.current) {
+        const anchor = getCaretAnchor(bodyRef.current);
+        const offset = getCaretTextOffset(bodyRef.current);
+        if (anchor) onAt?.(subStep.id, anchor, offset);
+      }
+    }
+  };
+  const handleBlur = (e: React.FocusEvent<HTMLSpanElement>) => {
+    if (!editable) return;
+    if (!bodyRef.current) return;
+    const next = e.relatedTarget as HTMLElement | null;
+    if (next?.closest?.('[data-slash-picker]')) return;
+    const fragments = parseFragmentsFromDom(bodyRef.current, subStep.fragments);
+    onFragmentsChange?.(fragments);
+  };
+  return (
+    <div className={`${styles.branchSubrow} ${isEmpty ? styles.branchSubrowEmpty : ''}`} data-step-id={subStep.id}>
+      <span className={styles.branchSubnum}>{subnum}</span>
+      <span
+        ref={bodyRef}
+        className={`${styles.branchSubbody} ${editable ? styles.stepBodyEditable : ''}`}
+        contentEditable={editable}
+        suppressContentEditableWarning
+        onKeyDown={handleKeyDown}
+        onBlur={handleBlur}
+        data-empty={isEmpty ? 'true' : undefined}
+      >
+        {subStep.fragments.map((f, fi) => (
+          <FragmentSpan
+            key={fi}
+            frag={f}
+            status={f.kind === 'chip' ? statuses[f.chip.id] : undefined}
+            onChipClick={onChipClick}
+            selected={f.kind === 'chip' && f.chip.id === selectedChipId}
+          />
+        ))}
+      </span>
+      {actions && (
+        <span className={styles.stepActions} onClick={(e) => e.stopPropagation()}>
+          <button className={`${styles.stepActionBtn} ${!canUp ? styles.stepActionBtnDisabled : ''}`} onClick={actions.onUp} disabled={!canUp} title="Move up" type="button"><RiArrowUpSLine /></button>
+          <button className={`${styles.stepActionBtn} ${!canDown ? styles.stepActionBtnDisabled : ''}`} onClick={actions.onDown} disabled={!canDown} title="Move down" type="button"><RiArrowDownLine /></button>
+          <button className={`${styles.stepActionBtn} ${styles.stepActionBtnDanger}`} onClick={actions.onDelete} title="Delete" type="button"><RiDeleteBinLine /></button>
+        </span>
+      )}
+    </div>
+  );
+}
+
 function StepRow({
   step, num, statuses, onChipClick, selectedChipId, highlight,
-  actions, canUp, canDown, editable, onFragmentsChange, onSlash, onAt,
+  actions, canUp, canDown, editable, onFragmentsChange, onSlash, onAt, condActions,
 }: {
   step: AnyStep;
   num: string;
@@ -163,6 +256,7 @@ function StepRow({
   onFragmentsChange?: (stepId: string, fragments: Frag[]) => void;
   onSlash?: (stepId: string, anchor: { top: number; left: number }, textOffset: number) => void;
   onAt?: (stepId: string, anchor: { top: number; left: number }, textOffset: number) => void;
+  condActions?: CondActions;
 }) {
   const bodyRef = useRef<HTMLSpanElement | null>(null);
   if (step.kind === 'end') {
@@ -183,33 +277,66 @@ function StepRow({
           <span className={styles.condLabel}>Condition</span>
           <span className={styles.condExpr}>{step.exprText}</span>
           <div className={styles.branches}>
-            {step.branches.map((b, bi) => (
-              <div key={b.id} className={styles.branch}>
-                <div className={styles.branchHead}>
-                  <span className={styles.branchLabel}>{`${String(bi + 1).padStart(2, '0')}.${b.label}`}</span>
-                  {b.predicate && <code className={styles.branchPredInline}>{b.predicate}</code>}
+            {step.branches.map((b, bi) => {
+              const isDefault = b.label === 'else' || !b.predicate;
+              return (
+                <div key={b.id} className={styles.branch}>
+                  <div className={styles.branchHead}>
+                    <span className={styles.branchLabel}>{`${String(bi + 1).padStart(2, '0')}.${b.label}`}</span>
+                    {b.predicate && <code className={styles.branchPredInline}>{b.predicate}</code>}
+                    {!isDefault && editable && condActions && (
+                      <button
+                        className={styles.branchRemoveBtn}
+                        onClick={(e) => { e.stopPropagation(); condActions.onRemoveBranch(b.id); }}
+                        title="Remove branch"
+                        type="button"
+                      ><RiCloseLine /></button>
+                    )}
+                  </div>
+                  {b.steps.map((bs, si) => {
+                    if (bs.kind !== 'action') return null;
+                    const subnum = `${num}${String.fromCharCode(96 + si + 1)}`;
+                    return (
+                      <BranchSubRow
+                        key={bs.id}
+                        condStepId={step.id}
+                        branchId={b.id}
+                        subStep={bs}
+                        subnum={subnum}
+                        statuses={statuses}
+                        onChipClick={onChipClick}
+                        selectedChipId={selectedChipId}
+                        editable={!!editable}
+                        canUp={si > 0}
+                        canDown={si < b.steps.length - 1}
+                        actions={condActions ? {
+                          onUp:     () => condActions.onMoveSubUp(b.id, bs.id),
+                          onDown:   () => condActions.onMoveSubDown(b.id, bs.id),
+                          onDelete: () => condActions.onRemoveSub(b.id, bs.id),
+                        } : undefined}
+                        onFragmentsChange={(fragments) => condActions?.onSetSubFragments(b.id, bs.id, fragments)}
+                        onSlash={(id, anchor, offset) => onSlash?.(id, anchor, offset)}
+                        onAt={(id, anchor, offset) => onAt?.(id, anchor, offset)}
+                      />
+                    );
+                  })}
+                  {editable && condActions && (
+                    <button
+                      className={styles.branchAddStepBtn}
+                      onClick={() => condActions.onAddStepInBranch(b.id)}
+                      type="button"
+                    ><RiAddLine /> Add step in this branch</button>
+                  )}
                 </div>
-                {b.steps.map((bs, si) => {
-                  if (bs.kind !== 'action') return null;
-                  return (
-                    <div key={bs.id} className={styles.branchSubrow} data-step-id={bs.id}>
-                      <span className={styles.branchSubnum}>{`${num}${String.fromCharCode(96 + si + 1)}`}</span>
-                      <span className={styles.branchSubbody}>
-                        {bs.fragments.map((f, fi) => (
-                          <FragmentSpan
-                            key={fi}
-                            frag={f}
-                            status={f.kind === 'chip' ? statuses[f.chip.id] : undefined}
-                            onChipClick={onChipClick}
-                            selected={f.kind === 'chip' && f.chip.id === selectedChipId}
-                          />
-                        ))}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
+              );
+            })}
+            {editable && condActions && (
+              <button
+                className={styles.branchAddBranchBtn}
+                onClick={() => condActions.onAddBranch()}
+                type="button"
+              ><RiAddLine /> Add branch</button>
+            )}
           </div>
         </span>
         {actions && (
@@ -678,6 +805,9 @@ function TracePanel({
   scrollToStep: (stepId: string) => void;
 }) {
   const [tab, setTab] = useState<'trace' | 'variables' | 'history'>('trace');
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+  // close expanded row when trace resets / test exits
+  useEffect(() => { if (!state.trace.length) setExpandedIdx(null); }, [state.trace.length]);
   return (
     <section className={styles.tracePanel}>
       <header className={styles.traceHead}>
@@ -711,29 +841,57 @@ function TracePanel({
               const chip = entry.chipId ? findChipInState(state.playbook.steps, entry.chipId) : null;
               const action = chip ? findAction(chip.actionId) : null;
               const Icon = action ? ICONS[action.iconKey] : null;
+              const isExpanded = expandedIdx === i;
+              const formatPretty = (v?: string) => {
+                if (!v) return '';
+                try { return JSON.stringify(JSON.parse(v), null, 2); } catch { return v; }
+              };
               return (
-                <button
-                  key={i}
-                  className={styles.traceRow}
-                  data-status={entry.status}
-                  onClick={() => scrollToStep(entry.stepId)}
-                  type="button"
-                >
-                  <span className={styles.traceRowNum}>{String(i + 1).padStart(2, '0')}</span>
-                  <span className={styles.traceRowIco}>{Icon ? <Icon /> : null}</span>
-                  <span className={styles.traceRowVerb}>
-                    {action?.brand && <span className={styles.traceRowBrand}>{action.brand} · </span>}
-                    {action?.verb ?? '—'}
-                  </span>
-                  <span className={styles.traceRowDur}>{entry.durationMs ? `${entry.durationMs}ms` : '—'}</span>
-                  <span className={`${styles.traceRowStatus} ${
-                    entry.status === 'ok'      ? styles.traceStatusOk :
-                    entry.status === 'error'   ? styles.traceStatusErr :
-                    entry.status === 'skipped' ? styles.traceStatusSkipped :
-                                                 styles.traceStatusRun
-                  }`}>{entry.status}</span>
-                  <span className={styles.traceRowOutput}>{entry.output}</span>
-                </button>
+                <div key={i} className={`${styles.traceRowWrap} ${isExpanded ? styles.traceRowWrapOpen : ''}`}>
+                  <button
+                    className={styles.traceRow}
+                    data-status={entry.status}
+                    onClick={() => {
+                      setExpandedIdx(isExpanded ? null : i);
+                      scrollToStep(entry.stepId);
+                    }}
+                    type="button"
+                  >
+                    <span className={styles.traceRowChevron} data-open={isExpanded ? 'true' : 'false'}>{isExpanded ? '▾' : '▸'}</span>
+                    <span className={styles.traceRowNum}>{String(i + 1).padStart(2, '0')}</span>
+                    <span className={styles.traceRowIco}>{Icon ? <Icon /> : null}</span>
+                    <span className={styles.traceRowVerb}>
+                      {action?.brand && <span className={styles.traceRowBrand}>{action.brand} · </span>}
+                      {action?.verb ?? '—'}
+                    </span>
+                    <span className={styles.traceRowDur}>{entry.durationMs ? `${entry.durationMs}ms` : '—'}</span>
+                    <span className={`${styles.traceRowStatus} ${
+                      entry.status === 'ok'      ? styles.traceStatusOk :
+                      entry.status === 'error'   ? styles.traceStatusErr :
+                      entry.status === 'skipped' ? styles.traceStatusSkipped :
+                                                   styles.traceStatusRun
+                    }`}>{entry.status}</span>
+                    <span className={styles.traceRowOutput}>{entry.output}</span>
+                  </button>
+                  {isExpanded && (
+                    <div className={styles.traceRowDetail}>
+                      <div className={styles.traceDetailBlock}>
+                        <div className={styles.traceDetailLabel}>Input</div>
+                        <pre className={styles.traceDetailPre}>{formatPretty(entry.input) || '—'}</pre>
+                      </div>
+                      <div className={styles.traceDetailBlock}>
+                        <div className={styles.traceDetailLabel}>Output</div>
+                        <pre className={styles.traceDetailPre}>{formatPretty(entry.output) || '—'}</pre>
+                      </div>
+                      {entry.errorMessage && (
+                        <div className={styles.traceDetailBlock}>
+                          <div className={styles.traceDetailLabel} data-tone="err">Error</div>
+                          <pre className={styles.traceDetailPre} data-tone="err">{entry.errorMessage}</pre>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               );
             })}
           </>
@@ -1446,6 +1604,19 @@ export default function CanvasPage() {
                                 onDown:      () => state.moveStepDown(step.id),
                                 onDuplicate: () => state.duplicateStep(step.id),
                                 onDelete:    () => state.removeStep(step.id),
+                              }
+                            : undefined
+                        }
+                        condActions={
+                          editable && step.kind === 'condition'
+                            ? {
+                                onAddBranch:        () => state.addBranch(step.id),
+                                onRemoveBranch:     (bid) => state.removeBranch(step.id, bid),
+                                onAddStepInBranch:  (bid) => state.addStepInBranch(step.id, bid),
+                                onRemoveSub:        (bid, sid) => state.removeStepInBranch(step.id, bid, sid),
+                                onMoveSubUp:        (bid, sid) => state.moveStepInBranch(step.id, bid, sid, -1),
+                                onMoveSubDown:      (bid, sid) => state.moveStepInBranch(step.id, bid, sid, 1),
+                                onSetSubFragments:  (bid, sid, frags) => state.setStepFragmentsInBranch(step.id, bid, sid, frags),
                               }
                             : undefined
                         }
