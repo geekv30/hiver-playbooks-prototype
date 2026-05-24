@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 import type { Playbook, Chip, ChipStatus, TraceEntry, AnyStep, Step, Frag } from './data';
-import { WALK_JAPAN_SEED, MOCK_TRACE_OUTPUTS, findAction } from './data';
+import { PLAYBOOKS, WALK_JAPAN_SEED, MOCK_TRACE_OUTPUTS, findAction } from './data';
 import { insertChipAtTextOffset } from './dom-parse';
 
 export type CanvasMode =
@@ -63,6 +63,7 @@ type Action =
   | { type: 'enterCleanWipe' }
   | { type: 'exitCleanWipe' }
   | { type: 'setConfigChipId'; id: string | null }
+  | { type: 'loadPlaybook'; playbook: Playbook }
   | { type: 'togglePalette' }
   | { type: 'setActivation'; activation: ActivationState }
   | { type: 'autosaveBump' }
@@ -134,6 +135,23 @@ function reducer(state: CanvasState, action: Action): CanvasState {
       return { ...state, mode: 'edit', playbook: state.cleanWipeSnapshot, cleanWipeSnapshot: null };
     }
     case 'setConfigChipId':    return { ...state, configChipId: action.id };
+    case 'loadPlaybook': {
+      // Replace playbook entirely. Reset transient state — trace, statuses, history,
+      // clean-wipe snapshot, configChipId — so the user starts fresh on the new playbook.
+      return {
+        ...state,
+        playbook: action.playbook,
+        mode: 'edit',
+        trace: [],
+        history: { past: [], future: [] },
+        cleanWipeSnapshot: null,
+        configChipId: null,
+        chipStatusOverride: {},
+        testOutcome: null,
+        slash: null,
+        refPicker: null,
+      };
+    }
     case 'togglePalette':      return { ...state, paletteCollapsed: !state.paletteCollapsed };
     case 'setActivation':      return { ...state, activation: action.activation };
     case 'autosaveBump':       return { ...state, autosaveTick: state.autosaveTick + 1 };
@@ -670,6 +688,7 @@ export function useCanvasState() {
   const redo = useCallback(() => dispatch({ type: 'redo' }), []);
   const setMode = useCallback((mode: CanvasMode) => dispatch({ type: 'setMode', mode }), []);
   const setConfigChipId = useCallback((id: string | null) => dispatch({ type: 'setConfigChipId', id }), []);
+  const loadPlaybook = useCallback((playbook: Playbook) => dispatch({ type: 'loadPlaybook', playbook }), []);
   const togglePalette = useCallback(() => dispatch({ type: 'togglePalette' }), []);
 
   const stopTest = useCallback(() => {
@@ -824,6 +843,7 @@ export function useCanvasState() {
     redo,
     setMode,
     setConfigChipId,
+    loadPlaybook,
     togglePalette,
     runTest,
     stopTest,

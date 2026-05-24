@@ -65,6 +65,78 @@
   color: var(--muted-soft);
 }
 
+/* Playbook switcher dropdown */
+.playbookSwitch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.playbookSwitchBtn {
+  width: 20px; height: 20px;
+  margin-left: 2px;
+  display: grid; place-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap), color var(--d-hover) var(--ease-snap);
+}
+.playbookSwitchBtn:hover { background: var(--surface-soft); color: var(--ink); }
+.playbookSwitchBtnOpen { background: var(--surface-soft); color: var(--ink); }
+.playbookSwitchBtn svg { width: 14px; height: 14px; }
+.playbookSwitchMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: -8px;
+  z-index: 75;
+  width: 280px;
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  box-shadow: 0 12px 32px rgba(15, 15, 17, .12);
+  padding: 4px;
+  animation: stepKebabIn 120ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+.playbookSwitchLabel {
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--muted-soft);
+  padding: 8px 10px 4px;
+}
+.playbookSwitchItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  background: transparent;
+  border: 0;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--d-hover) var(--ease-snap);
+}
+.playbookSwitchItem:hover { background: var(--surface-soft); }
+.playbookSwitchItemActive { background: var(--surface-soft); }
+.playbookSwitchItemMain { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.playbookSwitchItemName {
+  font-family: var(--font);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -.005em;
+}
+.playbookSwitchItemBlurb {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: -.005em;
+}
+.playbookSwitchItem svg { width: 14px; height: 14px; color: var(--primary); flex: none; }
+
 .cleanWipePill {
   display: inline-flex;
   align-items: center;

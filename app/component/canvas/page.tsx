@@ -11,7 +11,7 @@ import {
 import type { IconType } from 'react-icons';
 import styles from './canvas.module.css';
 import {
-  ACTIONS, BUCKET_TITLES, BUCKET_HINTS, BUCKET_ORDER, REFS,
+  ACTIONS, BUCKET_TITLES, BUCKET_HINTS, BUCKET_ORDER, REFS, PLAYBOOKS,
   ICONS, findAction, type Bucket, type Chip, type AnyStep, type Frag, type ChipStatus,
 } from './data';
 import { useCanvasState, getChipStatus } from './state';
@@ -456,6 +456,72 @@ interface TopbarProps {
   activateOpen: boolean;
 }
 
+function PlaybookSwitcher({ state }: { state: ReturnType<typeof useCanvasState> }) {
+  const [open, setOpen] = useState(false);
+  const btnRef = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  // Match the currently-loaded playbook to a registry entry by frontmatter name.
+  // (No persistent playbook id in state — name is the user-visible label.)
+  const current = PLAYBOOKS.find((p) => p.label === state.playbook.frontmatter.name) ?? PLAYBOOKS[0]!;
+
+  useEffect(() => {
+    if (!open) return;
+    const onMouse = (e: MouseEvent) => {
+      const t = e.target as Node | null;
+      if (!t) return;
+      if (menuRef.current?.contains(t)) return;
+      if (btnRef.current?.contains(t)) return;
+      setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    const id = window.setTimeout(() => document.addEventListener('mousedown', onMouse), 0);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      window.clearTimeout(id);
+      document.removeEventListener('mousedown', onMouse);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  return (
+    <span className={styles.playbookSwitch} onClick={(e) => e.stopPropagation()}>
+      <button
+        ref={btnRef}
+        className={`${styles.playbookSwitchBtn} ${open ? styles.playbookSwitchBtnOpen : ''}`}
+        onClick={() => setOpen((o) => !o)}
+        type="button"
+        title="Switch playbook"
+        aria-haspopup="menu"
+        aria-expanded={open}
+      ><RiArrowDownSLine /></button>
+      {open && (
+        <div ref={menuRef} className={styles.playbookSwitchMenu} role="menu">
+          <div className={styles.playbookSwitchLabel}>Playbooks</div>
+          {PLAYBOOKS.map((p) => {
+            const active = p.id === current.id;
+            return (
+              <button
+                key={p.id}
+                className={`${styles.playbookSwitchItem} ${active ? styles.playbookSwitchItemActive : ''}`}
+                onClick={() => { state.loadPlaybook(p.seed); setOpen(false); }}
+                type="button"
+                role="menuitem"
+              >
+                <div className={styles.playbookSwitchItemMain}>
+                  <span className={styles.playbookSwitchItemName}>{p.label}</span>
+                  <span className={styles.playbookSwitchItemBlurb}>{p.blurb}</span>
+                </div>
+                {active && <RiCheckLine />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </span>
+  );
+}
+
 function Topbar({ state, onOpenOverflow, overflowOpen, onOpenActivate, activateOpen }: TopbarProps) {
   const [savedLabel, setSavedLabel] = useState('Saved');
   useEffect(() => {
@@ -490,6 +556,7 @@ function Topbar({ state, onOpenOverflow, overflowOpen, onOpenActivate, activateO
         >
           {state.playbook.frontmatter.name}
         </span>
+        <PlaybookSwitcher state={state} />
       </div>
 
       {inCleanWipe && (

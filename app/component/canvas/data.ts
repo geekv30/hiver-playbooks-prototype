@@ -347,6 +347,216 @@ export const WALK_JAPAN_SEED: Playbook = {
 };
 
 /* ============================================================ */
+/* Devansh seed — Dev support API error reply with approval       */
+/* From PLAYBOOKS_STORIES.md Story 3 — the stress-test:           */
+/* 4-way diagnose branching + multi-channel approval + timeout    */
+/* ============================================================ */
+export const DEVANSH_API_SEED: Playbook = {
+  frontmatter: {
+    name: 'API error reply',
+    triggerFragments: [
+      { kind: 'ref',  refPath: 'dev-support@theirco.com' },
+      { kind: 'text', text: ' receives an email mentioning ' },
+      { kind: 'code', code: 'HTTP status / stack trace / endpoint' },
+    ],
+    summary: 'Diagnose API errors from devs, draft a careful reply with KB sources, and route to on-shift dev-support for approval before sending.',
+  },
+  steps: [
+    {
+      id: 'dv-01',
+      kind: 'action',
+      fragments: [
+        { kind: 'chip', chip: { id: 'dv-c01', actionId: 'ai_extract', status: 'idle', meta: 'error_code · http_status · endpoint · sdk · payload' } },
+        { kind: 'text', text: ' from the inbound message.' },
+      ],
+    },
+    {
+      id: 'dv-02',
+      kind: 'action',
+      fragments: [
+        { kind: 'chip', chip: { id: 'dv-c02', actionId: 'tag', status: 'idle', meta: 'api-error' } },
+        { kind: 'text', text: ' and route to developer-support.' },
+      ],
+    },
+    {
+      id: 'dv-03',
+      kind: 'action',
+      fragments: [
+        { kind: 'chip', chip: { id: 'dv-c03', actionId: 'hubspot_find', status: 'idle', meta: 'by from_email' } },
+        { kind: 'text', text: ' for the requester’s contact + company.' },
+      ],
+    },
+    {
+      id: 'dv-04',
+      kind: 'action',
+      fragments: [
+        { kind: 'chip', chip: { id: 'dv-c04', actionId: 'salesforce_get', status: 'idle', meta: 'contract · SLA · rate-limit tier' } },
+        { kind: 'text', text: ' so we know what we owe them.' },
+      ],
+    },
+    {
+      id: 'dv-05',
+      kind: 'action',
+      fragments: [
+        { kind: 'chip', chip: { id: 'dv-c05', actionId: 'note', status: 'idle', meta: 'plan · SLA · contact summary' } },
+        { kind: 'text', text: ' so the approver has the picture.' },
+      ],
+    },
+    {
+      id: 'dv-06',
+      kind: 'action',
+      fragments: [
+        { kind: 'chip', chip: { id: 'dv-c06', actionId: 'kb_search', status: 'idle', meta: 'error code · sdk examples · changelog · incidents' } },
+        { kind: 'text', text: ' for relevant articles.' },
+      ],
+    },
+    {
+      id: 'dv-07',
+      kind: 'condition',
+      exprText: 'diagnose error category',
+      branches: [
+        {
+          id: 'dv-b-auth',
+          label: 'auth',
+          predicate: 'http_status in (401, 403)',
+          steps: [
+            {
+              id: 'dv-07a',
+              kind: 'action',
+              fragments: [
+                { kind: 'chip', chip: { id: 'dv-c07a', actionId: 'draft_reply', status: 'idle', meta: 'scope walk-through + corrected request' } },
+                { kind: 'text', text: ' with a working example.' },
+              ],
+            },
+          ],
+        },
+        {
+          id: 'dv-b-schema',
+          label: 'schema',
+          predicate: 'http_status == 400',
+          steps: [
+            {
+              id: 'dv-07b',
+              kind: 'action',
+              fragments: [
+                { kind: 'chip', chip: { id: 'dv-c07b', actionId: 'draft_reply', status: 'idle', meta: 'point out malformed field + paste working code' } },
+                { kind: 'text', text: ' from KB examples.' },
+              ],
+            },
+          ],
+        },
+        {
+          id: 'dv-b-rate',
+          label: 'rate-limit',
+          predicate: 'http_status == 429',
+          steps: [
+            {
+              id: 'dv-07c',
+              kind: 'action',
+              fragments: [
+                { kind: 'chip', chip: { id: 'dv-c07c', actionId: 'draft_reply', status: 'idle', meta: 'reference SLA tier + rate-limit policy' } },
+                { kind: 'text', text: '.' },
+              ],
+            },
+          ],
+        },
+        {
+          id: 'dv-b-server',
+          label: 'server',
+          predicate: 'http_status >= 500',
+          steps: [
+            {
+              id: 'dv-07d',
+              kind: 'action',
+              fragments: [
+                { kind: 'chip', chip: { id: 'dv-c07d', actionId: 'draft_reply', status: 'idle', meta: 'incident-response template' } },
+                { kind: 'text', text: ' and link the live incident.' },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'dv-08',
+      kind: 'action',
+      fragments: [
+        { kind: 'chip', chip: { id: 'dv-c08', actionId: 'note', status: 'idle', meta: 'diagnosis · KB sources · confidence /10' } },
+        { kind: 'text', text: ' before the human reviews.' },
+      ],
+    },
+    {
+      id: 'dv-09',
+      kind: 'action',
+      fragments: [
+        { kind: 'chip', chip: { id: 'dv-c09', actionId: 'approval', status: 'idle', meta: 'on-shift dev-support · 1h · Slack + Hiver' } },
+        { kind: 'text', text: ' before anything sends. Approver sees email, parsed fields, diagnosis, draft, sources, SLA, confidence.' },
+      ],
+    },
+    {
+      id: 'dv-10',
+      kind: 'condition',
+      exprText: 'approval outcome',
+      branches: [
+        {
+          id: 'dv-b-approved',
+          label: 'approved',
+          predicate: 'approval == "approve" or "edit-and-approve"',
+          steps: [
+            {
+              id: 'dv-10a',
+              kind: 'action',
+              fragments: [
+                { kind: 'chip', chip: { id: 'dv-c10a', actionId: 'send_reply', status: 'idle', meta: 'as approved' } },
+                { kind: 'text', text: ', tag ' },
+                { kind: 'chip', chip: { id: 'dv-c10b', actionId: 'tag', status: 'idle', meta: 'auto-drafted-approved' } },
+                { kind: 'text', text: ', move to Pending.' },
+              ],
+            },
+          ],
+        },
+        {
+          id: 'dv-b-rejected',
+          label: 'rejected',
+          predicate: 'approval == "reject"',
+          steps: [
+            {
+              id: 'dv-10c',
+              kind: 'action',
+              fragments: [
+                { kind: 'chip', chip: { id: 'dv-c10d', actionId: 'note', status: 'idle', meta: 'rejection reason + correct diagnosis' } },
+                { kind: 'text', text: ', tag ' },
+                { kind: 'chip', chip: { id: 'dv-c10e', actionId: 'tag', status: 'idle', meta: 'manual-handling' } },
+                { kind: 'text', text: ', hand off to SE queue.' },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'dv-11',
+      kind: 'end',
+      reason: 'api-error handled',
+    },
+  ],
+};
+
+/* ============================================================ */
+/* Playbook registry — drives the topbar switcher                 */
+/* ============================================================ */
+export interface PlaybookOption {
+  id: string;
+  label: string;
+  blurb: string;
+  seed: Playbook;
+}
+export const PLAYBOOKS: PlaybookOption[] = [
+  { id: 'walk-japan', label: 'Tour enquiry',     blurb: 'Walk Japan · inbound tour enquiries', seed: WALK_JAPAN_SEED },
+  { id: 'devansh',    label: 'API error reply',  blurb: 'Dev-support · API errors with approval', seed: DEVANSH_API_SEED },
+];
+
+/* ============================================================ */
 /* Mock test trace generator                                      */
 /* ============================================================ */
 export const MOCK_TRACE_OUTPUTS: Record<string, { input: string; output: string; errorMessage?: string }> = {
