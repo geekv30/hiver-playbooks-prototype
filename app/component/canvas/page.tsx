@@ -178,7 +178,48 @@ function StepActions({
   );
 }
 
+/* Single-line contentEditable with placeholder + onBlur commit. */
+function EditableText({
+  value, placeholder, editable, className, onCommit,
+}: {
+  value: string;
+  placeholder?: string;
+  editable: boolean;
+  className?: string;
+  onCommit: (v: string) => void;
+}) {
+  const ref = useRef<HTMLSpanElement | null>(null);
+  // Keep DOM text in sync with prop when it changes from outside (e.g. seed swap).
+  useEffect(() => {
+    if (ref.current && ref.current.textContent !== value) {
+      ref.current.textContent = value;
+    }
+  }, [value]);
+  return (
+    <span
+      ref={ref}
+      className={className}
+      contentEditable={editable}
+      suppressContentEditableWarning
+      data-placeholder={placeholder}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') { e.preventDefault(); (e.currentTarget as HTMLElement).blur(); }
+        if (e.key === 'Escape') { (e.currentTarget as HTMLElement).blur(); }
+      }}
+      onBlur={(e) => {
+        const v = e.currentTarget.textContent ?? '';
+        if (v !== value) onCommit(v);
+      }}
+    >
+      {value}
+    </span>
+  );
+}
+
 interface CondActions {
+  onSetExprText: (text: string) => void;
+  onSetBranchLabel: (branchId: string, label: string) => void;
+  onSetBranchPredicate: (branchId: string, predicate: string) => void;
   onAddBranch: () => void;
   onRemoveBranch: (branchId: string) => void;
   onAddStepInBranch: (branchId: string) => void;
@@ -314,16 +355,42 @@ function StepRow({
         <span className={styles.stepDot}><StatusDot status="idle" /></span>
         <span className={styles.stepNum}>{num}</span>
         <span className={styles.stepBody}>
-          <span className={styles.condExpr}>{step.exprText}</span>
+          <EditableText
+            className={styles.condExpr}
+            value={step.exprText}
+            placeholder="Describe what to check (e.g. ‘Check whether the tour is available.’)"
+            editable={!!editable}
+            onCommit={(v) => condActions?.onSetExprText(v)}
+          />
           <div className={styles.branches}>
             {step.branches.map((b, bi) => {
               const isDefault = b.label === 'else' || !b.predicate;
-              const branchHeader = isDefault ? 'Otherwise' : (bi === 0 ? `If ${b.label}` : `If ${b.label}`);
               return (
                 <div key={b.id} className={styles.branch}>
                   <div className={styles.branchHead}>
-                    <span className={styles.branchLabel}>{branchHeader}</span>
-                    {b.predicate && !isDefault && <code className={styles.branchPredInline}>{b.predicate}</code>}
+                    <span className={styles.branchLabelLead}>{isDefault && bi > 0 ? 'Otherwise' : 'If'}</span>
+                    <EditableText
+                      className={styles.branchLabel}
+                      value={b.label}
+                      placeholder="condition label"
+                      editable={!!editable && !(isDefault && bi > 0)}
+                      onCommit={(v) => condActions?.onSetBranchLabel(b.id, v)}
+                    />
+                    <EditableText
+                      className={styles.branchPredInline}
+                      value={b.predicate ?? ''}
+                      placeholder="predicate"
+                      editable={!!editable}
+                      onCommit={(v) => condActions?.onSetBranchPredicate(b.id, v)}
+                    />
+                    {!isDefault && editable && condActions && (
+                      <button
+                        className={styles.branchRemoveBtn}
+                        onClick={(e) => { e.stopPropagation(); condActions.onRemoveBranch(b.id); }}
+                        title="Remove this branch"
+                        type="button"
+                      ><RiCloseLine /></button>
+                    )}
                   </div>
                   {b.steps.map((bs, si) => {
                     if (bs.kind !== 'action') return null;
@@ -352,9 +419,23 @@ function StepRow({
                       />
                     );
                   })}
+                  {editable && condActions && (
+                    <button
+                      className={styles.branchAddStepBtn}
+                      onClick={(e) => { e.stopPropagation(); condActions.onAddStepInBranch(b.id); }}
+                      type="button"
+                    ><RiAddLine /> Add step in this branch</button>
+                  )}
                 </div>
               );
             })}
+            {editable && condActions && (
+              <button
+                className={styles.branchAddBranchBtn}
+                onClick={(e) => { e.stopPropagation(); condActions.onAddBranch(); }}
+                type="button"
+              ><RiAddLine /> Add branch</button>
+            )}
           </div>
         </span>
         {actions && (
@@ -1586,7 +1667,10 @@ export default function CanvasPage() {
         <LeftPalette
           collapsed={state.paletteCollapsed}
           onToggle={state.togglePalette}
-          onInsert={state.insertAction}
+          onInsert={(actionId) => {
+            if (actionId === 'condition') state.insertConditionStep();
+            else state.insertAction(actionId);
+          }}
           query={paletteQuery}
           setQuery={setPaletteQuery}
           onDragActionStart={(id) => { setDragKind('action'); setDragActionId(id); }}
@@ -1608,7 +1692,8 @@ export default function CanvasPage() {
                   if (!dragKind) return;
                   e.preventDefault();
                   if (dragKind === 'action' && dragActionId) {
-                    state.insertAction(dragActionId);
+                    if (dragActionId === 'condition') state.insertConditionStep();
+                    else state.insertAction(dragActionId);
                   }
                   clearDrag();
                 }}
@@ -1655,7 +1740,8 @@ export default function CanvasPage() {
                       state.moveStepToIndex(dragStepId, i);
                     } else if (dragKind === 'action' && dragActionId) {
                       // insert AFTER the dropped-on step
-                      state.insertAction(dragActionId, step.id);
+                      if (dragActionId === 'condition') state.insertConditionStep(step.id);
+                      else state.insertAction(dragActionId, step.id);
                     }
                     clearDrag();
                   };
@@ -1695,6 +1781,9 @@ export default function CanvasPage() {
                         condActions={
                           editable && step.kind === 'condition'
                             ? {
+                                onSetExprText:       (text) => state.setCondExprText(step.id, text),
+                                onSetBranchLabel:    (bid, label) => state.setBranchLabel(step.id, bid, label),
+                                onSetBranchPredicate:(bid, pred) => state.setBranchPredicate(step.id, bid, pred),
                                 onAddBranch:        () => state.addBranch(step.id),
                                 onRemoveBranch:     (bid) => state.removeBranch(step.id, bid),
                                 onAddStepInBranch:  (bid) => state.addStepInBranch(step.id, bid),
@@ -1739,7 +1828,12 @@ export default function CanvasPage() {
           onClose={state.closeSlash}
           onPick={(actionId) => {
             const s = state.slash!;
-            state.insertChipInStepAtOffset(s.stepId, actionId, s.textOffset);
+            // Condition is a STEP kind, not an inline chip — insert a condition step after the current step
+            if (actionId === 'condition') {
+              state.insertConditionStep(s.stepId);
+            } else {
+              state.insertChipInStepAtOffset(s.stepId, actionId, s.textOffset);
+            }
             state.closeSlash();
           }}
         />

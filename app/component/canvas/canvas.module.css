@@ -1104,7 +1104,23 @@
 .addStepBtn svg { width: 13px; height: 13px; }
 
 /* Condition step */
-.condExpr { color: var(--ink); font-weight: 500; }
+.condExpr {
+  color: var(--ink);
+  font-weight: 500;
+  outline: none;
+  display: inline-block;
+  padding: 0 2px;
+  border-radius: 3px;
+  min-width: 4ch;
+}
+.condExpr:focus { background: var(--surface-soft); }
+.condExpr:empty::before {
+  content: attr(data-placeholder);
+  color: var(--muted-soft);
+  font-style: italic;
+  font-weight: 400;
+  pointer-events: none;
+}
 
 .branches {
   display: flex;
@@ -1117,18 +1133,38 @@
   flex-direction: column;
   gap: 4px;
   padding-left: 18px;
+  position: relative;
 }
 .branchHead {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: 6px;
   margin-bottom: 2px;
+}
+.branchLabelLead {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 500;
+  letter-spacing: -.005em;
 }
 .branchLabel {
   font-size: 13px;
   color: var(--muted);
   font-weight: 500;
   letter-spacing: -.005em;
+  outline: none;
+  display: inline-block;
+  padding: 0 2px;
+  border-radius: 3px;
+  min-width: 3ch;
+}
+.branchLabel:focus { background: var(--surface-soft); color: var(--ink); }
+.branchLabel:empty::before {
+  content: attr(data-placeholder);
+  color: var(--muted-soft);
+  font-style: italic;
+  font-weight: 400;
+  pointer-events: none;
 }
 .branchPredInline {
   font-family: var(--mono);
@@ -1138,6 +1174,16 @@
   padding: 1px 6px;
   border-radius: 3px;
   display: inline-block;
+  outline: none;
+  min-width: 6ch;
+}
+.branchPredInline:focus { background: var(--card); box-shadow: 0 0 0 1px var(--primary); }
+.branchPredInline:empty::before {
+  content: attr(data-placeholder);
+  color: var(--muted-soft);
+  font-style: italic;
+  font-family: var(--font);
+  pointer-events: none;
 }
 .branchSubrow {
   display: grid;
@@ -1177,6 +1223,7 @@
   color: var(--muted);
 }
 
+/* Branch × — hover-only (revealed when hovering this branch or while editing inside) */
 .branchRemoveBtn {
   display: inline-grid;
   place-items: center;
@@ -1187,17 +1234,22 @@
   border-radius: 3px;
   cursor: pointer;
   margin-left: auto;
-  transition: background var(--d-hover) var(--ease-snap), color var(--d-hover) var(--ease-snap);
+  opacity: 0;
+  transition: background var(--d-hover) var(--ease-snap), color var(--d-hover) var(--ease-snap), opacity var(--d-hover) var(--ease-snap);
 }
 .branchRemoveBtn:hover { background: rgba(220, 38, 38, .08); color: var(--state-error); }
 .branchRemoveBtn svg { width: 11px; height: 11px; }
+.branch:hover > .branchHead > .branchRemoveBtn,
+.branch:focus-within > .branchHead > .branchRemoveBtn { opacity: 1; }
 
+/* Add step in this branch — hover-only, sits below last sub-row */
 .branchAddStepBtn {
+  align-self: flex-start;
   display: inline-flex;
   align-items: center;
   gap: 4px;
   margin-left: 36px;
-  margin-top: 6px;
+  margin-top: 4px;
   padding: 3px 10px;
   background: transparent;
   border: 1px dashed var(--hairline-strong);
@@ -1206,29 +1258,37 @@
   font-weight: 500;
   color: var(--muted);
   cursor: pointer;
-  transition: color var(--d-hover) var(--ease-snap), border-color var(--d-hover) var(--ease-snap);
+  opacity: 0;
+  transition: color var(--d-hover) var(--ease-snap), border-color var(--d-hover) var(--ease-snap), opacity var(--d-hover) var(--ease-snap);
 }
 .branchAddStepBtn:hover { color: var(--ink); border-color: var(--ink); }
 .branchAddStepBtn svg { width: 11px; height: 11px; }
+.branch:hover > .branchAddStepBtn,
+.branch:focus-within > .branchAddStepBtn { opacity: 1; }
 
+/* Add branch — hover-only at condition bottom (revealed when condition row is hovered) */
 .branchAddBranchBtn {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  margin-top: 10px;
-  padding: 4px 12px;
+  margin-top: 8px;
+  padding: 3px 10px;
   background: transparent;
-  border: 1px dashed var(--state-running);
-  border-radius: var(--r-sm);
-  font-size: 11.5px;
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--r-pill);
+  font-size: 11px;
   font-weight: 500;
-  color: var(--state-running);
+  color: var(--muted);
   cursor: pointer;
-  transition: background var(--d-hover) var(--ease-snap);
   align-self: flex-start;
+  opacity: 0;
+  transition: color var(--d-hover) var(--ease-snap), border-color var(--d-hover) var(--ease-snap), opacity var(--d-hover) var(--ease-snap);
 }
-.branchAddBranchBtn:hover { background: rgba(124, 58, 237, .06); }
+.branchAddBranchBtn:hover { color: var(--ink); border-color: var(--ink); }
 .branchAddBranchBtn svg { width: 11px; height: 11px; }
+/* Reveal when condition row is hovered or has focus inside — but NOT when only a sub-row is hovered */
+.stepRow:hover > .stepBody > .branches > .branchAddBranchBtn,
+.stepRow:focus-within > .stepBody > .branches > .branchAddBranchBtn { opacity: 1; }
 
 /* ============================================================ */
 /* Chip atom — DESIGN H: bucket-tinted soft pill                  */

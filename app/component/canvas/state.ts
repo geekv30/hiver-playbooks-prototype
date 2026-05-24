@@ -1,6 +1,6 @@
 'use client';
 import { useCallback, useEffect, useReducer, useRef } from 'react';
-import type { Playbook, Chip, ChipStatus, TraceEntry, AnyStep, Step, Frag } from './data';
+import type { Playbook, Chip, ChipStatus, TraceEntry, AnyStep, Step, ConditionStep, Frag } from './data';
 import { PLAYBOOKS, WALK_JAPAN_SEED, MOCK_TRACE_OUTPUTS, findAction } from './data';
 import { insertChipAtTextOffset } from './dom-parse';
 
@@ -303,6 +303,31 @@ export function useCanvasState() {
     });
   }, [mutate]);
 
+  const insertConditionStep = useCallback((afterStepId?: string) => {
+    mutate((pb) => {
+      const stepId = `cond-${Date.now()}`;
+      const newStep: ConditionStep = {
+        id: stepId,
+        kind: 'condition',
+        exprText: '',
+        branches: [
+          { id: `b-${Date.now()}-y`,   label: 'yes', predicate: 'expression == "yes"', steps: [] },
+          { id: `b-${Date.now()}-e`,   label: 'else',                                    steps: [] },
+        ],
+      };
+      if (afterStepId) {
+        const idx = pb.steps.findIndex((s) => s.id === afterStepId);
+        if (idx >= 0) return { ...pb, steps: [...pb.steps.slice(0, idx + 1), newStep, ...pb.steps.slice(idx + 1)] };
+      }
+      const lastIdx = pb.steps.length - 1;
+      const last = pb.steps[lastIdx];
+      if (last && last.kind === 'end') {
+        return { ...pb, steps: [...pb.steps.slice(0, lastIdx), newStep, last] };
+      }
+      return { ...pb, steps: [...pb.steps, newStep] };
+    });
+  }, [mutate]);
+
   const insertEmptyStep = useCallback((afterStepId?: string) => {
     mutate((pb) => {
       const stepId = `step-${Date.now()}`;
@@ -526,6 +551,35 @@ export function useCanvasState() {
   /* ============================================================ */
   /* Condition branch + sub-step mutations                          */
   /* ============================================================ */
+
+  const setCondExprText = useCallback((condStepId: string, exprText: string) => {
+    mutate((pb) => ({
+      ...pb,
+      steps: pb.steps.map((s) =>
+        s.id !== condStepId || s.kind !== 'condition' ? s : { ...s, exprText }
+      ),
+    }));
+  }, [mutate]);
+
+  const setBranchLabel = useCallback((condStepId: string, branchId: string, label: string) => {
+    mutate((pb) => ({
+      ...pb,
+      steps: pb.steps.map((s) => {
+        if (s.id !== condStepId || s.kind !== 'condition') return s;
+        return { ...s, branches: s.branches.map((b) => b.id !== branchId ? b : { ...b, label }) };
+      }),
+    }));
+  }, [mutate]);
+
+  const setBranchPredicate = useCallback((condStepId: string, branchId: string, predicate: string) => {
+    mutate((pb) => ({
+      ...pb,
+      steps: pb.steps.map((s) => {
+        if (s.id !== condStepId || s.kind !== 'condition') return s;
+        return { ...s, branches: s.branches.map((b) => b.id !== branchId ? b : { ...b, predicate }) };
+      }),
+    }));
+  }, [mutate]);
 
   const addBranch = useCallback((condStepId: string) => {
     mutate((pb) => ({
@@ -816,6 +870,7 @@ export function useCanvasState() {
     setSummary,
     updateChipById,
     insertAction,
+    insertConditionStep,
     insertEmptyStep,
     removeStep,
     moveStepUp,
@@ -824,6 +879,9 @@ export function useCanvasState() {
     duplicateStep,
     setStepFragments,
     setTriggerFragments,
+    setCondExprText,
+    setBranchLabel,
+    setBranchPredicate,
     addBranch,
     removeBranch,
     addStepInBranch,
