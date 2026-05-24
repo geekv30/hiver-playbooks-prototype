@@ -62,7 +62,7 @@ function Chip({
   if (selected) cls.push(styles.chipSelected);
   if (large)    cls.push(styles.chipLarge);
   return (
-    <span className={cls.join(' ')} onClick={onClick} data-chip data-chip-id={chip.id} tabIndex={0}>
+    <span className={cls.join(' ')} data-bucket={chip.bucket} onClick={onClick} data-chip data-chip-id={chip.id} tabIndex={0}>
       <span className={styles.chipIco}><Icon /></span>
       {chip.brand && (
         <>

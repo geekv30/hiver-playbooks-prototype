@@ -44,13 +44,14 @@ function Tools() {
 }
 
 function Chip({
-  icon, brand, verb, meta, selected, onClick,
+  icon, brand, verb, meta, selected, bucket, onClick,
 }: {
-  icon?: React.ReactNode; brand?: string; verb: string; meta?: string; selected?: boolean; onClick?: (e: React.MouseEvent) => void;
+  icon?: React.ReactNode; brand?: string; verb: string; meta?: string; selected?: boolean; bucket?: 'read' | 'ticket' | 'external' | 'human' | 'wait' | 'flow'; onClick?: (e: React.MouseEvent) => void;
 }) {
   return (
     <span
       className={`${styles.chip} ${selected ? styles.chipSelected : ''}`}
+      data-bucket={bucket}
       onClick={onClick}
       data-chip
     >
@@ -213,6 +214,7 @@ export default function NodeComponentPage() {
                 brand="AI"
                 verb="Extract"
                 meta="tour · dates · group · concerns"
+                bucket="read"
                 selected={inspectorChip === 'extract'}
                 onClick={(e) => { e.stopPropagation(); setInspectorChip(inspectorChip === 'extract' ? null : 'extract'); }}
               />
@@ -241,6 +243,7 @@ export default function NodeComponentPage() {
                 brand="Sheets"
                 verb="Get rows"
                 meta="bookings sheet"
+                bucket="read"
                 selected={inspectorChip === 'sheets'}
                 onClick={(e) => { e.stopPropagation(); setInspectorChip(inspectorChip === 'sheets' ? null : 'sheets'); }}
               />
@@ -248,7 +251,7 @@ export default function NodeComponentPage() {
             </NodeCard>
 
             <NodeCard status={liveStatus('idle', 2)} num="03">
-              <Chip icon={<SiHubspot />} brand="HubSpot" verb="Find contact" meta="by from_email" />
+              <Chip icon={<SiHubspot />} brand="HubSpot" verb="Find contact" meta="by from_email" bucket="read" />
               {' '}to attach the lead history.
             </NodeCard>
 
@@ -257,6 +260,7 @@ export default function NodeComponentPage() {
                 icon={<RiPriceTag3Line />}
                 verb="Tag"
                 meta="@tour.name"
+                bucket="ticket"
                 selected={inspectorChip === 'tag'}
                 onClick={(e) => { e.stopPropagation(); setInspectorChip(inspectorChip === 'tag' ? null : 'tag'); }}
               />
@@ -264,7 +268,7 @@ export default function NodeComponentPage() {
             </NodeCard>
 
             <NodeCard status={liveStatus('idle', 4)} num="05">
-              Send <Chip icon={<RiReplyLine />} verb="Draft reply" meta="availability + KB" /> using <RefChip name="tour.dates" src="01" /> and <RefChip name="customer.history" src="03" />.
+              Send <Chip icon={<RiReplyLine />} verb="Draft reply" meta="availability + KB" bucket="ticket" /> using <RefChip name="tour.dates" src="01" /> and <RefChip name="customer.history" src="03" />.
             </NodeCard>
 
             {/* Slide-in inspector overlay */}
@@ -433,11 +437,11 @@ export default function NodeComponentPage() {
               <div className={styles.branches}>
                 <div className={styles.branch}>
                   <span className={styles.branchTag}>Then</span>
-                  Send <Chip icon={<RiReplyLine />} verb="Draft reply" meta="availability + KB" /> with confirmation.
+                  Send <Chip icon={<RiReplyLine />} verb="Draft reply" meta="availability + KB" bucket="ticket" /> with confirmation.
                 </div>
                 <div className={styles.branch}>
                   <span className={styles.branchTag}>Else</span>
-                  Send <Chip icon={<RiReplyLine />} verb="Draft reply" meta="alternatives" /> and tag the conversation.
+                  Send <Chip icon={<RiReplyLine />} verb="Draft reply" meta="alternatives" bucket="ticket" /> and tag the conversation.
                 </div>
               </div>
             </div>

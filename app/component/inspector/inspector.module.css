@@ -178,7 +178,7 @@
   background: var(--card);
   border: 1px solid var(--hairline);
   border-radius: var(--r-md);
-  padding: 14px 16px 16px;
+  padding: 16px;
   box-shadow: 0 1px 0 rgba(15, 15, 17, .03);
   transition: box-shadow var(--d-hover) var(--ease-snap), border-color var(--d-hover) var(--ease-snap), filter 200ms var(--ease-snap);
   display: flex;
@@ -222,55 +222,84 @@
   line-height: 1.5;
 }
 .demoCardChip {
-  margin-top: 6px;
+  margin-top: 0;
   display: flex;
   align-items: center;
 }
 
 /* ============================================================ */
-/* Chip atom                                                      */
+/* Chip atom — Design H (bucket-tinted soft pill, no border)      */
+/* Mirrors /component/canvas chip recipe                          */
 /* ============================================================ */
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 3px 8px 3px 6px;
+  gap: 5px;
+  height: 22px;
+  padding: 0 9px 0 7px;
   border-radius: var(--r-sm);
-  background: var(--card);
-  border: 1px solid var(--hairline);
+  background: var(--surface-soft);
+  border: 0;
   font-family: var(--font);
   font-size: 12.5px;
+  line-height: 1;
   color: var(--ink);
   cursor: pointer;
   user-select: none;
-  transition: background var(--d-hover) var(--ease-snap), border-color var(--d-hover) var(--ease-snap), box-shadow var(--d-hover) var(--ease-snap);
+  vertical-align: -6px;
+  transition: background var(--d-hover) var(--ease-snap), box-shadow var(--d-hover) var(--ease-snap), filter var(--d-hover) var(--ease-snap);
+  margin: 0 1px;
+  white-space: nowrap;
 }
-.chip:hover { background: var(--surface-soft); border-color: var(--hairline-strong); }
+.chip:hover { filter: brightness(.97); }
 .chip:focus-visible { outline: 0; box-shadow: 0 0 0 2px var(--primary-ring); }
-.chipSelected {
-  border-color: var(--primary);
-  background: var(--primary-tint);
-  box-shadow: 0 0 0 1px var(--primary);
+
+.chip[data-bucket="read"]     { background: rgba(212, 160, 90, .14); }
+.chip[data-bucket="ticket"]   { background: rgba(93, 160, 217, .14); }
+.chip[data-bucket="external"] { background: rgba(95, 182, 156, .14); }
+.chip[data-bucket="human"]    { background: rgba(168, 139, 216, .14); }
+.chip[data-bucket="wait"]     { background: rgba(210, 177, 118, .14); }
+.chip[data-bucket="flow"]     { background: rgba(216, 159, 136, .14); }
+
+.chipSelected,
+.chipSelected[data-bucket] {
+  box-shadow: inset 0 0 0 1.5px var(--primary);
 }
-.chipLarge { padding: 5px 10px 5px 8px; font-size: 13px; }
+.chipSelected .chipVerb { color: var(--primary); }
+
+/* chipLarge keeps the bucket recipe but bumps the dimensions for use in the Inspector header */
+.chipLarge { height: 26px; padding: 0 11px 0 9px; font-size: 13px; }
+
 .chipIco {
-  width: 16px; height: 16px;
+  width: 13px; height: 13px;
   display: inline-grid; place-items: center;
   color: var(--ink);
+  flex: none;
   line-height: 1;
+  opacity: .6;
 }
-.chipIco svg { width: 14px; height: 14px; }
-.chipBrand { color: var(--muted); font-weight: 400; }
-.chipSep { color: var(--muted-soft); }
-.chipVerb { color: var(--ink); font-weight: 500; letter-spacing: -.005em; }
+.chipIco svg { width: 12px; height: 12px; }
+.chipLarge .chipIco { width: 15px; height: 15px; }
+.chipLarge .chipIco svg { width: 14px; height: 14px; }
+.chip[data-bucket="read"]     .chipIco { color: #8E6526; }
+.chip[data-bucket="ticket"]   .chipIco { color: #2C5478; }
+.chip[data-bucket="external"] .chipIco { color: #2B6E5B; }
+.chip[data-bucket="human"]    .chipIco { color: #5A3F8A; }
+.chip[data-bucket="wait"]     .chipIco { color: #7A5926; }
+.chip[data-bucket="flow"]     .chipIco { color: #874025; }
+
+.chipBrand { color: var(--muted); font-weight: 400; line-height: 1; }
+.chipSep { color: var(--muted-soft); line-height: 1; }
+.chipVerb { color: var(--ink); font-weight: 500; letter-spacing: -.005em; line-height: 1; }
 .chipMeta {
   font-family: var(--mono);
-  font-size: 10.5px;
+  font-size: 10px;
   color: var(--muted);
-  padding-left: 7px;
-  margin-left: 1px;
-  border-left: 1px solid var(--hairline);
+  padding-left: 6px;
+  margin-left: 2px;
   letter-spacing: .01em;
+  line-height: 1;
+  opacity: .85;
 }
 
 /* ============================================================ */

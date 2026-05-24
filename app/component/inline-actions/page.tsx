@@ -88,7 +88,7 @@ function Chip({ action, status, selected, unconfigured, disabled, error, onClick
   if (disabled) cls.push(styles.chipDisabled);
   if (error) cls.push(styles.chipError);
   return (
-    <span className={cls.join(' ')} onClick={onClick} tabIndex={0}>
+    <span className={cls.join(' ')} data-bucket={action.bucket} onClick={onClick} tabIndex={0}>
       <span className={styles.chipIco}><Icon /></span>
       {action.brand && (
         <>
