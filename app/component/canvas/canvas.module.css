@@ -656,8 +656,8 @@
   transition: box-shadow var(--d-hover) var(--ease-snap), border-color var(--d-hover) var(--ease-snap), background var(--d-hover) var(--ease-snap);
 }
 .stepRow:hover { box-shadow: 0 2px 6px rgba(15,15,17,.04); border-color: var(--hairline-strong); }
-.stepRow:hover .stepActions,
-.stepRow:focus-within .stepActions {
+.stepRow:hover > .stepActions,
+.stepRow:focus-within > .stepActions {
   opacity: 1;
   transform: translateY(0);
 }
@@ -823,8 +823,8 @@
 .stepKebabBtn svg { width: 14px; height: 14px; }
 .stepKebabBtnOpen { background: var(--surface-soft); color: var(--ink); }
 /* Keep menu's parent visible while menu open, even if hover leaves */
-.stepRow:has(.stepKebabBtnOpen) .stepActions,
-.branchSubrow:has(.stepKebabBtnOpen) .stepActions { opacity: 1; }
+.stepRow > .stepActions:has(.stepKebabBtnOpen),
+.branchSubrow > .stepActions:has(.stepKebabBtnOpen) { opacity: 1; }
 
 .stepKebabMenu {
   position: absolute;
