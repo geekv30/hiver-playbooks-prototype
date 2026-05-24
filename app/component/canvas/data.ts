@@ -213,28 +213,28 @@ export const WALK_JAPAN_SEED: Playbook = {
     name: 'Tour enquiry',
     triggerFragments: [
       { kind: 'ref',  refPath: 'info@walkjapan.com' },
-      { kind: 'text', text: ' receives an email containing ' },
-      { kind: 'code', code: '"tour"' },
+      { kind: 'text', text: ' receives a tour enquiry.' },
     ],
-    summary: 'Auto-triage incoming tour requests: extract details, check availability, draft the right reply, and pull the right team in if needed.',
+    summary: 'Get the team 80% of the way to a reply, then leave the last 20% to a human who can keep the Walk Japan voice.',
   },
   steps: [
     {
       id: 'step-01',
       kind: 'action',
       fragments: [
-        { kind: 'chip', chip: { id: 'c-01', actionId: 'ai_extract', status: 'idle', meta: 'tour · dates · group · concerns' } },
-        { kind: 'text', text: ' from the inbound message.' },
+        { kind: 'text', text: 'First, ' },
+        { kind: 'chip', chip: { id: 'c-01', actionId: 'ai_extract', status: 'idle', meta: 'tour · dates · group size · concerns' } },
+        { kind: 'text', text: ' from the email in one line — which tour, what dates, group size, and any special concerns (fitness, dietary, accessibility).' },
       ],
     },
     {
       id: 'step-02',
       kind: 'action',
       fragments: [
-        { kind: 'chip', chip: { id: 'c-02', actionId: 'sheets_get', status: 'idle', meta: 'GET bookings sheet' } },
-        { kind: 'text', text: ' to check availability for ' },
+        { kind: 'chip', chip: { id: 'c-02', actionId: 'sheets_get', status: 'idle', meta: 'bookings sheet' } },
+        { kind: 'text', text: ' to see if ' },
         { kind: 'ref',  refPath: 'ai_extract.output.tour' },
-        { kind: 'text', text: '.' },
+        { kind: 'text', text: ' on those dates is available, partially available, or full.' },
       ],
     },
     {
@@ -242,21 +242,21 @@ export const WALK_JAPAN_SEED: Playbook = {
       kind: 'action',
       fragments: [
         { kind: 'chip', chip: { id: 'c-03', actionId: 'hubspot_find', status: 'idle', meta: 'by from_email' } },
-        { kind: 'text', text: ' so we can personalise the reply.' },
+        { kind: 'text', text: ' — are they a repeat guest, new, or have they enquired before?' },
       ],
     },
     {
       id: 'step-04',
       kind: 'action',
       fragments: [
-        { kind: 'chip', chip: { id: 'c-04', actionId: 'kb_search', status: 'idle', meta: 'overview · fitness · dietary' } },
-        { kind: 'text', text: ' for relevant articles.' },
+        { kind: 'chip', chip: { id: 'c-04', actionId: 'kb_search', status: 'idle', meta: 'tour overview · fitness · dietary' } },
+        { kind: 'text', text: ' — the tour overview, the fitness-level guide, and the dietary FAQ. Keep those links handy for the draft.' },
       ],
     },
     {
       id: 'step-05',
       kind: 'condition',
-      exprText: 'Availability check',
+      exprText: 'Check whether the tour is available on those dates.',
       branches: [
         {
           id: 'b-yes',
@@ -267,8 +267,8 @@ export const WALK_JAPAN_SEED: Playbook = {
               id: 'step-05a',
               kind: 'action',
               fragments: [
-                { kind: 'chip', chip: { id: 'c-05a', actionId: 'draft_reply', status: 'idle', meta: 'availability + KB links' } },
-                { kind: 'text', text: ' with tour confirmation and supporting articles.' },
+                { kind: 'chip', chip: { id: 'c-05a', actionId: 'draft_reply', status: 'idle', meta: 'warm + availability + KB links' } },
+                { kind: 'text', text: ' — warm voice, the availability, fitness/dietary notes from the right articles, help-center links, and an invitation to hold the dates.' },
               ],
             },
           ],
@@ -282,8 +282,8 @@ export const WALK_JAPAN_SEED: Playbook = {
               id: 'step-05b',
               kind: 'action',
               fragments: [
-                { kind: 'chip', chip: { id: 'c-05b', actionId: 'draft_reply', status: 'idle', meta: 'alternatives + similar tours' } },
-                { kind: 'text', text: ' suggesting other dates.' },
+                { kind: 'chip', chip: { id: 'c-05b', actionId: 'draft_reply', status: 'idle', meta: 'sorry + alternatives + similar tours' } },
+                { kind: 'text', text: ' — "sorry it’s not open then, but here’s what’s similar" — two alternative dates or two similar tours, with help-center links.' },
               ],
             },
           ],
@@ -294,32 +294,35 @@ export const WALK_JAPAN_SEED: Playbook = {
       id: 'step-06',
       kind: 'action',
       fragments: [
-        { kind: 'chip', chip: { id: 'c-06', actionId: 'tag', status: 'idle', meta: '@tour.name' } },
-        { kind: 'text', text: ' so the team can sort by tour.' },
+        { kind: 'chip', chip: { id: 'c-06', actionId: 'tag', status: 'idle', meta: 'the tour name' } },
+        { kind: 'text', text: ' so we can track interest per tour.' },
       ],
     },
     {
       id: 'step-07',
       kind: 'action',
       fragments: [
-        { kind: 'chip', chip: { id: 'c-07', actionId: 'note', status: 'idle', meta: 'tour · dates · group · concerns' } },
-        { kind: 'text', text: ' so the on-shift agent has full context.' },
+        { kind: 'text', text: 'Leave a private ' },
+        { kind: 'chip', chip: { id: 'c-07', actionId: 'note', status: 'idle', meta: 'tour · dates · group size · concerns' } },
+        { kind: 'text', text: ' — so the sender has the full picture without re-reading the thread.' },
       ],
     },
     {
       id: 'step-08',
       kind: 'action',
       fragments: [
-        { kind: 'chip', chip: { id: 'c-08', actionId: 'http', status: 'idle', meta: 'POST Airtable · enquiries' } },
-        { kind: 'text', text: ' for analytics archive.' },
+        { kind: 'text', text: 'Log a row in our enquiries tracker: ' },
+        { kind: 'chip', chip: { id: 'c-08', actionId: 'http', status: 'idle', meta: 'Airtable · customer · tour · dates · source · status' } },
+        { kind: 'text', text: '.' },
       ],
     },
     {
       id: 'step-09',
       kind: 'action',
       fragments: [
-        { kind: 'chip', chip: { id: 'c-09', actionId: 'assign', status: 'idle', meta: 'on-shift inbox' } },
-        { kind: 'text', text: '.' },
+        { kind: 'text', text: 'Hand the draft over: ' },
+        { kind: 'chip', chip: { id: 'c-09', actionId: 'assign', status: 'idle', meta: 'whoever’s on inbox duty' } },
+        { kind: 'text', text: '. They’ll read it, rewrite anything that doesn’t sound like us, add the personal touches, and send.' },
       ],
     },
     {
@@ -334,14 +337,15 @@ export const WALK_JAPAN_SEED: Playbook = {
       id: 'step-11',
       kind: 'action',
       fragments: [
+        { kind: 'text', text: 'If we haven’t heard back, ' },
         { kind: 'chip', chip: { id: 'c-11', actionId: 'tag', status: 'idle', meta: 'warm-follow-up-needed' } },
-        { kind: 'text', text: ' if no response by then.' },
+        { kind: 'text', text: ' and tell the human — we don’t auto-send nudges to enquiries. A human writes that one too.' },
       ],
     },
     {
       id: 'step-12',
       kind: 'end',
-      reason: 'tour-enquiry handled',
+      reason: 'enquiry handled',
     },
   ],
 };
@@ -356,18 +360,18 @@ export const DEVANSH_API_SEED: Playbook = {
     name: 'API error reply',
     triggerFragments: [
       { kind: 'ref',  refPath: 'dev-support@theirco.com' },
-      { kind: 'text', text: ' receives an email mentioning ' },
-      { kind: 'code', code: 'HTTP status / stack trace / endpoint' },
+      { kind: 'text', text: ' receives an email with an HTTP status code, a stack trace, or one of our endpoints.' },
     ],
-    summary: 'Diagnose API errors from devs, draft a careful reply with KB sources, and route to on-shift dev-support for approval before sending.',
+    summary: 'Let the AI do the boring research and drafting. Route every reply through the on-shift engineer before it goes out. Anything high-impact gets a second approval.',
   },
   steps: [
     {
       id: 'dv-01',
       kind: 'action',
       fragments: [
-        { kind: 'chip', chip: { id: 'dv-c01', actionId: 'ai_extract', status: 'idle', meta: 'error_code · http_status · endpoint · sdk · payload' } },
-        { kind: 'text', text: ' from the inbound message.' },
+        { kind: 'text', text: 'First, ' },
+        { kind: 'chip', chip: { id: 'dv-c01', actionId: 'ai_extract', status: 'idle', meta: 'error code · HTTP status · endpoint · when · SDK · payload (sanitized)' } },
+        { kind: 'text', text: ' — the bits that matter.' },
       ],
     },
     {
@@ -375,49 +379,51 @@ export const DEVANSH_API_SEED: Playbook = {
       kind: 'action',
       fragments: [
         { kind: 'chip', chip: { id: 'dv-c02', actionId: 'tag', status: 'idle', meta: 'api-error' } },
-        { kind: 'text', text: ' and route to developer-support.' },
+        { kind: 'text', text: ' and route it to developer-support.' },
       ],
     },
     {
       id: 'dv-03',
       kind: 'action',
       fragments: [
-        { kind: 'chip', chip: { id: 'dv-c03', actionId: 'hubspot_find', status: 'idle', meta: 'by from_email' } },
-        { kind: 'text', text: ' for the requester’s contact + company.' },
+        { kind: 'chip', chip: { id: 'dv-c03', actionId: 'hubspot_find', status: 'idle', meta: 'in HubSpot' } },
+        { kind: 'text', text: ' — which contact, which company.' },
       ],
     },
     {
       id: 'dv-04',
       kind: 'action',
       fragments: [
-        { kind: 'chip', chip: { id: 'dv-c04', actionId: 'salesforce_get', status: 'idle', meta: 'contract · SLA · rate-limit tier' } },
-        { kind: 'text', text: ' so we know what we owe them.' },
+        { kind: 'text', text: 'Then ' },
+        { kind: 'chip', chip: { id: 'dv-c04', actionId: 'salesforce_get', status: 'idle', meta: 'contract · API rate-limit tier · SLA terms' } },
+        { kind: 'text', text: ' for the company.' },
       ],
     },
     {
       id: 'dv-05',
       kind: 'action',
       fragments: [
-        { kind: 'chip', chip: { id: 'dv-c05', actionId: 'note', status: 'idle', meta: 'plan · SLA · contact summary' } },
-        { kind: 'text', text: ' so the approver has the picture.' },
+        { kind: 'text', text: 'Leave a private ' },
+        { kind: 'chip', chip: { id: 'dv-c05', actionId: 'note', status: 'idle', meta: 'who they are · plan · what SLA we owe them' } },
+        { kind: 'text', text: '.' },
       ],
     },
     {
       id: 'dv-06',
       kind: 'action',
       fragments: [
-        { kind: 'chip', chip: { id: 'dv-c06', actionId: 'kb_search', status: 'idle', meta: 'error code · sdk examples · changelog · incidents' } },
-        { kind: 'text', text: ' for relevant articles.' },
+        { kind: 'chip', chip: { id: 'dv-c06', actionId: 'kb_search', status: 'idle', meta: 'error docs · SDK examples · changelog · known incidents' } },
+        { kind: 'text', text: ' in our developer KB.' },
       ],
     },
     {
       id: 'dv-07',
       kind: 'condition',
-      exprText: 'diagnose error category',
+      exprText: 'Now figure out what kind of error this is and draft a fix.',
       branches: [
         {
           id: 'dv-b-auth',
-          label: 'auth',
+          label: "it's auth (401/403)",
           predicate: 'http_status in (401, 403)',
           steps: [
             {
@@ -425,36 +431,36 @@ export const DEVANSH_API_SEED: Playbook = {
               kind: 'action',
               fragments: [
                 { kind: 'chip', chip: { id: 'dv-c07a', actionId: 'draft_reply', status: 'idle', meta: 'scope walk-through + corrected request' } },
-                { kind: 'text', text: ' with a working example.' },
+                { kind: 'text', text: '.' },
               ],
             },
           ],
         },
         {
           id: 'dv-b-schema',
-          label: 'schema',
+          label: "it's a schema problem (400)",
           predicate: 'http_status == 400',
           steps: [
             {
               id: 'dv-07b',
               kind: 'action',
               fragments: [
-                { kind: 'chip', chip: { id: 'dv-c07b', actionId: 'draft_reply', status: 'idle', meta: 'point out malformed field + paste working code' } },
-                { kind: 'text', text: ' from KB examples.' },
+                { kind: 'chip', chip: { id: 'dv-c07b', actionId: 'draft_reply', status: 'idle', meta: 'point out the malformed field · paste a working code example' } },
+                { kind: 'text', text: '.' },
               ],
             },
           ],
         },
         {
           id: 'dv-b-rate',
-          label: 'rate-limit',
+          label: "it's a rate limit (429)",
           predicate: 'http_status == 429',
           steps: [
             {
               id: 'dv-07c',
               kind: 'action',
               fragments: [
-                { kind: 'chip', chip: { id: 'dv-c07c', actionId: 'draft_reply', status: 'idle', meta: 'reference SLA tier + rate-limit policy' } },
+                { kind: 'chip', chip: { id: 'dv-c07c', actionId: 'draft_reply', status: 'idle', meta: 'reference their SLA tier + our rate-limit policy' } },
                 { kind: 'text', text: '.' },
               ],
             },
@@ -462,15 +468,15 @@ export const DEVANSH_API_SEED: Playbook = {
         },
         {
           id: 'dv-b-server',
-          label: 'server',
+          label: "it's a server error (5xx)",
           predicate: 'http_status >= 500',
           steps: [
             {
               id: 'dv-07d',
               kind: 'action',
               fragments: [
-                { kind: 'chip', chip: { id: 'dv-c07d', actionId: 'draft_reply', status: 'idle', meta: 'incident-response template' } },
-                { kind: 'text', text: ' and link the live incident.' },
+                { kind: 'chip', chip: { id: 'dv-c07d', actionId: 'draft_reply', status: 'idle', meta: 'use our incident-response template' } },
+                { kind: 'text', text: '.' },
               ],
             },
           ],
@@ -481,53 +487,73 @@ export const DEVANSH_API_SEED: Playbook = {
       id: 'dv-08',
       kind: 'action',
       fragments: [
-        { kind: 'chip', chip: { id: 'dv-c08', actionId: 'note', status: 'idle', meta: 'diagnosis · KB sources · confidence /10' } },
-        { kind: 'text', text: ' before the human reviews.' },
+        { kind: 'text', text: 'Leave another private ' },
+        { kind: 'chip', chip: { id: 'dv-c08', actionId: 'note', status: 'idle', meta: 'diagnosis · KB articles used · draft preview · confidence out of 10' } },
+        { kind: 'text', text: '.' },
       ],
     },
     {
       id: 'dv-09',
       kind: 'action',
       fragments: [
-        { kind: 'chip', chip: { id: 'dv-c09', actionId: 'approval', status: 'idle', meta: 'on-shift dev-support · 1h · Slack + Hiver' } },
-        { kind: 'text', text: ' before anything sends. Approver sees email, parsed fields, diagnosis, draft, sources, SLA, confidence.' },
+        { kind: 'text', text: 'Now ask for ' },
+        { kind: 'chip', chip: { id: 'dv-c09', actionId: 'approval', status: 'idle', meta: 'on-shift dev-support · Slack DM + Hiver pending · 1h · escalate to backup engineer · off-hours → next shift' } },
+        { kind: 'text', text: ' before anything sends. They see the original email, the parsed bits, your diagnosis, the drafted reply, the KB sources, the customer’s SLA, and your confidence score. Three outcomes: Approve · Edit and approve · Reject.' },
       ],
     },
     {
       id: 'dv-10',
       kind: 'condition',
-      exprText: 'approval outcome',
+      exprText: 'How did the approver respond?',
       branches: [
         {
           id: 'dv-b-approved',
-          label: 'approved',
-          predicate: 'approval == "approve" or "edit-and-approve"',
+          label: 'they approved (as-is)',
+          predicate: 'approval == "approve"',
           steps: [
             {
               id: 'dv-10a',
               kind: 'action',
               fragments: [
-                { kind: 'chip', chip: { id: 'dv-c10a', actionId: 'send_reply', status: 'idle', meta: 'as approved' } },
-                { kind: 'text', text: ', tag ' },
+                { kind: 'chip', chip: { id: 'dv-c10a', actionId: 'send_reply', status: 'idle', meta: 'as drafted' } },
+                { kind: 'text', text: ', ' },
                 { kind: 'chip', chip: { id: 'dv-c10b', actionId: 'tag', status: 'idle', meta: 'auto-drafted-approved' } },
-                { kind: 'text', text: ', move to Pending.' },
+                { kind: 'text', text: ', and move the ticket to Pending.' },
+              ],
+            },
+          ],
+        },
+        {
+          id: 'dv-b-edited',
+          label: 'they edited and approved',
+          predicate: 'approval == "edit-and-approve"',
+          steps: [
+            {
+              id: 'dv-10c',
+              kind: 'action',
+              fragments: [
+                { kind: 'chip', chip: { id: 'dv-c10c', actionId: 'send_reply', status: 'idle', meta: 'with the approver’s edits' } },
+                { kind: 'text', text: ', ' },
+                { kind: 'chip', chip: { id: 'dv-c10d', actionId: 'tag', status: 'idle', meta: 'auto-drafted-approved' } },
+                { kind: 'text', text: ', and move the ticket to Pending.' },
               ],
             },
           ],
         },
         {
           id: 'dv-b-rejected',
-          label: 'rejected',
+          label: 'they rejected',
           predicate: 'approval == "reject"',
           steps: [
             {
-              id: 'dv-10c',
+              id: 'dv-10e',
               kind: 'action',
               fragments: [
-                { kind: 'chip', chip: { id: 'dv-c10d', actionId: 'note', status: 'idle', meta: 'rejection reason + correct diagnosis' } },
-                { kind: 'text', text: ', tag ' },
-                { kind: 'chip', chip: { id: 'dv-c10e', actionId: 'tag', status: 'idle', meta: 'manual-handling' } },
-                { kind: 'text', text: ', hand off to SE queue.' },
+                { kind: 'text', text: 'Leave a private ' },
+                { kind: 'chip', chip: { id: 'dv-c10f', actionId: 'note', status: 'idle', meta: 'rejection reason + correct diagnosis if given' } },
+                { kind: 'text', text: ', ' },
+                { kind: 'chip', chip: { id: 'dv-c10g', actionId: 'tag', status: 'idle', meta: 'manual-handling' } },
+                { kind: 'text', text: ', and hand off to the SE queue.' },
               ],
             },
           ],
@@ -536,6 +562,47 @@ export const DEVANSH_API_SEED: Playbook = {
     },
     {
       id: 'dv-11',
+      kind: 'condition',
+      exprText: 'Did the approver authorize anything high-impact while reviewing? Those need a second approval — the reply itself can go; the bumps and acks wait.',
+      branches: [
+        {
+          id: 'dv-b-bump',
+          label: 'they OK’d a rate-limit bump',
+          predicate: 'approval.flags has "rate_limit_bump"',
+          steps: [
+            {
+              id: 'dv-11a',
+              kind: 'action',
+              fragments: [
+                { kind: 'text', text: 'Get a second ' },
+                { kind: 'chip', chip: { id: 'dv-c11a', actionId: 'approval', status: 'idle', meta: 'Solutions Engineering lead' } },
+                { kind: 'text', text: ' before the bump goes through. If approved, ' },
+                { kind: 'chip', chip: { id: 'dv-c11b', actionId: 'clickup_create', status: 'idle', meta: 'SE queue · implement quota bump' } },
+                { kind: 'text', text: '.' },
+              ],
+            },
+          ],
+        },
+        {
+          id: 'dv-b-ack',
+          label: 'they OK’d a public bug acknowledgment',
+          predicate: 'approval.flags has "public_bug_ack"',
+          steps: [
+            {
+              id: 'dv-11c',
+              kind: 'action',
+              fragments: [
+                { kind: 'text', text: 'Get a second ' },
+                { kind: 'chip', chip: { id: 'dv-c11c', actionId: 'approval', status: 'idle', meta: 'Engineering on-call' } },
+                { kind: 'text', text: ' before the acknowledgment is sent.' },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'dv-12',
       kind: 'end',
       reason: 'api-error handled',
     },

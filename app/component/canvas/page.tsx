@@ -314,7 +314,7 @@ function StepRow({
         <span className={styles.stepDot}><StatusDot status="idle" /></span>
         <span className={styles.stepNum}>{num}</span>
         <span className={styles.stepBody}>
-          <span className={styles.condExpr}>If {step.exprText}</span>
+          <span className={styles.condExpr}>{step.exprText}</span>
           <div className={styles.branches}>
             {step.branches.map((b, bi) => {
               const isDefault = b.label === 'else' || !b.predicate;
