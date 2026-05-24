@@ -72,7 +72,7 @@
   color: var(--ink);
   cursor: pointer;
   user-select: none;
-  vertical-align: -6px;
+  vertical-align: middle;
   transition: background var(--d-hover) var(--ease-snap), box-shadow var(--d-hover) var(--ease-snap), filter var(--d-hover) var(--ease-snap);
   margin: 0 1px;
   white-space: nowrap;
