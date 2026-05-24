@@ -83,15 +83,14 @@ function ChipInline({
       className={cls}
       onClick={onClick}
       data-chip-id={chip.id}
+      data-bucket={action.bucket}
+      data-status={status !== 'idle' && status !== 'draft' ? status : undefined}
       contentEditable={false}
       tabIndex={0}
     >
       <span className={styles.chipIco}>{Icon ? <Icon /> : null}</span>
       {action.brand && (
-        <>
-          <span className={styles.chipBrand}>{action.brand}</span>
-          <span className={styles.chipSep}>·</span>
-        </>
+        <span className={styles.chipBrand}>{action.brand} · </span>
       )}
       <span className={styles.chipVerb}>{action.verb}</span>
       {chip.meta && <span className={styles.chipMeta}>{chip.meta}</span>}

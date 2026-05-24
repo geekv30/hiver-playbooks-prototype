@@ -1012,21 +1012,22 @@
 }
 
 /* ============================================================ */
-/* Chip atom — fixed-height so it flows inline with prose         */
-/* Total height locked at 22px so it sits on the same line as     */
-/* the parent's 13.5px body text (line-height 1.7 ≈ 23px).        */
-/* line-height: 1 inside the chip prevents the parent's 1.7 from  */
-/* inflating the chip vertically.                                 */
+/* Chip atom — DESIGN H: bucket-tinted soft pill                  */
+/* No border. Bucket bg-tint = "what kind of action" signal.      */
+/* Height locked to 22px so it sits on the same line as 13.5px /  */
+/* line-height 1.7 body text. line-height: 1 inside prevents the  */
+/* parent's 1.7 from inflating the chip vertically.               */
+/* See /component/chip-redesign for the 8-variant comparison.     */
 /* ============================================================ */
 .chip {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   height: 22px;
-  padding: 0 8px 0 6px;
+  padding: 0 9px 0 7px;
   border-radius: var(--r-sm);
-  background: var(--card);
-  border: 1px solid var(--hairline);
+  background: var(--surface-soft); /* fallback when bucket attr missing */
+  border: 0;
   font-family: var(--font);
   font-size: 12.5px;
   line-height: 1;
@@ -1034,24 +1035,38 @@
   cursor: pointer;
   user-select: none;
   vertical-align: -6px;
-  transition: background var(--d-hover) var(--ease-snap), border-color var(--d-hover) var(--ease-snap), box-shadow var(--d-hover) var(--ease-snap);
+  transition: background var(--d-hover) var(--ease-snap), box-shadow var(--d-hover) var(--ease-snap), filter var(--d-hover) var(--ease-snap);
   margin: 0 1px;
   white-space: nowrap;
 }
-.chip:hover { background: var(--surface-soft); border-color: var(--hairline-strong); }
+.chip:hover { filter: brightness(.97); }
 .chip:focus-visible { outline: 0; box-shadow: 0 0 0 2px var(--primary-ring); }
-.chipSelected {
-  border-color: var(--primary) !important;
-  background: var(--primary-tint) !important;
-  box-shadow: 0 0 0 1px var(--primary);
+
+/* Per-bucket tints — low chroma so the chip reads as inline prose */
+.chip[data-bucket="read"]     { background: rgba(212, 160, 90, .14); }
+.chip[data-bucket="ticket"]   { background: rgba(93, 160, 217, .14); }
+.chip[data-bucket="external"] { background: rgba(95, 182, 156, .14); }
+.chip[data-bucket="human"]    { background: rgba(168, 139, 216, .14); }
+.chip[data-bucket="wait"]     { background: rgba(210, 177, 118, .14); }
+.chip[data-bucket="flow"]     { background: rgba(216, 159, 136, .14); }
+
+/* Icon takes on bucket's saturated tint, at low opacity so it doesn't fight prose */
+.chipIco {
+  width: 13px; height: 13px;
+  display: inline-grid; place-items: center;
+  color: var(--ink);
+  line-height: 1;
+  flex: none;
+  opacity: .6;
 }
-.chipDraft {
-  border-style: dashed;
-  background: rgba(223, 168, 143, .08);
-  border-color: rgba(223, 168, 143, .55);
-}
-.chipIco { width: 14px; height: 14px; display: inline-grid; place-items: center; color: var(--ink); line-height: 1; flex: none; }
 .chipIco svg { width: 12px; height: 12px; }
+.chip[data-bucket="read"]     .chipIco { color: #8E6526; }
+.chip[data-bucket="ticket"]   .chipIco { color: #2C5478; }
+.chip[data-bucket="external"] .chipIco { color: #2B6E5B; }
+.chip[data-bucket="human"]    .chipIco { color: #5A3F8A; }
+.chip[data-bucket="wait"]     .chipIco { color: #7A5926; }
+.chip[data-bucket="flow"]     .chipIco { color: #874025; }
+
 .chipBrand { color: var(--muted); font-weight: 400; line-height: 1; }
 .chipSep { color: var(--muted-soft); line-height: 1; }
 .chipVerb { color: var(--ink); font-weight: 500; letter-spacing: -.005em; line-height: 1; }
@@ -1059,11 +1074,11 @@
   font-family: var(--mono);
   font-size: 10px;
   color: var(--muted);
-  padding-left: 7px;
-  margin-left: 1px;
-  border-left: 1px solid var(--hairline);
+  padding-left: 6px;
+  margin-left: 2px;
   letter-spacing: .01em;
   line-height: 1;
+  opacity: .85;
 }
 .chipStatusDot {
   width: 7px;
@@ -1073,6 +1088,22 @@
   margin-left: 2px;
   line-height: 1;
 }
+
+/* Status-state overrides (apply ON TOP OF bucket tint) */
+.chipSelected,
+.chipSelected[data-bucket] {
+  box-shadow: inset 0 0 0 1.5px var(--primary);
+}
+.chipDraft,
+.chipDraft[data-bucket] {
+  background: rgba(223, 168, 143, .16);
+  color: #8C5526;
+  box-shadow: inset 0 0 0 1px rgba(223, 168, 143, .55);
+}
+.chip[data-status="running"] { background: rgba(124, 58, 237, .16); }
+.chip[data-status="ok"]      { background: rgba(22, 163, 74, .14); }
+.chip[data-status="error"]   { background: rgba(220, 38, 38, .14); }
+.chip[data-status="skipped"] { background: var(--surface-soft); opacity: .55; }
 
 /* ============================================================ */
 /* Configure panel (renamed Inspector — no umbrella label)        */
