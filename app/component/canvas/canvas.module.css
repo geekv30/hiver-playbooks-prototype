@@ -624,7 +624,26 @@
 }
 .stepRowWrap {
   position: relative;
+  transition: opacity var(--d-hover) var(--ease-snap);
 }
+.stepRowWrap.dragging {
+  opacity: .35;
+}
+/* drop indicator — a 2px primary line above the targeted row */
+.stepRowWrap.dropTarget::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--primary);
+  border-radius: 1px;
+  pointer-events: none;
+  z-index: 5;
+}
+.paletteItem[draggable="true"] { cursor: grab; }
+.paletteItem[draggable="true"]:active { cursor: grabbing; }
 .stepRow {
   display: grid;
   grid-template-columns: 14px 30px 1fr auto;

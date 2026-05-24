@@ -431,13 +431,15 @@ function Topbar({ state, onOpenOverflow, overflowOpen, onOpenActivate, activateO
 /* Left palette                                                   */
 /* ============================================================ */
 function LeftPalette({
-  collapsed, onToggle, onInsert, query, setQuery,
+  collapsed, onToggle, onInsert, query, setQuery, onDragActionStart, onDragActionEnd,
 }: {
   collapsed: boolean;
   onToggle: () => void;
   onInsert: (id: string) => void;
   query: string;
   setQuery: (q: string) => void;
+  onDragActionStart?: (id: string) => void;
+  onDragActionEnd?: () => void;
 }) {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -513,6 +515,13 @@ function LeftPalette({
                     onClick={() => onInsert(a.id)}
                     data-action-id={a.id}
                     type="button"
+                    draggable
+                    onDragStart={(e) => {
+                      onDragActionStart?.(a.id);
+                      e.dataTransfer.effectAllowed = 'copy';
+                      try { e.dataTransfer.setData('text/plain', a.id); } catch {}
+                    }}
+                    onDragEnd={() => onDragActionEnd?.()}
                   >
                     <span className={styles.paletteItemIco}>{Icon ? <Icon /> : null}</span>
                     <span className={styles.paletteItemText}>
@@ -1173,6 +1182,8 @@ function ValidationStrip({ state }: { state: ReturnType<typeof useCanvasState> }
 /* ============================================================ */
 /* Page                                                           */
 /* ============================================================ */
+type DragKind = 'step' | 'action' | null;
+
 export default function CanvasPage() {
   const state = useCanvasState();
   const [paletteQuery, setPaletteQuery] = useState('');
@@ -1180,6 +1191,21 @@ export default function CanvasPage() {
   const [activateOpen, setActivateOpen] = useState(false);
   const configPanelRef = useRef<HTMLElement | null>(null);
   const [highlightStepId, setHighlightStepId] = useState<string | null>(null);
+
+  // Drag-and-drop state (local UI only, not persisted)
+  const [dragKind, setDragKind] = useState<DragKind>(null);
+  const [dragStepId, setDragStepId] = useState<string | null>(null);
+  const [dragActionId, setDragActionId] = useState<string | null>(null);
+  const [dropTargetId, setDropTargetId] = useState<string | null>(null);
+  const [dropAtEnd, setDropAtEnd] = useState(false);
+
+  const clearDrag = () => {
+    setDragKind(null);
+    setDragStepId(null);
+    setDragActionId(null);
+    setDropTargetId(null);
+    setDropAtEnd(false);
+  };
 
   // Outside-click for Configure panel
   useEffect(() => {
@@ -1320,6 +1346,8 @@ export default function CanvasPage() {
           onInsert={state.insertAction}
           query={paletteQuery}
           setQuery={setPaletteQuery}
+          onDragActionStart={(id) => { setDragKind('action'); setDragActionId(id); }}
+          onDragActionEnd={clearDrag}
         />
 
         <section className={styles.canvasArea}>
@@ -1327,7 +1355,21 @@ export default function CanvasPage() {
           <div className={styles.canvasScroll}>
             <div className={styles.canvasScrollInner}>
               <FrontmatterCard state={state} />
-              <div className={styles.stepList}>
+              <div
+                className={styles.stepList}
+                onDragOver={(e) => {
+                  // allow drop on empty list area to insert at end
+                  if (dragKind) { e.preventDefault(); }
+                }}
+                onDrop={(e) => {
+                  if (!dragKind) return;
+                  e.preventDefault();
+                  if (dragKind === 'action' && dragActionId) {
+                    state.insertAction(dragActionId);
+                  }
+                  clearDrag();
+                }}
+              >
                 {editable && lastActionableIdx === -1 && (
                   <button
                     className={styles.addStepBtn}
@@ -1340,8 +1382,52 @@ export default function CanvasPage() {
                 {state.playbook.steps.map((step, i) => {
                   const isLastBeforeEnd = i === lastActionableIdx;
                   const showAddBelow = editable && isLastBeforeEnd;
+                  const isDragging = dragKind === 'step' && dragStepId === step.id;
+                  const isDropTarget = dropTargetId === step.id;
+
+                  const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+                    if (!editable || step.kind === 'end') {
+                      e.preventDefault();
+                      return;
+                    }
+                    setDragKind('step');
+                    setDragStepId(step.id);
+                    e.dataTransfer.effectAllowed = 'move';
+                    try { e.dataTransfer.setData('text/plain', step.id); } catch {}
+                  };
+                  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+                    if (!dragKind) return;
+                    if (dragKind === 'step' && dragStepId === step.id) return; // can't drop on self
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = dragKind === 'step' ? 'move' : 'copy';
+                    setDropTargetId(step.id);
+                    setDropAtEnd(false);
+                  };
+                  const handleDragLeave = () => {};
+                  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+                    if (!dragKind) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (dragKind === 'step' && dragStepId) {
+                      state.moveStepToIndex(dragStepId, i);
+                    } else if (dragKind === 'action' && dragActionId) {
+                      // insert AFTER the dropped-on step
+                      state.insertAction(dragActionId, step.id);
+                    }
+                    clearDrag();
+                  };
+
                   return (
-                    <div key={step.id} className={styles.stepRowWrap}>
+                    <div
+                      key={step.id}
+                      className={`${styles.stepRowWrap} ${isDragging ? styles.dragging : ''} ${isDropTarget ? styles.dropTarget : ''}`}
+                      draggable={editable && step.kind !== 'end'}
+                      onDragStart={handleDragStart}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      onDragEnd={clearDrag}
+                    >
                       <StepRow
                         step={step}
                         num={stepNumbers[i] ?? '—'}

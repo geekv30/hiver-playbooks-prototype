@@ -325,6 +325,33 @@ export function useCanvasState() {
     });
   }, [mutate]);
 
+  /**
+   * Move a step to a specific index in the steps array.
+   * Used by drag-and-drop.
+   * The targetIndex is the index where the step should land AFTER removal.
+   * If null, places before the trailing End marker (or at end).
+   */
+  const moveStepToIndex = useCallback((stepId: string, targetIndex: number | null) => {
+    mutate((pb) => {
+      const fromIdx = pb.steps.findIndex((s) => s.id === stepId);
+      if (fromIdx < 0) return pb;
+      const arr = pb.steps.filter((s) => s.id !== stepId);
+      const movedStep = pb.steps[fromIdx]!;
+      // Cap targetIndex so it can't land after End
+      const lastIdx = arr.length;
+      const last = arr[arr.length - 1];
+      const ceiling = last && last.kind === 'end' ? lastIdx - 1 : lastIdx;
+      let dropAt = targetIndex == null ? ceiling : targetIndex;
+      if (fromIdx < (targetIndex ?? Infinity)) {
+        // when removing an item BEFORE the target index, the target shifts down by 1
+        dropAt = Math.max(0, dropAt - 1);
+      }
+      dropAt = Math.min(Math.max(0, dropAt), ceiling);
+      arr.splice(dropAt, 0, movedStep);
+      return { ...pb, steps: arr };
+    });
+  }, [mutate]);
+
   const moveStepDown = useCallback((stepId: string) => {
     mutate((pb) => {
       const idx = pb.steps.findIndex((s) => s.id === stepId);
@@ -657,6 +684,7 @@ export function useCanvasState() {
     removeStep,
     moveStepUp,
     moveStepDown,
+    moveStepToIndex,
     duplicateStep,
     setStepFragments,
     setTriggerFragments,
