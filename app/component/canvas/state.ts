@@ -24,6 +24,14 @@ export interface SlashState {
   query: string;
 }
 
+export interface RefPickerState {
+  /** "trigger" or a step id */
+  target: 'trigger' | string;
+  anchor: { top: number; left: number };
+  textOffset: number;
+  query: string;
+}
+
 export interface CanvasState {
   playbook: Playbook;
   mode: CanvasMode;
@@ -37,6 +45,7 @@ export interface CanvasState {
   chipStatusOverride: Record<string, ChipStatus>;
   autosaveTick: number;
   slash: SlashState | null;
+  refPicker: RefPickerState | null;
 }
 
 const HISTORY_CAP = 50;
@@ -59,7 +68,10 @@ type Action =
   | { type: 'autosaveBump' }
   | { type: 'openSlash'; payload: SlashState }
   | { type: 'updateSlashQuery'; query: string }
-  | { type: 'closeSlash' };
+  | { type: 'closeSlash' }
+  | { type: 'openRef'; payload: RefPickerState }
+  | { type: 'updateRefQuery'; query: string }
+  | { type: 'closeRef' };
 
 function reducer(state: CanvasState, action: Action): CanvasState {
   switch (action.type) {
@@ -128,6 +140,9 @@ function reducer(state: CanvasState, action: Action): CanvasState {
     case 'openSlash':          return { ...state, slash: action.payload };
     case 'updateSlashQuery':   return { ...state, slash: state.slash ? { ...state.slash, query: action.query } : null };
     case 'closeSlash':         return { ...state, slash: null };
+    case 'openRef':            return { ...state, refPicker: action.payload };
+    case 'updateRefQuery':     return { ...state, refPicker: state.refPicker ? { ...state.refPicker, query: action.query } : null };
+    case 'closeRef':           return { ...state, refPicker: null };
     default:                   return state;
   }
 }
@@ -145,6 +160,7 @@ const INITIAL_STATE: CanvasState = {
   chipStatusOverride: {},
   autosaveTick: 0,
   slash: null,
+  refPicker: null,
 };
 
 /* ============================================================ */
@@ -233,11 +249,26 @@ export function useCanvasState() {
     mutate((pb) => {
       const chipId = `c-${Date.now()}`;
       const stepId = `step-${Date.now()}`;
+      const newChip: Chip = { id: chipId, actionId, status: 'idle', meta: action.defaultMeta };
       const newStep: Step = {
         id: stepId,
         kind: 'action',
-        fragments: [{ kind: 'chip', chip: { id: chipId, actionId, status: 'idle', meta: action.defaultMeta } }],
+        fragments: [{ kind: 'chip', chip: newChip }],
       };
+
+      // T1.4 — if there's an empty action step, REPLACE it instead of adding alongside
+      const emptyIdx = pb.steps.findIndex((s) =>
+        s.kind === 'action' &&
+        !s.fragments.some((f) => f.kind === 'chip') &&
+        !s.fragments.some((f) => f.kind === 'text' && f.text.trim().length > 0) &&
+        !s.fragments.some((f) => f.kind === 'ref' || f.kind === 'code')
+      );
+      if (emptyIdx >= 0 && !afterStepId) {
+        const arr = [...pb.steps];
+        arr[emptyIdx] = { ...newStep, id: pb.steps[emptyIdx]!.id };
+        return { ...pb, steps: arr };
+      }
+
       if (afterStepId) {
         const idx = pb.steps.findIndex((s) => s.id === afterStepId);
         if (idx >= 0) {
@@ -321,6 +352,13 @@ export function useCanvasState() {
     }));
   }, [mutate]);
 
+  const setTriggerFragments = useCallback((fragments: Frag[]) => {
+    mutate((pb) => ({
+      ...pb,
+      frontmatter: { ...pb.frontmatter, triggerFragments: fragments },
+    }));
+  }, [mutate]);
+
   const insertChipInStepAtOffset = useCallback((stepId: string, actionId: string, textOffset: number) => {
     const action = findAction(actionId);
     if (!action) return;
@@ -353,6 +391,92 @@ export function useCanvasState() {
   const openSlash = useCallback((payload: SlashState) => dispatch({ type: 'openSlash', payload }), []);
   const updateSlashQuery = useCallback((query: string) => dispatch({ type: 'updateSlashQuery', query }), []);
   const closeSlash = useCallback(() => dispatch({ type: 'closeSlash' }), []);
+
+  const openRef = useCallback((payload: RefPickerState) => dispatch({ type: 'openRef', payload }), []);
+  const updateRefQuery = useCallback((query: string) => dispatch({ type: 'updateRefQuery', query }), []);
+  const closeRef = useCallback(() => dispatch({ type: 'closeRef' }), []);
+
+  const insertRefInStepAtOffset = useCallback((stepId: string, refPath: string, textOffset: number) => {
+    mutate((pb) => ({
+      ...pb,
+      steps: pb.steps.map((s) => {
+        if (s.id !== stepId || s.kind !== 'action') return s;
+        const fragmentTextLen = (f: Frag) => {
+          if (f.kind === 'text') return f.text.length;
+          if (f.kind === 'ref')  return f.refPath.length;
+          if (f.kind === 'code') return f.code.length;
+          if (f.kind === 'chip') {
+            const a = findAction(f.chip.actionId);
+            const brand = a?.brand ? `${a.brand} · ` : '';
+            return `${brand}${a?.verb ?? ''}${f.chip.meta ?? ''}`.length;
+          }
+          return 0;
+        };
+        // Walk fragments and insert ref at the offset, splitting any text fragment
+        const next: Frag[] = [];
+        let running = 0;
+        let inserted = false;
+        for (const f of s.fragments) {
+          const flen = fragmentTextLen(f);
+          if (!inserted && textOffset <= running + flen) {
+            if (f.kind === 'text') {
+              const splitAt = Math.max(0, textOffset - running);
+              const left = f.text.slice(0, splitAt);
+              const right = f.text.slice(splitAt);
+              if (left) next.push({ kind: 'text', text: left });
+              next.push({ kind: 'ref', refPath });
+              if (right) next.push({ kind: 'text', text: right });
+            } else {
+              next.push({ kind: 'ref', refPath });
+              next.push(f);
+            }
+            inserted = true;
+          } else {
+            next.push(f);
+            running += flen;
+          }
+        }
+        if (!inserted) next.push({ kind: 'ref', refPath });
+        return { ...s, fragments: next };
+      }),
+    }));
+  }, [mutate]);
+
+  const insertRefInTriggerAtOffset = useCallback((refPath: string, textOffset: number) => {
+    mutate((pb) => {
+      const fragmentTextLen = (f: Frag) => {
+        if (f.kind === 'text') return f.text.length;
+        if (f.kind === 'ref')  return f.refPath.length;
+        if (f.kind === 'code') return f.code.length;
+        return 0;
+      };
+      const next: Frag[] = [];
+      let running = 0;
+      let inserted = false;
+      for (const f of pb.frontmatter.triggerFragments) {
+        const flen = fragmentTextLen(f);
+        if (!inserted && textOffset <= running + flen) {
+          if (f.kind === 'text') {
+            const splitAt = Math.max(0, textOffset - running);
+            const left = f.text.slice(0, splitAt);
+            const right = f.text.slice(splitAt);
+            if (left) next.push({ kind: 'text', text: left });
+            next.push({ kind: 'ref', refPath });
+            if (right) next.push({ kind: 'text', text: right });
+          } else {
+            next.push({ kind: 'ref', refPath });
+            next.push(f);
+          }
+          inserted = true;
+        } else {
+          next.push(f);
+          running += flen;
+        }
+      }
+      if (!inserted) next.push({ kind: 'ref', refPath });
+      return { ...pb, frontmatter: { ...pb.frontmatter, triggerFragments: next } };
+    });
+  }, [mutate]);
 
   const duplicateStep = useCallback((stepId: string) => {
     mutate((pb) => {
@@ -535,10 +659,16 @@ export function useCanvasState() {
     moveStepDown,
     duplicateStep,
     setStepFragments,
+    setTriggerFragments,
     insertChipInStepAtOffset,
+    insertRefInStepAtOffset,
+    insertRefInTriggerAtOffset,
     openSlash,
     updateSlashQuery,
     closeSlash,
+    openRef,
+    updateRefQuery,
+    closeRef,
     undo,
     redo,
     setMode,

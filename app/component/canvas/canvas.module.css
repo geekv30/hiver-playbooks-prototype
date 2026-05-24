@@ -561,7 +561,10 @@
   color: var(--body);
   line-height: 1.55;
   margin-top: 6px;
+  outline: none;
+  cursor: text;
 }
+.fmTrigger:focus { background: var(--surface-soft); border-radius: var(--r-xs); }
 .triglabel {
   font-size: 10.5px;
   letter-spacing: .06em;
@@ -692,12 +695,12 @@
 }
 .stepBodyEditable:focus { /* no outline; selection state communicated via row hover/edit */ }
 .stepBody[data-empty="true"]::before {
-  content: 'Click here and press / to add an action';
+  content: 'Click here, then press / to add an action or @ to insert a ref';
   color: var(--muted-soft);
   font-style: italic;
 }
 .stepBody[data-empty="true"]:focus::before {
-  content: 'Press / to open the action picker';
+  content: 'Press / for actions · @ for refs';
   color: var(--muted);
 }
 

@@ -11,7 +11,7 @@ import {
 import type { IconType } from 'react-icons';
 import styles from './canvas.module.css';
 import {
-  ACTIONS, BUCKET_TITLES, BUCKET_HINTS, BUCKET_ORDER,
+  ACTIONS, BUCKET_TITLES, BUCKET_HINTS, BUCKET_ORDER, REFS,
   ICONS, findAction, type Bucket, type Chip, type AnyStep, type Frag, type ChipStatus,
 } from './data';
 import { useCanvasState, getChipStatus } from './state';
@@ -143,7 +143,7 @@ function StepActions({
 
 function StepRow({
   step, num, statuses, onChipClick, selectedChipId, highlight,
-  actions, canUp, canDown, editable, onFragmentsChange, onSlash,
+  actions, canUp, canDown, editable, onFragmentsChange, onSlash, onAt,
 }: {
   step: AnyStep;
   num: string;
@@ -162,6 +162,7 @@ function StepRow({
   editable?: boolean;
   onFragmentsChange?: (stepId: string, fragments: Frag[]) => void;
   onSlash?: (stepId: string, anchor: { top: number; left: number }, textOffset: number) => void;
+  onAt?: (stepId: string, anchor: { top: number; left: number }, textOffset: number) => void;
 }) {
   const bodyRef = useRef<HTMLSpanElement | null>(null);
   if (step.kind === 'end') {
@@ -240,6 +241,13 @@ function StepRow({
         const anchor = getCaretAnchor(bodyRef.current);
         const offset = getCaretTextOffset(bodyRef.current);
         if (anchor) onSlash?.(step.id, anchor, offset);
+      }
+    } else if (e.key === '@') {
+      e.preventDefault();
+      if (bodyRef.current) {
+        const anchor = getCaretAnchor(bodyRef.current);
+        const offset = getCaretTextOffset(bodyRef.current);
+        if (anchor) onAt?.(step.id, anchor, offset);
       }
     }
   };
@@ -533,6 +541,8 @@ function FrontmatterCard({
 }: { state: ReturnType<typeof useCanvasState> }) {
   const readOnly = state.mode !== 'edit' && state.mode !== 'clean-wipe';
   const fm = state.playbook.frontmatter;
+  const triggerRef = useRef<HTMLDivElement | null>(null);
+
   return (
     <div className={styles.fm} data-step-id="__frontmatter__">
       <h1
@@ -550,13 +560,35 @@ function FrontmatterCard({
       >
         {fm.name}
       </h1>
-      <div className={styles.fmTrigger}>
-        <span className={styles.triglabel} contentEditable={false}>WHEN</span>
-        <span className={styles.fragRow}>
-          {fm.triggerFragments.map((f, i) => (
-            <FragmentSpan key={i} frag={f} />
-          ))}
-        </span>
+      <div
+        ref={triggerRef}
+        className={styles.fmTrigger}
+        contentEditable={!readOnly}
+        suppressContentEditableWarning
+        data-trigger-row="true"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') { e.preventDefault(); (e.currentTarget as HTMLElement).blur(); }
+          else if (e.key === '@' && !readOnly && triggerRef.current) {
+            e.preventDefault();
+            const anchor = getCaretAnchor(triggerRef.current);
+            const offset = getCaretTextOffset(triggerRef.current);
+            // adjust offset to skip the "WHEN" label since it's data-skip
+            if (anchor) state.openRef({ target: 'trigger', anchor, textOffset: offset, query: '' });
+          }
+        }}
+        onBlur={(e) => {
+          if (readOnly) return;
+          const next = e.relatedTarget as HTMLElement | null;
+          if (next?.closest?.('[data-slash-picker]')) return;
+          if (!triggerRef.current) return;
+          const fragments = parseFragmentsFromDom(triggerRef.current, fm.triggerFragments);
+          state.setTriggerFragments(fragments);
+        }}
+      >
+        <span className={styles.triglabel} contentEditable={false} data-skip="true">WHEN</span>
+        {fm.triggerFragments.map((f, i) => (
+          <FragmentSpan key={i} frag={f} />
+        ))}
       </div>
       <div
         className={styles.fmSummary}
@@ -836,6 +868,120 @@ function SlashPicker({
                       <span className={styles.slashItemName}>{a.verb}</span>
                     </span>
                     <span className={styles.slashItemDesc}>{a.desc}</span>
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================ */
+/* Ref picker (@ menu)                                            */
+/* ============================================================ */
+function RefPicker({
+  state, onPick, onClose,
+}: {
+  state: ReturnType<typeof useCanvasState>;
+  onPick: (refPath: string) => void;
+  onClose: () => void;
+}) {
+  const rp = state.refPicker!;
+  const [idx, setIdx] = useState(0);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    const t = window.setTimeout(() => inputRef.current?.focus(), 0);
+    return () => window.clearTimeout(t);
+  }, []);
+
+  const filtered = useMemo(() => {
+    const q = rp.query.trim().toLowerCase();
+    if (!q) return REFS;
+    return REFS.filter((r) =>
+      r.path.toLowerCase().includes(q) ||
+      r.label.toLowerCase().includes(q) ||
+      r.group.toLowerCase().includes(q)
+    );
+  }, [rp.query]);
+
+  const groups: ('ticket' | 'inputs' | 'outputs')[] = ['ticket', 'inputs', 'outputs'];
+  const grouped = useMemo(() => {
+    return groups.reduce<Record<string, typeof REFS>>((acc, g) => {
+      acc[g] = filtered.filter((r) => r.group === g);
+      return acc;
+    }, {});
+  }, [filtered]);
+
+  const flat = useMemo(() => groups.flatMap((g) => grouped[g] || []), [grouped]);
+
+  useEffect(() => {
+    if (idx >= flat.length) setIdx(Math.max(0, flat.length - 1));
+  }, [flat.length, idx]);
+
+  const handleKey = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); setIdx((i) => Math.min(flat.length - 1, i + 1)); }
+    else if (e.key === 'ArrowUp')   { e.preventDefault(); setIdx((i) => Math.max(0, i - 1)); }
+    else if (e.key === 'Enter') {
+      e.preventDefault();
+      const r = flat[idx];
+      if (r) onPick(r.path);
+    } else if (e.key === 'Escape') { e.preventDefault(); onClose(); }
+  };
+
+  const top = Math.min(rp.anchor.top, window.innerHeight - 360);
+
+  return (
+    <div
+      className={styles.slashPicker}
+      data-slash-picker="true"
+      data-ref-picker="true"
+      style={{ top, left: rp.anchor.left }}
+      onMouseDown={(e) => e.preventDefault()}
+    >
+      <div className={styles.slashHead}>
+        <span className={styles.slashHint}>Insert reference</span>
+        <span className={styles.slashKbdHint}>↑↓ to navigate · ↩ select · esc close</span>
+      </div>
+      <input
+        ref={inputRef}
+        className={styles.slashInput}
+        placeholder="Search refs…"
+        value={rp.query}
+        onChange={(e) => state.updateRefQuery(e.target.value)}
+        onKeyDown={handleKey}
+      />
+      <div className={styles.slashList}>
+        {flat.length === 0 && (
+          <div className={styles.slashEmpty}>No refs match &quot;{rp.query}&quot;.</div>
+        )}
+        {groups.map((g) => {
+          const items = grouped[g] || [];
+          if (!items.length) return null;
+          return (
+            <div key={g} className={styles.slashBucket}>
+              <div className={styles.slashBucketLabel}>{g}</div>
+              {items.map((r) => {
+                const globalIdx = flat.findIndex((x) => x.path === r.path);
+                const active = globalIdx === idx;
+                return (
+                  <button
+                    key={r.path}
+                    className={`${styles.slashItem} ${active ? styles.slashItemActive : ''}`}
+                    onClick={() => onPick(r.path)}
+                    onMouseEnter={() => setIdx(globalIdx)}
+                    data-ref-path={r.path}
+                    type="button"
+                  >
+                    <span className={styles.slashItemIco} />
+                    <span className={styles.slashItemText}>
+                      <span className={styles.slashItemBrand}>{r.label} · </span>
+                      <span className={styles.slashItemName} style={{ fontFamily: 'var(--mono)', fontSize: 11 }}>{`{{${r.path}}}`}</span>
+                    </span>
+                    <span className={styles.slashItemDesc}>{r.type}</span>
                   </button>
                 );
               })}
@@ -1206,6 +1352,7 @@ export default function CanvasPage() {
                         editable={editable && step.kind !== 'end'}
                         onFragmentsChange={(id, fragments) => state.setStepFragments(id, fragments)}
                         onSlash={(id, anchor, offset) => state.openSlash({ stepId: id, anchor, textOffset: offset, query: '' })}
+                        onAt={(id, anchor, offset) => state.openRef({ target: id, anchor, textOffset: offset, query: '' })}
                         actions={
                           editable && step.kind !== 'end'
                             ? {
@@ -1252,6 +1399,22 @@ export default function CanvasPage() {
             const s = state.slash!;
             state.insertChipInStepAtOffset(s.stepId, actionId, s.textOffset);
             state.closeSlash();
+          }}
+        />
+      )}
+
+      {state.refPicker && (
+        <RefPicker
+          state={state}
+          onClose={state.closeRef}
+          onPick={(refPath) => {
+            const rp = state.refPicker!;
+            if (rp.target === 'trigger') {
+              state.insertRefInTriggerAtOffset(refPath, rp.textOffset);
+            } else {
+              state.insertRefInStepAtOffset(rp.target, refPath, rp.textOffset);
+            }
+            state.closeRef();
           }}
         />
       )}
