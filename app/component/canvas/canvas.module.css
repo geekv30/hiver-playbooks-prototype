@@ -713,12 +713,13 @@
   cursor: text;
 }
 .stepBodyEditable:focus { /* no outline; selection state communicated via row hover/edit */ }
-.stepBody[data-empty="true"]::before {
+.stepBody:empty::before {
   content: 'Click here, then press / to add an action or @ to insert a ref';
   color: var(--muted-soft);
   font-style: italic;
+  pointer-events: none;
 }
-.stepBody[data-empty="true"]:focus::before {
+.stepBody:empty:focus::before {
   content: 'Press / for actions · @ for refs';
   color: var(--muted);
 }
@@ -1040,12 +1041,13 @@
   outline: none;
   min-height: 22px;
 }
-.branchSubrowEmpty .branchSubbody[data-empty="true"]::before {
+.branchSubbody:empty::before {
   content: 'Click here, then / for actions · @ for refs';
   color: var(--muted-soft);
   font-style: italic;
+  pointer-events: none;
 }
-.branchSubrowEmpty .branchSubbody[data-empty="true"]:focus::before {
+.branchSubbody:empty:focus::before {
   content: '/ actions · @ refs';
   color: var(--muted);
 }
