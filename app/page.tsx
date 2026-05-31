@@ -27,7 +27,7 @@ import type { Chip as ChipModel } from '@/types/playbook';
 import styles from './page.module.css';
 
 // Component review surface. Components reviewed in isolation, one at a time,
-// before assembly into Canvas 360. Full editor preserved at /editor.
+// before assembly into Canvas 360. The live editor is at /canvas.
 
 type Variant = {
   k: string;
@@ -121,8 +121,8 @@ export default function ComponentsReview() {
       <header className={styles.head}>
         <h1>Components</h1>
         <p>
-          Each component reviewed in isolation, then assembled into Canvas 360. The full editor is
-          preserved at <a href="/editor">/editor</a>.
+          Each component reviewed in isolation, then assembled into the live editor at{' '}
+          <a href="/canvas">/canvas</a>.
         </p>
       </header>
 
