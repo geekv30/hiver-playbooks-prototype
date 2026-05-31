@@ -10,6 +10,7 @@ import ChatBar from './ChatBar';
 import CoachmarkTriggers from './CoachmarkTriggers';
 import EditorLine, { PaletteRequest } from './EditorLine';
 import CommandPalette from './CommandPalette';
+import SimulatePanel from '@/components/simulate/SimulatePanel';
 import { REFERENCE_ID } from './paletteCatalog';
 import { useEditorDoc } from './useEditorDoc';
 import { LineTarget, makeChip, makeRef, txt, normalizeLine, lineIsEmpty } from './doc';
@@ -45,6 +46,7 @@ export default function EditorCanvas() {
 
   const [palette, setPalette] = useState<PaletteState | null>(null);
   const [focusReq, setFocusReq] = useState<FocusReq | null>(null);
+  const [simOpen, setSimOpen] = useState(false);
   const tokenRef = useRef(0);
 
   const lineKey = (t: LineTarget) => (t.kind === 'trigger' ? 'trigger' : `step:${t.id}`);
@@ -138,9 +140,12 @@ export default function EditorCanvas() {
         onUndo={api.undo}
         onRedo={api.redo}
         isValid={api.isValid}
+        onSimulate={() => setSimOpen((o) => !o)}
+        simulating={simOpen}
       />
 
-      <div className={styles.area}>
+      <div className={styles.stage}>
+        <div className={styles.area}>
         <div className={styles.docScroll}>
           <div className={styles.doc}>
             <CoachmarkTriggers />
@@ -218,6 +223,8 @@ export default function EditorCanvas() {
             <ChatBar />
           </div>
         </div>
+        </div>
+        <SimulatePanel open={simOpen} onClose={() => setSimOpen(false)} />
       </div>
 
       {palette && (

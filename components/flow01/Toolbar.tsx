@@ -23,6 +23,8 @@ interface Props {
   isValid: boolean;
   onSimulate?: () => void;
   onActivate?: () => void;
+  /** Whether the simulate panel is open (toggles the Simulate button's state). */
+  simulating?: boolean;
 }
 
 // Editor toolbar (flow-01 256:3081). Undo/redo/title/validity are live; the
@@ -38,6 +40,7 @@ export default function Toolbar({
   isValid,
   onSimulate,
   onActivate,
+  simulating,
 }: Props) {
   return (
     <div className={styles.bar}>
@@ -52,7 +55,7 @@ export default function Toolbar({
         <Button variant="tertiary" iconOnly={<RiArrowGoForwardLine />} ariaLabel="Redo" onClick={onRedo} disabled={!canRedo} />
         <span className={styles.gap} />
         <Button variant="secondary" iconOnly={<RiBookOpenLine />} ariaLabel="Manual" />
-        <Button variant="secondary" iconLeft={<RiPlayLine />} onClick={onSimulate}>Simulate</Button>
+        <Button variant={simulating ? 'primary' : 'secondary'} iconLeft={<RiPlayLine />} onClick={onSimulate}>Simulate</Button>
         <Button variant="primary" iconRight={<RiArrowDownSLine />} disabled={!isValid} onClick={onActivate}>
           Activate
         </Button>

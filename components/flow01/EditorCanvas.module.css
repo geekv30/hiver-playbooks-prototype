@@ -10,9 +10,18 @@
   overflow: hidden;
 }
 
+/* Stage — editor area + simulate panel as flex siblings, so opening the panel
+   makes the editor give space (the canvas-shift). */
+.stage {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
 /* Scroll region (doc) + pinned chat dock. */
 .area {
   flex: 1;
+  min-width: 0; /* let the editor shrink when the panel opens */
   display: flex;
   flex-direction: column;
   min-height: 0;

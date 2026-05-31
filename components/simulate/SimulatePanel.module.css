@@ -1,0 +1,87 @@
+/* SimulatePanel — the right-hand simulate surface (M1: shell + canvas-shift). */
+
+/* The reveal animates WIDTH (the editor flex-sibling gives space) while the
+   inner content holds a fixed width and is clipped, so nothing reflows during
+   the slide. transform/opacity-only is preferred, but a true "make space" needs
+   the width; the fixed-width inner keeps it jank-free. */
+.panel {
+  --sim-w: 448px;
+  flex: none;
+  width: 0;
+  overflow: hidden;
+  background: var(--card);
+  border-left: 1px solid var(--hairline-soft);
+  transition: width 240ms var(--ease-snap);
+  will-change: width;
+}
+.panel[data-open] {
+  width: var(--sim-w);
+}
+
+.inner {
+  /* Fixed width so tabs/content don't reflow as the panel width animates. */
+  width: var(--sim-w);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tabs — Scenarios | Custom test. Active = ink label + a neutral 2px indicator
+   (reconciled from the Figma's blue to our one-palette neutral; flagged). */
+.tabs {
+  flex: none;
+  display: flex;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--hairline-soft);
+}
+.tab {
+  flex: 1;
+  appearance: none;
+  background: none;
+  border: none;
+  margin: 0;
+  padding: 15px 8px 13px;
+  font-family: var(--font);
+  font-size: var(--fs-body);
+  font-weight: 500;
+  letter-spacing: var(--ls-body);
+  color: var(--muted);
+  cursor: pointer;
+  position: relative;
+  transition: color var(--d-hover) var(--ease-snap);
+}
+.tab:hover {
+  color: var(--ink-soft);
+}
+.tab:focus-visible {
+  outline: 2px solid var(--hairline-strong);
+  outline-offset: -4px;
+  border-radius: var(--r-sm);
+}
+.tab[data-active] {
+  color: var(--ink);
+  font-weight: 600;
+}
+.tab[data-active]::after {
+  content: '';
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: -1px; /* sit on the tabs' bottom hairline */
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--ink);
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    transition: none;
+  }
+}
