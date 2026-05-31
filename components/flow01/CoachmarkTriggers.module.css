@@ -1,0 +1,77 @@
+/* One-time trigger coachmark — a quiet card at the top of the doc. Low-contrast
+   so it teaches without shouting; dismisses for good on "Got it". */
+.coach {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 0 0 18px;
+  padding: 11px 12px 11px 16px;
+  background: var(--info-subtle); /* #FAFDFF */
+  border: 1px solid var(--hairline-soft);
+  border-radius: 10px;
+  animation: coachIn var(--d-enter) var(--ease-snap);
+}
+@keyframes coachIn {
+  from { opacity: 0; transform: translateY(-3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.text {
+  flex: 1 1 auto;
+  margin: 0;
+  font-size: 13px;
+  line-height: 19px;
+  letter-spacing: var(--ls-small);
+  color: var(--body); /* Gray 2 */
+}
+.lead {
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+/* Inline key — same beveled-cap idiom as the placeholder '@'/'/' pills. */
+.key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  margin: 0 1px;
+  padding: 0 4px;
+  border-radius: 5px;
+  background: #fff;
+  border-style: solid;
+  border-color: var(--hairline); /* Gray 5 */
+  border-width: 1px 1.4px 1.4px 1px; /* beveled */
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1;
+  color: var(--ink-soft);
+  vertical-align: baseline;
+}
+
+.dismiss {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 5px 9px 5px 11px;
+  border: 1px solid var(--hairline-soft);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: var(--ls-small);
+  cursor: pointer;
+  transition: color var(--d-hover) var(--ease-snap), border-color var(--d-hover) var(--ease-snap);
+}
+.dismiss:hover {
+  color: var(--ink-soft);
+  border-color: var(--hairline);
+}
+.dismiss svg {
+  width: 13px;
+  height: 13px;
+}

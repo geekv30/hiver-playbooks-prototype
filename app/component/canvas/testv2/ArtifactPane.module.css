@@ -1,0 +1,155 @@
+/* ============================================================ */
+/* Artifact pane — prose-first, minimal. No card chrome, no       */
+/* background fills, no chunky borders. Type hierarchy carries it. */
+/* ============================================================ */
+
+.empty {
+  color: var(--muted-soft);
+  font-size: 12px;
+  font-style: italic;
+  padding: 2px 0;
+}
+
+/* Every artifact shares this: a tiny mono eyebrow + flush content. */
+.eyebrow {
+  font-family: var(--mono, 'JetBrains Mono', monospace);
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-soft);
+  font-weight: 500;
+  display: block;
+  margin-bottom: 6px;
+}
+
+/* ============================================================ */
+/* Email — reads like a compose preview, but flush prose          */
+/* ============================================================ */
+.email { font-size: 12.5px; }
+.emailMeta {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+.emailSubject {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+  margin-bottom: 6px;
+}
+.emailBody {
+  font-size: 12.5px;
+  color: var(--body);
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+/* ============================================================ */
+/* Tag — neutral soft pills, no border, no loud color             */
+/* ============================================================ */
+.tagPills { display: flex; flex-wrap: wrap; gap: 5px; }
+.tagPill {
+  display: inline-block;
+  padding: 2px 9px;
+  background: var(--surface-soft);
+  color: var(--ink);
+  border-radius: 9999px;
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+}
+
+/* ============================================================ */
+/* Note — flush prose, no yellow, no left bar                     */
+/* ============================================================ */
+.noteBody {
+  font-size: 12.5px;
+  color: var(--body);
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+/* ============================================================ */
+/* Assign                                                         */
+/* ============================================================ */
+.assignTo {
+  font-size: 13px;
+  color: var(--ink);
+  font-weight: 500;
+  letter-spacing: -0.005em;
+}
+
+/* ============================================================ */
+/* HTTP — two flush lines, request then response                  */
+/* ============================================================ */
+.httpLine {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  font-size: 12px;
+  margin-bottom: 3px;
+  line-height: 1.5;
+}
+.httpDir {
+  font-family: var(--mono, 'JetBrains Mono', monospace);
+  font-size: 11px;
+  color: var(--muted-soft);
+  flex-shrink: 0;
+}
+.httpVal {
+  font-family: var(--mono, 'JetBrains Mono', monospace);
+  font-size: 11.5px;
+  color: var(--ink);
+  word-break: break-word;
+}
+
+/* ============================================================ */
+/* Approval — one status line + meta, no table, no card           */
+/* ============================================================ */
+.approvalLine {
+  font-size: 12.5px;
+  color: var(--ink);
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.approvalStatus { font-weight: 500; }
+.approvalMeta { color: var(--muted); font-size: 12px; }
+.approvalContext {
+  font-size: 12px;
+  color: var(--body);
+  line-height: 1.55;
+  margin-top: 4px;
+}
+
+/* ============================================================ */
+/* Wait — single line                                             */
+/* ============================================================ */
+.waitLine {
+  font-size: 12.5px;
+  color: var(--ink);
+}
+.waitDuration { font-weight: 500; }
+.waitMuted { color: var(--muted); }
+
+/* ============================================================ */
+/* Data (read.* default) — flush key/value, hairline rows only    */
+/* ============================================================ */
+.dataRow {
+  display: grid;
+  grid-template-columns: minmax(72px, auto) 1fr;
+  gap: 10px;
+  padding: 3px 0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.dataRow + .dataRow { border-top: 1px solid var(--hairline); }
+.dataKey {
+  font-family: var(--mono, 'JetBrains Mono', monospace);
+  font-size: 10.5px;
+  color: var(--muted);
+}
+.dataVal { color: var(--ink); }
+.dataValue { color: var(--ink); font-size: 12.5px; line-height: 1.55; }
