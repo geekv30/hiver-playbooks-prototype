@@ -8,8 +8,6 @@ type Tab = 'scenarios' | 'custom';
 interface Props {
   /** Whether the panel is open (the canvas makes space for it). */
   open: boolean;
-  /** Close request (kept for parity; the Simulate toolbar button toggles open). */
-  onClose?: () => void;
 }
 
 /**

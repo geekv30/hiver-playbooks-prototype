@@ -224,7 +224,7 @@ export default function EditorCanvas() {
           </div>
         </div>
         </div>
-        <SimulatePanel open={simOpen} onClose={() => setSimOpen(false)} />
+        <SimulatePanel open={simOpen} />
       </div>
 
       {palette && (
