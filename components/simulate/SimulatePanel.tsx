@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { RiMailAddLine } from 'react-icons/ri';
 import { SIM_TOPICS, type SimEmail, type SimStatusKind, type SimTopic } from '@/data/simFixtures';
 import ScenarioList from './ScenarioList';
 import TopicHeader from './TopicHeader';
 import EmailList from './EmailList';
 import TestAllBar, { type TestAllMode } from './TestAllBar';
 import { useSimRun } from './useSimRun';
+import type { Verdict } from './RunOutcome';
 import styles from './SimulatePanel.module.css';
 
 type Tab = 'scenarios' | 'custom';
@@ -34,14 +36,15 @@ function aggregate(statuses: (SimStatusKind | undefined)[]): SimStatusKind {
  * SimulatePanel — the right-hand simulate surface.
  *
  * Scenarios tab: topic list -> drill into a topic's emails -> "Test all" runs
- * them sequentially with a live trace + per-email outcome (passed / failed /
- * needs-attention). The topic rolls up (header live; list cards persist past
- * runs). The run engine resets per topic. Custom test is a stub (out of scope).
+ * them sequentially with a live trace + per-email outcome. Topic rolls up (header
+ * live; list cards persist past runs). Human verdicts persist per email so they
+ * survive re-runs. Custom test is a clear "coming soon" placeholder.
  */
 export default function SimulatePanel({ open }: Props) {
   const [tab, setTab] = useState<Tab>('scenarios');
   const [openTopicId, setOpenTopicId] = useState<string | null>(null);
   const [results, setResults] = useState<Record<string, TopicResult>>({});
+  const [verdicts, setVerdicts] = useState<Record<string, Verdict>>({});
 
   const topic = openTopicId ? SIM_TOPICS.find((t) => t.id === openTopicId) ?? null : null;
   const inScenarios = tab === 'scenarios';
@@ -77,6 +80,8 @@ export default function SimulatePanel({ open }: Props) {
     return r ? { ...t, status: r.status, runCount: r.runCount } : t;
   });
 
+  const tabPanelLabel = tab === 'scenarios' ? 'sim-tab-scenarios' : 'sim-tab-custom';
+
   return (
     <aside
       className={styles.panel}
@@ -89,8 +94,10 @@ export default function SimulatePanel({ open }: Props) {
         <div className={styles.tabs} role="tablist" aria-label="Simulate views">
           <button
             type="button"
+            id="sim-tab-scenarios"
             role="tab"
             aria-selected={tab === 'scenarios'}
+            aria-controls="sim-tabpanel"
             className={styles.tab}
             data-active={tab === 'scenarios' || undefined}
             onClick={() => setTab('scenarios')}
@@ -99,8 +106,10 @@ export default function SimulatePanel({ open }: Props) {
           </button>
           <button
             type="button"
+            id="sim-tab-custom"
             role="tab"
             aria-selected={tab === 'custom'}
+            aria-controls="sim-tabpanel"
             className={styles.tab}
             data-active={tab === 'custom' || undefined}
             onClick={() => setTab('custom')}
@@ -109,16 +118,35 @@ export default function SimulatePanel({ open }: Props) {
           </button>
         </div>
 
-        <div className={styles.body} role="tabpanel">
-          {inScenarios &&
-            (topic && headerTopic ? (
+        <div
+          id="sim-tabpanel"
+          className={styles.body}
+          role="tabpanel"
+          aria-labelledby={tabPanelLabel}
+        >
+          {inScenarios ? (
+            topic && headerTopic ? (
               <>
                 <TopicHeader topic={headerTopic} onBack={() => setOpenTopicId(null)} />
-                <EmailList emails={topic.emails} runs={runs} />
+                <EmailList
+                  emails={topic.emails}
+                  runs={runs}
+                  verdicts={verdicts}
+                  onVerdict={(id, v) => setVerdicts((p) => ({ ...p, [id]: v }))}
+                />
               </>
             ) : (
               <ScenarioList topics={listTopics} onOpenTopic={setOpenTopicId} />
-            ))}
+            )
+          ) : (
+            <div className={styles.custom} aria-live="polite">
+              <RiMailAddLine className={styles.customIcon} aria-hidden />
+              <p className={styles.customTitle}>Custom test</p>
+              <p className={styles.customBody}>
+                Paste or compose a single email and run this playbook against it. Coming soon.
+              </p>
+            </div>
+          )}
         </div>
 
         {inScenarios && topic && <TestAllBar mode={mode} onTestAll={start} onStop={stop} />}

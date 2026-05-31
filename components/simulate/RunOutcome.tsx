@@ -1,35 +1,31 @@
 'use client';
 
-import { useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { RiCornerUpLeftLine, RiThumbUpLine, RiThumbDownLine, RiAlertLine } from 'react-icons/ri';
+import { SIM_COPY } from '@/data/simFixtures';
 import { SIM_BRANCH, SIM_DRAFT } from './traceFixture';
 import styles from './RunOutcome.module.css';
 
-type Verdict = 'none' | 'up' | 'down';
+export type Verdict = 'up' | 'down';
 
 interface Props {
   /** 'passed' shows the drafted reply; 'attention' shows the caught-gap nudge. */
   kind: 'passed' | 'attention';
   branch?: string;
   draft?: string;
-  onVerdict?: (v: 'up' | 'down') => void;
+  /** Controlled verdict (persisted by the panel, so it survives re-runs). */
+  verdict?: Verdict;
+  onVerdict?: (v: Verdict) => void;
 }
 
 /**
  * RunOutcome — the payoff above the trace: the drafted reply with its matched
- * branch attributed inside the box (so branch -> draft reads as connected) and
- * the verdict as icon-only thumbs; or the caught-gap nudge. Springs in via Motion
- * (motion.dev), honouring prefers-reduced-motion.
+ * branch attributed inside the box, and a controlled human verdict (icon-only
+ * thumbs). For a caught logic gap it shows the needs-attention nudge (guidance
+ * only, no dead button). Springs in via Motion (motion.dev), reduced-motion aware.
  */
-export default function RunOutcome({ kind, branch = SIM_BRANCH, draft = SIM_DRAFT, onVerdict }: Props) {
-  const [verdict, setVerdict] = useState<Verdict>('none');
+export default function RunOutcome({ kind, branch = SIM_BRANCH, draft = SIM_DRAFT, verdict, onVerdict }: Props) {
   const reduce = useReducedMotion();
-  const choose = (v: 'up' | 'down') => {
-    setVerdict(v);
-    onVerdict?.(v);
-  };
-
   const spring = { type: 'spring' as const, stiffness: 420, damping: 34 };
   const enter = reduce ? false : { opacity: 0, y: 6 };
 
@@ -38,14 +34,9 @@ export default function RunOutcome({ kind, branch = SIM_BRANCH, draft = SIM_DRAF
       <motion.div className={styles.attn} initial={enter} animate={{ opacity: 1, y: 0 }} transition={spring}>
         <div className={styles.attnHead}>
           <RiAlertLine aria-hidden />
-          No branch matched
+          {SIM_COPY.noBranchHead}
         </div>
-        <p className={styles.attnBody}>
-          The condition didn&apos;t match any branch for this email. Add an ELSE to handle it.
-        </p>
-        <button type="button" className={styles.attnAction}>
-          Add an ELSE branch
-        </button>
+        <p className={styles.attnBody}>{SIM_COPY.noBranchBody}</p>
       </motion.div>
     );
   }
@@ -63,9 +54,9 @@ export default function RunOutcome({ kind, branch = SIM_BRANCH, draft = SIM_DRAF
               type="button"
               className={styles.vbtn}
               data-on={verdict === 'up' || undefined}
-              onClick={() => choose('up')}
+              aria-pressed={verdict === 'up'}
               aria-label="Looks right"
-              title="Looks right"
+              onClick={() => onVerdict?.('up')}
             >
               <RiThumbUpLine aria-hidden />
             </button>
@@ -74,9 +65,9 @@ export default function RunOutcome({ kind, branch = SIM_BRANCH, draft = SIM_DRAF
               className={styles.vbtn}
               data-down
               data-on={verdict === 'down' || undefined}
-              onClick={() => choose('down')}
+              aria-pressed={verdict === 'down'}
               aria-label="Needs work"
-              title="Needs work"
+              onClick={() => onVerdict?.('down')}
             >
               <RiThumbDownLine aria-hidden />
             </button>

@@ -30,6 +30,15 @@
   border-color: var(--hairline-strong);
 }
 
+/* Borderless variant (run trace): same content + icons, no pill chrome. */
+.plain,
+.plain:hover {
+  padding: 0;
+  background: transparent;
+  border-color: transparent;
+  cursor: default;
+}
+
 .chipIco {
   width: 14px;
   height: 14px;

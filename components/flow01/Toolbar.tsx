@@ -23,6 +23,8 @@ interface Props {
   isValid: boolean;
   onSimulate?: () => void;
   onActivate?: () => void;
+  onBack?: () => void;
+  onManual?: () => void;
   /** Whether the simulate panel is open (toggles the Simulate button's state). */
   simulating?: boolean;
 }
@@ -40,12 +42,14 @@ export default function Toolbar({
   isValid,
   onSimulate,
   onActivate,
+  onBack,
+  onManual,
   simulating,
 }: Props) {
   return (
     <div className={styles.bar}>
       <div className={styles.left}>
-        <Button variant="secondary" iconOnly={<RiArrowLeftLine />} ariaLabel="Back" />
+        <Button variant="secondary" iconOnly={<RiArrowLeftLine />} ariaLabel="Back" onClick={onBack} />
         <TitleField value={title} onChange={onTitleChange} />
         <Badge intent="draft">Draft</Badge>
       </div>
@@ -54,8 +58,8 @@ export default function Toolbar({
         <Button variant="tertiary" iconOnly={<RiArrowGoBackLine />} ariaLabel="Undo" onClick={onUndo} disabled={!canUndo} />
         <Button variant="tertiary" iconOnly={<RiArrowGoForwardLine />} ariaLabel="Redo" onClick={onRedo} disabled={!canRedo} />
         <span className={styles.gap} />
-        <Button variant="secondary" iconOnly={<RiBookOpenLine />} ariaLabel="Manual" />
-        <Button variant={simulating ? 'primary' : 'secondary'} iconLeft={<RiPlayLine />} onClick={onSimulate}>Simulate</Button>
+        <Button variant="secondary" iconOnly={<RiBookOpenLine />} ariaLabel="Documentation" onClick={onManual} />
+        <Button variant={simulating ? 'primary' : 'secondary'} iconLeft={<RiPlayLine />} onClick={onSimulate} ariaPressed={simulating}>Simulate</Button>
         <Button variant="primary" iconRight={<RiArrowDownSLine />} disabled={!isValid} onClick={onActivate}>
           Activate
         </Button>
@@ -69,6 +73,9 @@ export default function Toolbar({
 // Uncontrolled DOM text (seeded/reconciled imperatively) so the caret never jumps.
 function TitleField({ value, onChange }: { value: string; onChange: (t: string) => void }) {
   const ref = useRef<HTMLSpanElement>(null);
+  // "Unnamed" until the user gives it a real title: subtle + underlined as a
+  // "name me" affordance; once named, normal ink with no underline.
+  const unnamed = !value.trim() || value === 'Untitled Playbook';
   useLayoutEffect(() => {
     const el = ref.current;
     if (el && el.textContent !== value) el.textContent = value;
@@ -77,10 +84,12 @@ function TitleField({ value, onChange }: { value: string; onChange: (t: string) 
     <span
       ref={ref}
       className={styles.title}
+      data-unnamed={unnamed || undefined}
       contentEditable
       suppressContentEditableWarning
       spellCheck={false}
       role="textbox"
+      aria-multiline="false"
       aria-label="Playbook title"
       onInput={(e) => onChange(e.currentTarget.textContent ?? '')}
       onKeyDown={(e) => {

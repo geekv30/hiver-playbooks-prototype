@@ -20,6 +20,8 @@ interface Props {
   onClick?: () => void;
   type?: 'button' | 'submit';
   ariaLabel?: string;
+  /** Toggle state for buttons that act as toggles (e.g. a panel toggle). */
+  ariaPressed?: boolean;
 }
 
 // Button — Figma 211:19456 / 211:19749 / 211:20709. Neutral system:
@@ -37,6 +39,7 @@ export default function Button({
   onClick,
   type = 'button',
   ariaLabel,
+  ariaPressed,
 }: Props) {
   const cls = [
     styles.btn,
@@ -49,7 +52,14 @@ export default function Button({
     .join(' ');
 
   return (
-    <button type={type} className={cls} disabled={disabled} onClick={onClick} aria-label={ariaLabel}>
+    <button
+      type={type}
+      className={cls}
+      disabled={disabled}
+      onClick={onClick}
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
+    >
       {iconOnly ? (
         <span className={styles.icon}>{iconOnly}</span>
       ) : (

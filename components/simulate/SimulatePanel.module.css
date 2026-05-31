@@ -88,6 +88,35 @@
   padding: 20px 18px;
 }
 
+/* Custom test tab — a clear "coming soon" empty state (not a blank panel). */
+.custom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 64px 24px 24px;
+  text-align: center;
+}
+.customIcon {
+  width: 28px;
+  height: 28px;
+  margin-bottom: 4px;
+  color: var(--muted-soft);
+}
+.customTitle {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.customBody {
+  margin: 0;
+  max-width: 260px;
+  font-size: var(--fs-small);
+  line-height: 1.5;
+  color: var(--muted);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .panel {
     transition: none;

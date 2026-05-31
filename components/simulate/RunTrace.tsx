@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { RiArrowDownSLine } from 'react-icons/ri';
-import type { SimStatusKind } from '@/data/simFixtures';
+import { SIM_COPY, type SimStatusKind } from '@/data/simFixtures';
 import { SIM_TRACE, type StepStatus } from './traceFixture';
 import TraceStep from './TraceStep';
 import styles from './RunTrace.module.css';
@@ -33,7 +33,7 @@ export default function RunTrace({ stepStatus, outcome }: Props) {
         <div className={styles.steps}>
           {SIM_TRACE.map((s, i) => {
             const noBranch = s.kind === 'condition' && outcome === 'attention';
-            const step = noBranch ? { ...s, branch: 'no branch matched for this email' } : s;
+            const step = noBranch ? { ...s, branch: SIM_COPY.noBranchTrace } : s;
             return (
               <TraceStep
                 key={s.id}

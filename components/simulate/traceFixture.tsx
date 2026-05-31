@@ -1,19 +1,13 @@
-import type { ComponentType, SVGProps } from 'react';
-import { RiPriceTag3Line, RiBookOpenLine, RiReplyLine } from 'react-icons/ri';
-import { ExtractIcon } from '@/components/icons/ui/Extract';
-import { HubSpotIcon } from '@/components/icons/connectors/HubSpot';
-import { BranchIcon } from '@/components/icons/ui/Branch';
-
 // Per-step status during a run. grey dot -> green as each step succeeds.
 export type StepStatus = 'pending' | 'running' | 'done' | 'failed' | 'skipped';
 
 export interface TraceStepDef {
   id: string;
-  Icon: ComponentType<SVGProps<SVGSVGElement>>;
-  /** Brand-coloured icon (e.g. the HubSpot logo) — skip the currentColor tint. */
-  brand?: boolean;
-  label: string;
-  /** Mono detail after the " · " (JetBrains). */
+  /** Library action id. The trace renders each step through the shared Chip
+   *  atom, so its action-tags are identical to the editor's (one renderer per
+   *  pattern - see feedback-reusability-principle). */
+  actionId: string;
+  /** Mono detail after the " · " (overrides the action's default meta). */
   meta?: string;
   /** Simulated duration (ms) shown in the trace. */
   ms: number;
@@ -24,56 +18,49 @@ export interface TraceStepDef {
   branch?: string;
 }
 
-// The trace template (the illustrative API playbook). The renderer is generic;
-// in the real product this derives from the live EditorDoc steps. The Condition
-// renders matched-path-only, and the matched branch's Reply produces the draft.
+// The trace template (the illustrative API playbook, mirroring the example doc).
+// actionIds map to the action library so the Chip atom draws them.
 export const SIM_TRACE: TraceStepDef[] = [
   {
     id: 's1',
-    Icon: ExtractIcon,
-    label: 'AI Extract',
+    actionId: 'ai_extract',
     meta: 'summary',
     ms: 450,
     output: 'summary returned: 404, not found, 11:34, v1.2.1, southern-S3',
   },
   {
     id: 's2',
-    Icon: RiPriceTag3Line,
-    label: 'Tag',
+    actionId: 'tag',
     meta: 'api-error, support',
     ms: 120,
     output: 'ticket tagged: api-error, support',
   },
   {
     id: 's3',
-    Icon: HubSpotIcon,
-    brand: true,
-    label: 'Hubspot · Get contact',
-    meta: 'contact, company association',
+    actionId: 'hubspot_get_contact',
+    meta: 'contact, company',
     ms: 380,
-    output: 'contact: John Doe · company: hiverhq.com',
+    output: 'contact: John Doe, company: hiverhq.com',
   },
   {
     id: 's4',
-    Icon: RiBookOpenLine,
-    label: 'KB',
+    actionId: 'kb_search',
     meta: 'Engg-docs',
     ms: 210,
     output: 'returned: 200 ok',
   },
   {
     id: 's5',
-    Icon: BranchIcon,
+    actionId: 'condition',
     kind: 'condition',
-    label: 'Condition',
+    meta: '4xx / 5xx / config',
     ms: 90,
-    branch: 'matched IF · client error (4xx)',
+    branch: 'matched: client error (4xx)',
   },
   {
     id: 's6',
-    Icon: RiReplyLine,
-    label: 'Reply',
-    meta: 'draft',
+    actionId: 'draft_reply',
+    meta: 'with the fix',
     ms: 1200,
     output: 'drafted reply ready',
   },

@@ -132,20 +132,3 @@
   line-height: 1.5;
   color: var(--ink-soft);
 }
-.attnAction {
-  align-self: flex-start;
-  margin: 0;
-  padding: 5px 10px;
-  background: var(--card);
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-sm);
-  font-family: var(--font);
-  font-size: var(--fs-caption);
-  font-weight: 500;
-  color: var(--ink-soft);
-  cursor: pointer;
-  transition: border-color var(--d-hover) var(--ease-snap);
-}
-.attnAction:hover {
-  border-color: var(--hairline-strong);
-}

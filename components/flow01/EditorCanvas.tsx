@@ -13,7 +13,7 @@ import CommandPalette from './CommandPalette';
 import SimulatePanel from '@/components/simulate/SimulatePanel';
 import { REFERENCE_ID } from './paletteCatalog';
 import { useEditorDoc } from './useEditorDoc';
-import { LineTarget, makeChip, makeRef, txt, normalizeLine, lineIsEmpty } from './doc';
+import { LineTarget, makeChip, makeRef, txt, normalizeLine, lineIsEmpty, type EditorDoc } from './doc';
 import styles from './EditorCanvas.module.css';
 
 interface PaletteState {
@@ -27,7 +27,7 @@ interface FocusReq {
   token: number;
 }
 
-const TRIGGER_PLACEHOLDER = 'Describe briefly when this procedure is to be run';
+const TRIGGER_PLACEHOLDER = 'e.g. When an email reports an API error';
 // Step placeholder — teaches BOTH triggers as small keys (the disappearing-
 // placeholder fix). '/' for actions, '@' to reference. Recurs on every empty line.
 const STEP_PLACEHOLDER = (
@@ -40,14 +40,22 @@ const STEP_PLACEHOLDER = (
   </>
 );
 
-export default function EditorCanvas() {
-  const api = useEditorDoc();
+interface Props {
+  /** Optional starting document. Omit for a fresh empty playbook (/canvas);
+   *  /api-example passes the seeded example. */
+  initialDoc?: EditorDoc;
+}
+
+export default function EditorCanvas({ initialDoc }: Props) {
+  const api = useEditorDoc(initialDoc);
   const { doc } = api;
 
   const [palette, setPalette] = useState<PaletteState | null>(null);
   const [focusReq, setFocusReq] = useState<FocusReq | null>(null);
   const [simOpen, setSimOpen] = useState(false);
+  const [hint, setHint] = useState<string | null>(null);
   const tokenRef = useRef(0);
+  const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const lineKey = (t: LineTarget) => (t.kind === 'trigger' ? 'trigger' : `step:${t.id}`);
 
@@ -56,6 +64,14 @@ export default function EditorCanvas() {
   const requestFocus = useCallback((key: string, atStart: boolean) => {
     tokenRef.current += 1;
     setFocusReq({ key, atStart, token: tokenRef.current });
+  }, []);
+
+  // Ephemeral "coming soon" toast for chrome actions not wired in this prototype
+  // (Activate / Back / Docs) so a click registers as intentional, not a no-op.
+  const showHint = useCallback((msg: string) => {
+    setHint(msg);
+    if (hintTimer.current) clearTimeout(hintTimer.current);
+    hintTimer.current = setTimeout(() => setHint(null), 2600);
   }, []);
 
   const focusFor = (key: string): { token: number; atStart: boolean } | null =>
@@ -142,6 +158,9 @@ export default function EditorCanvas() {
         isValid={api.isValid}
         onSimulate={() => setSimOpen((o) => !o)}
         simulating={simOpen}
+        onActivate={() => showHint('Activation is coming soon.')}
+        onBack={() => showHint('Your playbook list is coming soon.')}
+        onManual={() => showHint('Documentation is coming soon.')}
       />
 
       <div className={styles.stage}>
@@ -155,7 +174,7 @@ export default function EditorCanvas() {
               <div className={styles.row}>
                 <span className={styles.gutter} aria-hidden />
                 <div className={styles.content}>
-                  <h2 className={styles.label}>When should this procedure be ran :</h2>
+                  <h2 className={styles.label}>When should this run?</h2>
                   <div className={styles.triggerField}>
                     <EditorLine
                       fragments={doc.trigger}
@@ -178,7 +197,7 @@ export default function EditorCanvas() {
               <div className={styles.row}>
                 <span className={styles.gutter} aria-hidden />
                 <div className={styles.content}>
-                  <h2 className={styles.label}>Describe Procedure :</h2>
+                  <h2 className={styles.label}>What should it do?</h2>
                 </div>
               </div>
 
@@ -234,6 +253,12 @@ export default function EditorCanvas() {
           onSelect={insertChip}
           onClose={() => setPalette(null)}
         />
+      )}
+
+      {hint && (
+        <div className={styles.toast} role="status">
+          {hint}
+        </div>
       )}
     </div>
   );

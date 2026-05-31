@@ -15,7 +15,7 @@ interface Props {
 // reflect the run state — Test all emails / Stop Test / Re-test all.
 const CONFIG: Record<TestAllMode, { label: string; Icon: typeof RiPlayFill }> = {
   idle: { label: 'Test all emails', Icon: RiPlayFill },
-  running: { label: 'Stop Test', Icon: RiStopFill },
+  running: { label: 'Stop test', Icon: RiStopFill },
   done: { label: 'Re-test all', Icon: RiRefreshLine },
 };
 

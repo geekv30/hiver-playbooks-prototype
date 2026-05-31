@@ -113,6 +113,17 @@ export const SIM_TOPICS: SimTopic[] = [
   },
 ];
 
+// Outcome narrative copy — kept in the data layer (not baked into renderers) so
+// the components stay generic and other outcomes can reuse them. See
+// feedback-reusability-principle.
+export const SIM_COPY = {
+  noBranchHead: 'No matching branch',
+  noBranchBody:
+    'This email did not match any branch in the playbook. Add an ELSE branch to handle cases like it.',
+  noBranchTrace: 'no matching branch for this email',
+  stepError: 'Request failed, no response',
+} as const;
+
 // One label helper for both the topic card and the topic header (DRY).
 export function topicStatusLabel(t: SimTopic): string {
   if (t.status === 'idle') return 'no runs yet';

@@ -5,7 +5,7 @@ import { RiMailLine } from 'react-icons/ri';
 import type { SimEmail } from '@/data/simFixtures';
 import type { EmailRun } from './useSimRun';
 import StatusPill, { type PillStatus } from './StatusPill';
-import RunOutcome from './RunOutcome';
+import RunOutcome, { type Verdict } from './RunOutcome';
 import RunTrace from './RunTrace';
 import styles from './EmailCard.module.css';
 
@@ -13,6 +13,9 @@ interface Props {
   email: SimEmail;
   /** Run state (present once "Test all" starts). */
   run?: EmailRun;
+  /** Persisted human verdict for this email (survives re-runs). */
+  verdict?: Verdict;
+  onVerdict?: (v: Verdict) => void;
 }
 
 /**
@@ -21,7 +24,7 @@ interface Props {
  * collapsible trace, and auto-scrolls into view when it starts running (so the
  * panel follows the run from one email to the next).
  */
-export default function EmailCard({ email, run }: Props) {
+export default function EmailCard({ email, run, verdict, onVerdict }: Props) {
   const showRun = !!run && run.status !== 'idle';
   const ref = useRef<HTMLElement>(null);
   const status = run?.status;
@@ -50,7 +53,9 @@ export default function EmailCard({ email, run }: Props) {
           <div className={styles.pillRow}>
             <StatusPill status={run!.status as PillStatus} />
           </div>
-          {run!.status === 'passed' && <RunOutcome kind="passed" draft={email.draft} />}
+          {run!.status === 'passed' && (
+            <RunOutcome kind="passed" draft={email.draft} verdict={verdict} onVerdict={onVerdict} />
+          )}
           {run!.status === 'attention' && <RunOutcome kind="attention" />}
           <div className={styles.divider} aria-hidden />
           <RunTrace stepStatus={run!.steps} outcome={run!.status} />

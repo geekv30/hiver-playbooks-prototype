@@ -1,6 +1,9 @@
 'use client';
 
 import { motion, useReducedMotion } from 'motion/react';
+import type { Chip as ChipModel } from '@/types/playbook';
+import Chip from '@/components/atoms/Chip';
+import { SIM_COPY } from '@/data/simFixtures';
 import type { TraceStepDef, StepStatus } from './traceFixture';
 import styles from './TraceStep.module.css';
 
@@ -14,18 +17,24 @@ interface Props {
 
 /**
  * TraceStep — one execution step (Figma 211:20462): a status rail (dot + the
- * connector line) + the step chip. Once resolved it springs in timing + output
- * (Motion / motion.dev); a failed step shows an error; skipped steps dim out; a
- * Condition shows its matched branch (or the caught gap when none matched).
+ * connector line) + the action-tag rendered by the SHARED Chip atom (so trace
+ * action-tags are identical to the editor's). Once resolved it springs in timing
+ * + output; a failed step shows an error; skipped steps dim; a Condition shows
+ * its matched branch (or the caught gap when none matched).
  */
 export default function TraceStep({ step, status, isLast, branchWarn }: Props) {
-  const { Icon } = step;
   const done = status === 'done';
   const failed = status === 'failed';
   const reduce = useReducedMotion();
-
   const spring = { type: 'spring' as const, stiffness: 520, damping: 38 };
   const enter = reduce ? false : { opacity: 0, y: -3 };
+
+  const chipModel: ChipModel = {
+    id: step.id,
+    actionId: step.actionId,
+    status: 'ok',
+    config: step.meta ? { meta: step.meta } : {},
+  };
 
   return (
     <div className={styles.step} data-status={status}>
@@ -34,17 +43,8 @@ export default function TraceStep({ step, status, isLast, branchWarn }: Props) {
         {!isLast && <span className={styles.line} aria-hidden />}
       </div>
       <div className={styles.content}>
-        <div className={styles.chip}>
-          <span className={styles.icon} data-brand={step.brand || undefined}>
-            <Icon width={14} height={14} />
-          </span>
-          <span className={styles.label}>{step.label}</span>
-          {step.meta && (
-            <>
-              <span className={styles.sep}>·</span>
-              <span className={styles.meta}>{step.meta}</span>
-            </>
-          )}
+        <div className={styles.chipRow}>
+          <Chip chip={chipModel} metaText={step.meta} plain />
         </div>
         {(done || failed) && step.branch && (
           <motion.div
@@ -66,7 +66,7 @@ export default function TraceStep({ step, status, isLast, branchWarn }: Props) {
         {failed && (
           <motion.div className={styles.detail} initial={enter} animate={{ opacity: 1, y: 0 }} transition={spring}>
             <div className={styles.timing}>{step.ms} ms</div>
-            <div className={styles.error}>errored - no response</div>
+            <div className={styles.error}>{SIM_COPY.stepError}</div>
           </motion.div>
         )}
       </div>
