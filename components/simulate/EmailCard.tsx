@@ -37,7 +37,7 @@ export default function EmailCard({ email, run }: Props) {
           <div className={styles.pillRow}>
             <StatusPill status={run!.status as PillStatus} />
           </div>
-          {run!.status === 'passed' && <RunOutcome kind="passed" />}
+          {run!.status === 'passed' && <RunOutcome kind="passed" draft={email.draft} />}
           {run!.status === 'attention' && <RunOutcome kind="attention" />}
           <div className={styles.divider} aria-hidden />
           <RunTrace stepStatus={run!.steps} outcome={run!.status} />

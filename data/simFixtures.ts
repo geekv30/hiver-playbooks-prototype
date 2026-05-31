@@ -5,8 +5,8 @@
 // pattern), so swapping this array re-skins the whole panel — there is NO
 // case-specific content baked into the components. See feedback-reusability-principle.
 //
-// Sample emails are written to be COHERENT with their topic (no "can't log in"
-// under "404 errors") — believability is part of the craft bar.
+// Sample emails + drafts are written to be COHERENT with their topic (no
+// "can't log in" under "404 errors") — believability is part of the craft bar.
 
 export type SimStatusKind = 'idle' | 'running' | 'passed' | 'failed' | 'attention';
 
@@ -19,6 +19,8 @@ export interface SimEmail {
   outcome?: 'passed' | 'failed' | 'attention';
   /** For 'failed': the trace step index that errors (later steps are skipped). */
   failAt?: number;
+  /** Drafted reply shown on a passed run (coherent with this email). */
+  draft?: string;
 }
 
 export interface SimTopic {
@@ -44,6 +46,8 @@ export const SIM_TOPICS: SimTopic[] = [
         subject: '404 on the /v2/orders endpoint',
         preview:
           'Since this morning every call to /v2/orders comes back 404 not found, but the docs still list the route. Did something change?',
+        draft:
+          "Hi Maria, thanks for flagging this. The 404 on /v2/orders started with the v1.2.1 rollout - the route moved to /v2/order (singular), so updating the path resolves it. I've logged it for the team in case other endpoints are affected.",
       },
       {
         id: 'e2',
@@ -51,6 +55,8 @@ export const SIM_TOPICS: SimTopic[] = [
         subject: 'Getting 404s after the v1.2.1 upgrade',
         preview:
           'After upgrading the SDK to v1.2.1 our webhook receiver returns 404 for routes that worked yesterday. Can you help us trace it?',
+        draft:
+          'Hi Devin, thanks for the detail. The v1.2.1 upgrade renamed several webhook routes, so the old paths now return 404. Remapping to the new routes (listed in the v1.2.1 changelog) restores delivery - happy to confirm the mapping for your endpoints.',
       },
     ],
   },
@@ -66,6 +72,8 @@ export const SIM_TOPICS: SimTopic[] = [
         subject: '500s spiking on checkout',
         preview:
           'We are seeing intermittent 500 Internal Server Error on the checkout API for the last 20 minutes. Is there an incident open?',
+        draft:
+          "Hi Aisha, thanks for the heads-up. We're seeing the elevated 500s on checkout as well and have opened an incident; a fix is rolling out now. I'll follow up the moment it clears - apologies for the disruption.",
       },
       {
         id: 'e4',
@@ -90,6 +98,8 @@ export const SIM_TOPICS: SimTopic[] = [
         subject: 'Empty payload returns 200 instead of 400',
         preview:
           'When we POST an empty body the API responds 200 OK rather than a validation error, which quietly breaks our retry logic.',
+        draft:
+          "Hi Priya, good catch. An empty body should return a 400 validation error rather than 200 - that's a known gap we're tracking a fix for. In the meantime, validating the payload before the call avoids the silent pass; I'll let you know when the API-side fix ships.",
       },
       {
         id: 'e6',
