@@ -36,6 +36,11 @@
   --primary-tint-strong: rgba(225, 85, 36, .14);
   --primary-ring: rgba(225, 85, 36, .30);
 
+  /* Interactive accent — Figma "Blue/Primary Blue". Used for simulate active
+     states (tabs, primary sim CTA). Distinct from the Hiver-orange brand --primary. */
+  --accent: #196FE0;
+  --accent-bg: rgba(25, 111, 224, .10);
+
   /* ===== Radii ===== */
   --r-xs: 4px;
   --r-sm: 6px;
