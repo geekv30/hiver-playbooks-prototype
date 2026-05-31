@@ -7,7 +7,7 @@
 .scalar {
   padding: 10px 12px;
   font-family: var(--mono);
-  font-size: 12.5px;
+  font-size: var(--fs-small);
   color: var(--ink-soft);
   background: var(--surface-soft);
   border-radius: var(--r-sm);
@@ -34,7 +34,7 @@
 }
 .key {
   font-family: var(--font);
-  font-size: 11.5px;
+  font-size: var(--fs-caption);
   font-weight: 500;
   color: var(--muted);
   letter-spacing: -.003em;
@@ -42,7 +42,7 @@
 }
 .value {
   font-family: var(--mono);
-  font-size: 12.5px;
+  font-size: var(--fs-small);
   color: var(--ink-soft);
   margin: 0;
   word-break: break-word;

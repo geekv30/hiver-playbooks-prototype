@@ -45,7 +45,7 @@
   background: var(--ink);
   color: var(--card);
   font-family: var(--font);
-  font-size: 11.5px;
+  font-size: var(--fs-caption);
   font-weight: 500;
   letter-spacing: -.003em;
   padding: 3px 8px;
