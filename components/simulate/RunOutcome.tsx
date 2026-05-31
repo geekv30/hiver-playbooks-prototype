@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import { RiCornerUpLeftLine, RiThumbUpLine, RiThumbDownLine, RiAlertLine } from 'react-icons/ri';
 import { SIM_BRANCH, SIM_DRAFT } from './traceFixture';
 import styles from './RunOutcome.module.css';
@@ -16,20 +17,25 @@ interface Props {
 }
 
 /**
- * RunOutcome — the payoff above the trace: which branch fired (neutral chip) +
- * the drafted reply, with the human verdict as icon-only thumbs inside the
- * reply box. For a caught logic gap it shows the "needs attention" nudge instead.
+ * RunOutcome — the payoff above the trace: the drafted reply with its matched
+ * branch attributed inside the box (so branch -> draft reads as connected) and
+ * the verdict as icon-only thumbs; or the caught-gap nudge. Springs in via Motion
+ * (motion.dev), honouring prefers-reduced-motion.
  */
 export default function RunOutcome({ kind, branch = SIM_BRANCH, draft = SIM_DRAFT, onVerdict }: Props) {
   const [verdict, setVerdict] = useState<Verdict>('none');
+  const reduce = useReducedMotion();
   const choose = (v: 'up' | 'down') => {
     setVerdict(v);
     onVerdict?.(v);
   };
 
+  const spring = { type: 'spring' as const, stiffness: 420, damping: 34 };
+  const enter = reduce ? false : { opacity: 0, y: 6 };
+
   if (kind === 'attention') {
     return (
-      <div className={styles.attn}>
+      <motion.div className={styles.attn} initial={enter} animate={{ opacity: 1, y: 0 }} transition={spring}>
         <div className={styles.attnHead}>
           <RiAlertLine aria-hidden />
           No branch matched
@@ -40,13 +46,12 @@ export default function RunOutcome({ kind, branch = SIM_BRANCH, draft = SIM_DRAF
         <button type="button" className={styles.attnAction}>
           Add an ELSE branch
         </button>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className={styles.outcome}>
-      <span className={styles.branch}>matched: {branch}</span>
+    <motion.div className={styles.outcome} initial={enter} animate={{ opacity: 1, y: 0 }} transition={spring}>
       <div className={styles.draft}>
         <div className={styles.draftHead}>
           <span className={styles.draftLabel}>
@@ -77,8 +82,9 @@ export default function RunOutcome({ kind, branch = SIM_BRANCH, draft = SIM_DRAF
             </button>
           </div>
         </div>
+        <span className={styles.branchCaption}>matched: {branch}</span>
         <p className={styles.draftBody}>{draft}</p>
       </div>
-    </div>
+    </motion.div>
   );
 }

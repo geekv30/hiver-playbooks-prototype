@@ -8,19 +8,14 @@
   gap: 10px;
 }
 
-/* Branch chip — which branch fired. NEUTRAL (B2B restraint; not accent-coloured). */
-.branch {
-  align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: var(--r-sm);
-  background: var(--surface-card);
-  color: var(--body);
+/* Branch attribution — lives INSIDE the draft box so the matched branch and the
+   reply it produced read as connected. Neutral/muted (B2B restraint). */
+.branchCaption {
   font-size: var(--fs-caption); /* 12px */
-  line-height: 18px;
-  font-weight: 500;
+  line-height: 16px;
+  font-weight: 400;
   letter-spacing: var(--ls-caption);
+  color: var(--muted);
 }
 
 /* Drafted reply box. */

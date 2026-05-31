@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
-import { RiAddLine, RiSlashCommands2, RiAtLine } from 'react-icons/ri';
+import { RiAddLine, RiSlashCommands, RiAtLine } from 'react-icons/ri';
 import type { Fragment } from '@/types/playbook';
 import GutterMarker from '@/components/atoms/GutterMarker';
 import GmailBar from './GmailBar';
@@ -33,7 +33,7 @@ const TRIGGER_PLACEHOLDER = 'Describe briefly when this procedure is to be run';
 const STEP_PLACEHOLDER = (
   <>
     Write in natural language, or
-    <span className={styles.keyPill} aria-hidden><RiSlashCommands2 /></span>
+    <span className={styles.keyPill} aria-hidden><RiSlashCommands /></span>
     for actions and
     <span className={styles.keyPill} aria-hidden><RiAtLine /></span>
     to reference

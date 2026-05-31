@@ -1,3 +1,6 @@
+'use client';
+
+import { useEffect, useRef } from 'react';
 import { RiMailLine } from 'react-icons/ri';
 import type { SimEmail } from '@/data/simFixtures';
 import type { EmailRun } from './useSimRun';
@@ -15,12 +18,22 @@ interface Props {
 /**
  * EmailCard — Figma 211:20104 / 211:20418: bordered card with sender, subject,
  * single-line preview. When a run is in flight it grows a status pill + the
- * collapsible trace.
+ * collapsible trace, and auto-scrolls into view when it starts running (so the
+ * panel follows the run from one email to the next).
  */
 export default function EmailCard({ email, run }: Props) {
   const showRun = !!run && run.status !== 'idle';
+  const ref = useRef<HTMLElement>(null);
+  const status = run?.status;
+
+  useEffect(() => {
+    if (status === 'running') {
+      ref.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [status]);
+
   return (
-    <article className={styles.card}>
+    <article ref={ref} className={styles.card} style={{ scrollMarginBlock: 12 }}>
       <div className={styles.head}>
         <div className={styles.sender}>
           <RiMailLine className={styles.mail} aria-hidden />

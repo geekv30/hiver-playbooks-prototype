@@ -1,3 +1,6 @@
+'use client';
+
+import { motion, useReducedMotion } from 'motion/react';
 import type { TraceStepDef, StepStatus } from './traceFixture';
 import styles from './TraceStep.module.css';
 
@@ -11,14 +14,19 @@ interface Props {
 
 /**
  * TraceStep — one execution step (Figma 211:20462): a status rail (dot + the
- * connector line) + the step chip (icon · label · mono meta). When resolved it
- * shows timing + output; a failed step shows an error; skipped steps dim out;
- * a Condition shows its matched branch (or the caught gap when none matched).
+ * connector line) + the step chip. Once resolved it springs in timing + output
+ * (Motion / motion.dev); a failed step shows an error; skipped steps dim out; a
+ * Condition shows its matched branch (or the caught gap when none matched).
  */
 export default function TraceStep({ step, status, isLast, branchWarn }: Props) {
   const { Icon } = step;
   const done = status === 'done';
   const failed = status === 'failed';
+  const reduce = useReducedMotion();
+
+  const spring = { type: 'spring' as const, stiffness: 520, damping: 38 };
+  const enter = reduce ? false : { opacity: 0, y: -3 };
+
   return (
     <div className={styles.step} data-status={status}>
       <div className={styles.rail}>
@@ -39,21 +47,27 @@ export default function TraceStep({ step, status, isLast, branchWarn }: Props) {
           )}
         </div>
         {(done || failed) && step.branch && (
-          <div className={styles.branch} data-warn={branchWarn || undefined}>
+          <motion.div
+            className={styles.branch}
+            data-warn={branchWarn || undefined}
+            initial={enter}
+            animate={{ opacity: 1, y: 0 }}
+            transition={spring}
+          >
             {step.branch}
-          </div>
+          </motion.div>
         )}
         {done && (
-          <div className={styles.detail}>
+          <motion.div className={styles.detail} initial={enter} animate={{ opacity: 1, y: 0 }} transition={spring}>
             <div className={styles.timing}>{step.ms} ms</div>
             {step.output && <div className={styles.output}>{step.output}</div>}
-          </div>
+          </motion.div>
         )}
         {failed && (
-          <div className={styles.detail}>
+          <motion.div className={styles.detail} initial={enter} animate={{ opacity: 1, y: 0 }} transition={spring}>
             <div className={styles.timing}>{step.ms} ms</div>
             <div className={styles.error}>errored - no response</div>
-          </div>
+          </motion.div>
         )}
       </div>
     </div>

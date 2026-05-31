@@ -11,6 +11,7 @@
   align-items: center;
   gap: 5px;
   min-height: 28px;
+  padding-right: 6px; /* breathing room before the panel edge */
 }
 
 /* Back — a 28px ghost circular button (Figma renders it borderless). */

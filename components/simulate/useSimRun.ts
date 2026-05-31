@@ -20,8 +20,11 @@ function freshSteps(): Record<string, StepStatus> {
 function emptyRun(): EmailRun {
   return { status: 'idle', steps: freshSteps() };
 }
+// Use the step's stated duration (with a readable floor) so the run feels like
+// a real one — fast steps are quick, the AI draft visibly takes longer. A real
+// run would track actual AI/connector latency; this approximates it.
 function stepDelay(i: number): number {
-  return Math.max(260, Math.round(SIM_TRACE[i]!.ms * 0.55));
+  return Math.max(350, SIM_TRACE[i]!.ms);
 }
 
 // Resolve an email's run UP FRONT: the final per-step status, the email's final
