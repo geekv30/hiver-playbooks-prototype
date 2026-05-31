@@ -1,5 +1,6 @@
-/* RunOutcome — the result payoff above the trace: branch chip + drafted reply
-   + human verdict; or the "needs attention / add an ELSE" caught-gap nudge. */
+/* RunOutcome — the result payoff above the trace: branch chip (neutral) + the
+   drafted reply box with the human verdict as icon-only thumbs in its header;
+   or the "needs attention / add an ELSE" caught-gap nudge. */
 
 .outcome {
   display: flex;
@@ -7,15 +8,15 @@
   gap: 10px;
 }
 
-/* Branch chip — which IF/ELSE branch fired. Accent-tinted. */
+/* Branch chip — which branch fired. NEUTRAL (B2B restraint; not accent-coloured). */
 .branch {
   align-self: flex-start;
   display: inline-flex;
   align-items: center;
   padding: 2px 8px;
   border-radius: var(--r-sm);
-  background: var(--accent-bg);
-  color: var(--accent);
+  background: var(--surface-card);
+  color: var(--body);
   font-size: var(--fs-caption); /* 12px */
   line-height: 18px;
   font-weight: 500;
@@ -33,6 +34,12 @@
   border-radius: var(--r-md); /* 8px */
 }
 .draftHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.draftLabel {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -43,7 +50,7 @@
   text-transform: uppercase;
   color: var(--muted);
 }
-.draftHead svg {
+.draftLabel svg {
   width: 13px;
   height: 13px;
 }
@@ -54,30 +61,28 @@
   color: var(--ink-soft);
 }
 
-/* Human verdict. */
+/* Human verdict — icon-only thumbs in the reply box header. */
 .verdict {
-  display: flex;
-  gap: 8px;
-}
-.vbtn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
+}
+.vbtn {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
   margin: 0;
-  padding: 5px 10px;
-  background: var(--card);
-  border: 1px solid var(--hairline);
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
   border-radius: var(--r-sm);
-  font-family: var(--font);
-  font-size: var(--fs-caption);
-  font-weight: 500;
-  letter-spacing: var(--ls-caption);
-  color: var(--muted);
+  color: var(--muted-soft);
   cursor: pointer;
   transition:
     color var(--d-hover) var(--ease-snap),
-    border-color var(--d-hover) var(--ease-snap),
-    background var(--d-hover) var(--ease-snap);
+    background var(--d-hover) var(--ease-snap),
+    border-color var(--d-hover) var(--ease-snap);
 }
 .vbtn svg {
   width: 14px;
@@ -85,7 +90,8 @@
 }
 .vbtn:hover {
   color: var(--ink-soft);
-  border-color: var(--hairline-strong);
+  background: var(--card);
+  border-color: var(--hairline);
 }
 .vbtn[data-on] {
   color: var(--state-ok);

@@ -16,9 +16,9 @@ interface Props {
 }
 
 /**
- * RunOutcome — the payoff above the trace (Varun's decision): the branch that
- * fired + the drafted reply + a human verdict. For a caught logic gap it shows
- * the "needs attention / add an ELSE" nudge instead.
+ * RunOutcome — the payoff above the trace: which branch fired (neutral chip) +
+ * the drafted reply, with the human verdict as icon-only thumbs inside the
+ * reply box. For a caught logic gap it shows the "needs attention" nudge instead.
  */
 export default function RunOutcome({ kind, branch = SIM_BRANCH, draft = SIM_DRAFT, onVerdict }: Props) {
   const [verdict, setVerdict] = useState<Verdict>('none');
@@ -49,31 +49,35 @@ export default function RunOutcome({ kind, branch = SIM_BRANCH, draft = SIM_DRAF
       <span className={styles.branch}>matched: {branch}</span>
       <div className={styles.draft}>
         <div className={styles.draftHead}>
-          <RiCornerUpLeftLine aria-hidden />
-          Drafted reply
+          <span className={styles.draftLabel}>
+            <RiCornerUpLeftLine aria-hidden />
+            Drafted reply
+          </span>
+          <div className={styles.verdict}>
+            <button
+              type="button"
+              className={styles.vbtn}
+              data-on={verdict === 'up' || undefined}
+              onClick={() => choose('up')}
+              aria-label="Looks right"
+              title="Looks right"
+            >
+              <RiThumbUpLine aria-hidden />
+            </button>
+            <button
+              type="button"
+              className={styles.vbtn}
+              data-down
+              data-on={verdict === 'down' || undefined}
+              onClick={() => choose('down')}
+              aria-label="Needs work"
+              title="Needs work"
+            >
+              <RiThumbDownLine aria-hidden />
+            </button>
+          </div>
         </div>
         <p className={styles.draftBody}>{draft}</p>
-      </div>
-      <div className={styles.verdict}>
-        <button
-          type="button"
-          className={styles.vbtn}
-          data-on={verdict === 'up' || undefined}
-          onClick={() => choose('up')}
-        >
-          <RiThumbUpLine aria-hidden />
-          Looks right
-        </button>
-        <button
-          type="button"
-          className={styles.vbtn}
-          data-down
-          data-on={verdict === 'down' || undefined}
-          onClick={() => choose('down')}
-        >
-          <RiThumbDownLine aria-hidden />
-          Needs work
-        </button>
       </div>
     </div>
   );

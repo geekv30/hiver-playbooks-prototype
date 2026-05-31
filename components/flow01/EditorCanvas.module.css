@@ -29,7 +29,7 @@
 .docScroll {
   flex: 1;
   overflow-y: auto;
-  padding: 40px 24px 8px;
+  padding: 24px 24px 8px;
 }
 
 .doc {
@@ -39,6 +39,10 @@
   border: 1px solid var(--hairline-soft);
   border-radius: 14px;
   padding: 32px 40px 48px;
+  /* Subtle elevation (Figma) — soft, B2B, not a drop shadow. */
+  box-shadow:
+    0 1px 2px rgba(52, 60, 69, 0.04),
+    0 4px 14px rgba(52, 60, 69, 0.05);
 }
 
 .block {

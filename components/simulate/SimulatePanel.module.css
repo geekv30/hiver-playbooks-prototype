@@ -12,7 +12,7 @@
   overflow: hidden;
   background: var(--card);
   border-left: 1px solid var(--hairline-soft);
-  border-top: 1px solid var(--hairline); /* separate the panel from the toolbar (no merge) */
+  /* Top separation is handled by the toolbar's bottom border (full width). */
   transition: width 240ms var(--ease-snap);
   will-change: width;
 }
