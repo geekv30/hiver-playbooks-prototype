@@ -1,0 +1,6 @@
+/* ScenarioList — vertical stack of topic cards (12px gap per Figma pitch). */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}

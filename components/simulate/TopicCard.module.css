@@ -1,0 +1,71 @@
+/* TopicCard — Figma 211:18599: border #ECEFF6, radius 16, padding 20/18,
+   name Medium 14 #3E4C5A, status on the right, drill chevron on hover. */
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+  padding: 20px 18px;
+  background: var(--card);
+  border: 1px solid var(--hairline-soft);
+  border-radius: 16px;
+  font-family: var(--font);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--d-hover) var(--ease-snap),
+    background var(--d-hover) var(--ease-snap);
+}
+.card:hover {
+  border-color: var(--hairline);
+  background: var(--surface-soft);
+}
+.card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.name {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-body); /* 14px */
+  font-weight: 500;
+  letter-spacing: var(--ls-body);
+  color: var(--ink-soft); /* #3E4C5A */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.right {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Drill affordance — a chevron, revealed on hover (affordance, not info, so a
+   hover reveal is allowed; the status stays always-visible). */
+.chevron {
+  width: 16px;
+  height: 16px;
+  color: var(--muted-soft);
+  opacity: 0;
+  transform: translateX(-2px);
+  transition:
+    opacity var(--d-hover) var(--ease-snap),
+    transform var(--d-hover) var(--ease-snap);
+}
+.card:hover .chevron,
+.card:focus-visible .chevron {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevron {
+    transition: none;
+  }
+}

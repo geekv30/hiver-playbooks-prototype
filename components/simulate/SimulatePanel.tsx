@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { SIM_TOPICS } from '@/data/simFixtures';
+import ScenarioList from './ScenarioList';
 import styles from './SimulatePanel.module.css';
 
 type Tab = 'scenarios' | 'custom';
@@ -53,8 +55,10 @@ export default function SimulatePanel({ open }: Props) {
           </button>
         </div>
 
-        {/* Body — M2 fills Scenarios with the topic list; Custom test stays a stub. */}
-        <div className={styles.body} role="tabpanel" />
+        {/* Body — Scenarios shows the topic list; Custom test stays a stub. */}
+        <div className={styles.body} role="tabpanel">
+          {tab === 'scenarios' && <ScenarioList topics={SIM_TOPICS} />}
+        </div>
       </div>
     </aside>
   );
