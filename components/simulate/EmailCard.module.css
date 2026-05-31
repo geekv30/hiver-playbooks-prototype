@@ -1,15 +1,22 @@
 /* EmailCard — Figma 211:20104 / 211:20418: bordered card, radius 10,
-   padding 20(top)/16(side)/14(bottom), sender 13 Medium #343C45, subject 13
-   Medium #3E4C5A, preview 13 Regular #6F7C90 (both single-line, ellipsis). */
+   padding 20(top)/16(side)/14(bottom). Outer gap 16 (head -> pill -> trace);
+   head gap 8 (sender -> subject/preview), subject -> preview gap 4. */
 
 .card {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 16px;
   padding: 20px 16px 14px;
   background: var(--card);
   border: 1px solid var(--hairline-soft);
   border-radius: 10px;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
 }
 
 .sender {
@@ -60,4 +67,13 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Run section. */
+.pillRow {
+  display: flex;
+}
+.divider {
+  height: 1px;
+  background: var(--hairline-soft);
 }

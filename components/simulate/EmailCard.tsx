@@ -1,27 +1,45 @@
 import { RiMailLine } from 'react-icons/ri';
 import type { SimEmail } from '@/data/simFixtures';
+import type { EmailRun } from './useSimRun';
+import StatusPill, { type PillStatus } from './StatusPill';
+import RunTrace from './RunTrace';
 import styles from './EmailCard.module.css';
 
 interface Props {
   email: SimEmail;
+  /** Run state (present once "Test all" starts). */
+  run?: EmailRun;
 }
 
 /**
- * EmailCard (idle) — Figma 211:20104: bordered card (radius 10, padding 20/16/14)
- * with the sender (mail icon + name), subject, and a single-line preview. The
- * run pill + trace mount onto this card from M4/M5.
+ * EmailCard — Figma 211:20104 / 211:20418: bordered card with sender, subject,
+ * single-line preview. When a run is in flight it grows a status pill + the
+ * collapsible trace.
  */
-export default function EmailCard({ email }: Props) {
+export default function EmailCard({ email, run }: Props) {
+  const showRun = !!run && run.status !== 'idle';
   return (
     <article className={styles.card}>
-      <div className={styles.sender}>
-        <RiMailLine className={styles.mail} aria-hidden />
-        <span className={styles.name}>{email.sender}</span>
+      <div className={styles.head}>
+        <div className={styles.sender}>
+          <RiMailLine className={styles.mail} aria-hidden />
+          <span className={styles.name}>{email.sender}</span>
+        </div>
+        <div className={styles.body}>
+          <div className={styles.subject}>{email.subject}</div>
+          <div className={styles.preview}>{email.preview}</div>
+        </div>
       </div>
-      <div className={styles.body}>
-        <div className={styles.subject}>{email.subject}</div>
-        <div className={styles.preview}>{email.preview}</div>
-      </div>
+
+      {showRun && (
+        <>
+          <div className={styles.pillRow}>
+            <StatusPill status={run!.status as PillStatus} />
+          </div>
+          <div className={styles.divider} aria-hidden />
+          <RunTrace stepStatus={run!.steps} />
+        </>
+      )}
     </article>
   );
 }

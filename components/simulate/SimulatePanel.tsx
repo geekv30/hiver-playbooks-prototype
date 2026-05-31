@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { SIM_TOPICS } from '@/data/simFixtures';
+import { SIM_TOPICS, type SimEmail, type SimTopic } from '@/data/simFixtures';
 import ScenarioList from './ScenarioList';
 import TopicHeader from './TopicHeader';
 import EmailList from './EmailList';
-import TestAllBar from './TestAllBar';
+import TestAllBar, { type TestAllMode } from './TestAllBar';
+import { useSimRun } from './useSimRun';
 import styles from './SimulatePanel.module.css';
 
 type Tab = 'scenarios' | 'custom';
@@ -15,13 +16,15 @@ interface Props {
   open: boolean;
 }
 
+// Stable empty array so the run hook doesn't reset every render on the list view.
+const NO_EMAILS: SimEmail[] = [];
+
 /**
  * SimulatePanel — the right-hand simulate surface.
  *
- * Scenarios tab: a topic list that drills into a topic's email list with a
- * pinned "Test all emails" bar. Custom test is a stub (out of scope). The
- * canvas-shift reveal animates the container WIDTH (fixed-width inner, no reflow).
- * The run engine (sequential trace) mounts here in M5.
+ * Scenarios tab: topic list -> drill into a topic's emails -> "Test all" runs
+ * them sequentially with a live trace, pinned bar reflecting the run state. The
+ * run engine resets per topic. Custom test is a stub (out of scope).
  */
 export default function SimulatePanel({ open }: Props) {
   const [tab, setTab] = useState<Tab>('scenarios');
@@ -29,6 +32,18 @@ export default function SimulatePanel({ open }: Props) {
 
   const topic = openTopicId ? SIM_TOPICS.find((t) => t.id === openTopicId) ?? null : null;
   const inScenarios = tab === 'scenarios';
+
+  const { phase, runs, start, stop } = useSimRun(topic?.emails ?? NO_EMAILS);
+  const mode: TestAllMode = phase === 'running' ? 'running' : phase === 'done' ? 'done' : 'idle';
+
+  // Live rollup for the drill header (M7 extends with failed / needs-attention).
+  const headerTopic: SimTopic | null = topic
+    ? {
+        ...topic,
+        status: phase === 'running' ? 'running' : phase === 'done' ? 'passed' : topic.status,
+        runCount: phase === 'done' ? Math.max(1, topic.runCount) : topic.runCount,
+      }
+    : null;
 
   return (
     <aside
@@ -64,17 +79,17 @@ export default function SimulatePanel({ open }: Props) {
 
         <div className={styles.body} role="tabpanel">
           {inScenarios &&
-            (topic ? (
+            (topic && headerTopic ? (
               <>
-                <TopicHeader topic={topic} onBack={() => setOpenTopicId(null)} />
-                <EmailList emails={topic.emails} />
+                <TopicHeader topic={headerTopic} onBack={() => setOpenTopicId(null)} />
+                <EmailList emails={topic.emails} runs={runs} />
               </>
             ) : (
               <ScenarioList topics={SIM_TOPICS} onOpenTopic={setOpenTopicId} />
             ))}
         </div>
 
-        {inScenarios && topic && <TestAllBar mode="idle" />}
+        {inScenarios && topic && <TestAllBar mode={mode} onTestAll={start} onStop={stop} />}
       </div>
     </aside>
   );

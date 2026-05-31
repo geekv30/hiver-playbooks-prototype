@@ -1,0 +1,94 @@
+/* StatusPill — Figma 211:20446: h22 pill, pl6 pr7 py2, gap8, 12px label. */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 22px;
+  padding: 2px 7px 2px 6px;
+  border-radius: var(--r-pill);
+  background: var(--surface-card); /* running */
+}
+
+.label {
+  font-size: var(--fs-caption); /* 12px */
+  line-height: 18px;
+  font-weight: 400;
+  letter-spacing: var(--ls-caption);
+  color: var(--ink-soft);
+}
+
+/* Running — three sequenced dots (the animated "in progress" cue). */
+.dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.dots span {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--ink-soft);
+  animation: pillPulse 1s infinite ease-in-out;
+}
+.dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes pillPulse {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Resolved — a single coloured dot. */
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.pill[data-status='passed'] {
+  background: var(--state-ok-bg);
+}
+.pill[data-status='passed'] .label {
+  color: var(--state-ok);
+}
+.pill[data-status='passed'] .dot {
+  background: var(--state-ok);
+}
+
+.pill[data-status='failed'] {
+  background: var(--state-error-bg);
+}
+.pill[data-status='failed'] .label {
+  color: var(--state-error);
+}
+.pill[data-status='failed'] .dot {
+  background: var(--state-error);
+}
+
+.pill[data-status='attention'] {
+  background: var(--state-warn-bg);
+}
+.pill[data-status='attention'] .label {
+  color: var(--state-warn);
+}
+.pill[data-status='attention'] .dot {
+  background: var(--state-warn);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dots span {
+    animation: none;
+    opacity: 0.55;
+  }
+}

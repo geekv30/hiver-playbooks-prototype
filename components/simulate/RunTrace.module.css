@@ -1,0 +1,50 @@
+/* RunTrace — "Trace" header (uppercase eyebrow + chevron) over the steps. */
+
+.trace {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.title {
+  font-size: var(--fs-caption); /* 12px */
+  line-height: 18px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.chev {
+  width: 16px;
+  height: 16px;
+  color: var(--muted-soft);
+  transition: transform var(--d-hover) var(--ease-snap);
+}
+.chev[data-open] {
+  transform: rotate(180deg);
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chev {
+    transition: none;
+  }
+}
