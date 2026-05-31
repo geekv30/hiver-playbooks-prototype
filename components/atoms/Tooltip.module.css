@@ -1,0 +1,110 @@
+.wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Trigger ----------------------------------------------------------------- */
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  outline: none;
+  cursor: default;
+  border-radius: var(--r-xs);
+}
+.trigger:focus-visible {
+  box-shadow: 0 0 0 2px var(--primary-ring);
+}
+.infoIcon {
+  width: 14px;
+  height: 14px;
+  color: var(--muted);
+  transition: color var(--d-hover) var(--ease-snap);
+}
+.wrapper:hover .infoIcon,
+.wrapper:focus-within .infoIcon {
+  color: var(--body);
+}
+
+/* Bubble ------------------------------------------------------------------ */
+.bubble {
+  position: absolute;
+  z-index: 60;
+  width: max-content;
+  max-width: 220px;
+  padding: 6px 9px;
+  background: var(--ink);
+  color: var(--card);
+  font-size: var(--fs-caption);
+  line-height: 1.45;
+  letter-spacing: -.003em;
+  font-weight: 450;
+  border-radius: var(--r-sm);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .16);
+  /* hidden state */
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity var(--d-exit) var(--ease-snap),
+    visibility var(--d-exit) var(--ease-snap),
+    transform var(--d-exit) var(--ease-snap);
+}
+.wrapper:hover .bubble,
+.wrapper:focus-within .bubble {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity var(--d-enter) var(--ease-snap),
+    transform var(--d-enter) var(--ease-snap);
+}
+
+/* Arrow (rotated square that bleeds out of the bubble edge) ---------------- */
+.arrow {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--ink);
+  transform: rotate(45deg);
+}
+
+/* Sides — placement + entry offset + arrow anchoring ---------------------- */
+.top {
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  margin-bottom: 8px;
+}
+.wrapper:hover .top,
+.wrapper:focus-within .top { transform: translateX(-50%) translateY(0); }
+.top .arrow { bottom: -3px; left: 50%; margin-left: -4px; }
+
+.bottom {
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  margin-top: 8px;
+}
+.wrapper:hover .bottom,
+.wrapper:focus-within .bottom { transform: translateX(-50%) translateY(0); }
+.bottom .arrow { top: -3px; left: 50%; margin-left: -4px; }
+
+.left {
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%) translateX(4px);
+  margin-right: 8px;
+}
+.wrapper:hover .left,
+.wrapper:focus-within .left { transform: translateY(-50%) translateX(0); }
+.left .arrow { right: -3px; top: 50%; margin-top: -4px; }
+
+.right {
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%) translateX(-4px);
+  margin-left: 8px;
+}
+.wrapper:hover .right,
+.wrapper:focus-within .right { transform: translateY(-50%) translateX(0); }
+.right .arrow { left: -3px; top: 50%; margin-top: -4px; }

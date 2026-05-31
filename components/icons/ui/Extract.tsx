@@ -1,2 +1,17 @@
-import { RiSparklingLine } from 'react-icons/ri';
-export const ExtractIcon = RiSparklingLine;
+import type { SVGProps } from 'react';
+
+// AI Extract — document with sparkle. Path lifted verbatim from the Figma
+// action-tag spec (node 241:16560, viewBox 14, filled). Horizontally mirrored
+// to match the displayed orientation (sparkle top-left, folded corner top-right).
+export function ExtractIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 14 14" fill="none" aria-hidden="true" {...props}>
+      <g transform="translate(14 0) scale(-1 1)">
+        <path
+          d="M7.58333 2.33323H6.41667V5.2499C6.41667 5.57207 6.15551 5.83323 5.83333 5.83323H2.91667V11.6666H11.0833V5.83323H12.25V12.2545C12.25 12.5739 11.9905 12.8332 11.6706 12.8333H2.32934C2.00937 12.8332 1.75001 12.5707 1.75 12.2459V4.66657L5.25 1.16827V1.16656H7.58333V2.33323ZM3.40031 4.66657H5.25V2.81801L3.40031 4.66657ZM11.3579 0.192114C11.255 -0.0562677 10.9118 -0.0562611 10.8088 0.192114L10.6612 0.548722C10.4093 1.15703 9.93912 1.64277 9.34815 1.90566L8.92943 2.09194C8.69015 2.19858 8.69021 2.54696 8.92943 2.65362L9.37265 2.85073C9.94887 3.107 10.4111 3.57543 10.6675 4.1638L10.811 4.49363C10.9163 4.73521 11.2504 4.73521 11.3556 4.49363L11.4998 4.1638C11.7561 3.57552 12.2179 3.10697 12.794 2.85073L13.2372 2.65362C13.4765 2.54695 13.4766 2.19858 13.2372 2.09194L12.8185 1.90566C12.2276 1.64277 11.7574 1.15702 11.5055 0.548722L11.3579 0.192114Z"
+          fill="currentColor"
+        />
+      </g>
+    </svg>
+  );
+}

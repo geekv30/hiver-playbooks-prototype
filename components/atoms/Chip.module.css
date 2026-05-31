@@ -6,14 +6,16 @@
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 2px 8px 2px 6px;
+  gap: 5px;
+  padding: 3px 6px 3px 6px;
   border-radius: var(--r-sm);
-  background: var(--card);
+  background: var(--info-subtle);
   border: 1px solid var(--hairline);
-  font-size: 13.5px;
+  border-right-width: 1.6px;
+  border-bottom-width: 1.6px;
+  font-size: var(--fs-small);
   font-family: var(--font);
-  line-height: 1.5;
+  line-height: var(--lh-small);
   color: var(--ink-soft);
   cursor: pointer;
   transition: background var(--t-fast), border-color var(--t-fast);
@@ -44,13 +46,13 @@
 
 .chipBrand {
   font-weight: 400;
-  color: var(--body);
+  color: var(--ink);
   pointer-events: none;
 }
 
 .chipSep {
-  color: var(--muted-soft);
-  margin: 0 1px;
+  color: var(--muted);
+  margin: 0;
   pointer-events: none;
 }
 
@@ -62,12 +64,47 @@
 
 .chipMeta {
   font-family: var(--mono);
-  font-size: 10.5px;
-  color: var(--muted);
+  font-size: var(--fs-small);
+  color: var(--body);
   font-weight: 400;
-  padding-left: 7px;
-  margin-left: 7px;
-  border-left: 1px solid var(--hairline-soft);
+  letter-spacing: -0.02em;
+  pointer-events: none;
+}
+
+/* @-reference (attri) glyph — sits in the icon slot */
+.chipAt {
+  width: 14px;
+  height: 14px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.chipAt svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* Connector setup-required state (Figma Status/Primary red #CD3746) */
+.chipSetup {
+  font-family: var(--mono);
+  font-size: var(--fs-small);
+  color: #cd3746;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  pointer-events: none;
+}
+
+.chipSetupDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #cd3746;
+  box-shadow: 0 0 0 2px #ffe0e3;   /* faint red halo (Figma Red light #FFE0E3) */
+  flex: none;
+  margin: 0 2px;
   pointer-events: none;
 }
 

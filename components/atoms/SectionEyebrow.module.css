@@ -1,6 +1,6 @@
 .eyebrow {
   font-family: var(--font);
-  font-size: 10.5px;
+  font-size: var(--fs-micro);
   font-weight: 600;
   color: var(--muted);
   letter-spacing: .06em;

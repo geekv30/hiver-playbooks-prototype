@@ -1,0 +1,132 @@
+/* Button — Figma neutral button system (211:19456 / 19749 / 20709). */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 12px;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  font-family: var(--font);
+  font-size: var(--fs-body);
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition: background var(--d-hover) var(--ease-snap), border-color var(--d-hover) var(--ease-snap),
+    color var(--d-hover) var(--ease-snap);
+}
+
+.label {
+  pointer-events: none;
+}
+
+.icon {
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  pointer-events: none;
+}
+.icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Primary — soft-filled neutral (Gray 6). */
+.primary {
+  background: var(--surface-card);
+  color: var(--ink);
+}
+.primary:hover {
+  background: var(--hairline);
+}
+.primary:active {
+  background: var(--hairline-strong);
+}
+
+/* Secondary — light fill + hairline border. */
+.secondary {
+  background: var(--surface-soft);
+  border-color: var(--hairline);
+  color: var(--body);
+}
+.secondary:hover {
+  background: var(--surface-card);
+  border-color: var(--hairline-strong);
+}
+.secondary:active {
+  background: var(--hairline);
+}
+
+/* Tertiary — ghost. */
+.tertiary {
+  background: transparent;
+  color: var(--body);
+}
+.tertiary:hover {
+  background: var(--surface-soft);
+}
+.tertiary:active {
+  background: var(--surface-card);
+}
+
+/* Text — link. */
+.text {
+  background: transparent;
+  color: var(--body);
+  padding: 4px 6px;
+}
+.text:hover {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Icon-only — squarer footprint. */
+.iconOnly {
+  padding: 9px;
+}
+
+/* Small — compact controls (chat send 258:7078 = 22px circle, 18px glyph). */
+.sm {
+  padding: 6px 10px;
+  gap: 4px;
+}
+.sm.iconOnly {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+}
+.sm .icon,
+.sm .icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Pill — circular controls (stop / send). */
+.pill {
+  border-radius: var(--r-pill);
+}
+
+.btn:disabled {
+  opacity: 0.75;
+  color: var(--muted-soft);
+  cursor: not-allowed;
+}
+.btn:disabled:hover {
+  background: var(--surface-card);
+  border-color: transparent;
+}
+.secondary:disabled:hover {
+  background: var(--surface-soft);
+  border-color: var(--hairline);
+}
+.tertiary:disabled:hover,
+.text:disabled:hover {
+  background: transparent;
+}
