@@ -1,0 +1,64 @@
+/* Input field — Figma 258:21645. Geometry from the frame (h40, radius 8, px12 py8);
+   colors mapped to our reconciled Neutrals (the Figma input used the kb slate
+   namespace #E2E8F0/#64758B, inconsistent with the chip/button Neutrals). */
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  background: var(--card);
+  transition: border-color var(--d-hover) var(--ease-snap), box-shadow var(--d-hover) var(--ease-snap);
+}
+.field:focus-within {
+  border-color: var(--hairline-strong);
+  box-shadow: 0 0 0 3px var(--surface-card);
+}
+
+.input {
+  flex: 1 0 0;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font);
+  font-size: var(--fs-body);
+  font-weight: 400;
+  line-height: 20px;
+  letter-spacing: -0.005em;
+  color: var(--ink);
+}
+.input::placeholder {
+  color: var(--muted);
+}
+
+.affix {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+}
+.affix svg {
+  width: 16px;
+  height: 16px;
+}
+
+.field.error {
+  border-color: #cd3746;
+}
+.field.error:focus-within {
+  box-shadow: 0 0 0 3px #ffe0e3;
+}
+
+.field.disabled {
+  background: var(--surface-soft);
+  opacity: 0.7;
+}
+.field.disabled .input {
+  cursor: not-allowed;
+}

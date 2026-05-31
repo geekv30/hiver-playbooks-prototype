@@ -19,7 +19,7 @@
   border-radius: var(--r-xs);
 }
 .fmTrigger {
-  font-size: 12.5px;
+  font-size: var(--fs-small);
   color: var(--body);
   line-height: 1.55;
   display: flex;
@@ -31,7 +31,7 @@
 }
 .fmTrigger .triglabel {
   font-family: var(--font);
-  font-size: 10.5px;
+  font-size: var(--fs-micro);
   color: var(--muted);
   letter-spacing: .06em;
   text-transform: uppercase;
@@ -39,7 +39,7 @@
   font-weight: 600;
 }
 .fmSummary {
-  font-size: 12.5px;
+  font-size: var(--fs-small);
   color: var(--muted);
   line-height: 1.55;
   outline: none;

@@ -11,24 +11,19 @@ export const REF_GROUPS: RefGroup[] = [
   { key: 'outputs', label: 'From earlier steps' },
 ];
 
+// GENERIC, case-agnostic references ONLY. These ticket/email fields exist on
+// any conversation regardless of the problem being solved — never story data
+// (no tour/dietary/bookings). "From earlier steps" outputs are derived
+// dynamically from the current doc, not hardcoded here.
 export const DEFAULT_REFS: Ref[] = [
-  // ticket - inbound message fields, always in scope
-  { id: 'ref-ticket-from-email', path: 'ticket.from_email', label: 'Customer email', type: 'email',    desc: 'sender',              group: 'ticket' },
-  { id: 'ref-ticket-subject',    path: 'ticket.subject',    label: 'Subject line',   type: 'text',     desc: 'email subject',       group: 'ticket' },
-  { id: 'ref-ticket-body',       path: 'ticket.body',       label: 'Email body',     type: 'longtext', desc: 'full message',        group: 'ticket' },
-
-  // inputs - trigger frontmatter fields the playbook reads
-  { id: 'ref-tour-name',         path: 'tour.name',         label: 'Tour name',      type: 'text',     desc: 'which tour they asked about', group: 'inputs' },
-  { id: 'ref-tour-dates',        path: 'tour.dates',        label: 'Tour dates',     type: 'date',     desc: 'requested travel dates',      group: 'inputs' },
-  { id: 'ref-tour-group-size',   path: 'tour.group_size',   label: 'Group size',     type: 'number',   desc: 'number of guests',            group: 'inputs' },
-
-  // outputs - produced by earlier steps
-  { id: 'ref-bookings-available', path: 'bookings.available', label: 'Bookings status', type: 'enum',  desc: 'step 02 · yes/partial/full', group: 'outputs' },
-  { id: 'ref-customer-is-repeat', path: 'customer.is_repeat', label: 'Repeat guest',    type: 'bool',  desc: 'step 03 · returning flag',   group: 'outputs' },
-  { id: 'ref-kb-overview',        path: 'kb.overview',        label: 'Tour overview',   type: 'doc',   desc: 'step 04 · KB article',       group: 'outputs' },
-  { id: 'ref-kb-fitness',         path: 'kb.fitness',         label: 'Fitness guide',   type: 'doc',   desc: 'step 04 · KB article',       group: 'outputs' },
-  { id: 'ref-kb-dietary',         path: 'kb.dietary',         label: 'Dietary FAQ',     type: 'doc',   desc: 'step 04 · KB article',       group: 'outputs' },
-  { id: 'ref-step5-draft',        path: 'step5.draft',        label: 'Draft reply',     type: 'draft', desc: 'step 05 · drafted text',     group: 'outputs' },
+  { id: 'ref-from-email', path: 'ticket.from_email', label: 'Customer email', type: 'email',    desc: 'sender address',          group: 'ticket' },
+  { id: 'ref-from-name',  path: 'ticket.from_name',  label: 'Customer name',  type: 'text',     desc: 'sender name',             group: 'ticket' },
+  { id: 'ref-subject',    path: 'ticket.subject',    label: 'Subject line',   type: 'text',     desc: 'email subject',           group: 'ticket' },
+  { id: 'ref-body',       path: 'ticket.body',       label: 'Message body',   type: 'longtext', desc: 'full message',            group: 'ticket' },
+  { id: 'ref-status',     path: 'ticket.status',     label: 'Status',         type: 'enum',     desc: 'open / pending / closed', group: 'ticket' },
+  { id: 'ref-priority',   path: 'ticket.priority',   label: 'Priority',       type: 'enum',     desc: 'ticket priority',         group: 'ticket' },
+  { id: 'ref-assignee',   path: 'ticket.assignee',   label: 'Assignee',       type: 'text',     desc: 'current owner',           group: 'ticket' },
+  { id: 'ref-created',    path: 'ticket.created_at', label: 'Created date',   type: 'date',     desc: 'when it arrived',         group: 'ticket' },
 ];
 
 export function refsByGroup(group: Ref['group']): Ref[] {

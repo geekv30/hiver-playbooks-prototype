@@ -1,0 +1,14 @@
+/* Spinner — Figma 211:19472. Remix loader rotating (Remix-consistent). */
+
+.spinner {
+  display: inline-block;
+  color: var(--muted);
+  animation: spin 0.7s linear infinite;
+  flex: none;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

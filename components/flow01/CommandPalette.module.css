@@ -1,0 +1,298 @@
+/* CommandPalette — Figma 283:28427. Layered: faint container > search > white
+   results card > pinned footer hints. */
+
+.pop {
+  position: fixed;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  padding: 3px 4px;
+  background: #f8fafc; /* background/neutral/faint */
+  border: 1px solid var(--hairline-soft);
+  border-radius: 10px;
+  box-shadow: 0 8px 12px -4px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  animation: popIn var(--d-enter) var(--ease-snap);
+}
+@keyframes popIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* In-flow (review page) — drop the fixed positioning + entry animation. */
+.popStatic {
+  position: relative;
+  animation: none;
+}
+
+/* Search (sits on the faint bg) */
+.search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 11px 10px;
+  flex: none;
+}
+.searchIco {
+  width: 14px;
+  height: 14px;
+  color: var(--muted-soft);
+  flex: none;
+}
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font);
+  font-size: 13px;
+  line-height: 19px;
+  letter-spacing: var(--ls-small);
+  color: var(--ink);
+}
+.searchInput::placeholder {
+  color: var(--muted-soft);
+}
+
+/* Results card */
+.card {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 332px;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 7px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.01), 0 1px 1.5px rgba(0, 0, 0, 0.05);
+}
+
+.group {
+  padding-bottom: 2px;
+}
+.group:not(:first-of-type) {
+  border-top: 1px solid var(--hairline-soft);
+}
+.groupLabel {
+  padding: 8px 14px;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--muted); /* Gray 3 #6F7C90 */
+}
+.rows {
+  padding: 0 4px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 7px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font);
+}
+.rowActive {
+  background: var(--surface-soft); /* #F6F8FC */
+}
+
+.rowIco {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  border-radius: 5px;
+  color: var(--body); /* action (outline) icons inherit ink-grey */
+}
+.rowIco svg {
+  width: 14px;
+  height: 14px;
+}
+.rowIcoBrand {
+  color: inherit; /* brand icons carry their own fills */
+}
+
+.rowText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.rowLabel {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 19px;
+  color: var(--ink-soft); /* Gray1 #3E4C5A */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rowSub {
+  font-size: 11.5px;
+  line-height: 15px;
+  color: var(--muted); /* Gray 3 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Trailing chevron — marks a row that opens another page. */
+.rowChevron {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  margin-left: auto;
+  color: var(--muted-soft);
+}
+.rowActive .rowChevron {
+  color: var(--muted);
+}
+
+/* Text-only rows (picker values: tags, assignees, statuses, fields) — no icon
+   gutter; label sits at the row's text inset, matching the Figma tag page. */
+.rowPlain {
+  padding-left: 14px;
+}
+
+/* Right-aligned selection check (pick-many). The slot reserves space; the glyph
+   only appears when selected (Figma 283:28810 — opacity-toggled check). */
+.rowCheck {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  color: var(--body); /* ink-grey check, not a brand fill */
+}
+.rowCheck svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Drill-page header — single row: back chevron + page icon + quiet title.
+   Replaces the old two-part back-button + group-label (Figma 283:28810). */
+.pageHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font);
+  text-align: left;
+}
+.pageHeadBack {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  color: var(--muted); /* Gray 3 */
+  transition: color var(--d-hover) var(--ease-snap);
+}
+.pageHead:hover .pageHeadBack {
+  color: var(--ink-soft);
+}
+.pageHeadIco {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+.pageHeadIco svg {
+  width: 14px;
+  height: 14px;
+}
+/* In the drill header the brand mark is muted/greyed (Figma 286:29059) — the
+   row icons stay full brand colour. grayscale desaturates the hardcoded fills. */
+.pageHeadIcoBrand {
+  filter: grayscale(1) opacity(0.55);
+}
+.pageHeadTitle {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--muted); /* Gray 3 #6F7C90 */
+  white-space: nowrap;
+}
+
+.empty {
+  padding: 18px 14px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Footer hints */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex: none;
+  padding: 8px 14px;
+  margin-top: 1px;
+  background: #fcfcfc; /* background/canvas/subtle */
+  border-top: 1px solid var(--surface-soft); /* #F6F8FC */
+  border-bottom-left-radius: 7px;
+  border-bottom-right-radius: 7px;
+}
+.hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--muted);
+}
+.keys {
+  display: inline-flex;
+  gap: 4px;
+}
+.cap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: var(--info-subtle); /* #FAFDFF */
+  border-style: solid;
+  border-color: var(--hairline-soft);
+  border-width: 0.77px 1.23px 1.23px 0.77px; /* beveled: heavier bottom/right */
+  border-radius: 4.6px;
+  color: var(--body);
+}
+.cap svg {
+  width: 10px;
+  height: 10px;
+}
+.capWide {
+  width: 24px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: -0.02em;
+  color: var(--body);
+}
+
+/* Input page (KB search) — a hint line under the field. */
+.inputPage {
+  padding: 14px;
+}
+.inputHint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--muted);
+}
+.inputHint .cap {
+  width: 20px;
+  height: 20px;
+}

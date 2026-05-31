@@ -1,0 +1,64 @@
+/* ChatBar — "ask a question..." with gradient focus ring (flow-05). */
+
+.wrap {
+  width: 100%;
+}
+
+.thinking {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px 20px;
+  font-size: var(--fs-small);
+  color: var(--muted);
+}
+
+/* Shell carries the gradient ring on focus (1.5px reveal around the field). */
+.shell {
+  border-radius: var(--r-pill);
+  padding: 0;
+  background: transparent;
+  transition: padding var(--d-hover) var(--ease-snap);
+}
+.focused {
+  padding: 1.5px;
+  background: linear-gradient(95deg, #8b5cf6 0%, #d946a6 50%, #e15524 100%);
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 8px 0 20px;
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+}
+.focused .field {
+  border-color: transparent;
+}
+
+.input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font);
+  font-size: var(--fs-body);
+  letter-spacing: var(--ls-body);
+  color: var(--ink);
+}
+.input::placeholder {
+  color: var(--muted);
+}
+
+/* Send: dim until there's something to send (Figma empty-state 0.75). */
+.send {
+  display: inline-flex;
+  opacity: 0.55;
+  transition: opacity var(--d-hover) var(--ease-snap);
+}
+.sendActive {
+  opacity: 1;
+}

@@ -1,0 +1,45 @@
+/* Badge — Figma 258:21962 (neutral count pill). Intent variants extrapolated from
+   our state tokens for the scenarios statuses (Figma confirmed neutral only). */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  border-radius: var(--r-pill);
+  font-family: var(--font);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.neutral {
+  background: var(--surface-card);
+  color: var(--ink);
+}
+.success {
+  background: var(--state-ok-bg);
+  color: var(--state-ok);
+}
+.warning {
+  background: var(--state-warn-bg);
+  color: var(--state-warn);
+}
+.error {
+  background: var(--state-error-bg);
+  color: var(--state-error);
+}
+.running {
+  background: #ede9fe;
+  color: var(--state-running);
+}
+/* Draft — solid doc-status pill (Figma 256:3087: #97A3B7 fill, white label, pill).
+   Figma used Roboto/literal #97A3B7; mapped to Inter + --muted-soft (one-palette,
+   one-font). Slight positive tracking echoes the Figma 0.4px. */
+.draft {
+  background: var(--muted-soft);
+  color: #fff;
+  padding: 2px 8px;
+  letter-spacing: 0.01em;
+}

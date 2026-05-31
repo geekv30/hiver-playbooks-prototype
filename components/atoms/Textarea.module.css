@@ -1,0 +1,63 @@
+/* Textarea — Figma trigger field 256:2895. */
+
+.field {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 16px;
+  background: var(--card);
+  border: 1px solid var(--hairline-soft);
+  border-radius: var(--r-lg);
+  transition: border-color var(--d-hover) var(--ease-snap), box-shadow var(--d-hover) var(--ease-snap);
+}
+
+.field:focus-within {
+  border-color: var(--hairline-strong);
+}
+
+.input {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  resize: none;
+  overflow: hidden;
+  font-family: var(--font);
+  font-size: var(--fs-body);
+  line-height: 20px;
+  letter-spacing: var(--ls-body);
+  color: var(--ink-soft);
+}
+
+.input::placeholder {
+  color: var(--muted-soft);
+}
+
+/* Corner info-tooltip trigger (bottom-right, bleeds to the field edge). */
+.corner {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  display: inline-flex;
+}
+
+/* States ------------------------------------------------------------------ */
+.error {
+  border-color: var(--state-error);
+}
+.error:focus-within {
+  border-color: var(--state-error);
+}
+
+.disabled {
+  background: var(--surface-soft);
+  border-color: var(--hairline-soft);
+}
+.disabled .input {
+  color: var(--muted);
+  cursor: not-allowed;
+}

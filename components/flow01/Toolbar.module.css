@@ -1,0 +1,49 @@
+/* Editor toolbar (flow-01 256:3081). */
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 74px;
+  padding: 0 20px;
+  background: var(--card);
+  flex: none;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.title {
+  display: inline-block;
+  outline: none;
+  background: transparent;
+  font-family: var(--font);
+  font-size: var(--fs-body); /* 14px medium (Figma) — was 16px */
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.006em;
+  padding: 1px 0;
+  border-bottom: 1px dotted var(--hairline-strong);
+  white-space: nowrap;
+  cursor: text;
+  min-width: 8px;
+}
+.title:focus {
+  border-bottom-color: var(--ink);
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.gap {
+  width: 1px;
+  height: 22px;
+  background: var(--hairline);
+  margin: 0 4px;
+}

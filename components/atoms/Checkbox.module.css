@@ -1,0 +1,35 @@
+/* Checkbox — Figma 211:21186 (14px, radius 3, slate border). Mapped to Neutrals:
+   border = --muted-soft, checked = --ink fill + white check. */
+
+.box {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid var(--muted-soft);
+  background: var(--card);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  color: #fff;
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap), border-color var(--d-hover) var(--ease-snap);
+}
+.box svg {
+  width: 11px;
+  height: 11px;
+}
+
+.unchecked:hover {
+  border-color: var(--hairline-strong);
+}
+
+.checked,
+.indeterminate {
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

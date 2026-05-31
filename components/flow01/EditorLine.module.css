@@ -1,0 +1,53 @@
+/* EditorLine — a flowing line of editable text spans + atomic chip tokens. */
+
+.line {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: 26px;
+  font-family: var(--font);
+  font-size: var(--fs-body);
+  line-height: 26px;
+  letter-spacing: var(--ls-body);
+  color: var(--ink-soft);
+  outline: none;
+  cursor: text;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Editable text run. Inline so chips flow with the prose. */
+.text {
+  display: inline;
+  outline: none;
+  white-space: pre-wrap;
+  min-width: 1px;
+}
+
+/* Token wrapper (chip / ref) — atomic, non-editable. vertical-align: middle
+   centers the chip on the text line. The 4px horizontal margin is the SOLE
+   source of spacing around a chip: no editable space characters are inserted,
+   so the gap before/after is always consistent and the user can't backspace it
+   away (the chip itself is atomic). */
+.token {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  margin: 0 4px;
+  user-select: none;
+}
+
+/* Placeholder — overlays the empty line, click-through to the caret. Flex so an
+   inline key (the '@' pill) sits centered with the prose. */
+.placeholder {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  color: var(--muted-soft);
+  pointer-events: none;
+  white-space: nowrap;
+}

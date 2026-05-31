@@ -4,35 +4,67 @@ import { findAction } from '@/data/library';
 import { CONNECTOR_META } from '@/data/connectors';
 import { CONNECTOR_ICON } from '@/components/icons/connectors';
 import { ACTION_ICON } from '@/components/icons/ui';
+import { BranchIcon } from '@/components/icons/ui/Branch';
+import { RiAtLine } from 'react-icons/ri';
 import styles from './Chip.module.css';
 
+type ChipMode = 'action' | 'ref' | 'condition';
+
 interface Props {
-  chip: ChipModel;
-  /** Optional override for chip meta text. Falls back to ActionDef.meta from the library. */
+  /** Required for mode 'action'. Omit for 'ref' / 'condition'. */
+  chip?: ChipModel;
+  /** Override for chip meta text (action mode). Falls back to chip.config.meta then ActionDef.meta. */
   metaText?: string;
   onClick?: (chipId: string) => void;
+  /** 'action' (default) renders from chip.actionId. 'ref' = @-reference pill. 'condition' = flow branch label. */
+  mode?: ChipMode;
+  /** ref mode: the reference value (mono). condition mode: the branch label (IF / ELSE-IF / ELSE). */
+  label?: string;
+  /** Connector setup-required state: red "setup needed" status in place of verb/meta. */
+  setupNeeded?: boolean;
 }
 
-export default function Chip({ chip, metaText, onClick }: Props) {
+// The action-tag. One pill chrome, several variants (Figma component 241:16557):
+// action / connector verbs, @-references, condition branch labels, and the
+// connector setup-required state.
+export default function Chip({ chip, metaText, onClick, mode = 'action', label, setupNeeded }: Props) {
+  // Reference (@attri) — @ glyph + mono value.
+  if (mode === 'ref') {
+    return (
+      <span className={styles.chip} contentEditable={false} suppressContentEditableWarning>
+        <span className={styles.chipAt} aria-hidden="true"><RiAtLine /></span>
+        <span className={styles.chipMeta}>{label}</span>
+      </span>
+    );
+  }
+
+  // Condition / flow — branch icon + uppercase label.
+  if (mode === 'condition') {
+    return (
+      <span className={styles.chip} contentEditable={false} suppressContentEditableWarning>
+        <span className={styles.chipIco}><BranchIcon /></span>
+        <span className={styles.chipVerb}>{label}</span>
+      </span>
+    );
+  }
+
+  // Action / connector.
+  if (!chip) return null;
   const action = findAction(chip.actionId);
   if (!action) return null;
 
   const draft = chip.status === 'draft';
   const cls = [styles.chip, draft ? styles.isDraft : ''].filter(Boolean).join(' ');
+  const handleClick = onClick ? () => onClick(chip.id) : undefined;
 
-  // Icon: connector brand SVG if connectorSlug, otherwise the verb icon from ACTION_ICON.
   const ConnectorIcon = action.connectorSlug ? CONNECTOR_ICON[action.connectorSlug] : null;
   const VerbIcon = !action.connectorSlug ? ACTION_ICON[action.iconKey] : null;
   const Icon = ConnectorIcon ?? VerbIcon ?? null;
 
-  // Label: for connector actions, split 'Brand · Verb' so the brand/sep/verb hierarchy renders.
-  // For non-connector actions, the full label is the verb.
   let brandText: string | null = null;
   let verbText: string;
   if (action.connectorSlug) {
-    const brand = CONNECTOR_META[action.connectorSlug].name;
-    brandText = brand;
-    // The canvas label is "Brand · Verb"; strip the brand prefix to get the verb.
+    brandText = CONNECTOR_META[action.connectorSlug].name;
     const middleDot = ' · ';
     const idx = action.name.indexOf(middleDot);
     verbText = idx > -1 ? action.name.slice(idx + middleDot.length) : action.name;
@@ -40,11 +72,8 @@ export default function Chip({ chip, metaText, onClick }: Props) {
     verbText = action.name;
   }
 
-  // Meta priority: prop override > chip.config.meta (per-chip canvas-seed override) > ActionDef.meta default.
   const configMeta = typeof chip.config.meta === 'string' ? chip.config.meta : null;
   const meta = metaText ?? configMeta ?? action.meta ?? null;
-
-  const handleClick = onClick ? () => onClick(chip.id) : undefined;
 
   return (
     <span
@@ -67,9 +96,26 @@ export default function Chip({ chip, metaText, onClick }: Props) {
           <span className={styles.chipSep}>·</span>
         </>
       )}
-      <span className={styles.chipVerb}>{verbText}</span>
-      {meta && <span className={styles.chipMeta}>{meta}</span>}
-      <span className={`${styles.chipState} ${draft ? styles.draft : ''}`} aria-hidden="true" />
+      {setupNeeded ? (
+        <>
+          {!brandText && <span className={styles.chipVerb}>{verbText}</span>}
+          <span className={styles.chipSetupDot} aria-hidden="true" />
+          <span className={styles.chipSetup}>setup needed</span>
+        </>
+      ) : (
+        <>
+          <span className={styles.chipVerb}>{verbText}</span>
+          {meta && (
+            <>
+              <span className={styles.chipSep}>·</span>
+              <span className={styles.chipMeta}>{meta}</span>
+            </>
+          )}
+        </>
+      )}
+      {!setupNeeded && chip.status !== 'ok' && (
+        <span className={`${styles.chipState} ${draft ? styles.draft : ''}`} aria-hidden="true" />
+      )}
     </span>
   );
 }

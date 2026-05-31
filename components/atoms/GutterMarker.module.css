@@ -1,0 +1,14 @@
+/* GutterMarker — Figma 256:3067 (step number) / 256:2885 (section dot). */
+
+.marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 14px;
+  font-family: var(--mono);
+  font-size: var(--fs-small);
+  line-height: 19px;
+  color: var(--muted-soft);
+  font-weight: 400;
+  user-select: none;
+}
