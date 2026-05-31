@@ -18,10 +18,11 @@
   min-height: 0;
 }
 
-/* Scroll region (doc) + pinned chat dock. */
+/* Scroll region (doc) + the chat dock floating over its lower edge. */
 .area {
   flex: 1;
   min-width: 0; /* let the editor shrink when the panel opens */
+  position: relative; /* anchor the floating chat dock */
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -29,7 +30,7 @@
 .docScroll {
   flex: 1;
   overflow-y: auto;
-  padding: 24px 24px 8px;
+  padding: 24px 24px 0;
 }
 
 .doc {
@@ -38,7 +39,10 @@
   background: var(--card);
   border: 1px solid var(--hairline-soft);
   border-radius: 14px;
-  padding: 32px 40px 48px;
+  /* Tall page: fills the viewport and runs behind the floating chat + through
+     the fold (extra bottom padding keeps content clear of the chat). */
+  min-height: calc(100vh / var(--app-scale));
+  padding: 32px 40px 100px;
   /* Subtle elevation (Figma) — soft, B2B, not a drop shadow. */
   box-shadow:
     0 1px 2px rgba(52, 60, 69, 0.04),
@@ -120,15 +124,23 @@
   padding: 3px 0;
 }
 
-/* Chat dock — pinned at the bottom of the editor, centered to doc width. */
+/* Chat dock — floats over the lower edge of the doc (the doc runs behind it).
+   Transparent->canvas gradient so the page fades through the fold; the dock
+   itself is click-through except for the input. */
 .chatDock {
-  flex: none;
-  padding: 12px 24px 24px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 36px 24px 24px;
+  background: linear-gradient(to bottom, transparent, var(--canvas-soft) 58%);
+  pointer-events: none;
 }
 .chatInner {
   max-width: 936px;
   margin: 0 auto;
   padding: 0 40px;
+  pointer-events: auto;
 }
 
 /* '/' and '@' key pills inside the step placeholder (Figma 256:2880 idiom).
@@ -151,7 +163,11 @@
   font-family: var(--mono);
   font-size: 13px;
   line-height: 1;
-  color: var(--body); /* glyph in ink-grey */
+  color: var(--body); /* icon in ink-grey */
+}
+.keyPill svg {
+  width: 14px;
+  height: 14px;
 }
 
 /* Line-start '+' affordance — opens the Actions palette with no keystroke.
