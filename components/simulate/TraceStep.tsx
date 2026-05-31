@@ -5,17 +5,20 @@ interface Props {
   step: TraceStepDef;
   status: StepStatus;
   isLast: boolean;
+  /** Style the branch line as a caught gap (amber). */
+  branchWarn?: boolean;
 }
 
 /**
  * TraceStep — one execution step (Figma 211:20462): a status rail (dot + the
- * connector line to the next step) + the step chip (icon · label · mono meta).
- * Timing + output appear once the step resolves; a Condition shows its matched
- * branch (matched-path-only).
+ * connector line) + the step chip (icon · label · mono meta). When resolved it
+ * shows timing + output; a failed step shows an error; skipped steps dim out;
+ * a Condition shows its matched branch (or the caught gap when none matched).
  */
-export default function TraceStep({ step, status, isLast }: Props) {
+export default function TraceStep({ step, status, isLast, branchWarn }: Props) {
   const { Icon } = step;
-  const resolved = status === 'done' || status === 'failed';
+  const done = status === 'done';
+  const failed = status === 'failed';
   return (
     <div className={styles.step} data-status={status}>
       <div className={styles.rail}>
@@ -35,11 +38,21 @@ export default function TraceStep({ step, status, isLast }: Props) {
             </>
           )}
         </div>
-        {resolved && step.branch && <div className={styles.branch}>{step.branch}</div>}
-        {resolved && (
+        {(done || failed) && step.branch && (
+          <div className={styles.branch} data-warn={branchWarn || undefined}>
+            {step.branch}
+          </div>
+        )}
+        {done && (
           <div className={styles.detail}>
             <div className={styles.timing}>{step.ms} ms</div>
             {step.output && <div className={styles.output}>{step.output}</div>}
+          </div>
+        )}
+        {failed && (
+          <div className={styles.detail}>
+            <div className={styles.timing}>{step.ms} ms</div>
+            <div className={styles.error}>errored - no response</div>
           </div>
         )}
       </div>

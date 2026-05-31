@@ -2,6 +2,7 @@ import { RiMailLine } from 'react-icons/ri';
 import type { SimEmail } from '@/data/simFixtures';
 import type { EmailRun } from './useSimRun';
 import StatusPill, { type PillStatus } from './StatusPill';
+import RunOutcome from './RunOutcome';
 import RunTrace from './RunTrace';
 import styles from './EmailCard.module.css';
 
@@ -36,8 +37,10 @@ export default function EmailCard({ email, run }: Props) {
           <div className={styles.pillRow}>
             <StatusPill status={run!.status as PillStatus} />
           </div>
+          {run!.status === 'passed' && <RunOutcome kind="passed" />}
+          {run!.status === 'attention' && <RunOutcome kind="attention" />}
           <div className={styles.divider} aria-hidden />
-          <RunTrace stepStatus={run!.steps} />
+          <RunTrace stepStatus={run!.steps} outcome={run!.status} />
         </>
       )}
     </article>

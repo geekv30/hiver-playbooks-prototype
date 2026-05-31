@@ -12,6 +12,7 @@ export interface EmailRun {
 export type RunPhase = 'idle' | 'running' | 'done';
 
 const STEP_IDS = SIM_TRACE.map((s) => s.id);
+const LAST = STEP_IDS.length - 1;
 
 function freshSteps(): Record<string, StepStatus> {
   return Object.fromEntries(STEP_IDS.map((id) => [id, 'pending'])) as Record<string, StepStatus>;
@@ -19,19 +20,48 @@ function freshSteps(): Record<string, StepStatus> {
 function emptyRun(): EmailRun {
   return { status: 'idle', steps: freshSteps() };
 }
-// Demo timing — scale the fixture ms down so a full run is snappy but readable.
 function stepDelay(i: number): number {
   return Math.max(260, Math.round(SIM_TRACE[i]!.ms * 0.55));
+}
+
+// Resolve an email's run UP FRONT: the final per-step status, the email's final
+// status, and the last step the animation should walk to (after which the rest
+// are filled in as their final state — e.g. skipped).
+interface Resolved {
+  finalStatus: SimStatusKind;
+  stepFinal: Record<string, StepStatus>;
+  lastIdx: number;
+}
+function resolveEmail(email: SimEmail): Resolved {
+  const outcome = email.outcome ?? 'passed';
+  const stepFinal: Record<string, StepStatus> = {};
+  if (outcome === 'failed') {
+    const failAt = email.failAt ?? LAST;
+    STEP_IDS.forEach((id, i) => {
+      stepFinal[id] = i < failAt ? 'done' : i === failAt ? 'failed' : 'skipped';
+    });
+    return { finalStatus: 'failed', stepFinal, lastIdx: failAt };
+  }
+  if (outcome === 'attention') {
+    // Runs through the condition; the matched-branch step (last) is skipped.
+    STEP_IDS.forEach((id, i) => {
+      stepFinal[id] = i === LAST ? 'skipped' : 'done';
+    });
+    return { finalStatus: 'attention', stepFinal, lastIdx: Math.max(0, LAST - 1) };
+  }
+  STEP_IDS.forEach((id) => {
+    stepFinal[id] = 'done';
+  });
+  return { finalStatus: 'passed', stepFinal, lastIdx: LAST };
 }
 
 /**
  * useSimRun — sequential run engine for a topic's emails.
  *
- * Emails run ONE AT A TIME: each step goes pending -> running -> done (dot grey
- * -> green), then the next step; when the last step resolves the email passes
- * and the next email starts. Scripted/deterministic (the prototype fakes values;
- * the trace template stands in for the live playbook steps). Honours
- * prefers-reduced-motion by jumping straight to the resolved state.
+ * Emails run ONE AT A TIME: each step pending -> running -> its final state (done
+ * / failed), then the next step; the email resolves to passed / failed / needs-
+ * attention (scripted per the fixture), then the next email starts. Honours
+ * prefers-reduced-motion (jump to resolved) and resets when the topic changes.
  */
 export function useSimRun(emails: SimEmail[]) {
   const [phase, setPhase] = useState<RunPhase>('idle');
@@ -53,24 +83,27 @@ export function useSimRun(emails: SimEmail[]) {
       setPhase('done');
       return;
     }
-    const curId = STEP_IDS[si.current]!;
-    const lastStep = si.current >= STEP_IDS.length - 1;
+    const res = resolveEmail(email);
+    const idx = si.current;
+    const curId = STEP_IDS[idx]!;
+    const curFinal = res.stepFinal[curId]!; // 'done' | 'failed'
+    const atLast = idx >= res.lastIdx;
 
-    if (!lastStep) {
-      const nextId = STEP_IDS[si.current + 1]!;
+    if (!atLast) {
+      const nextId = STEP_IDS[idx + 1]!;
       setRuns((prev) => {
         const run = { ...(prev[email.id] ?? emptyRun()) };
-        run.steps = { ...run.steps, [curId]: 'done', [nextId]: 'running' };
+        run.steps = { ...run.steps, [curId]: curFinal, [nextId]: 'running' };
         return { ...prev, [email.id]: run };
       });
-      si.current += 1;
+      si.current = idx + 1;
       timer.current = setTimeout(advance, stepDelay(si.current));
     } else {
       const nextEmail = emails[ei.current + 1];
       setRuns((prev) => {
         const run = { ...(prev[email.id] ?? emptyRun()) };
-        run.steps = { ...run.steps, [curId]: 'done' };
-        run.status = 'passed';
+        run.steps = { ...run.steps, ...res.stepFinal }; // apply finals incl. skipped
+        run.status = res.finalStatus;
         const out = { ...prev, [email.id]: run };
         if (nextEmail) {
           const nr = emptyRun();
@@ -100,9 +133,9 @@ export function useSimRun(emails: SimEmail[]) {
       window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     if (reduce) {
       const done: Record<string, EmailRun> = {};
-      const allDone = Object.fromEntries(STEP_IDS.map((id) => [id, 'done'])) as Record<string, StepStatus>;
       emails.forEach((e) => {
-        done[e.id] = { status: 'passed', steps: { ...allDone } };
+        const res = resolveEmail(e);
+        done[e.id] = { status: res.finalStatus, steps: { ...res.stepFinal } };
       });
       setRuns(done);
       setPhase('done');
@@ -128,7 +161,7 @@ export function useSimRun(emails: SimEmail[]) {
     setPhase('idle');
   }, [clear]);
 
-  // Reset the run when the email set changes (drilling to another topic), and
+  // Reset the run when the email set changes (drilling to another topic) and
   // clean up the timer on unmount.
   useEffect(() => {
     clear();

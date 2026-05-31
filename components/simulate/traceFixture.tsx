@@ -85,5 +85,6 @@ export const SIM_DRAFT =
   'the route moved to /v2/order (singular), so updating the path resolves it. ' +
   "I've logged it for the team in case other endpoints are affected.";
 
-// The matched branch chip shown on the result headline.
-export const SIM_BRANCH = 'error 401 or 403';
+// The matched branch shown on the result headline + the Condition trace step
+// (kept consistent: a 404 is a 4xx client error).
+export const SIM_BRANCH = 'client error (4xx)';

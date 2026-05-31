@@ -2,16 +2,21 @@
 
 import { useState } from 'react';
 import { RiArrowDownSLine } from 'react-icons/ri';
+import type { SimStatusKind } from '@/data/simFixtures';
 import { SIM_TRACE, type StepStatus } from './traceFixture';
 import TraceStep from './TraceStep';
 import styles from './RunTrace.module.css';
 
 interface Props {
   stepStatus: Record<string, StepStatus>;
+  /** The email's run outcome — adjusts the Condition step on a caught gap. */
+  outcome?: SimStatusKind;
 }
 
-/** RunTrace — the collapsible TRACE section on an email card. */
-export default function RunTrace({ stepStatus }: Props) {
+const LAST = SIM_TRACE.length - 1;
+
+/** RunTrace — the collapsible Trace section on an email card. */
+export default function RunTrace({ stepStatus, outcome }: Props) {
   const [open, setOpen] = useState(true);
   return (
     <div className={styles.trace}>
@@ -26,14 +31,19 @@ export default function RunTrace({ stepStatus }: Props) {
       </button>
       {open && (
         <div className={styles.steps}>
-          {SIM_TRACE.map((s, i) => (
-            <TraceStep
-              key={s.id}
-              step={s}
-              status={stepStatus[s.id] ?? 'pending'}
-              isLast={i === SIM_TRACE.length - 1}
-            />
-          ))}
+          {SIM_TRACE.map((s, i) => {
+            const noBranch = s.kind === 'condition' && outcome === 'attention';
+            const step = noBranch ? { ...s, branch: 'no branch matched for this email' } : s;
+            return (
+              <TraceStep
+                key={s.id}
+                step={step}
+                status={stepStatus[s.id] ?? 'pending'}
+                isLast={i === LAST}
+                branchWarn={noBranch}
+              />
+            );
+          })}
         </div>
       )}
     </div>

@@ -15,6 +15,10 @@ export interface SimEmail {
   sender: string;
   subject: string;
   preview: string;
+  /** Scripted run outcome (default 'passed'). Demonstrates the result states. */
+  outcome?: 'passed' | 'failed' | 'attention';
+  /** For 'failed': the trace step index that errors (later steps are skipped). */
+  failAt?: number;
 }
 
 export interface SimTopic {
@@ -69,6 +73,8 @@ export const SIM_TOPICS: SimTopic[] = [
         subject: '503 from the reporting service',
         preview:
           'The reporting endpoint has returned 503 Service Unavailable since the last deploy. Our dashboards are all blank.',
+        outcome: 'failed',
+        failAt: 3, // KB lookup times out
       },
     ],
   },
@@ -91,6 +97,7 @@ export const SIM_TOPICS: SimTopic[] = [
         subject: 'Large batch import times out silently',
         preview:
           'Batch imports over about 5,000 rows time out with no error code, so we cannot tell whether the import partially applied.',
+        outcome: 'attention', // condition matches no branch -> caught gap
       },
     ],
   },
