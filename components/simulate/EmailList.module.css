@@ -1,0 +1,7 @@
+/* EmailList — cards stacked under the topic header (16px below it, 14px apart). */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 16px;
+}

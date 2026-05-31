@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { SIM_TOPICS } from '@/data/simFixtures';
 import ScenarioList from './ScenarioList';
+import TopicHeader from './TopicHeader';
+import EmailList from './EmailList';
+import TestAllBar from './TestAllBar';
 import styles from './SimulatePanel.module.css';
 
 type Tab = 'scenarios' | 'custom';
@@ -13,15 +16,19 @@ interface Props {
 }
 
 /**
- * SimulatePanel (M1) — the right-hand simulate surface.
+ * SimulatePanel — the right-hand simulate surface.
  *
- * Shell only: the canvas-shift reveal + the Scenarios / Custom test tabs. The
- * Scenarios body (topic list, drill-down, run trace) lands in M2+. The reveal
- * animates the container WIDTH while the inner content stays a fixed width, so
- * the editor re-centres smoothly and the panel content never reflows mid-animation.
+ * Scenarios tab: a topic list that drills into a topic's email list with a
+ * pinned "Test all emails" bar. Custom test is a stub (out of scope). The
+ * canvas-shift reveal animates the container WIDTH (fixed-width inner, no reflow).
+ * The run engine (sequential trace) mounts here in M5.
  */
 export default function SimulatePanel({ open }: Props) {
   const [tab, setTab] = useState<Tab>('scenarios');
+  const [openTopicId, setOpenTopicId] = useState<string | null>(null);
+
+  const topic = openTopicId ? SIM_TOPICS.find((t) => t.id === openTopicId) ?? null : null;
+  const inScenarios = tab === 'scenarios';
 
   return (
     <aside
@@ -55,10 +62,19 @@ export default function SimulatePanel({ open }: Props) {
           </button>
         </div>
 
-        {/* Body — Scenarios shows the topic list; Custom test stays a stub. */}
         <div className={styles.body} role="tabpanel">
-          {tab === 'scenarios' && <ScenarioList topics={SIM_TOPICS} />}
+          {inScenarios &&
+            (topic ? (
+              <>
+                <TopicHeader topic={topic} onBack={() => setOpenTopicId(null)} />
+                <EmailList emails={topic.emails} />
+              </>
+            ) : (
+              <ScenarioList topics={SIM_TOPICS} onOpenTopic={setOpenTopicId} />
+            ))}
         </div>
+
+        {inScenarios && topic && <TestAllBar mode="idle" />}
       </div>
     </aside>
   );

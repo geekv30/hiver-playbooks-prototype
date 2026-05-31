@@ -1,0 +1,63 @@
+/* EmailCard — Figma 211:20104 / 211:20418: bordered card, radius 10,
+   padding 20(top)/16(side)/14(bottom), sender 13 Medium #343C45, subject 13
+   Medium #3E4C5A, preview 13 Regular #6F7C90 (both single-line, ellipsis). */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px 16px 14px;
+  background: var(--card);
+  border: 1px solid var(--hairline-soft);
+  border-radius: 10px;
+}
+
+.sender {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.mail {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: var(--muted);
+}
+.name {
+  font-size: var(--fs-small); /* 13px */
+  line-height: 19px;
+  font-weight: 500;
+  letter-spacing: var(--ls-small);
+  color: var(--ink); /* #343C45 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.subject {
+  font-size: var(--fs-small);
+  line-height: 19px;
+  font-weight: 500;
+  letter-spacing: var(--ls-small);
+  color: var(--ink-soft); /* #3E4C5A */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.preview {
+  font-size: var(--fs-small);
+  line-height: 19px;
+  font-weight: 400;
+  letter-spacing: var(--ls-small);
+  color: var(--muted); /* #6F7C90 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
