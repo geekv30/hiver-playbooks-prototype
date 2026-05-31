@@ -48,3 +48,15 @@
 .btn[data-mode='running']:hover {
   background: var(--hairline);
 }
+
+/* Done = secondary (bordered, neutral) — the run's finished, so re-running is a
+   quiet optional action; the accent fill is reserved for the first "Test all". */
+.btn[data-mode='done'] {
+  background: var(--card);
+  border-color: var(--hairline);
+  color: var(--ink-soft);
+}
+.btn[data-mode='done']:hover {
+  background: var(--surface-soft);
+  border-color: var(--hairline-strong);
+}
