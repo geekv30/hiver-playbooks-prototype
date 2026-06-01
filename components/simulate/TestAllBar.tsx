@@ -12,7 +12,7 @@ interface Props {
 }
 
 // Pinned footer CTA (Figma 211:24049): full-width accent button. The label/icon
-// reflect the run state — Test all emails / Stop Test / Re-test all.
+// reflect the run state - Test all emails / Stop Test / Re-test all.
 const CONFIG: Record<TestAllMode, { label: string; Icon: typeof RiPlayFill }> = {
   idle: { label: 'Test all emails', Icon: RiPlayFill },
   running: { label: 'Stop test', Icon: RiStopFill },

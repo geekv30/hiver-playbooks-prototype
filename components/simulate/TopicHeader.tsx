@@ -11,7 +11,7 @@ interface Props {
 }
 
 /**
- * TopicHeader — the drill-down header (Figma 211:20069): a back button, the
+ * TopicHeader - the drill-down header (Figma 211:20069): a back button, the
  * topic name, the rollup status, and a divider below. Reuses SimStatus.
  */
 export default function TopicHeader({ topic, onBack }: Props) {

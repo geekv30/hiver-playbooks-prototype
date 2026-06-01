@@ -8,7 +8,7 @@ interface Props {
 }
 
 /**
- * SimStatus — a colored dot + label. The ONE renderer for every simulate status
+ * SimStatus - a colored dot + label. The ONE renderer for every simulate status
  * (topic card, topic header, ...). Dot + label colour are driven by `status`, so
  * the same component covers idle / running / passed / failed / needs-attention.
  */

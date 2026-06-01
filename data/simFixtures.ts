@@ -1,12 +1,12 @@
-// Simulate fixtures — GENERIC, swappable seed data for the Simulate panel.
+// Simulate fixtures - GENERIC, swappable seed data for the Simulate panel.
 //
 // The 404 / Server / Edge "API" example is the illustrative SEED (it matches the
 // Figma answer key). The renderers are generic and data-driven (one renderer per
-// pattern), so swapping this array re-skins the whole panel — there is NO
+// pattern), so swapping this array re-skins the whole panel - there is NO
 // case-specific content baked into the components. See feedback-reusability-principle.
 //
 // Sample emails + drafts are written to be COHERENT with their topic (no
-// "can't log in" under "404 errors") — believability is part of the craft bar.
+// "can't log in" under "404 errors") - believability is part of the craft bar.
 
 export type SimStatusKind = 'idle' | 'running' | 'passed' | 'failed' | 'attention';
 
@@ -113,7 +113,7 @@ export const SIM_TOPICS: SimTopic[] = [
   },
 ];
 
-// Outcome narrative copy — kept in the data layer (not baked into renderers) so
+// Outcome narrative copy - kept in the data layer (not baked into renderers) so
 // the components stay generic and other outcomes can reuse them. See
 // feedback-reusability-principle.
 export const SIM_COPY = {

@@ -1,4 +1,4 @@
-/* TraceStep — status rail (dot + connector) + the action-tag (shared Chip atom)
+/* TraceStep - status rail (dot + connector) + the action-tag (shared Chip atom)
    + resolved detail (timing/output). */
 
 .step {
@@ -7,7 +7,7 @@
   align-items: stretch;
 }
 
-/* Rail — the status dot (grey -> green as it succeeds) and the connector line. */
+/* Rail - the status dot (grey -> green as it succeeds) and the connector line. */
 .rail {
   flex: none;
   width: 14px;
@@ -47,7 +47,7 @@
   min-height: 32px;
 }
 
-/* Resolved detail — aligns flush at the content edge (under the chip's icon),
+/* Resolved detail - aligns flush at the content edge (under the chip's icon),
    exactly as Figma 293:32581: the timing/output rows share the chip's left,
    they are NOT indented under the label. */
 .branch {

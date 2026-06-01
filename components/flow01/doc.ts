@@ -3,7 +3,7 @@ import { findAction } from '@/data/library';
 
 // ---------------------------------------------------------------------------
 // flow-01 editor document model.
-// A line (the trigger, or a step body) is a Fragment[] — the structured-token
+// A line (the trigger, or a step body) is a Fragment[] - the structured-token
 // model: text fragments interleaved with atomic chip/ref tokens.
 // ---------------------------------------------------------------------------
 
@@ -43,7 +43,7 @@ function exChip(id: string, actionId: string, meta?: string): Fragment {
 
 // A complete, named, ready-to-simulate example playbook (the API-error triage
 // case that the Simulate scenarios are built around). Seeds /canvas so a
-// stakeholder lands on a real playbook to fiddle with — not a blank editor.
+// stakeholder lands on a real playbook to fiddle with - not a blank editor.
 // Fixed ids keep it hydration-stable. Conditions stay inline (the editor does
 // not nest IF/ELSE yet); the matched-branch detail lives in the simulate trace.
 export function exampleDoc(): EditorDoc {

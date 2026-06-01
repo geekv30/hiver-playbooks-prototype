@@ -1,4 +1,4 @@
-/* StatusPill — Figma 211:20446: h22 pill, pl6 pr7 py2, gap8, 12px label. */
+/* StatusPill - Figma 211:20446: h22 pill, pl6 pr7 py2, gap8, 12px label. */
 
 .pill {
   display: inline-flex;
@@ -18,7 +18,7 @@
   color: var(--ink-soft);
 }
 
-/* Running — three sequenced dots (the animated "in progress" cue). */
+/* Running - three sequenced dots (the animated "in progress" cue). */
 .dots {
   display: inline-flex;
   align-items: center;
@@ -49,7 +49,7 @@
   }
 }
 
-/* Resolved — a single coloured dot. */
+/* Resolved - a single coloured dot. */
 .dot {
   width: 6px;
   height: 6px;

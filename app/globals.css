@@ -1,11 +1,11 @@
 :root {
-  /* ===== Surface (Figma "ai-playbook-ai" Neutrals — node 227:2148) ===== */
+  /* ===== Surface (Figma "ai-playbook-ai" Neutrals - node 227:2148) ===== */
   --canvas: #FBFBFC;
   --canvas-soft: #F6F8FC;      /* Neutrals/Gray 6a */
   --card: #FFFFFF;             /* Neutrals/White */
   --surface-soft: #F6F8FC;     /* Neutrals/Gray 6a */
   --surface-card: #ECEFF6;     /* Neutrals/Gray 6 */
-  --info-subtle: #FAFDFF;      /* background/info/subtle — chip / inline-token bg */
+  --info-subtle: #FAFDFF;      /* background/info/subtle - chip / inline-token bg */
 
   /* ===== Hairlines (Figma Neutrals) ===== */
   --hairline: #D6DDE8;         /* Neutrals/Gray 5 */
@@ -29,15 +29,15 @@
   --state-error-bg: #FEE2E2;
   --state-running: #7C3AED;
 
-  /* ===== Hiver tint (accent only — CTA, focus, active) ===== */
+  /* ===== Hiver tint (accent only - CTA, focus, active) ===== */
   --primary: #E15524;
   --primary-hover: #C8431C;
   --primary-tint: rgba(225, 85, 36, .08);
   --primary-tint-strong: rgba(225, 85, 36, .14);
   --primary-ring: rgba(225, 85, 36, .30);
 
-  /* Interactive accent — Figma "Primary purple" #506DFF (the Test-all CTA + the
-     active tab; unified here — the Figma also drew the tabs in #196FE0 "Blue").
+  /* Interactive accent - Figma "Primary purple" #506DFF (the Test-all CTA + the
+     active tab; unified here - the Figma also drew the tabs in #196FE0 "Blue").
      Simulate active states. Distinct from the Hiver-orange brand --primary. */
   --accent: #506DFF;
   --accent-hover: #3F57E6;
@@ -88,7 +88,7 @@
 
 html, body { margin: 0; padding: 0; }
 
-/* Global UI scale lives on the app wrapper ONLY — not <body> — so dev overlays
+/* Global UI scale lives on the app wrapper ONLY - not <body> - so dev overlays
    (Agentation) sit outside the zoom in the real 1:1 viewport and measure the
    app's on-screen rects correctly. */
 .app-scale {
@@ -103,7 +103,7 @@ body {
   line-height: var(--lh-body);
   letter-spacing: var(--ls-body);
   font-feature-settings: "calt", "kern", "liga";
-  /* Crisp text everywhere — full smoothing stack, variable-font optical sizing,
+  /* Crisp text everywhere - full smoothing stack, variable-font optical sizing,
      no synthesized weights. */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

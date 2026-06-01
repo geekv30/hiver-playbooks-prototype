@@ -24,7 +24,7 @@ interface Props {
   ariaPressed?: boolean;
 }
 
-// Button — Figma 211:19456 / 211:19749 / 211:20709. Neutral system:
+// Button - Figma 211:19456 / 211:19749 / 211:20709. Neutral system:
 // primary = soft-filled (#ECEFF6), secondary = bordered light, tertiary = ghost,
 // text = link. px12 py9, radius 6, Inter Medium 14, 18px icons.
 export default function Button({

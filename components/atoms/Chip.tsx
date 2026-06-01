@@ -22,7 +22,7 @@ interface Props {
   label?: string;
   /** Connector setup-required state: red "setup needed" status in place of verb/meta. */
   setupNeeded?: boolean;
-  /** Borderless, transparent variant (e.g. the run trace) — same content, no chrome. */
+  /** Borderless, transparent variant (e.g. the run trace) - same content, no chrome. */
   plain?: boolean;
 }
 
@@ -30,7 +30,7 @@ interface Props {
 // action / connector verbs, @-references, condition branch labels, and the
 // connector setup-required state.
 export default function Chip({ chip, metaText, onClick, mode = 'action', label, setupNeeded, plain }: Props) {
-  // Reference (@attri) — @ glyph + mono value.
+  // Reference (@attri) - @ glyph + mono value.
   if (mode === 'ref') {
     return (
       <span className={styles.chip} contentEditable={false} suppressContentEditableWarning>
@@ -40,7 +40,7 @@ export default function Chip({ chip, metaText, onClick, mode = 'action', label, 
     );
   }
 
-  // Condition / flow — branch icon + uppercase label.
+  // Condition / flow - branch icon + uppercase label.
   if (mode === 'condition') {
     return (
       <span className={styles.chip} contentEditable={false} suppressContentEditableWarning>

@@ -1,4 +1,4 @@
-/* TopicHeader — back button + name + rollup status + divider (Figma 211:20069). */
+/* TopicHeader - back button + name + rollup status + divider (Figma 211:20069). */
 
 .header {
   display: flex;
@@ -14,7 +14,7 @@
   padding-right: 6px; /* breathing room before the panel edge */
 }
 
-/* Back — a 28px ghost circular button (Figma renders it borderless). */
+/* Back - a 28px ghost circular button (Figma renders it borderless). */
 .back {
   flex: none;
   display: grid;

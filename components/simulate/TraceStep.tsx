@@ -16,7 +16,7 @@ interface Props {
 }
 
 /**
- * TraceStep — one execution step (Figma 211:20462): a status rail (dot + the
+ * TraceStep - one execution step (Figma 211:20462): a status rail (dot + the
  * connector line) + the action-tag rendered by the SHARED Chip atom (so trace
  * action-tags are identical to the editor's). Once resolved it springs in timing
  * + output; a failed step shows an error; skipped steps dim; a Condition shows

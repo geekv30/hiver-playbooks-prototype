@@ -1,4 +1,4 @@
-/* EditorCanvas — flow-01 assembly. */
+/* EditorCanvas - flow-01 assembly. */
 
 .canvas {
   position: relative; /* anchor the ephemeral toast */
@@ -28,7 +28,7 @@
   box-shadow: 0 6px 20px rgba(52, 60, 69, 0.18);
 }
 
-/* Stage — editor area + simulate panel as flex siblings, so opening the panel
+/* Stage - editor area + simulate panel as flex siblings, so opening the panel
    makes the editor give space (the canvas-shift). */
 .stage {
   flex: 1;
@@ -61,7 +61,7 @@
      the fold (extra bottom padding keeps content clear of the chat). */
   min-height: calc(100vh / var(--app-scale));
   padding: 32px 40px 100px;
-  /* Subtle elevation (Figma) — soft, B2B, not a drop shadow. */
+  /* Subtle elevation (Figma) - soft, B2B, not a drop shadow. */
   box-shadow:
     0 1px 2px rgba(52, 60, 69, 0.04),
     0 4px 14px rgba(52, 60, 69, 0.05);
@@ -101,7 +101,7 @@
   letter-spacing: -0.011em;
 }
 
-/* Trigger field — the bordered NL container (Figma 256:2895).
+/* Trigger field - the bordered NL container (Figma 256:2895).
    Outdented by its own left padding (-16px) so the placeholder/text lines up
    on the same vertical rail as the step prose below; the right edge stays put,
    so the field reads as "longer". Native vertical resize shows the corner grip
@@ -142,7 +142,7 @@
   padding: 3px 0;
 }
 
-/* Chat dock — floats over the lower edge of the doc (the doc runs behind it).
+/* Chat dock - floats over the lower edge of the doc (the doc runs behind it).
    Transparent->canvas gradient so the page fades through the fold; the dock
    itself is click-through except for the input. */
 .chatDock {
@@ -163,7 +163,7 @@
 
 /* '/' and '@' key pills inside the step placeholder (Figma 256:2880 idiom).
    Beveled keyboard-caps: info-subtle fill, hairline border heavier on
-   bottom/right, holding the literal glyph. Decorative — pointer-events inherited
+   bottom/right, holding the literal glyph. Decorative - pointer-events inherited
    none from the placeholder. */
 .keyPill {
   display: inline-flex;
@@ -188,7 +188,7 @@
   height: 14px;
 }
 
-/* Line-start '+' affordance — opens the Actions palette with no keystroke.
+/* Line-start '+' affordance - opens the Actions palette with no keystroke.
    Sits in the step gutter, replacing the step number on hover / on an empty
    line (NN/g: never make the key the only path). */
 .gutterPlus {
@@ -220,7 +220,7 @@
   border-color: var(--hairline-strong);
 }
 /* Show ONLY on an empty step (the "add here" line); content lines always keep
-   their number. No hover-swap — predictable: empty line -> +, content -> number. */
+   their number. No hover-swap - predictable: empty line -> +, content -> number. */
 .steps .row[data-empty] .gutterPlus {
   opacity: 1;
   pointer-events: auto;

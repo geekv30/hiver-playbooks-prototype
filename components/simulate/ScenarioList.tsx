@@ -10,7 +10,7 @@ interface Props {
   onOpenTopic?: (id: string) => void;
 }
 
-/** ScenarioList — the stack of TopicCards in the Scenarios tab. */
+/** ScenarioList - the stack of TopicCards in the Scenarios tab. */
 export default function ScenarioList({ topics, onOpenTopic }: Props) {
   return (
     <div className={styles.list}>

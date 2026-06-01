@@ -13,7 +13,7 @@ interface Props {
   onVerdict?: (emailId: string, v: Verdict) => void;
 }
 
-/** EmailList — the stack of email cards inside a topic drill-down. */
+/** EmailList - the stack of email cards inside a topic drill-down. */
 export default function EmailList({ emails, runs, verdicts, onVerdict }: Props) {
   return (
     <div className={styles.list}>

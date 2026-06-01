@@ -9,13 +9,13 @@ import styles from './RunTrace.module.css';
 
 interface Props {
   stepStatus: Record<string, StepStatus>;
-  /** The email's run outcome — adjusts the Condition step on a caught gap. */
+  /** The email's run outcome - adjusts the Condition step on a caught gap. */
   outcome?: SimStatusKind;
 }
 
 const LAST = SIM_TRACE.length - 1;
 
-/** RunTrace — the collapsible Trace section on an email card. */
+/** RunTrace - the collapsible Trace section on an email card. */
 export default function RunTrace({ stepStatus, outcome }: Props) {
   const [open, setOpen] = useState(true);
   return (

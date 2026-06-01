@@ -68,7 +68,7 @@ export default function Toolbar({
   );
 }
 
-// Editable title — a content-sized span so the dotted underline hugs the text
+// Editable title - a content-sized span so the dotted underline hugs the text
 // exactly (an <input> sized by char-count overshoots a proportional font).
 // Uncontrolled DOM text (seeded/reconciled imperatively) so the caret never jumps.
 function TitleField({ value, onChange }: { value: string; onChange: (t: string) => void }) {

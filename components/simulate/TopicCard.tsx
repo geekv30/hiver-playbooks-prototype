@@ -12,7 +12,7 @@ interface Props {
 }
 
 /**
- * TopicCard — one AI-grouped scenario (Figma 211:18599): name on the left,
+ * TopicCard - one AI-grouped scenario (Figma 211:18599): name on the left,
  * status dot + label on the right, a drill chevron revealed on hover. Renders
  * any SimTopic; no hardcoded content.
  */

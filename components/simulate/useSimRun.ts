@@ -21,7 +21,7 @@ function emptyRun(): EmailRun {
   return { status: 'idle', steps: freshSteps() };
 }
 // Use the step's stated duration (with a readable floor) so the run feels like
-// a real one — fast steps are quick, the AI draft visibly takes longer. A real
+// a real one - fast steps are quick, the AI draft visibly takes longer. A real
 // run would track actual AI/connector latency; this approximates it.
 function stepDelay(i: number): number {
   return Math.max(350, SIM_TRACE[i]!.ms);
@@ -29,7 +29,7 @@ function stepDelay(i: number): number {
 
 // Resolve an email's run UP FRONT: the final per-step status, the email's final
 // status, and the last step the animation should walk to (after which the rest
-// are filled in as their final state — e.g. skipped).
+// are filled in as their final state - e.g. skipped).
 interface Resolved {
   finalStatus: SimStatusKind;
   stepFinal: Record<string, StepStatus>;
@@ -59,7 +59,7 @@ function resolveEmail(email: SimEmail): Resolved {
 }
 
 /**
- * useSimRun — sequential run engine for a topic's emails.
+ * useSimRun - sequential run engine for a topic's emails.
  *
  * Emails run ONE AT A TIME: each step pending -> running -> its final state (done
  * / failed), then the next step; the email resolves to passed / failed / needs-

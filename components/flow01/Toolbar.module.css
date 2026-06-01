@@ -23,7 +23,7 @@
   outline: none;
   background: transparent;
   font-family: var(--font);
-  font-size: var(--fs-body); /* 14px medium (Figma) — was 16px */
+  font-size: var(--fs-body); /* 14px medium (Figma) - was 16px */
   font-weight: 500;
   color: var(--ink);
   letter-spacing: -0.006em;

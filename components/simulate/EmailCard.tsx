@@ -19,7 +19,7 @@ interface Props {
 }
 
 /**
- * EmailCard — Figma 211:20104 / 211:20418: bordered card with sender, subject,
+ * EmailCard - Figma 211:20104 / 211:20418: bordered card with sender, subject,
  * single-line preview. When a run is in flight it grows a status pill + the
  * collapsible trace, and auto-scrolls into view when it starts running (so the
  * panel follows the run from one email to the next).

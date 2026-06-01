@@ -1,4 +1,4 @@
-/* RunOutcome — the result payoff above the trace: branch chip (neutral) + the
+/* RunOutcome - the result payoff above the trace: branch chip (neutral) + the
    drafted reply box with the human verdict as icon-only thumbs in its header;
    or the "needs attention / add an ELSE" caught-gap nudge. */
 
@@ -8,7 +8,7 @@
   gap: 10px;
 }
 
-/* Branch attribution — lives INSIDE the draft box so the matched branch and the
+/* Branch attribution - lives INSIDE the draft box so the matched branch and the
    reply it produced read as connected. Neutral/muted (B2B restraint). */
 .branchCaption {
   font-size: var(--fs-caption); /* 12px */
@@ -56,7 +56,7 @@
   color: var(--ink-soft);
 }
 
-/* Human verdict — icon-only thumbs in the reply box header. */
+/* Human verdict - icon-only thumbs in the reply box header. */
 .verdict {
   display: inline-flex;
   align-items: center;

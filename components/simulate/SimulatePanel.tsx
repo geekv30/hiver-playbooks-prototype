@@ -33,7 +33,7 @@ function aggregate(statuses: (SimStatusKind | undefined)[]): SimStatusKind {
 }
 
 /**
- * SimulatePanel — the right-hand simulate surface.
+ * SimulatePanel - the right-hand simulate surface.
  *
  * Scenarios tab: topic list -> drill into a topic's emails -> "Test all" runs
  * them sequentially with a live trace + per-email outcome. Topic rolls up (header

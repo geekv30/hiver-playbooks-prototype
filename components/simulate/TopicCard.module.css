@@ -1,4 +1,4 @@
-/* TopicCard — Figma 211:18599: border #ECEFF6, radius 16, padding 20/18,
+/* TopicCard - Figma 211:18599: border #ECEFF6, radius 16, padding 20/18,
    name Medium 14 #3E4C5A, status on the right, drill chevron on hover. */
 
 .card {
@@ -46,7 +46,7 @@
   gap: 10px;
 }
 
-/* Drill affordance — a chevron, revealed on hover (affordance, not info, so a
+/* Drill affordance - a chevron, revealed on hover (affordance, not info, so a
    hover reveal is allowed; the status stays always-visible). */
 .chevron {
   width: 16px;

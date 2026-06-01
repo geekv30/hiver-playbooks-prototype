@@ -10,9 +10,9 @@ const LABEL: Record<PillStatus, string> = {
 };
 
 /**
- * StatusPill — the run state on an email card (Figma 211:20446). Running shows
+ * StatusPill - the run state on an email card (Figma 211:20446). Running shows
  * three animated dots ("running simulation"); resolved shows a coloured dot +
- * outcome. No emoji — real animated indicator + a dot.
+ * outcome. No emoji - real animated indicator + a dot.
  */
 export default function StatusPill({ status }: { status: PillStatus }) {
   return (

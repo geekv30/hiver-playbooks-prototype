@@ -28,7 +28,7 @@ interface FocusReq {
 }
 
 const TRIGGER_PLACEHOLDER = 'e.g. When an email reports an API error';
-// Step placeholder — teaches BOTH triggers as small keys (the disappearing-
+// Step placeholder - teaches BOTH triggers as small keys (the disappearing-
 // placeholder fix). '/' for actions, '@' to reference. Recurs on every empty line.
 const STEP_PLACEHOLDER = (
   <>
@@ -106,7 +106,7 @@ export default function EditorCanvas({ initialDoc }: Props) {
   };
 
   // The line-start '+' affordance: open the Actions palette for a line with no
-  // keystroke (NN/g — never make the key the only path). Inserts at line end.
+  // keystroke (NN/g - never make the key the only path). Inserts at line end.
   const openActionsFromPlus = (target: LineTarget, el: HTMLElement) => {
     const frags = lineFrags(target);
     const idx = Math.max(0, frags.length - 1);
@@ -130,7 +130,7 @@ export default function EditorCanvas({ initialDoc }: Props) {
     frags.forEach((f, i) => {
       if (i === req.fragIndex && f.kind === 'text') {
         // Split the text at the caret and drop the chip between the halves.
-        // NO inserted space characters — gap before/after a chip is owned by the
+        // NO inserted space characters - gap before/after a chip is owned by the
         // token's CSS margin, so it is always consistent and the user can't
         // backspace it away (the chip is atomic).
         const before = f.text.slice(0, req.caretOffset);

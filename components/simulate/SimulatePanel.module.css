@@ -1,4 +1,4 @@
-/* SimulatePanel — the right-hand simulate surface (M1: shell + canvas-shift).
+/* SimulatePanel - the right-hand simulate surface (M1: shell + canvas-shift).
    Geometry matches Figma frame 211:18582 (panel 464px) and 211:18583 (tabs). */
 
 /* The reveal animates WIDTH (the editor flex-sibling gives space) while the
@@ -28,7 +28,7 @@
   flex-direction: column;
 }
 
-/* Tabs — Scenarios | Custom test (Figma 211:18583: 48px row, px-18, gap-16,
+/* Tabs - Scenarios | Custom test (Figma 211:18583: 48px row, px-18, gap-16,
    each TabItem px-24, active = #196FE0 Medium + a full-width 2px underline). */
 .tabs {
   flex: none;
@@ -80,7 +80,7 @@
   background: var(--accent);
 }
 
-/* Body — 20px gap below the tabs, 18px side padding (cards are 428px). */
+/* Body - 20px gap below the tabs, 18px side padding (cards are 428px). */
 .body {
   flex: 1;
   min-height: 0;
@@ -88,7 +88,7 @@
   padding: 20px 18px;
 }
 
-/* Custom test tab — a clear "coming soon" empty state (not a blank panel). */
+/* Custom test tab - a clear "coming soon" empty state (not a blank panel). */
 .custom {
   display: flex;
   flex-direction: column;

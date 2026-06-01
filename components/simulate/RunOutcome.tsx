@@ -19,7 +19,7 @@ interface Props {
 }
 
 /**
- * RunOutcome — the payoff above the trace: the drafted reply with its matched
+ * RunOutcome - the payoff above the trace: the drafted reply with its matched
  * branch attributed inside the box, and a controlled human verdict (icon-only
  * thumbs). For a caught logic gap it shows the needs-attention nudge (guidance
  * only, no dead button). Springs in via Motion (motion.dev), reduced-motion aware.
