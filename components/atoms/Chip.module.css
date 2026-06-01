@@ -7,12 +7,17 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 3px 6px 3px 6px;
+  padding: 3px 6px 3px 4px;
   border-radius: var(--r-sm);
   background: var(--info-subtle);
-  border: 1px solid var(--hairline);
-  border-right-width: 1.6px;
-  border-bottom-width: 1.6px;
+  /* Figma 241:16557 — asymmetric stroke (1px top/left, 1.6px right/bottom) gives
+     the tag its subtle lift. Authored as explicit longhands on purpose: the
+     `border: 1px solid var(--hairline)` shorthand mis-compiles under Turbopack
+     into EMPTY longhands, which silently collapsed the 1.6px sides back to a flat
+     1px and flattened the tag. Do not refactor this back into the shorthand. */
+  border-style: solid;
+  border-color: var(--hairline);
+  border-width: 1px 1.6px 1.6px 1px;
   font-size: var(--fs-small);
   font-family: var(--font);
   line-height: var(--lh-small);
@@ -35,6 +40,7 @@
 .plain:hover {
   padding: 0;
   background: transparent;
+  border-width: 0;
   border-color: transparent;
   cursor: default;
 }
