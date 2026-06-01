@@ -13,6 +13,17 @@
   flex-direction: column;
 }
 
+/* the trailing ELSE-IF / ELSE prompt anchors its two-option picker below the tag */
+.promptArm {
+  position: relative;
+}
+.pickerAnchor {
+  position: absolute;
+  left: 10px;
+  top: 40px;
+  z-index: 30;
+}
+
 /* tag + condition field row (Figma: gap 10, px 10 / py 8) */
 .head {
   display: flex;

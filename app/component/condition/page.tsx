@@ -1,39 +1,41 @@
 'use client';
 
+import { useState } from 'react';
 import ConditionBlock from '@/components/flow01/condition/ConditionBlock';
 import type { Branch } from '@/components/flow01/doc';
 
-const ifOnly: Branch[] = [{ id: 'b1', type: 'if', condition: [], body: [] }];
-
-const ifElseif: Branch[] = [
-  { id: 'b1', type: 'if', condition: [], body: [] },
-  { id: 'b2', type: 'elseif', condition: [], body: [] },
-];
-
-const full: Branch[] = [
-  { id: 'b1', type: 'if', condition: [], body: [] },
-  { id: 'b2', type: 'elseif', condition: [], body: [] },
-  { id: 'b3', type: 'else', body: [] },
-];
+let seq = 0;
+const nid = () => `b-${(seq += 1)}`;
 
 export default function ConditionComponentPage() {
-  return (
-    <div style={{ padding: 40, maxWidth: 820, display: 'flex', flexDirection: 'column', gap: 40 }}>
-      <h1 style={{ fontSize: 15, fontWeight: 600, color: '#343C45', letterSpacing: '-0.01em' }}>
-        Condition block (IF / ELSE-IF / ELSE) - Figma 334:35590
-      </h1>
-      <Section title="Default: IF + ELSE-IF / ELSE prompt" branches={ifOnly} />
-      <Section title="IF + ELSE-IF + prompt (chaining)" branches={ifElseif} />
-      <Section title="IF + ELSE-IF + ELSE (terminal, no prompt)" branches={full} />
-    </div>
-  );
-}
+  const [branches, setBranches] = useState<Branch[]>([{ id: 'if', type: 'if', condition: [], body: [] }]);
 
-function Section({ title, branches }: { title: string; branches: Branch[] }) {
+  const addBranch = (type: 'elseif' | 'else') =>
+    setBranches((bs) => [
+      ...bs,
+      { id: nid(), type, condition: type === 'else' ? undefined : [], body: [] },
+    ]);
+
+  const deleteBranch = (id: string) => setBranches((bs) => bs.filter((b) => b.id !== id));
+
   return (
-    <div>
-      <h2 style={{ fontSize: 13, color: '#6F7C90', marginBottom: 12, fontWeight: 500 }}>{title}</h2>
-      <ConditionBlock branches={branches} onAddBranch={() => {}} />
+    <div style={{ padding: 40, maxWidth: 820, display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <h1 style={{ fontSize: 15, fontWeight: 600, color: '#343C45', letterSpacing: '-0.01em' }}>
+        Condition block (IF / ELSE-IF / ELSE) - interactive (Figma flow 4a-4b)
+      </h1>
+      <p style={{ fontSize: 13, lineHeight: 1.55, color: '#6F7C90', margin: 0, maxWidth: 620 }}>
+        Type the IF condition, then click the subtle <strong style={{ color: '#3E4C5A' }}>ELSE-IF / ELSE</strong> tag
+        to pick a branch type. Else-if chains (a fresh prompt appears each time); Else ends the chain (no prompt
+        after). Backspace an empty else-if condition to remove it.
+      </p>
+      <div style={{ marginTop: 8 }}>
+        <ConditionBlock
+          branches={branches}
+          onAddBranch={addBranch}
+          onEditCondition={() => {}}
+          onDeleteBranch={deleteBranch}
+        />
+      </div>
     </div>
   );
 }
