@@ -74,44 +74,38 @@ export default function ConditionBlock({
         const isIf = b.type === 'if';
         return (
           <div key={b.id} className={`${styles.arm} ${styles.relative}`}>
-            {isElse ? (
-              // ELSE: tag + inline body, no condition field, no number.
-              <div className={styles.elseRow}>
-                <Chip mode="condition" label="ELSE" onConditionClick={() => setPickerFor(b.id)} />
-                {bodyContent()}
-              </div>
-            ) : (
-              <>
-                <div className={styles.head}>
-                  <Chip
-                    mode="condition"
-                    label={TYPE_LABEL[b.type]}
-                    onConditionClick={isIf ? undefined : () => setPickerFor(b.id)}
-                  />
-                  <div
-                    className={styles.condField}
-                    contentEditable
-                    suppressContentEditableWarning
-                    role="textbox"
-                    aria-label={`${TYPE_LABEL[b.type]} condition`}
-                    data-placeholder="condition"
-                    onInput={(e: FormEvent<HTMLDivElement>) =>
-                      onEditCondition?.(b.id, e.currentTarget.textContent ?? '')
+            {/* Every arm is a tag row + a numbered body line below. ELSE is the
+                same construction minus the condition field (Figma 334:36705). */}
+            <div className={styles.head}>
+              <Chip
+                mode="condition"
+                label={TYPE_LABEL[b.type]}
+                onConditionClick={isIf ? undefined : () => setPickerFor(b.id)}
+              />
+              {!isElse && (
+                <div
+                  className={styles.condField}
+                  contentEditable
+                  suppressContentEditableWarning
+                  role="textbox"
+                  aria-label={`${TYPE_LABEL[b.type]} condition`}
+                  data-placeholder="condition"
+                  onInput={(e: FormEvent<HTMLDivElement>) =>
+                    onEditCondition?.(b.id, e.currentTarget.textContent ?? '')
+                  }
+                  onKeyDown={(e: ReactKeyboardEvent<HTMLDivElement>) => {
+                    if (!isIf && e.key === 'Backspace' && (e.currentTarget.textContent ?? '') === '') {
+                      e.preventDefault();
+                      onDeleteBranch?.(b.id);
                     }
-                    onKeyDown={(e: ReactKeyboardEvent<HTMLDivElement>) => {
-                      if (!isIf && e.key === 'Backspace' && (e.currentTarget.textContent ?? '') === '') {
-                        e.preventDefault();
-                        onDeleteBranch?.(b.id);
-                      }
-                    }}
-                  />
-                </div>
-                <div className={styles.bodyLine}>
-                  <span className={styles.bodyNum}>1</span>
-                  {bodyContent()}
-                </div>
-              </>
-            )}
+                  }}
+                />
+              )}
+            </div>
+            <div className={styles.bodyLine}>
+              <span className={styles.bodyNum}>1</span>
+              {bodyContent()}
+            </div>
             {picker(b.id)}
           </div>
         );
