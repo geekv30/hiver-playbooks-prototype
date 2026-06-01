@@ -1,0 +1,98 @@
+/* ConditionBlock - IF / ELSE-IF / ELSE authoring (Figma 334:35590).
+   Arms stack with no inter-arm gap; vertical rhythm comes from each row's
+   padding, exactly as the Figma column. */
+
+.block {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.arm {
+  display: flex;
+  flex-direction: column;
+}
+
+/* tag + condition field row (Figma: gap 10, px 10 / py 8) */
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+}
+
+/* the resizable NL condition field. Figma: 1px #ECEFF6, radius 10, pad 10/16,
+   grows to fill, content-driven height. Native vertical resize (the trigger
+   field's grip pattern). */
+.condField {
+  flex: 1 0 0;
+  min-width: 0;
+  padding: 10px 16px;
+  border: 1px solid var(--hairline-soft);
+  border-radius: 10px;
+  background: #fff;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--ink);
+  resize: vertical;
+  overflow: auto;
+  min-height: 40px;
+  outline: none;
+}
+.condField:empty::before {
+  content: attr(data-placeholder);
+  color: var(--hairline-strong);
+  pointer-events: none;
+}
+.condField:focus {
+  border-color: var(--hairline-strong);
+}
+
+/* body line: number + NL prompt + the @ affordance (Figma: white, px 10/py 2) */
+.bodyLine {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  background: #fff;
+}
+.bodyNum {
+  flex: none;
+  font-family: var(--mono);
+  font-size: var(--fs-small);
+  line-height: 19px;
+  color: var(--hairline-strong);
+}
+.bodyText {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--hairline-strong);
+}
+
+/* the 26px @ affordance - same asymmetric action-tag border (zoom-compensated,
+   matching the Chip atom) so it reads as part of the same family. */
+.atChip {
+  width: 26px;
+  height: 26px;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  background: var(--info-subtle);
+  border-style: solid;
+  border-color: var(--hairline);
+  border-top-width: calc(1px / var(--app-scale));
+  border-left-width: calc(1px / var(--app-scale));
+  border-right-width: calc(1.6px / var(--app-scale));
+  border-bottom-width: calc(1.6px / var(--app-scale));
+  border-radius: var(--r-sm);
+  color: var(--muted);
+}
+.atChip svg {
+  width: 14px;
+  height: 14px;
+}

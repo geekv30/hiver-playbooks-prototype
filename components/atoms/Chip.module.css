@@ -52,6 +52,22 @@
   cursor: default;
 }
 
+/* Condition mode: the not-yet-decided ELSE-IF / ELSE prompt uses a muted label
+   (Figma #97A3B7 vs IF's #343C45). Same tag chrome otherwise. */
+.verbSubtle {
+  color: var(--hairline-strong);
+}
+
+/* Condition tag rendered as a <button> (the ELSE-IF / ELSE prompt opens a
+   picker). Strip the UA chrome the .chip class does not already cover. */
+.condButton {
+  margin: 0;
+  text-align: left;
+  font: inherit;
+  font-size: var(--fs-small);
+  line-height: var(--lh-small);
+}
+
 .chipIco {
   width: 14px;
   height: 14px;

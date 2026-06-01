@@ -18,6 +18,28 @@ export interface EditorDoc {
   steps: DocStep[];
 }
 
+// --- Condition block (IF / ELSE-IF / ELSE) ---------------------------------
+// Replaces the old flat condition chip. One nesting level: a branch body holds
+// normal steps, never another condition. (Wired into EditorDoc.steps in the
+// reducer step; the types live here so components can build against them.)
+export type BranchType = 'if' | 'elseif' | 'else';
+
+// One arm of a condition. `condition` is the NL expression for if / else-if;
+// `else` has none. `body` is the arm's steps, renumbered from 1.
+export interface Branch {
+  id: string;
+  type: BranchType;
+  condition?: Fragment[];
+  body: DocStep[];
+}
+
+// A condition step: ordered IF -> ELSE-IF* -> (optional) ELSE arms.
+export interface ConditionStep {
+  id: string;
+  kind: 'condition';
+  branches: Branch[];
+}
+
 export type LineTarget = { kind: 'trigger' } | { kind: 'step'; id: string };
 
 // Deterministic ids: fixed seed ids for SSR stability, a client-only counter

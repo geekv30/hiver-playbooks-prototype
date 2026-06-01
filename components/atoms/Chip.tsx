@@ -24,12 +24,16 @@ interface Props {
   setupNeeded?: boolean;
   /** Borderless, transparent variant (e.g. the run trace) - same content, no chrome. */
   plain?: boolean;
+  /** Condition mode only: muted label for the not-yet-decided ELSE-IF / ELSE prompt. */
+  subtle?: boolean;
+  /** Condition mode only: makes the tag a button (the ELSE-IF / ELSE prompt opens a picker). */
+  onConditionClick?: () => void;
 }
 
 // The action-tag. One pill chrome, several variants (Figma component 241:16557):
 // action / connector verbs, @-references, condition branch labels, and the
 // connector setup-required state.
-export default function Chip({ chip, metaText, onClick, mode = 'action', label, setupNeeded, plain }: Props) {
+export default function Chip({ chip, metaText, onClick, mode = 'action', label, setupNeeded, plain, subtle, onConditionClick }: Props) {
   // Reference (@attri) - @ glyph + mono value.
   if (mode === 'ref') {
     return (
@@ -40,13 +44,22 @@ export default function Chip({ chip, metaText, onClick, mode = 'action', label, 
     );
   }
 
-  // Condition / flow - branch icon + uppercase label.
+  // Condition / flow - branch icon + uppercase label. Two states: decided (IF /
+  // ELSE-IF / ELSE, ink label) and the not-yet-decided ELSE-IF / ELSE prompt
+  // (subtle label, clickable to open the branch-type picker). Same tag chrome.
   if (mode === 'condition') {
-    return (
-      <span className={styles.chip} contentEditable={false} suppressContentEditableWarning>
+    const condCls = `${styles.chip} ${onConditionClick ? styles.condButton : ''}`.trim();
+    const verbCls = `${styles.chipVerb} ${subtle ? styles.verbSubtle : ''}`.trim();
+    const inner = (
+      <>
         <span className={styles.chipIco}><BranchIcon /></span>
-        <span className={styles.chipVerb}>{label}</span>
-      </span>
+        <span className={verbCls}>{label}</span>
+      </>
+    );
+    return onConditionClick ? (
+      <button type="button" className={condCls} onClick={onConditionClick}>{inner}</button>
+    ) : (
+      <span className={condCls} contentEditable={false} suppressContentEditableWarning>{inner}</span>
     );
   }
 
