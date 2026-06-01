@@ -48,7 +48,7 @@ export default function Chip({ chip, metaText, onClick, mode = 'action', label, 
   // ELSE-IF / ELSE, ink label) and the not-yet-decided ELSE-IF / ELSE prompt
   // (subtle label, clickable to open the branch-type picker). Same tag chrome.
   if (mode === 'condition') {
-    const condCls = `${styles.chip} ${onConditionClick ? styles.condButton : ''}`.trim();
+    const condCls = `${styles.chip} ${plain ? styles.plain : ''} ${onConditionClick ? styles.condButton : ''}`.trim();
     const verbCls = `${styles.chipVerb} ${subtle ? styles.verbSubtle : ''}`.trim();
     const inner = (
       <>
