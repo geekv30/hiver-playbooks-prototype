@@ -99,8 +99,8 @@
   border-color: var(--hairline);
   border-top-width: calc(1px / var(--app-scale));
   border-left-width: calc(1px / var(--app-scale));
-  border-right-width: calc(1.6px / var(--app-scale));
-  border-bottom-width: calc(1.6px / var(--app-scale));
+  border-right-width: calc(2px / var(--app-scale));
+  border-bottom-width: calc(2px / var(--app-scale));
   border-radius: var(--r-sm);
   color: var(--muted);
 }
