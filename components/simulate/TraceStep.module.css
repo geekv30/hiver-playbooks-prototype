@@ -1,0 +1,118 @@
+/* TraceStep - status rail (dot + connector) + the action-tag (shared Chip atom)
+   + resolved detail (timing/output). */
+
+.step {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+/* Rail - the status dot (grey -> green as it succeeds) and the connector line. */
+.rail {
+  flex: none;
+  width: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  margin-top: 13px; /* centre on the ~32px chip row */
+  border-radius: 50%;
+  background: var(--muted-soft); /* pending */
+  transition: background var(--d-indicator) var(--ease-snap);
+}
+.line {
+  flex: 1;
+  width: 1px;
+  min-height: 6px;
+  margin: 4px 0;
+  background: var(--hairline);
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+  padding-bottom: 6px;
+}
+
+/* The action-tag (shared Chip atom) sits in a fixed-height row so the rail dot
+   lines up with its centre. */
+.chipRow {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 32px;
+}
+
+/* Resolved detail - aligns flush at the content edge (under the chip's icon),
+   exactly as Figma 293:32581: the timing/output rows share the chip's left,
+   they are NOT indented under the label. */
+.branch {
+  padding-left: 0;
+  font-size: var(--fs-small);
+  line-height: 19px;
+  color: var(--ink-soft);
+}
+.branch[data-warn] {
+  color: var(--state-warn);
+}
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 0 0 0;
+}
+.timing {
+  font-family: var(--mono);
+  font-size: var(--fs-small);
+  line-height: 19px;
+  color: var(--muted);
+}
+.output {
+  font-size: var(--fs-small);
+  line-height: 19px;
+  color: var(--ink-soft);
+  word-break: break-word;
+}
+.error {
+  font-size: var(--fs-small);
+  line-height: 19px;
+  color: var(--state-error);
+}
+
+/* Dot status colours. */
+.step[data-status='running'] .dot {
+  background: var(--accent);
+  animation: traceDot 1s infinite ease-in-out;
+}
+.step[data-status='done'] .dot {
+  background: var(--state-ok);
+}
+.step[data-status='failed'] .dot {
+  background: var(--state-error);
+}
+.step[data-status='skipped'] .dot {
+  background: var(--hairline-strong);
+  opacity: 0.5;
+}
+.step[data-status='skipped'] .content {
+  opacity: 0.45;
+}
+
+@keyframes traceDot {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .step[data-status='running'] .dot {
+    animation: none;
+  }
+}

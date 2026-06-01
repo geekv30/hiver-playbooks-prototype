@@ -10,9 +10,21 @@
   padding: 3px 6px 3px 6px;
   border-radius: var(--r-sm);
   background: var(--info-subtle);
-  border: 1px solid var(--hairline);
-  border-right-width: 1.6px;
-  border-bottom-width: 1.6px;
+  /* Figma 241:16557 - asymmetric stroke (1px top/left, 1.6px right/bottom) gives
+     the tag its subtle lift. Two gotchas, both load-bearing:
+     1. The `border: …` shorthand with a var() colour mis-compiles under Turbopack
+        into EMPTY longhands, so author every side as an explicit longhand.
+     2. The app runs at `zoom: 0.9`, which shrinks a literal 1.6px stroke to
+        1.44px - that lands on the device-pixel boundary and intermittently snaps
+        flat (the "sometimes asymmetric, sometimes flat" flicker). Divide each
+        width by the zoom so the stroke renders at its true Figma size on a stable
+        pixel, instead of a sub-pixel value that rounds unpredictably. */
+  border-style: solid;
+  border-color: var(--hairline);
+  border-top-width: calc(1px / var(--app-scale));
+  border-left-width: calc(1px / var(--app-scale));
+  border-right-width: calc(1.6px / var(--app-scale));
+  border-bottom-width: calc(1.6px / var(--app-scale));
   font-size: var(--fs-small);
   font-family: var(--font);
   line-height: var(--lh-small);
@@ -28,6 +40,16 @@
 .chip:hover {
   background: var(--surface-soft);
   border-color: var(--hairline-strong);
+}
+
+/* Borderless variant (run trace): same content + icons, no pill chrome. */
+.plain,
+.plain:hover {
+  padding: 0;
+  background: transparent;
+  border-width: 0;
+  border-color: transparent;
+  cursor: default;
 }
 
 .chipIco {
@@ -71,7 +93,7 @@
   pointer-events: none;
 }
 
-/* @-reference (attri) glyph — sits in the icon slot */
+/* @-reference (attri) glyph - sits in the icon slot */
 .chipAt {
   width: 14px;
   height: 14px;

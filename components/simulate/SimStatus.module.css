@@ -1,0 +1,48 @@
+/* SimStatus - dot + label, coloured by status. Figma: 6px dot, label 13px
+   Regular #3E4C5A (idle); state colours for the run outcomes. */
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--muted); /* idle */
+}
+
+.label {
+  font-size: var(--fs-small); /* 13px */
+  line-height: 19px;
+  font-weight: 400;
+  letter-spacing: var(--ls-small);
+  color: var(--ink-soft); /* Figma "no runs yet" = #3E4C5A */
+  white-space: nowrap;
+}
+
+/* Run outcomes (exercised from M5/M7; defined now so one renderer covers all). */
+.status[data-status='running'] .dot {
+  background: var(--accent);
+}
+.status[data-status='passed'] .dot {
+  background: var(--state-ok);
+}
+.status[data-status='passed'] .label {
+  color: var(--state-ok);
+}
+.status[data-status='failed'] .dot {
+  background: var(--state-error);
+}
+.status[data-status='failed'] .label {
+  color: var(--state-error);
+}
+.status[data-status='attention'] .dot {
+  background: var(--state-warn);
+}
+.status[data-status='attention'] .label {
+  color: var(--state-warn);
+}

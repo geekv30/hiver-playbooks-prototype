@@ -22,13 +22,15 @@ interface Props {
   label?: string;
   /** Connector setup-required state: red "setup needed" status in place of verb/meta. */
   setupNeeded?: boolean;
+  /** Borderless, transparent variant (e.g. the run trace) - same content, no chrome. */
+  plain?: boolean;
 }
 
 // The action-tag. One pill chrome, several variants (Figma component 241:16557):
 // action / connector verbs, @-references, condition branch labels, and the
 // connector setup-required state.
-export default function Chip({ chip, metaText, onClick, mode = 'action', label, setupNeeded }: Props) {
-  // Reference (@attri) — @ glyph + mono value.
+export default function Chip({ chip, metaText, onClick, mode = 'action', label, setupNeeded, plain }: Props) {
+  // Reference (@attri) - @ glyph + mono value.
   if (mode === 'ref') {
     return (
       <span className={styles.chip} contentEditable={false} suppressContentEditableWarning>
@@ -38,7 +40,7 @@ export default function Chip({ chip, metaText, onClick, mode = 'action', label, 
     );
   }
 
-  // Condition / flow — branch icon + uppercase label.
+  // Condition / flow - branch icon + uppercase label.
   if (mode === 'condition') {
     return (
       <span className={styles.chip} contentEditable={false} suppressContentEditableWarning>
@@ -54,7 +56,7 @@ export default function Chip({ chip, metaText, onClick, mode = 'action', label, 
   if (!action) return null;
 
   const draft = chip.status === 'draft';
-  const cls = [styles.chip, draft ? styles.isDraft : ''].filter(Boolean).join(' ');
+  const cls = [styles.chip, draft ? styles.isDraft : '', plain ? styles.plain : ''].filter(Boolean).join(' ');
   const handleClick = onClick ? () => onClick(chip.id) : undefined;
 
   const ConnectorIcon = action.connectorSlug ? CONNECTOR_ICON[action.connectorSlug] : null;

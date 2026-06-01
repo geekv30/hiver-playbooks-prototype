@@ -3,7 +3,7 @@ import { findAction } from '@/data/library';
 
 // ---------------------------------------------------------------------------
 // flow-01 editor document model.
-// A line (the trigger, or a step body) is a Fragment[] — the structured-token
+// A line (the trigger, or a step body) is a Fragment[] - the structured-token
 // model: text fragments interleaved with atomic chip/ref tokens.
 // ---------------------------------------------------------------------------
 
@@ -33,6 +33,74 @@ export function emptyDoc(): EditorDoc {
     title: 'Untitled Playbook',
     trigger: [txt('')],
     steps: [{ id: 'step-seed-1', body: [txt('')] }],
+  };
+}
+
+// Deterministic example chip (fixed id -> SSR-safe, no counter).
+function exChip(id: string, actionId: string, meta?: string): Fragment {
+  return { kind: 'chip', chip: { id, actionId, status: 'ok', config: meta ? { meta } : {} } };
+}
+
+// A complete, named, ready-to-simulate example playbook (the API-error triage
+// case that the Simulate scenarios are built around). Seeds /canvas so a
+// stakeholder lands on a real playbook to fiddle with - not a blank editor.
+// Fixed ids keep it hydration-stable. Conditions stay inline (the editor does
+// not nest IF/ELSE yet); the matched-branch detail lives in the simulate trace.
+export function exampleDoc(): EditorDoc {
+  return {
+    title: 'API error triage',
+    trigger: normalizeLine([
+      txt('When an email arrives at '),
+      makeRef('engg.hiver@grexit.com'),
+      txt(' reporting an error or API status issue.'),
+    ]),
+    steps: [
+      {
+        id: 'ex-s1',
+        body: normalizeLine([
+          exChip('ex-c1', 'ai_extract', 'summary'),
+          txt(' the error and pull the code, HTTP status, endpoint, timestamps, and SDK version.'),
+        ]),
+      },
+      {
+        id: 'ex-s2',
+        body: normalizeLine([txt('Tag the ticket '), exChip('ex-c2', 'tag', 'api-error, support'), txt('.')]),
+      },
+      {
+        id: 'ex-s3',
+        body: normalizeLine([
+          txt('Look up the customer with '),
+          exChip('ex-c3', 'hubspot_get_contact', 'contact, company'),
+          txt('.'),
+        ]),
+      },
+      {
+        id: 'ex-s4',
+        body: normalizeLine([
+          txt('Search the developer KB '),
+          exChip('ex-c4', 'kb_search', 'Engg-docs'),
+          txt(' for the error code and a known fix.'),
+        ]),
+      },
+      {
+        id: 'ex-s5',
+        body: normalizeLine([
+          txt('Categorise the error with a '),
+          exChip('ex-c5', 'condition', '4xx / 5xx / config'),
+          txt('.'),
+        ]),
+      },
+      {
+        id: 'ex-s6',
+        body: normalizeLine([
+          exChip('ex-c6', 'draft_reply', 'with the fix'),
+          txt(' for the agent to review and send.'),
+        ]),
+      },
+      // Trailing empty step: the always-present "add the next step" line (carries
+      // the + affordance and the placeholder).
+      { id: 'ex-s7', body: [txt('')] },
+    ],
   };
 }
 
@@ -97,3 +165,8 @@ export function normalizeLine(frags: Fragment[]): Fragment[] {
   if (head && head.kind !== 'text') out.unshift(txt(''));
   return out;
 }
+
+// Built AFTER the fragment helpers above are initialized (the helpers are
+// `const`s, so referencing them earlier hits a temporal-dead-zone error).
+// Computed once at module load: deterministic + hydration-stable.
+export const EXAMPLE_DOC: EditorDoc = exampleDoc();

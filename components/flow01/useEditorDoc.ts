@@ -67,6 +67,17 @@ function reducer(state: HistoryState, action: Action): HistoryState {
   }
 }
 
+// Keep a trailing empty step so there is ALWAYS an "add the next step" line at
+// the bottom (carrying the + affordance and the placeholder). When the last step
+// gains content, a fresh empty one is appended below it.
+function withTrailingEmpty(doc: EditorDoc): EditorDoc {
+  const last = doc.steps[doc.steps.length - 1];
+  if (last && lineHasContent(last.body)) {
+    return { ...doc, steps: [...doc.steps, { id: newId('step'), body: [txt('')] }] };
+  }
+  return doc;
+}
+
 function replaceLine(doc: EditorDoc, target: LineTarget, frags: Fragment[]): EditorDoc {
   const body = normalizeLine(frags);
   if (target.kind === 'trigger') return { ...doc, trigger: body };

@@ -1,0 +1,124 @@
+/* SimulatePanel - the right-hand simulate surface (M1: shell + canvas-shift).
+   Geometry matches Figma frame 211:18582 (panel 464px) and 211:18583 (tabs). */
+
+/* The reveal animates WIDTH (the editor flex-sibling gives space) while the
+   inner content holds a fixed width and is clipped, so nothing reflows during
+   the slide. transform/opacity-only is preferred, but a true "make space" needs
+   the width; the fixed-width inner keeps it jank-free. */
+.panel {
+  --sim-w: 464px; /* Figma panel frame 211:18582 = 464px wide */
+  flex: none;
+  width: 0;
+  overflow: hidden;
+  background: var(--card);
+  border-left: 1px solid var(--hairline-soft);
+  /* Top separation is handled by the toolbar's bottom border (full width). */
+  transition: width 240ms var(--ease-snap);
+  will-change: width;
+}
+.panel[data-open] {
+  width: var(--sim-w);
+}
+
+.inner {
+  /* Fixed width so tabs/content don't reflow as the panel width animates. */
+  width: var(--sim-w);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tabs - Scenarios | Custom test (Figma 211:18583: 48px row, px-18, gap-16,
+   each TabItem px-24, active = #196FE0 Medium + a full-width 2px underline). */
+.tabs {
+  flex: none;
+  display: flex;
+  gap: 16px;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--hairline);
+}
+.tab {
+  flex: 1;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  appearance: none;
+  background: none;
+  border: none;
+  margin: 0;
+  padding: 0 24px;
+  font-family: var(--font);
+  font-size: var(--fs-body);
+  font-weight: 400; /* inactive = Regular */
+  letter-spacing: var(--ls-body);
+  color: var(--muted); /* Gray 3 #6F7C90 */
+  white-space: nowrap;
+  cursor: pointer;
+  position: relative;
+  transition: color var(--d-hover) var(--ease-snap);
+}
+.tab:hover {
+  color: var(--ink-soft);
+}
+.tab:focus-visible {
+  outline: 2px solid var(--hairline-strong);
+  outline-offset: -4px;
+  border-radius: var(--r-sm);
+}
+.tab[data-active] {
+  color: var(--accent); /* Figma "Blue/Primary Blue" #196FE0 */
+  font-weight: 500; /* active = Medium */
+}
+.tab[data-active]::after {
+  content: '';
+  position: absolute;
+  left: 0; /* underline spans the full tab item (Figma border-b-2 on TabItem) */
+  right: 0;
+  bottom: -1px; /* sit on the tabs' bottom hairline */
+  height: 2px;
+  background: var(--accent);
+}
+
+/* Body - 20px gap below the tabs, 18px side padding (cards are 428px). */
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 18px;
+}
+
+/* Custom test tab - a clear "coming soon" empty state (not a blank panel). */
+.custom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 64px 24px 24px;
+  text-align: center;
+}
+.customIcon {
+  width: 28px;
+  height: 28px;
+  margin-bottom: 4px;
+  color: var(--muted-soft);
+}
+.customTitle {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.customBody {
+  margin: 0;
+  max-width: 260px;
+  font-size: var(--fs-small);
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    transition: none;
+  }
+}
