@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type KeyboardEvent as ReactKeyboardEvent, type FormEvent } from 'react';
+import { useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { RiAtLine } from 'react-icons/ri';
 import Chip from '@/components/atoms/Chip';
 import type { Branch, BranchType } from '../doc';
@@ -18,121 +18,123 @@ interface Props {
   branches: Branch[];
   /** Pick a type from the ELSE-IF / ELSE prompt -> append that arm. */
   onAddBranch?: (type: 'elseif' | 'else') => void;
+  /** Re-pick a decided arm's type (else-if <-> else). */
+  onChangeBranchType?: (branchId: string, type: 'elseif' | 'else') => void;
   /** Live condition text for an arm (if / else-if). */
   onEditCondition?: (branchId: string, text: string) => void;
-  /** Remove an arm (else-if / else). */
+  /** Remove an arm (else-if). */
   onDeleteBranch?: (branchId: string) => void;
 }
 
 /**
- * ConditionBlock - the IF / ELSE-IF / ELSE authoring block (Figma 334:35590).
- * Each arm: the condition tag (shared Chip, condition mode) + a resizable NL
- * condition field (omitted for ELSE) + a body line. A subtle, clickable
- * "ELSE-IF / ELSE" prompt trails the arms and opens the two-option picker;
- * picking ELSE terminates the chain (no prompt after).
+ * ConditionBlock - the IF / ELSE-IF / ELSE authoring block (Figma 334:35590 /
+ * 334:36607). IF and ELSE-IF: tag + resizable condition field, body on a
+ * numbered line below. ELSE: tag + body INLINE (no condition field, no number).
+ * Every ELSE-IF / ELSE tag (decided or the trailing prompt) opens the two-option
+ * picker; ELSE terminates the chain.
  */
-export default function ConditionBlock({ branches, onAddBranch, onEditCondition, onDeleteBranch }: Props) {
-  const [pickerOpen, setPickerOpen] = useState(false);
+export default function ConditionBlock({
+  branches,
+  onAddBranch,
+  onChangeBranchType,
+  onEditCondition,
+  onDeleteBranch,
+}: Props) {
+  // Which tag's picker is open: a branch id, the literal 'prompt', or null.
+  const [pickerFor, setPickerFor] = useState<string | null>(null);
   const hasElse = branches.some((b) => b.type === 'else');
+
+  const pick = (type: 'elseif' | 'else') => {
+    if (pickerFor === 'prompt') onAddBranch?.(type);
+    else if (pickerFor) onChangeBranchType?.(pickerFor, type);
+    setPickerFor(null);
+  };
+
+  const bodyContent = () => (
+    <span className={styles.bodyText}>
+      Write in natural language what this procedure should do or use
+      <span className={styles.atChip} aria-hidden>
+        <RiAtLine />
+      </span>
+      for an action
+    </span>
+  );
+
+  const picker = (key: string) =>
+    pickerFor === key ? (
+      <div className={styles.pickerAnchor}>
+        <BranchTypePicker onPick={pick} onClose={() => setPickerFor(null)} />
+      </div>
+    ) : null;
 
   return (
     <div className={styles.block}>
-      {branches.map((b) => (
-        <Arm
-          key={b.id}
-          branch={b}
-          deletable={b.type !== 'if'}
-          onEdit={(text) => onEditCondition?.(b.id, text)}
-          onDelete={() => onDeleteBranch?.(b.id)}
-        />
-      ))}
+      {branches.map((b) => {
+        const isElse = b.type === 'else';
+        const isIf = b.type === 'if';
+        return (
+          <div key={b.id} className={`${styles.arm} ${styles.relative}`}>
+            {isElse ? (
+              // ELSE: tag + inline body, no condition field, no number.
+              <div className={styles.elseRow}>
+                <Chip mode="condition" label="ELSE" onConditionClick={() => setPickerFor(b.id)} />
+                {bodyContent()}
+              </div>
+            ) : (
+              <>
+                <div className={styles.head}>
+                  <Chip
+                    mode="condition"
+                    label={TYPE_LABEL[b.type]}
+                    onConditionClick={isIf ? undefined : () => setPickerFor(b.id)}
+                  />
+                  <div
+                    className={styles.condField}
+                    contentEditable
+                    suppressContentEditableWarning
+                    role="textbox"
+                    aria-label={`${TYPE_LABEL[b.type]} condition`}
+                    data-placeholder="condition"
+                    onInput={(e: FormEvent<HTMLDivElement>) =>
+                      onEditCondition?.(b.id, e.currentTarget.textContent ?? '')
+                    }
+                    onKeyDown={(e: ReactKeyboardEvent<HTMLDivElement>) => {
+                      if (!isIf && e.key === 'Backspace' && (e.currentTarget.textContent ?? '') === '') {
+                        e.preventDefault();
+                        onDeleteBranch?.(b.id);
+                      }
+                    }}
+                  />
+                </div>
+                <div className={styles.bodyLine}>
+                  <span className={styles.bodyNum}>1</span>
+                  {bodyContent()}
+                </div>
+              </>
+            )}
+            {picker(b.id)}
+          </div>
+        );
+      })}
 
       {!hasElse && (
-        <div className={`${styles.arm} ${styles.promptArm}`}>
+        <div className={`${styles.arm} ${styles.relative}`}>
           <div className={styles.head}>
             <Chip
               mode="condition"
               label="ELSE-IF / ELSE"
               subtle
-              onConditionClick={() => setPickerOpen(true)}
+              onConditionClick={() => setPickerFor('prompt')}
             />
             <div className={styles.condField} data-placeholder="condition" aria-hidden />
           </div>
-          <BodyLine />
-          {pickerOpen && (
-            <div className={styles.pickerAnchor}>
-              <BranchTypePicker
-                onPick={(type) => {
-                  setPickerOpen(false);
-                  onAddBranch?.(type);
-                }}
-                onClose={() => setPickerOpen(false)}
-              />
-            </div>
-          )}
+          <div className={styles.bodyLine}>
+            <span className={styles.bodyNum}>1</span>
+            {bodyContent()}
+          </div>
+          {picker('prompt')}
         </div>
       )}
-    </div>
-  );
-}
-
-function Arm({
-  branch,
-  deletable,
-  onEdit,
-  onDelete,
-}: {
-  branch: Branch;
-  deletable: boolean;
-  onEdit: (text: string) => void;
-  onDelete: () => void;
-}) {
-  const isElse = branch.type === 'else';
-
-  const handleInput = (e: FormEvent<HTMLDivElement>) => onEdit(e.currentTarget.textContent ?? '');
-  const handleKey = (e: ReactKeyboardEvent<HTMLDivElement>) => {
-    // Backspace on an empty condition removes the arm (else-if). The IF arm is
-    // the anchor and is not deletable here (removing the whole block lives at
-    // the step level).
-    if (deletable && e.key === 'Backspace' && (e.currentTarget.textContent ?? '') === '') {
-      e.preventDefault();
-      onDelete();
-    }
-  };
-
-  return (
-    <div className={styles.arm}>
-      <div className={styles.head}>
-        <Chip mode="condition" label={TYPE_LABEL[branch.type]} />
-        {!isElse && (
-          <div
-            className={styles.condField}
-            contentEditable
-            suppressContentEditableWarning
-            role="textbox"
-            aria-label={`${TYPE_LABEL[branch.type]} condition`}
-            data-placeholder="condition"
-            onInput={handleInput}
-            onKeyDown={handleKey}
-          />
-        )}
-      </div>
-      <BodyLine />
-    </div>
-  );
-}
-
-function BodyLine() {
-  return (
-    <div className={styles.bodyLine}>
-      <span className={styles.bodyNum}>1</span>
-      <span className={styles.bodyText}>
-        Write in natural language what this procedure should do or use
-        <span className={styles.atChip} aria-hidden>
-          <RiAtLine />
-        </span>
-        for an action
-      </span>
     </div>
   );
 }

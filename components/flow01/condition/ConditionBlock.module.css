@@ -13,8 +13,8 @@
   flex-direction: column;
 }
 
-/* the trailing ELSE-IF / ELSE prompt anchors its two-option picker below the tag */
-.promptArm {
+/* arms that can open the picker anchor it below their tag */
+.relative {
   position: relative;
 }
 .pickerAnchor {
@@ -22,6 +22,19 @@
   left: 10px;
   top: 40px;
   z-index: 30;
+}
+
+/* ELSE arm: tag + inline body on one row (no condition field, no number),
+   per Figma 334:36607. The body fills the space where if/else-if put the
+   condition field. */
+.elseRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+}
+.elseRow .bodyText {
+  flex: 1 0 0;
 }
 
 /* tag + condition field row (Figma: gap 10, px 10 / py 8) */

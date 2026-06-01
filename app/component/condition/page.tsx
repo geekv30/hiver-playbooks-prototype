@@ -18,6 +18,21 @@ export default function ConditionComponentPage() {
 
   const deleteBranch = (id: string) => setBranches((bs) => bs.filter((b) => b.id !== id));
 
+  // Re-pick a decided arm's type. ELSE must be last, so converting an arm to
+  // ELSE drops any arms after it; converting back to ELSE-IF restores a
+  // condition and the trailing prompt re-appears.
+  const changeBranchType = (id: string, type: 'elseif' | 'else') =>
+    setBranches((bs) => {
+      const idx = bs.findIndex((b) => b.id === id);
+      if (idx < 0) return bs;
+      const next = bs.map((b, i) =>
+        i === idx
+          ? { ...b, type, condition: type === 'else' ? undefined : b.condition ?? [] }
+          : b,
+      );
+      return type === 'else' ? next.slice(0, idx + 1) : next;
+    });
+
   return (
     <div style={{ padding: 40, maxWidth: 820, display: 'flex', flexDirection: 'column', gap: 16 }}>
       <h1 style={{ fontSize: 15, fontWeight: 600, color: '#343C45', letterSpacing: '-0.01em' }}>
@@ -32,6 +47,7 @@ export default function ConditionComponentPage() {
         <ConditionBlock
           branches={branches}
           onAddBranch={addBranch}
+          onChangeBranchType={changeBranchType}
           onEditCondition={() => {}}
           onDeleteBranch={deleteBranch}
         />
