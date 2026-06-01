@@ -57,7 +57,15 @@ export default function Chip({ chip, metaText, onClick, mode = 'action', label, 
       </>
     );
     return onConditionClick ? (
-      <button type="button" className={condCls} onClick={onConditionClick}>{inner}</button>
+      <button
+        type="button"
+        className={condCls}
+        onClick={onConditionClick}
+        aria-haspopup="listbox"
+        aria-label={`${label ?? 'Branch'} - choose branch type`}
+      >
+        {inner}
+      </button>
     ) : (
       <span className={condCls} contentEditable={false} suppressContentEditableWarning>{inner}</span>
     );

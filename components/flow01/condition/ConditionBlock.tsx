@@ -6,7 +6,6 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
 } from 'react';
-import { RiAtLine } from 'react-icons/ri';
 import Chip from '@/components/atoms/Chip';
 import type { Branch, BranchType } from '../doc';
 import BranchTypePicker from './BranchTypePicker';
@@ -61,22 +60,23 @@ export default function ConditionBlock({
     setPickerFor(null);
   };
 
+  // Static fallback body copy (the editor injects real EditorLines via renderBody;
+  // this is only the isolation-page showcase). Matches the editor's step placeholder.
   const bodyContent = () => (
-    <span className={styles.bodyText}>
-      Write in natural language what this procedure should do or use
-      <span className={styles.atChip} aria-hidden>
-        <RiAtLine />
-      </span>
-      for an action
-    </span>
+    <span className={styles.bodyText}>Write in natural language, or / for actions and @ to reference</span>
   );
 
-  const picker = (key: string) =>
-    pickerFor === key ? (
+  const picker = (key: string) => {
+    if (pickerFor !== key) return null;
+    // ELSE is only offered when it can't drop trailing arms: the new-branch
+    // prompt, or a re-pick on the last decided arm.
+    const allowElse = key === 'prompt' || branches[branches.length - 1]?.id === key;
+    return (
       <div className={styles.pickerAnchor}>
-        <BranchTypePicker onPick={pick} onClose={() => setPickerFor(null)} />
+        <BranchTypePicker allowElse={allowElse} onPick={pick} onClose={() => setPickerFor(null)} />
       </div>
-    ) : null;
+    );
+  };
 
   return (
     <div className={styles.block}>
@@ -88,11 +88,14 @@ export default function ConditionBlock({
             {/* Every arm is a tag row + a numbered body line below. ELSE is the
                 same construction minus the condition field (Figma 334:36705). */}
             <div className={styles.head}>
-              <Chip
-                mode="condition"
-                label={TYPE_LABEL[b.type]}
-                onConditionClick={isIf ? undefined : () => setPickerFor(b.id)}
-              />
+              <span className={styles.tagWrap}>
+                <Chip
+                  mode="condition"
+                  label={TYPE_LABEL[b.type]}
+                  onConditionClick={isIf ? undefined : () => setPickerFor(b.id)}
+                />
+                {picker(b.id)}
+              </span>
               {!isElse &&
                 (renderExpr ? (
                   <div className={styles.condField}>{renderExpr(b)}</div>
@@ -120,27 +123,26 @@ export default function ConditionBlock({
               <span className={styles.bodyNum}>1</span>
               {renderBody ? renderBody(b) : bodyContent()}
             </div>
-            {picker(b.id)}
           </div>
         );
       })}
 
       {!hasElse && (
+        // The undecided prompt is a pure affordance: just the subtle tag that
+        // opens the picker. No fake condition field / numbered body (those appear
+        // only once a real arm is added) - integrity by construction.
         <div className={`${styles.arm} ${styles.relative}`}>
           <div className={styles.head}>
-            <Chip
-              mode="condition"
-              label="ELSE-IF / ELSE"
-              subtle
-              onConditionClick={() => setPickerFor('prompt')}
-            />
-            <div className={styles.condField} data-placeholder="condition" aria-hidden />
+            <span className={styles.tagWrap}>
+              <Chip
+                mode="condition"
+                label="ELSE-IF / ELSE"
+                subtle
+                onConditionClick={() => setPickerFor('prompt')}
+              />
+              {picker('prompt')}
+            </span>
           </div>
-          <div className={styles.bodyLine}>
-            <span className={styles.bodyNum}>1</span>
-            {bodyContent()}
-          </div>
-          {picker('prompt')}
         </div>
       )}
     </div>

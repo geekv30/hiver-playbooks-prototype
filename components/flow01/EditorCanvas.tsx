@@ -267,8 +267,20 @@ export default function EditorCanvas({ initialDoc }: Props) {
                                 true,
                               );
                             }}
-                            onChangeBranchType={(branchId, type) => api.changeBranchType(step.id, branchId, type)}
-                            onDeleteBranch={(branchId) => api.deleteBranch(step.id, branchId)}
+                            onChangeBranchType={(branchId, type) => {
+                              api.changeBranchType(step.id, branchId, type);
+                              // keep the caret on the arm just re-decided (its expr, or body for else)
+                              requestFocus(
+                                lineKey({ kind: 'cond', condId: step.id, branchId, part: type === 'else' ? 'body' : 'expr' }),
+                                false,
+                              );
+                            }}
+                            onDeleteBranch={(branchId) => {
+                              api.deleteBranch(step.id, branchId);
+                              // return the caret to the IF expression (the anchor arm)
+                              const ifId = step.branches[0]?.id;
+                              if (ifId) requestFocus(lineKey({ kind: 'cond', condId: step.id, branchId: ifId, part: 'expr' }), false);
+                            }}
                             renderExpr={(b) => {
                               const ct: LineTarget = { kind: 'cond', condId: step.id, branchId: b.id, part: 'expr' };
                               return (
@@ -278,6 +290,7 @@ export default function EditorCanvas({ initialDoc }: Props) {
                                   onChange={handleChange(ct)}
                                   onRequestPalette={openPalette(ct)}
                                   onBackspaceEmpty={b.type === 'if' ? undefined : () => api.deleteBranch(step.id, b.id)}
+                                  noActions
                                   autoFocus={focusFor(lineKey(ct))}
                                   ariaLabel={`${b.type} condition`}
                                 />
@@ -291,6 +304,8 @@ export default function EditorCanvas({ initialDoc }: Props) {
                                   placeholder={STEP_PLACEHOLDER}
                                   onChange={handleChange(bt)}
                                   onRequestPalette={openPalette(bt)}
+                                  // ELSE has no expression line, so backspace on its empty body removes the arm
+                                  onBackspaceEmpty={b.type === 'else' ? () => api.deleteBranch(step.id, b.id) : undefined}
                                   autoFocus={focusFor(lineKey(bt))}
                                   ariaLabel={`${b.type} action`}
                                 />

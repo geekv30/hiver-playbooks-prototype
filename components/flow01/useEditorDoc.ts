@@ -273,11 +273,13 @@ export function useEditorDoc(initial?: EditorDoc): EditorApi {
   const deleteBranch = useCallback(
     (condId: string, branchId: string) => {
       const doc = docRef.current;
-      const steps = doc.steps.map((s) =>
-        s.id === condId && isCondition(s) && s.branches.length > 1
-          ? { ...s, branches: s.branches.filter((b) => b.id !== branchId) }
-          : s,
-      );
+      const steps = doc.steps.map((s) => {
+        if (s.id !== condId || !isCondition(s) || s.branches.length <= 1) return s;
+        const target = s.branches.find((b) => b.id === branchId);
+        // Never strand the block without an IF - it is the anchor arm.
+        if (!target || target.type === 'if') return s;
+        return { ...s, branches: s.branches.filter((b) => b.id !== branchId) };
+      });
       commit({ ...doc, steps }, null);
     },
     [commit],

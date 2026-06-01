@@ -13,14 +13,19 @@
   flex-direction: column;
 }
 
-/* arms that can open the picker anchor it below their tag */
 .relative {
   position: relative;
 }
+/* the tag + its picker. The popover anchors to the tag itself so it tracks the
+   real row height and survives the condition field wrapping (no magic offset). */
+.tagWrap {
+  position: relative;
+  display: inline-flex;
+}
 .pickerAnchor {
   position: absolute;
-  left: 10px;
-  top: 40px;
+  top: calc(100% + 4px);
+  left: 0;
   z-index: 30;
 }
 
@@ -73,7 +78,7 @@
   flex: none;
   font-family: var(--mono);
   font-size: var(--fs-small);
-  line-height: 19px;
+  line-height: 20px; /* match the body text line-height so the digit shares its baseline */
   color: var(--hairline-strong);
 }
 .bodyText {

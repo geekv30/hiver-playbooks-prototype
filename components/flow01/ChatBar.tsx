@@ -29,14 +29,14 @@ export default function ChatBar() {
       {thinking && (
         <div className={styles.thinking}>
           <Spinner size={14} />
-          <span>thinking critically on this</span>
+          <span>Thinking…</span>
         </div>
       )}
       <div className={`${styles.shell} ${focused ? styles.focused : ''}`}>
         <div className={styles.field}>
           <input
             className={styles.input}
-            placeholder="ask a question..."
+            placeholder="Ask a question…"
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onFocus={() => setFocused(true)}
