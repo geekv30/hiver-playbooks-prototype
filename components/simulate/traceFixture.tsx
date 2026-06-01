@@ -14,7 +14,9 @@ export interface TraceStepDef {
   /** Result line shown once the step is done. */
   output?: string;
   kind?: 'action' | 'condition';
-  /** Condition: the matched branch line (matched-path-only). */
+  /** Condition: which arm fired (renders the matched IF / ELSE-IF / ELSE tag). */
+  condType?: 'if' | 'elseif' | 'else';
+  /** Condition: the matched branch line - the expression (or the no-branch note). */
   branch?: string;
 }
 
@@ -53,9 +55,9 @@ export const SIM_TRACE: TraceStepDef[] = [
     id: 's5',
     actionId: 'condition',
     kind: 'condition',
-    meta: '4xx / 5xx / config',
+    condType: 'if',
     ms: 90,
-    branch: 'matched: client error (4xx)',
+    branch: 'the error is a 4xx client error',
   },
   {
     id: 's6',
@@ -73,5 +75,5 @@ export const SIM_DRAFT =
   "I've logged it for the team in case other endpoints are affected.";
 
 // The matched branch shown on the result headline + the Condition trace step
-// (kept consistent: a 404 is a 4xx client error).
-export const SIM_BRANCH = 'client error (4xx)';
+// (kept consistent: a 404 matches the IF "the error is a 4xx client error").
+export const SIM_BRANCH = 'the error is a 4xx client error';

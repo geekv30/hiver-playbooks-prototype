@@ -15,6 +15,12 @@ interface Props {
   branchWarn?: boolean;
 }
 
+const CONDLABEL: Record<'if' | 'elseif' | 'else', string> = {
+  if: 'IF',
+  elseif: 'ELSE-IF',
+  else: 'ELSE',
+};
+
 /**
  * TraceStep - one execution step (Figma 211:20462): a status rail (dot + the
  * connector line) + the action-tag rendered by the SHARED Chip atom (so trace
@@ -36,6 +42,12 @@ export default function TraceStep({ step, status, isLast, branchWarn }: Props) {
     config: step.meta ? { meta: step.meta } : {},
   };
 
+  // A condition step renders the SAME condition-mode tag the editor uses: the
+  // matched arm (IF / ELSE-IF / ELSE), or the subtle ELSE-IF / ELSE prompt when
+  // nothing matched (the caught-gap case).
+  const isCond = step.kind === 'condition';
+  const condLabel = branchWarn ? 'ELSE-IF / ELSE' : CONDLABEL[step.condType ?? 'if'];
+
   return (
     <div className={styles.step} data-status={status}>
       <div className={styles.rail}>
@@ -44,7 +56,11 @@ export default function TraceStep({ step, status, isLast, branchWarn }: Props) {
       </div>
       <div className={styles.content}>
         <div className={styles.chipRow}>
-          <Chip chip={chipModel} metaText={step.meta} plain />
+          {isCond ? (
+            <Chip mode="condition" label={condLabel} subtle={branchWarn} plain />
+          ) : (
+            <Chip chip={chipModel} metaText={step.meta} plain />
+          )}
         </div>
         {(done || failed) && step.branch && (
           <motion.div

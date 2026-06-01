@@ -10,10 +10,20 @@ import ChatBar from './ChatBar';
 import CoachmarkTriggers from './CoachmarkTriggers';
 import EditorLine, { PaletteRequest } from './EditorLine';
 import CommandPalette from './CommandPalette';
+import ConditionBlock from './condition/ConditionBlock';
 import SimulatePanel from '@/components/simulate/SimulatePanel';
 import { REFERENCE_ID } from './paletteCatalog';
 import { useEditorDoc } from './useEditorDoc';
-import { LineTarget, makeChip, makeRef, txt, normalizeLine, lineIsEmpty, type EditorDoc } from './doc';
+import {
+  LineTarget,
+  makeChip,
+  makeRef,
+  txt,
+  normalizeLine,
+  lineIsEmpty,
+  isCondition,
+  type EditorDoc,
+} from './doc';
 import styles from './EditorCanvas.module.css';
 
 interface PaletteState {
@@ -57,7 +67,12 @@ export default function EditorCanvas({ initialDoc }: Props) {
   const tokenRef = useRef(0);
   const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const lineKey = (t: LineTarget) => (t.kind === 'trigger' ? 'trigger' : `step:${t.id}`);
+  const lineKey = (t: LineTarget) =>
+    t.kind === 'trigger'
+      ? 'trigger'
+      : t.kind === 'cond'
+        ? `cond:${t.condId}:${t.branchId}:${t.part}`
+        : `step:${t.id}`;
 
   // Ask a line to take the caret. The matching line focuses itself (mount or
   // update), so this works even for a step that was just created.
@@ -77,8 +92,18 @@ export default function EditorCanvas({ initialDoc }: Props) {
   const focusFor = (key: string): { token: number; atStart: boolean } | null =>
     focusReq && focusReq.key === key ? { token: focusReq.token, atStart: focusReq.atStart } : null;
 
-  const lineFrags = (t: LineTarget): Fragment[] =>
-    t.kind === 'trigger' ? doc.trigger : doc.steps.find((s) => s.id === t.id)?.body ?? [];
+  const lineFrags = (t: LineTarget): Fragment[] => {
+    if (t.kind === 'trigger') return doc.trigger;
+    if (t.kind === 'cond') {
+      const step = doc.steps.find((s) => s.id === t.condId);
+      if (!step || !isCondition(step)) return [];
+      const b = step.branches.find((br) => br.id === t.branchId);
+      if (!b) return [];
+      return (t.part === 'expr' ? b.condition : b.body) ?? [];
+    }
+    const step = doc.steps.find((s) => s.id === t.id);
+    return step && !isCondition(step) ? step.body : [];
+  };
 
   const handleChange = (t: LineTarget) => (frags: Fragment[]) => {
     api.setLine(t, frags, `text:${lineKey(t)}`);
@@ -91,6 +116,7 @@ export default function EditorCanvas({ initialDoc }: Props) {
       if (first) requestFocus(`step:${first.id}`, true);
       return;
     }
+    if (t.kind === 'cond') return; // lines inside a condition block don't add steps on Enter
     const newId = api.addStepAfter(t.id);
     requestFocus(`step:${newId}`, true);
   };
@@ -122,6 +148,21 @@ export default function EditorCanvas({ initialDoc }: Props) {
   const insertChip = (actionId: string, meta?: string) => {
     if (!palette) return;
     const { target, req } = palette;
+    // "Condition" is a block, not an inline chip: swap an empty line in-place,
+    // otherwise insert the block after the current step.
+    if (actionId === 'condition') {
+      setPalette(null);
+      if (target.kind === 'step') {
+        const src = doc.steps.find((s) => s.id === target.id);
+        if (src && !isCondition(src) && lineIsEmpty(src.body)) api.replaceWithCondition(target.id);
+        else api.insertConditionAfter(target.id);
+      } else if (target.kind === 'cond') {
+        api.insertConditionAfter(target.condId);
+      } else {
+        api.insertConditionAfter();
+      }
+      return;
+    }
     // 'reference' inserts an @-reference token (meta = the ref path); everything
     // else an action chip, with the picked value (if any) as the chip's meta.
     const inserted = actionId === REFERENCE_ID ? makeRef(meta ?? '') : makeChip(actionId, meta);
@@ -203,6 +244,79 @@ export default function EditorCanvas({ initialDoc }: Props) {
 
               <ol className={styles.steps}>
                 {doc.steps.map((step, i) => {
+                  // Condition block: rendered by ConditionBlock, with each branch's
+                  // expression + body line as real EditorLines wired to 'cond' targets.
+                  if (isCondition(step)) {
+                    return (
+                      <li key={step.id} className={styles.row}>
+                        <span className={styles.gutter}>
+                          <GutterMarker n={i + 1} />
+                        </span>
+                        <div className={styles.content}>
+                          <ConditionBlock
+                            branches={step.branches}
+                            onAddBranch={(type) => {
+                              const bid = api.addBranch(step.id, type);
+                              requestFocus(
+                                lineKey({
+                                  kind: 'cond',
+                                  condId: step.id,
+                                  branchId: bid,
+                                  part: type === 'else' ? 'body' : 'expr',
+                                }),
+                                true,
+                              );
+                            }}
+                            onChangeBranchType={(branchId, type) => {
+                              api.changeBranchType(step.id, branchId, type);
+                              // keep the caret on the arm just re-decided (its expr, or body for else)
+                              requestFocus(
+                                lineKey({ kind: 'cond', condId: step.id, branchId, part: type === 'else' ? 'body' : 'expr' }),
+                                false,
+                              );
+                            }}
+                            onDeleteBranch={(branchId) => {
+                              api.deleteBranch(step.id, branchId);
+                              // return the caret to the IF expression (the anchor arm)
+                              const ifId = step.branches[0]?.id;
+                              if (ifId) requestFocus(lineKey({ kind: 'cond', condId: step.id, branchId: ifId, part: 'expr' }), false);
+                            }}
+                            renderExpr={(b) => {
+                              const ct: LineTarget = { kind: 'cond', condId: step.id, branchId: b.id, part: 'expr' };
+                              return (
+                                <EditorLine
+                                  fragments={b.condition ?? []}
+                                  placeholder="condition"
+                                  onChange={handleChange(ct)}
+                                  onRequestPalette={openPalette(ct)}
+                                  onBackspaceEmpty={b.type === 'if' ? undefined : () => api.deleteBranch(step.id, b.id)}
+                                  noActions
+                                  autoFocus={focusFor(lineKey(ct))}
+                                  ariaLabel={`${b.type} condition`}
+                                />
+                              );
+                            }}
+                            renderBody={(b) => {
+                              const bt: LineTarget = { kind: 'cond', condId: step.id, branchId: b.id, part: 'body' };
+                              return (
+                                <EditorLine
+                                  fragments={b.body}
+                                  placeholder={STEP_PLACEHOLDER}
+                                  onChange={handleChange(bt)}
+                                  onRequestPalette={openPalette(bt)}
+                                  // ELSE has no expression line, so backspace on its empty body removes the arm
+                                  onBackspaceEmpty={b.type === 'else' ? () => api.deleteBranch(step.id, b.id) : undefined}
+                                  autoFocus={focusFor(lineKey(bt))}
+                                  ariaLabel={`${b.type} action`}
+                                />
+                              );
+                            }}
+                          />
+                        </div>
+                      </li>
+                    );
+                  }
+
                   const t: LineTarget = { kind: 'step', id: step.id };
                   return (
                     <li key={step.id} className={styles.row} data-empty={lineIsEmpty(step.body) || undefined}>

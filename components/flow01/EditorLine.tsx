@@ -45,6 +45,9 @@ interface Props {
   onBackspaceEmpty?: () => void;
   /** '@' typed — open the action palette anchored at the caret. */
   onRequestPalette?: (req: PaletteRequest) => void;
+  /** When true, '/' is typed literally (no Actions palette) - e.g. a condition
+   *  expression is an NL predicate, not a place to invoke actions. '@' still works. */
+  noActions?: boolean;
   /** When set (and token changes), the line focuses itself. */
   autoFocus?: { token: number; atStart: boolean } | null;
   ariaLabel?: string;
@@ -106,6 +109,7 @@ export default function EditorLine({
   onEnter,
   onBackspaceEmpty,
   onRequestPalette,
+  noActions,
   autoFocus,
   ariaLabel,
 }: Props) {
@@ -190,6 +194,8 @@ export default function EditorLine({
       // (line-start or after whitespace), so literal "and/or", URLs, emails and
       // dates stay literal text.
       if (e.key === '/' || e.key === '@') {
+        // Condition expressions take '/' literally (no Actions palette).
+        if (e.key === '/' && noActions) return;
         // Work in model space: ignore any leading zero-width placeholder.
         const raw = targetSpan.textContent ?? '';
         const offset = Math.max(0, caretOffsetIn(targetSpan) - leadingZws(raw));
@@ -238,7 +244,7 @@ export default function EditorLine({
         }
       }
     },
-    [fragments, isEmpty, onChange, onEnter, onBackspaceEmpty, onRequestPalette, readDom],
+    [fragments, isEmpty, onChange, onEnter, onBackspaceEmpty, onRequestPalette, noActions, readDom],
   );
 
   return (

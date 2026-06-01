@@ -10,21 +10,22 @@
   padding: 3px 6px 3px 6px;
   border-radius: var(--r-sm);
   background: var(--info-subtle);
-  /* Figma 241:16557 - asymmetric stroke (1px top/left, 1.6px right/bottom) gives
-     the tag its subtle lift. Two gotchas, both load-bearing:
-     1. The `border: …` shorthand with a var() colour mis-compiles under Turbopack
+  /* Figma 241:16557 - asymmetric stroke (lighter top/left, heavier right/bottom)
+     gives the tag its subtle lift. Two gotchas, both load-bearing:
+     1. The `border:` shorthand with a var() colour mis-compiles under Turbopack
         into EMPTY longhands, so author every side as an explicit longhand.
-     2. The app runs at `zoom: 0.9`, which shrinks a literal 1.6px stroke to
-        1.44px - that lands on the device-pixel boundary and intermittently snaps
-        flat (the "sometimes asymmetric, sometimes flat" flicker). Divide each
-        width by the zoom so the stroke renders at its true Figma size on a stable
-        pixel, instead of a sub-pixel value that rounds unpredictably. */
+     2. The app runs at `zoom: 0.9`. A literal 1.6px stroke renders at a sub-pixel
+        device width that straddles the pixel grid and snapped flat intermittently
+        (the "sometimes asymmetric, sometimes flat" flicker). So `calc(.. / scale)`
+        renders the chosen size exactly, and the heavy side is 2px (not Figma's
+        1.6) so it lands on a WHOLE device pixel at any DPR (2 device px @1x,
+        4 @2x) - it can no longer snap flat. Top/left stay 1px (also whole). */
   border-style: solid;
   border-color: var(--hairline);
   border-top-width: calc(1px / var(--app-scale));
   border-left-width: calc(1px / var(--app-scale));
-  border-right-width: calc(1.6px / var(--app-scale));
-  border-bottom-width: calc(1.6px / var(--app-scale));
+  border-right-width: calc(2px / var(--app-scale));
+  border-bottom-width: calc(2px / var(--app-scale));
   font-size: var(--fs-small);
   font-family: var(--font);
   line-height: var(--lh-small);
@@ -50,6 +51,22 @@
   border-width: 0;
   border-color: transparent;
   cursor: default;
+}
+
+/* Condition mode: the not-yet-decided ELSE-IF / ELSE prompt uses a muted label
+   (Figma #97A3B7 vs IF's #343C45). Same tag chrome otherwise. */
+.verbSubtle {
+  color: var(--hairline-strong);
+}
+
+/* Condition tag rendered as a <button> (the ELSE-IF / ELSE prompt opens a
+   picker). Strip the UA chrome the .chip class does not already cover. */
+.condButton {
+  margin: 0;
+  text-align: left;
+  font: inherit;
+  font-size: var(--fs-small);
+  line-height: var(--lh-small);
 }
 
 .chipIco {

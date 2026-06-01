@@ -15,10 +15,42 @@ export interface DocStep {
 export interface EditorDoc {
   title: string;
   trigger: Fragment[];
-  steps: DocStep[];
+  steps: Step[];
 }
 
-export type LineTarget = { kind: 'trigger' } | { kind: 'step'; id: string };
+// --- Condition block (IF / ELSE-IF / ELSE) ---------------------------------
+// Replaces the old flat condition chip. One nesting level: a branch body holds
+// normal steps, never another condition. (Wired into EditorDoc.steps in the
+// reducer step; the types live here so components can build against them.)
+export type BranchType = 'if' | 'elseif' | 'else';
+
+// One arm of a condition. `condition` is the NL expression for if / else-if;
+// `else` has none. `body` is the arm's single action line (one line per arm).
+export interface Branch {
+  id: string;
+  type: BranchType;
+  condition?: Fragment[];
+  body: Fragment[];
+}
+
+// A condition step: ordered IF -> ELSE-IF* -> (optional) ELSE arms.
+export interface ConditionStep {
+  id: string;
+  kind: 'condition';
+  branches: Branch[];
+}
+
+// A step in the document is either a normal line or a condition block.
+export type Step = DocStep | ConditionStep;
+export function isCondition(s: Step): s is ConditionStep {
+  return (s as ConditionStep).kind === 'condition';
+}
+
+export type LineTarget =
+  | { kind: 'trigger' }
+  | { kind: 'step'; id: string }
+  // a line inside a condition block: the branch's NL expression, or its body line
+  | { kind: 'cond'; condId: string; branchId: string; part: 'expr' | 'body' };
 
 // Deterministic ids: fixed seed ids for SSR stability, a client-only counter
 // for everything created through interaction (so server/client markup match).
@@ -84,18 +116,32 @@ export function exampleDoc(): EditorDoc {
       },
       {
         id: 'ex-s5',
-        body: normalizeLine([
-          txt('Categorise the error with a '),
-          exChip('ex-c5', 'condition', '4xx / 5xx / config'),
-          txt('.'),
-        ]),
+        body: normalizeLine([txt('Then categorise the error and draft the right reply:')]),
       },
+      // The condition block replaces the old flat "Condition" chip + draft step:
+      // each arm drafts the reply that fits the error class.
       {
-        id: 'ex-s6',
-        body: normalizeLine([
-          exChip('ex-c6', 'draft_reply', 'with the fix'),
-          txt(' for the agent to review and send.'),
-        ]),
+        id: 'ex-cond',
+        kind: 'condition',
+        branches: [
+          {
+            id: 'ex-b1',
+            type: 'if',
+            condition: normalizeLine([txt('the error is a 4xx client error')]),
+            body: normalizeLine([exChip('ex-bc1', 'draft_reply', 'with the fix'), txt(' and send for review.')]),
+          },
+          {
+            id: 'ex-b2',
+            type: 'elseif',
+            condition: normalizeLine([txt('the error is a 5xx server error')]),
+            body: normalizeLine([exChip('ex-bc2', 'draft_reply', 'with a status update'), txt('.')]),
+          },
+          {
+            id: 'ex-b3',
+            type: 'else',
+            body: normalizeLine([exChip('ex-bc3', 'draft_reply', 'with a warm note'), txt(' that we are looking into it.')]),
+          },
+        ],
       },
       // Trailing empty step: the always-present "add the next step" line (carries
       // the + affordance and the placeholder).
@@ -121,6 +167,28 @@ export function makeChip(actionId: string, meta?: string): Fragment {
 }
 
 export const makeRef = (refPath: string): Fragment => ({ kind: 'ref', refPath });
+
+// --- Condition helpers -----------------------------------------------------
+
+export function newBranch(type: BranchType): Branch {
+  return {
+    id: newId('branch'),
+    type,
+    condition: type === 'else' ? undefined : [txt('')],
+    body: [txt('')],
+  };
+}
+
+// A fresh condition block: a single IF arm (empty expression + empty body).
+export function makeCondition(): ConditionStep {
+  return { id: newId('cond'), kind: 'condition', branches: [newBranch('if')] };
+}
+
+// Whether a step "has content": a condition block always does; a normal step
+// does when its line is non-empty.
+export function stepHasContent(step: Step): boolean {
+  return isCondition(step) ? true : lineHasContent(step.body);
+}
 
 // A line counts as "empty" when it has no chips/refs and only blank text.
 export function lineIsEmpty(frags: Fragment[]): boolean {
