@@ -5,12 +5,17 @@ import type { Fragment } from '@/types/playbook';
 import {
   EditorDoc,
   DocStep,
+  BranchType,
   LineTarget,
   emptyDoc,
   newId,
   normalizeLine,
   lineHasContent,
   lineIsEmpty,
+  isCondition,
+  makeCondition,
+  newBranch,
+  stepHasContent,
   txt,
 } from './doc';
 
@@ -72,7 +77,7 @@ function reducer(state: HistoryState, action: Action): HistoryState {
 // gains content, a fresh empty one is appended below it.
 function withTrailingEmpty(doc: EditorDoc): EditorDoc {
   const last = doc.steps[doc.steps.length - 1];
-  if (last && lineHasContent(last.body)) {
+  if (last && stepHasContent(last)) {
     return { ...doc, steps: [...doc.steps, { id: newId('step'), body: [txt('')] }] };
   }
   return doc;
@@ -81,16 +86,43 @@ function withTrailingEmpty(doc: EditorDoc): EditorDoc {
 function replaceLine(doc: EditorDoc, target: LineTarget, frags: Fragment[]): EditorDoc {
   const body = normalizeLine(frags);
   if (target.kind === 'trigger') return { ...doc, trigger: body };
+  // A line inside a condition block: the branch's expression or its body line.
+  if (target.kind === 'cond') {
+    return {
+      ...doc,
+      steps: doc.steps.map((s) => {
+        if (s.id !== target.condId || !isCondition(s)) return s;
+        return {
+          ...s,
+          branches: s.branches.map((b) =>
+            b.id !== target.branchId
+              ? b
+              : target.part === 'expr'
+                ? { ...b, condition: body }
+                : { ...b, body },
+          ),
+        };
+      }),
+    };
+  }
+  // A normal top-level step line.
   return {
     ...doc,
-    steps: doc.steps.map((s) => (s.id === target.id ? { ...s, body } : s)),
+    steps: doc.steps.map((s) => (s.id === target.id && !isCondition(s) ? { ...s, body } : s)),
   };
 }
 
 function getLine(doc: EditorDoc, target: LineTarget): Fragment[] {
-  return target.kind === 'trigger'
-    ? doc.trigger
-    : doc.steps.find((s) => s.id === target.id)?.body ?? [];
+  if (target.kind === 'trigger') return doc.trigger;
+  if (target.kind === 'cond') {
+    const step = doc.steps.find((s) => s.id === target.condId);
+    if (!step || !isCondition(step)) return [];
+    const branch = step.branches.find((b) => b.id === target.branchId);
+    if (!branch) return [];
+    return (target.part === 'expr' ? branch.condition : branch.body) ?? [];
+  }
+  const step = doc.steps.find((s) => s.id === target.id);
+  return step && !isCondition(step) ? step.body : [];
 }
 
 export interface EditorApi {
@@ -105,6 +137,16 @@ export interface EditorApi {
   addStepAfter: (afterId?: string) => string;
   /** Delete a step by id. Returns the id of the step to focus next (prev/next), or null. */
   deleteStep: (id: string) => string | null;
+  /** Insert a fresh condition block after a step (or at end). Returns the condition id. */
+  insertConditionAfter: (afterId?: string) => string;
+  /** Swap an empty step in-place for a fresh condition block. Returns the condition id. */
+  replaceWithCondition: (stepId: string) => string;
+  /** Append an ELSE-IF / ELSE arm to a condition. Returns the new branch id. */
+  addBranch: (condId: string, type: BranchType) => string;
+  /** Re-pick a decided arm's type (else-if <-> else; else terminates the chain). */
+  changeBranchType: (condId: string, branchId: string, type: BranchType) => void;
+  /** Remove an arm (never the last/only one). */
+  deleteBranch: (condId: string, branchId: string) => void;
   undo: () => void;
   redo: () => void;
 }
@@ -112,7 +154,7 @@ export interface EditorApi {
 export function useEditorDoc(initial?: EditorDoc): EditorApi {
   const [state, dispatch] = useReducer(reducer, undefined, () => ({
     past: [],
-    present: initial ?? emptyDoc(),
+    present: withTrailingEmpty(initial ?? emptyDoc()),
     future: [],
     lastKey: null,
   }));
@@ -120,8 +162,11 @@ export function useEditorDoc(initial?: EditorDoc): EditorApi {
   const docRef = useRef(state.present);
   docRef.current = state.present;
 
+  // Every commit guarantees a trailing empty step (the always-present "add the
+  // next step" line), so structural edits like inserting a condition block keep
+  // a line to type into below them.
   const commit = useCallback((next: EditorDoc, key: string | null) => {
-    dispatch({ type: 'commit', next, key });
+    dispatch({ type: 'commit', next: withTrailingEmpty(next), key });
   }, []);
 
   const setLine = useCallback(
@@ -166,12 +211,84 @@ export function useEditorDoc(initial?: EditorDoc): EditorApi {
     [commit],
   );
 
+  const insertConditionAfter = useCallback(
+    (afterId?: string) => {
+      const cond = makeCondition();
+      const doc = docRef.current;
+      const idx = afterId ? doc.steps.findIndex((s) => s.id === afterId) : doc.steps.length - 1;
+      const steps = [...doc.steps];
+      steps.splice(idx + 1, 0, cond);
+      commit({ ...doc, steps }, null);
+      return cond.id;
+    },
+    [commit],
+  );
+
+  // Swap an (empty) normal step in-place for a fresh condition block - used when
+  // the palette's "Condition" is picked on an empty line, in one commit.
+  const replaceWithCondition = useCallback(
+    (stepId: string) => {
+      const cond = makeCondition();
+      const doc = docRef.current;
+      const steps = doc.steps.map((s) => (s.id === stepId ? cond : s));
+      commit({ ...doc, steps }, null);
+      return cond.id;
+    },
+    [commit],
+  );
+
+  const addBranch = useCallback(
+    (condId: string, type: BranchType) => {
+      const branch = newBranch(type);
+      const doc = docRef.current;
+      const steps = doc.steps.map((s) =>
+        s.id === condId && isCondition(s) ? { ...s, branches: [...s.branches, branch] } : s,
+      );
+      commit({ ...doc, steps }, null);
+      return branch.id;
+    },
+    [commit],
+  );
+
+  const changeBranchType = useCallback(
+    (condId: string, branchId: string, type: BranchType) => {
+      const doc = docRef.current;
+      const steps = doc.steps.map((s) => {
+        if (s.id !== condId || !isCondition(s)) return s;
+        const idx = s.branches.findIndex((b) => b.id === branchId);
+        if (idx < 0) return s;
+        let branches = s.branches.map((b, i) =>
+          i === idx
+            ? { ...b, type, condition: type === 'else' ? undefined : b.condition ?? [txt('')] }
+            : b,
+        );
+        if (type === 'else') branches = branches.slice(0, idx + 1); // else terminates
+        return { ...s, branches };
+      });
+      commit({ ...doc, steps }, null);
+    },
+    [commit],
+  );
+
+  const deleteBranch = useCallback(
+    (condId: string, branchId: string) => {
+      const doc = docRef.current;
+      const steps = doc.steps.map((s) =>
+        s.id === condId && isCondition(s) && s.branches.length > 1
+          ? { ...s, branches: s.branches.filter((b) => b.id !== branchId) }
+          : s,
+      );
+      commit({ ...doc, steps }, null);
+    },
+    [commit],
+  );
+
   const undo = useCallback(() => dispatch({ type: 'undo' }), []);
   const redo = useCallback(() => dispatch({ type: 'redo' }), []);
 
   const isValid = useMemo(() => {
     const triggerOk = lineHasContent(state.present.trigger);
-    const aStepOk = state.present.steps.some((s) => lineHasContent(s.body));
+    const aStepOk = state.present.steps.some((s) => stepHasContent(s));
     return triggerOk && aStepOk;
   }, [state.present]);
 
@@ -184,6 +301,11 @@ export function useEditorDoc(initial?: EditorDoc): EditorApi {
     setTitle,
     addStepAfter,
     deleteStep,
+    insertConditionAfter,
+    replaceWithCondition,
+    addBranch,
+    changeBranchType,
+    deleteBranch,
     undo,
     redo,
   };

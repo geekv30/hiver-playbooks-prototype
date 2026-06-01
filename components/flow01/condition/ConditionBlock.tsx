@@ -1,6 +1,11 @@
 'use client';
 
-import { useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import {
+  useState,
+  type FormEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type ReactNode,
+} from 'react';
 import { RiAtLine } from 'react-icons/ri';
 import Chip from '@/components/atoms/Chip';
 import type { Branch, BranchType } from '../doc';
@@ -24,6 +29,10 @@ interface Props {
   onEditCondition?: (branchId: string, text: string) => void;
   /** Remove an arm (else-if). */
   onDeleteBranch?: (branchId: string) => void;
+  /** Editor mode: render the branch's condition expression as a real EditorLine. */
+  renderExpr?: (branch: Branch) => ReactNode;
+  /** Editor mode: render the branch's body as a real EditorLine. */
+  renderBody?: (branch: Branch) => ReactNode;
 }
 
 /**
@@ -39,6 +48,8 @@ export default function ConditionBlock({
   onChangeBranchType,
   onEditCondition,
   onDeleteBranch,
+  renderExpr,
+  renderBody,
 }: Props) {
   // Which tag's picker is open: a branch id, the literal 'prompt', or null.
   const [pickerFor, setPickerFor] = useState<string | null>(null);
@@ -82,29 +93,32 @@ export default function ConditionBlock({
                 label={TYPE_LABEL[b.type]}
                 onConditionClick={isIf ? undefined : () => setPickerFor(b.id)}
               />
-              {!isElse && (
-                <div
-                  className={styles.condField}
-                  contentEditable
-                  suppressContentEditableWarning
-                  role="textbox"
-                  aria-label={`${TYPE_LABEL[b.type]} condition`}
-                  data-placeholder="condition"
-                  onInput={(e: FormEvent<HTMLDivElement>) =>
-                    onEditCondition?.(b.id, e.currentTarget.textContent ?? '')
-                  }
-                  onKeyDown={(e: ReactKeyboardEvent<HTMLDivElement>) => {
-                    if (!isIf && e.key === 'Backspace' && (e.currentTarget.textContent ?? '') === '') {
-                      e.preventDefault();
-                      onDeleteBranch?.(b.id);
+              {!isElse &&
+                (renderExpr ? (
+                  <div className={styles.condField}>{renderExpr(b)}</div>
+                ) : (
+                  <div
+                    className={styles.condField}
+                    contentEditable
+                    suppressContentEditableWarning
+                    role="textbox"
+                    aria-label={`${TYPE_LABEL[b.type]} condition`}
+                    data-placeholder="condition"
+                    onInput={(e: FormEvent<HTMLDivElement>) =>
+                      onEditCondition?.(b.id, e.currentTarget.textContent ?? '')
                     }
-                  }}
-                />
-              )}
+                    onKeyDown={(e: ReactKeyboardEvent<HTMLDivElement>) => {
+                      if (!isIf && e.key === 'Backspace' && (e.currentTarget.textContent ?? '') === '') {
+                        e.preventDefault();
+                        onDeleteBranch?.(b.id);
+                      }
+                    }}
+                  />
+                ))}
             </div>
             <div className={styles.bodyLine}>
               <span className={styles.bodyNum}>1</span>
-              {bodyContent()}
+              {renderBody ? renderBody(b) : bodyContent()}
             </div>
             {picker(b.id)}
           </div>
