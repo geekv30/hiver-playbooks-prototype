@@ -11,12 +11,12 @@ import {
 import type { Fragment } from '@/types/playbook';
 import { findAction } from '@/data/library';
 import Chip from '@/components/atoms/Chip';
-import { txt } from './doc';
+import { txt, PENDING_ACTION } from './doc';
 import styles from './EditorLine.module.css';
 
 // A real zero-width space kept in EMPTY text runs so they always own a text line
 // box. Without it, the caret in an empty run right after an atomic chip snaps to
-// the chip's (taller) box and renders low. The ZWS lives only in the DOM — it is
+// the chip's (taller) box and renders low. The ZWS lives only in the DOM - it is
 // stripped from everything the model sees, so there is nothing to backspace and
 // no stray character in the data.
 const ZWS = '​';
@@ -43,13 +43,15 @@ interface Props {
   onEnter?: () => void;
   /** Backspace at the very start of an already-empty line. */
   onBackspaceEmpty?: () => void;
-  /** '@' typed — open the action palette anchored at the caret. */
+  /** '@' typed - open the action palette anchored at the caret. */
   onRequestPalette?: (req: PaletteRequest) => void;
   /** When true, '/' is typed literally (no Actions palette) - e.g. a condition
    *  expression is an NL predicate, not a place to invoke actions. '@' still works. */
   noActions?: boolean;
   /** When set (and token changes), the line focuses itself. */
   autoFocus?: { token: number; atStart: boolean } | null;
+  /** Fired when the caret enters this line (focus bubbles from the text spans). */
+  onFocus?: () => void;
   ariaLabel?: string;
 }
 
@@ -93,12 +95,12 @@ function placeCaret(el: HTMLElement, offset: number) {
     sel.removeAllRanges();
     sel.addRange(range);
   } catch {
-    /* noop — span may be empty */
+    /* noop - span may be empty */
   }
 }
 
 /**
- * EditorLine — one segmented token line (the trigger, or a step body).
+ * EditorLine - one segmented token line (the trigger, or a step body).
  * Text fragments are uncontrolled contentEditable spans (seeded imperatively so
  * the caret never jumps); chip/ref fragments are atomic <Chip> tokens.
  */
@@ -111,6 +113,7 @@ export default function EditorLine({
   onRequestPalette,
   noActions,
   autoFocus,
+  onFocus,
   ariaLabel,
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -132,7 +135,7 @@ export default function EditorLine({
   }, [fragments]);
 
   // Reconcile text spans to state without disturbing the caret: only write when
-  // the DOM differs (so local typing — already in sync — is left alone; external
+  // the DOM differs (so local typing - already in sync - is left alone; external
   // changes like undo are applied).
   useLayoutEffect(() => {
     fragments.forEach((f, i) => {
@@ -190,12 +193,12 @@ export default function EditorLine({
       const targetSpan = e.target as HTMLElement;
       const fragIndex = Number(targetSpan.dataset.frag ?? -1);
 
-      // '/' opens actions, '@' opens references — but only at a token boundary
-      // (line-start or after whitespace), so literal "and/or", URLs, emails and
-      // dates stay literal text.
-      if (e.key === '/' || e.key === '@') {
-        // Condition expressions take '/' literally (no Actions palette).
-        if (e.key === '/' && noActions) return;
+      // '@' opens the actions palette ('/' kept as an alias) - but only at a token
+      // boundary (line-start or after whitespace), so literal emails, URLs, dates
+      // and "and/or" stay literal text. References are reachable inside the palette.
+      if (e.key === '@' || e.key === '/') {
+        // Condition expressions are NL predicates - take the key literally.
+        if (noActions) return;
         // Work in model space: ignore any leading zero-width placeholder.
         const raw = targetSpan.textContent ?? '';
         const offset = Math.max(0, caretOffsetIn(targetSpan) - leadingZws(raw));
@@ -206,7 +209,7 @@ export default function EditorLine({
         const rect = (rootRef.current ?? targetSpan).getBoundingClientRect();
         const caretRect = targetSpan.getBoundingClientRect();
         onRequestPalette?.({
-          scope: e.key === '/' ? 'actions' : 'references',
+          scope: 'actions',
           fragIndex: Number.isNaN(fragIndex) ? 0 : fragIndex,
           caretOffset: offset,
           rect: { left: caretRect.left, top: rect.top, bottom: rect.bottom },
@@ -255,6 +258,7 @@ export default function EditorLine({
       onMouseDown={handleRootMouseDown}
       onKeyDown={handleKeyDown}
       onInput={handleInput}
+      onFocus={onFocus}
       role="textbox"
       aria-label={ariaLabel}
       aria-multiline="true"
@@ -276,12 +280,27 @@ export default function EditorLine({
             />
           );
         }
-        // chip / ref token — atomic. Delete via Backspace; a polished mouse
-        // delete will live in the (future) click-to-configure popover.
+        // chip / ref token - atomic. Delete via Backspace; a polished mouse
+        // delete will live in the (future) click-to-configure popover. A token
+        // that sits at the visual line edge (only an empty text run beside it)
+        // drops its edge margin so the content's left edge lines up with prose-
+        // first lines (no 4px skew - Figma puts both at x=0).
+        const head = fragments[0];
+        const tail = fragments[fragments.length - 1];
+        const isLead = i === 1 && head?.kind === 'text' && head.text === '';
+        const isTrail =
+          i === fragments.length - 2 && tail?.kind === 'text' && tail.text === '';
+        const tokenCls = [styles.token, isLead ? styles.tokenLead : '', isTrail ? styles.tokenTrail : '']
+          .filter(Boolean)
+          .join(' ');
         return (
-          <span key={`${sig}:${i}`} className={styles.token} contentEditable={false}>
+          <span key={`${sig}:${i}`} className={tokenCls} contentEditable={false}>
             {f.kind === 'chip' ? (
-              <Chip chip={f.chip} metaText={chipMeta(f.chip)} />
+              f.chip.actionId === PENDING_ACTION ? (
+                <Chip mode="placeholder" chip={f.chip} />
+              ) : (
+                <Chip chip={f.chip} metaText={chipMeta(f.chip)} />
+              )
             ) : f.kind === 'ref' ? (
               <Chip mode="ref" label={f.refPath} />
             ) : (

@@ -34,8 +34,8 @@
   min-width: 8px;
 }
 .title[data-unnamed] {
-  color: var(--muted-soft); /* subtle until the user names it */
-  border-bottom-color: var(--hairline-strong); /* "name me" affordance */
+  color: var(--muted); /* Gray 3 #6F7C90 until named (Figma 647:39843) */
+  border-bottom-color: var(--hairline-strong); /* dotted "name me" affordance */
 }
 .title:focus {
   border-bottom-color: var(--hairline-strong);

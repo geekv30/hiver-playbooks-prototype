@@ -15,7 +15,7 @@ interface Props {
   ariaLabel?: string;
 }
 
-// Input field — Figma 258:21645. Field chrome + optional prefix icon / suffix.
+// Input field - Figma 258:21645. Field chrome + optional prefix icon / suffix.
 export default function Input({
   defaultValue,
   placeholder,

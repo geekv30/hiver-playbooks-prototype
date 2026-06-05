@@ -44,7 +44,7 @@ const BUCKET_TITLES: Record<Bucket, string> = {
 
 const BUCKET_DESCS: Record<Bucket, string> = {
   read:     'Source ref + parameters + output preview',
-  ticket:   'Tags / Note / Assign / Reply – Hiver-native field shapes',
+  ticket:   'Tags / Note / Assign / Reply - Hiver-native field shapes',
   external: 'Connector tile + endpoint + params (JSON for HTTP)',
   human:    'Approver + message + dual labels + timeout',
   wait:     'Mode tabs: Duration / Until / For reply',
@@ -138,7 +138,7 @@ function TicketBody() {
       <FieldRow label="Tags" hint="required">
         <div className={styles.tagRow}>
           <span className={styles.tagChip}>
-            tour-enquiry
+            tour-inquiry
             <button className={styles.pillX} type="button" aria-label="Remove"><RiCloseLine /></button>
           </span>
           <span className={styles.tagChip} data-color="ref">
@@ -193,7 +193,7 @@ function ExternalBody() {
         <textarea
           className={styles.textArea}
           rows={4}
-          defaultValue={'New tour enquiry from {{from.name}} — {{ai_extract.output.tour}} in {{ai_extract.output.dates}}.'}
+          defaultValue={'New tour inquiry from {{from.name}} - {{ai_extract.output.tour}} in {{ai_extract.output.dates}}.'}
         />
         <div className={styles.fieldHelper}>Supports <code className={styles.codeInline}>{'{{ref}}'}</code> insertion.</div>
       </FieldRow>
@@ -230,7 +230,7 @@ function HumanBody() {
         <input className={styles.textInput} defaultValue="Approve & continue" type="text" />
       </FieldRow>
       <FieldRow label="Reject label">
-        <input className={styles.textInput} defaultValue="Reject — send alternatives" type="text" />
+        <input className={styles.textInput} defaultValue="Reject - send alternatives" type="text" />
       </FieldRow>
       <FieldRow label="Timeout" hint="auto-resolve after">
         <div className={styles.unitRow}>
@@ -273,7 +273,7 @@ function WaitBody() {
           </FieldRow>
           <FieldRow label="Business hours" hint="workspace">
             <div className={styles.readonlyDisplay}>
-              Mon–Fri · 09:00–18:00 · Asia/Tokyo
+              Mon-Fri · 9:00 AM to 6:00 PM · Asia/Tokyo
             </div>
             <div className={styles.fieldHelper}><a className={styles.linkInline}>Change workspace settings ↗</a></div>
           </FieldRow>
@@ -282,7 +282,7 @@ function WaitBody() {
       {tab === 'until' && (
         <>
           <FieldRow label="Until">
-            <input className={styles.textInput} defaultValue="2026-06-01 09:00" type="text" />
+            <input className={styles.textInput} defaultValue="06/01/2026 9:00 AM" type="text" />
           </FieldRow>
           <FieldRow label="Timezone" hint="workspace">
             <div className={styles.readonlyDisplay}>Asia/Tokyo (UTC+9)</div>
@@ -492,7 +492,7 @@ function StateMock({ state }: { state: CatalogState }) {
               >
                 {(state === 'open-configured' || state === 'open-running' || state === 'open-success' || state === 'open-error' || state === 'open-disabled' || state === 'open-idle') &&
                   <>
-                    <span className={styles.miniTag}>tour-enquiry</span>
+                    <span className={styles.miniTag}>tour-inquiry</span>
                     <span className={styles.miniTag} data-ref>{'@tour.name'}</span>
                   </>
                 }
@@ -541,7 +541,7 @@ export default function InspectorPage() {
 
   const openChip = openChipId ? (DEMO_CHIPS.find((c) => c.id === openChipId) ?? null) : null;
 
-  /* outside-click — canonical deferred-attach pattern */
+  /* outside-click - canonical deferred-attach pattern */
   useEffect(() => {
     if (!openChipId) return;
     const handler = (e: MouseEvent) => {
@@ -575,13 +575,13 @@ export default function InspectorPage() {
       <header className={styles.docbar}>
         <div className={styles.brand}>P</div>
         <div className={styles.crumb}>
-          <Link href="/">Playbooks</Link>
+          <Link href="/">AOPs</Link>
           <span className={styles.csep}>/</span>
           <Link href="/component/node">Components</Link>
           <span className={styles.csep}>/</span>
           <span className={styles.name}>Inspector</span>
         </div>
-        <span className={styles.meta}>Umbrella · 2026-05-23</span>
+        <span className={styles.meta}>Umbrella · 05/23/2026</span>
         <span className={styles.tbDivider} />
         <span className={styles.meta}>OpenAI (shell) · Fin (ticket fields) · Linear (rows) · Hiver (taxonomy)</span>
         <span className={styles.spacer} />
@@ -594,7 +594,7 @@ export default function InspectorPage() {
       <div className={styles.wrap}>
         <div className={styles.hero}>
           <span className={styles.eyebrow}>Component · Inspector · umbrella</span>
-          <h1 className={styles.h1}>The contextual right rail — bucket-aware, slide-in on chip click</h1>
+          <h1 className={styles.h1}>The contextual right rail - bucket-aware, slide-in on chip click</h1>
           <p className={styles.lede}>
             One Inspector shell, six body renderers. Click any Inline Action chip and the Inspector slides in from the right (220ms spring) with that chip's config. The body content is bucket-aware: <strong>read</strong> chips show source + parameters + output; <strong>ticket</strong> chips show Hiver-native fields; <strong>external</strong> chips show connector + endpoint; <strong>human</strong> chips show approver + dual labels; <strong>wait</strong> chips show duration mode tabs; <strong>flow</strong> chips show branch lists.
           </p>
@@ -608,12 +608,12 @@ export default function InspectorPage() {
         </div>
 
         {/* ============================================================ */}
-        {/* 01 Live demo — canvas + 6 chips + working Inspector            */}
+        {/* 01 Live demo - canvas + 6 chips + working Inspector            */}
         {/* ============================================================ */}
         <section className={styles.section}>
           <span className={styles.seclabel}><span className={styles.secnum}>01</span> Live demo</span>
-          <h2 className={styles.h2}>Click any chip — the Inspector opens with its bucket's body</h2>
-          <p className={styles.sub}>Six demo chips, one per bucket. Same chip atom, same Inspector shell, six different bodies. Click outside or press <code>Esc</code> to close. Click a second chip while open — content swaps without re-animating.</p>
+          <h2 className={styles.h2}>Click any chip - the Inspector opens with its bucket's body</h2>
+          <p className={styles.sub}>Six demo chips, one per bucket. Same chip atom, same Inspector shell, six different bodies. Click outside or press <code>Esc</code> to close. Click a second chip while open - content swaps without re-animating.</p>
 
           <div className={styles.canvasToolbar}>
             <div className={styles.modeSwitch}>
@@ -708,7 +708,7 @@ export default function InspectorPage() {
             <div className={styles.sourceRow}>
               <div className={styles.sourceProp}>Slide-in spring (220ms)</div>
               <div className={styles.sourceFrom}>OpenAI Agent Builder</div>
-              <div className={styles.sourceNote}><code>cubic-bezier(0.32, 0.72, 0, 1)</code> — calm enter, no overshoot.</div>
+              <div className={styles.sourceNote}><code>cubic-bezier(0.32, 0.72, 0, 1)</code> - calm enter, no overshoot.</div>
             </div>
             <div className={styles.sourceRow}>
               <div className={styles.sourceProp}>Field-row anatomy (label · control · helper)</div>
@@ -728,7 +728,7 @@ export default function InspectorPage() {
             <div className={styles.sourceRow}>
               <div className={styles.sourceProp}>External-bucket connector tile + endpoint dropdown</div>
               <div className={styles.sourceFrom}>Pylon Custom Actions + Postman</div>
-              <div className={styles.sourceNote}>Auth + endpoint + params + body — the four sections.</div>
+              <div className={styles.sourceNote}>Auth + endpoint + params + body - the four sections.</div>
             </div>
             <div className={styles.sourceRow}>
               <div className={styles.sourceProp}>Wait mode tabs (Duration / Until / For reply)</div>
@@ -742,7 +742,7 @@ export default function InspectorPage() {
             </div>
             <div className={styles.sourceRow}>
               <div className={styles.sourceProp}>Bucket taxonomy + action verbs</div>
-              <div className={styles.sourceFrom}>Hiver — <code>data/library.ts:9-16</code></div>
+              <div className={styles.sourceFrom}>Hiver - <code>data/library.ts:9-16</code></div>
               <div className={styles.sourceNote}>6 buckets, 29 actions. Not invented.</div>
             </div>
           </div>

@@ -1,0 +1,73 @@
+/* SegmentedControl - white-chip-on-track segmented tabs (Figma 530:33976).
+   Track = Gray-6a, 4px pad, radius 12; the active segment is a white chip
+   (radius 8, Shadows/sm) that SLIDES between equal-width segments. Generic over
+   any N tabs via --n (count) and --active (index). */
+
+.track {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--canvas-soft);
+}
+
+/* The sliding white chip. Width = one segment; slides by index. */
+.chip {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc((100% - 8px) / var(--n));
+  border-radius: var(--r-md); /* 8px */
+  background: var(--card);
+  box-shadow:
+    0 1px 4px -4px rgba(0, 0, 0, 0.1),
+    0 1px 2px -4px rgba(0, 0, 0, 0.03);
+  transform: translateX(calc(var(--active) * 100%));
+  transition: transform var(--d-indicator) var(--ease-snap);
+}
+
+.seg {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  appearance: none;
+  border: none;
+  background: none;
+  margin: 0;
+  border-radius: var(--r-md);
+  font-family: var(--font);
+  font-size: var(--fs-small); /* 13px */
+  font-weight: 500;
+  line-height: 19px;
+  letter-spacing: var(--ls-body);
+  color: var(--muted); /* inactive label (Figma slateTextSubtle) */
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--d-hover) var(--ease-snap);
+}
+.seg:hover:not([data-active]) {
+  color: var(--ink-soft);
+}
+.seg[data-active] {
+  color: var(--ink-soft); /* active label (Figma slateTextBody) */
+}
+.seg:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chip,
+  .seg {
+    transition: none;
+  }
+}

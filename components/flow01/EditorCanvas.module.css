@@ -18,7 +18,10 @@
   bottom: 96px;
   transform: translateX(-50%);
   z-index: 50;
-  padding: 9px 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 9px 10px 9px 14px;
   background: var(--ink);
   color: #fff;
   border-radius: var(--r-md);
@@ -26,45 +29,84 @@
   font-weight: 500;
   letter-spacing: var(--ls-small);
   box-shadow: 0 6px 20px rgba(52, 60, 69, 0.18);
+  animation: toastIn var(--d-enter) var(--ease-snap) both;
+}
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+/* The Undo affordance inside an actionable toast (e.g. after Pause). */
+.toastAction {
+  flex: none;
+  padding: 4px 9px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-family: var(--font);
+  font-size: var(--fs-small);
+  font-weight: 600;
+  letter-spacing: var(--ls-small);
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap);
+}
+.toastAction:hover {
+  background: rgba(255, 255, 255, 0.24);
 }
 
-/* Stage - editor area + simulate panel as flex siblings, so opening the panel
-   makes the editor give space (the canvas-shift). */
+/* Stage - the two-window workspace (Figma 647:39782): the canvas window and the
+   side panel sit side by side as equal-height docked cards, each scrolling its
+   own content internally. The group is centred and capped so on wide screens the
+   margins grow evenly (no lopsided void); on narrow screens the canvas shrinks. */
 .stage {
   flex: 1;
   display: flex;
+  justify-content: center; /* centre the [canvas][panel] group */
+  align-items: stretch; /* both windows fill the height -> equal height */
+  gap: 14px; /* Figma gap canvas<->panel */
+  padding: 16px 24px; /* 16px top/bottom; min 24px horizontal */
   min-height: 0;
 }
 
-/* Scroll region (doc) + the chat dock floating over its lower edge. */
+/* Canvas window - a fixed-height card; the content scrolls inside it (.docScroll),
+   the card itself never grows. Caps at 888 (Figma) and shrinks on narrow screens. */
 .area {
-  flex: 1;
-  min-width: 0; /* let the editor shrink when the panel opens */
+  flex: 1 1 888px;
+  max-width: 888px;
+  min-width: 0;
   position: relative; /* anchor the floating chat dock */
   display: flex;
   flex-direction: column;
   min-height: 0;
-}
-.docScroll {
-  flex: 1;
-  overflow-y: auto;
-  padding: 24px 24px 0;
-}
-
-.doc {
-  max-width: 936px;
-  margin: 0 auto;
   background: var(--card);
   border: 1px solid var(--hairline-soft);
   border-radius: 14px;
-  /* Tall page: fills the viewport and runs behind the floating chat + through
-     the fold (extra bottom padding keeps content clear of the chat). */
-  min-height: calc(100vh / var(--app-scale));
-  padding: 32px 40px 100px;
-  /* Subtle elevation (Figma) - soft, B2B, not a drop shadow. */
   box-shadow:
     0 1px 2px rgba(52, 60, 69, 0.04),
     0 4px 14px rgba(52, 60, 69, 0.05);
+  overflow: hidden; /* the window clips; .docScroll scrolls within */
+}
+/* Internal scroll region. 24px side padding + the doc's 40px + the row gutter (40)
+   lands the content rail at 104px (Figma). Scrollbar hidden for a clean window. */
+.docScroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 24px;
+  scrollbar-width: none; /* Firefox */
+}
+.docScroll::-webkit-scrollbar {
+  display: none; /* WebKit */
+}
+
+/* Document content (no card chrome - that lives on .area now). */
+.doc {
+  padding: 32px 40px 40px;
 }
 
 .block {
@@ -73,7 +115,10 @@
 
 .row {
   display: grid;
-  grid-template-columns: 40px 1fr;
+  /* 40px gutter (number) + content + a 40px right spacer that MIRRORS the gutter,
+     so the content (heading / trigger field / steps) is inset symmetrically left
+     and right (Figma 647:40010 = 104px each side), not tight against the right. */
+  grid-template-columns: 40px 1fr 40px;
   align-items: start;
 }
 
@@ -95,20 +140,19 @@
 
 .label {
   margin: 0 0 12px;
-  font-size: var(--fs-h4);
+  font-size: var(--fs-h5); /* 16px (Figma) - was --fs-h4 18px */
   font-weight: 500;
   color: var(--ink);
   letter-spacing: -0.011em;
 }
 
-/* Trigger field - the bordered NL container (Figma 256:2895).
-   Outdented by its own left padding (-16px) so the placeholder/text lines up
-   on the same vertical rail as the step prose below; the right edge stays put,
-   so the field reads as "longer". Native vertical resize shows the corner grip
+/* Trigger field - the bordered NL container (Figma 647:40010). The field BORDER
+   left-aligns with the "When should this run :" heading (and the step rail), with
+   the placeholder/text indented by the field's own 16px padding - so the box and
+   the heading share a left edge. Native vertical resize shows the corner grip
    (the diagonal "slash" handle) and lets the field be dragged taller/shorter. */
 .triggerField {
   position: relative;
-  margin-left: -16px;
   padding: 10px 16px;
   background: var(--card);
   border: 1px solid var(--hairline-soft);
@@ -127,7 +171,9 @@
 .divider {
   height: 1px;
   background: var(--hairline-soft);
-  margin: 24px 0;
+  /* Inset 40px L/R so the rule aligns with the content rail (matching the
+     symmetric row content), not the full doc width. */
+  margin: 24px 40px;
 }
 
 .steps {
@@ -136,10 +182,21 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  /* No inter-row gap: each row owns its rhythm via min-height (Figma stacks the
+     46px rows with no gap). */
+  gap: 0;
 }
 .steps .row {
-  padding: 3px 0;
+  /* Uniform row height (Figma action row = 46px) regardless of whether the line
+     holds a chip or only prose, so sibling steps never differ by a few pixels.
+     A condition block is taller than 46 and keeps its natural height. */
+  min-height: 46px;
+  /* Center the step number AND content on the row (Figma centers the number
+     frame on the row; for a tall condition block the number lands at the
+     block's center). */
+  align-items: center;
+  /* Anchor the absolute drag handle + the row menu popover. */
+  position: relative;
 }
 
 /* Chat dock - floats over the lower edge of the doc (the doc runs behind it).
@@ -188,43 +245,129 @@
   height: 14px;
 }
 
-/* Line-start '+' affordance - opens the Actions palette with no keystroke.
-   Sits in the step gutter, replacing the step number on hover / on an empty
-   line (NN/g: never make the key the only path). */
-.gutterPlus {
+/* Row that carries the shared <ActionHint> pill (its visual lives in
+   ActionHint.module.css). It's its own in-flow row in the steps list, beneath the
+   empty step it belongs to, so it reserves space (no overlap with a following
+   step) and never affects the step number's alignment. padding-left = the gutter
+   width so the pill's left edge sits on the content rail (under the placeholder);
+   padding-bottom gives the gap to the next row (Figma 647:40172). */
+.hintRow {
+  padding-left: 40px;
+  padding-bottom: 8px;
+}
+
+/* --- Step row chrome: drag handle + 3-dot menu (Figma 647:40811) ------------
+   Both reveal only on hover of THAT row; each greys only on hover of THAT icon. */
+
+/* Drag handle - absolutely placed in the doc's left padding, just left of the
+   step number (so it never shifts the number's layout). */
+.dragHandle {
   position: absolute;
-  top: 2px; /* center the 22px button on the 26px line */
-  left: 50%;
-  transform: translateX(-50%);
+  left: -28px;
+  top: 50%;
+  transform: translateY(-50%);
   display: grid;
   place-items: center;
   width: 22px;
-  height: 22px;
+  height: 24px;
   padding: 0;
-  border: 1px solid var(--hairline);
+  border: none;
   border-radius: 6px;
-  background: var(--card);
-  color: var(--muted);
+  background: transparent;
+  color: var(--muted-soft);
+  cursor: grab;
+  opacity: 0;
+  transition:
+    opacity var(--d-hover) var(--ease-snap),
+    background var(--d-hover) var(--ease-snap);
+}
+.dragHandle svg {
+  width: 16px;
+  height: 16px;
+}
+.steps .row:hover .dragHandle {
+  opacity: 1;
+}
+.dragHandle:hover {
+  background: var(--surface-soft); /* #F6F8FC - grey bg on the icon's own hover */
+}
+.dragHandle:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* 3-dot menu - the MIRROR of the drag handle: absolutely placed in the doc's
+   right padding, the same 28px outside the row edge as the handle sits on the
+   left, so the two affordances are symmetric from the card edges (Figma 647:40811
+   places both 24px inside the card edges; here we mirror the shipped handle's
+   -28px). The grid keeps its 40px right spacer so the content does not shift. The
+   popover anchors to this slot. */
+.rowMenuSlot {
+  position: absolute;
+  right: -28px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+}
+.kebab {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-soft);
   cursor: pointer;
   opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--d-hover) var(--ease-snap), color var(--d-hover) var(--ease-snap),
-    border-color var(--d-hover) var(--ease-snap);
+  transition:
+    opacity var(--d-hover) var(--ease-snap),
+    background var(--d-hover) var(--ease-snap);
 }
-.gutterPlus svg {
-  width: 14px;
-  height: 14px;
+.kebab svg {
+  width: 16px;
+  height: 16px;
 }
-.gutterPlus:hover {
-  color: var(--ink-soft);
-  border-color: var(--hairline-strong);
-}
-/* Show ONLY on an empty step (the "add here" line); content lines always keep
-   their number. No hover-swap - predictable: empty line -> +, content -> number. */
-.steps .row[data-empty] .gutterPlus {
+.steps .row:hover .kebab,
+.kebab[aria-expanded='true'] {
   opacity: 1;
-  pointer-events: auto;
 }
-.steps .row[data-empty] .gutter > :first-child {
-  opacity: 0;
+.kebab:hover,
+.kebab[aria-expanded='true'] {
+  background: var(--surface-soft);
+}
+.kebab:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Drop indicator - the accent line marking where the dragged step would land. */
+.dropLine {
+  height: 2px;
+  margin: 1px 40px;
+  background: var(--accent);
+  border-radius: 2px;
+  list-style: none;
+}
+
+/* While a drag is in progress: suppress text selection and dim the lifted row. */
+.steps[data-dragging] {
+  user-select: none;
+  cursor: grabbing;
+}
+.row[data-dragging] {
+  opacity: 0.45;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dragHandle,
+  .kebab {
+    transition: none;
+  }
 }

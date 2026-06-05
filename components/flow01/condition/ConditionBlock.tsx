@@ -4,10 +4,11 @@ import {
   useState,
   type FormEvent,
   type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
   type ReactNode,
 } from 'react';
 import Chip from '@/components/atoms/Chip';
-import type { Branch, BranchType } from '../doc';
+import type { Branch, BranchType, DocStep } from '../doc';
 import BranchTypePicker from './BranchTypePicker';
 import styles from './ConditionBlock.module.css';
 
@@ -30,8 +31,9 @@ interface Props {
   onDeleteBranch?: (branchId: string) => void;
   /** Editor mode: render the branch's condition expression as a real EditorLine. */
   renderExpr?: (branch: Branch) => ReactNode;
-  /** Editor mode: render the branch's body as a real EditorLine. */
-  renderBody?: (branch: Branch) => ReactNode;
+  /** Editor mode: render ONE body line as a real EditorLine. Called per line so an
+   *  arm can hold several action lines (the number gutter shows its 1-based index). */
+  renderBody?: (branch: Branch, line: DocStep, index: number) => ReactNode;
 }
 
 /**
@@ -58,6 +60,26 @@ export default function ConditionBlock({
     if (pickerFor === 'prompt') onAddBranch?.(type);
     else if (pickerFor) onChangeBranchType?.(pickerFor, type);
     setPickerFor(null);
+  };
+
+  // Clicking the field's padding (not directly on the text) should still focus the
+  // inner editable line - otherwise the box reads as dead everywhere there isn't a
+  // glyph. Only act on a click that lands on the wrapper itself; a click on the
+  // text / a token focuses itself.
+  const focusFieldPadding = (e: ReactMouseEvent<HTMLDivElement>) => {
+    if (e.target !== e.currentTarget) return;
+    e.preventDefault();
+    const spans = e.currentTarget.querySelectorAll<HTMLElement>('[contenteditable]');
+    const last = spans[spans.length - 1];
+    if (!last) return;
+    last.focus();
+    const sel = window.getSelection();
+    if (!sel) return;
+    const range = document.createRange();
+    range.selectNodeContents(last);
+    range.collapse(false); // caret at the end
+    sel.removeAllRanges();
+    sel.addRange(range);
   };
 
   // Static fallback body copy (the editor injects real EditorLines via renderBody;
@@ -98,7 +120,9 @@ export default function ConditionBlock({
               </span>
               {!isElse &&
                 (renderExpr ? (
-                  <div className={styles.condField}>{renderExpr(b)}</div>
+                  <div className={styles.condField} onMouseDown={focusFieldPadding}>
+                    {renderExpr(b)}
+                  </div>
                 ) : (
                   <div
                     className={styles.condField}
@@ -119,10 +143,12 @@ export default function ConditionBlock({
                   />
                 ))}
             </div>
-            <div className={styles.bodyLine}>
-              <span className={styles.bodyNum}>1</span>
-              {renderBody ? renderBody(b) : bodyContent()}
-            </div>
+            {b.lines.map((ln, li) => (
+              <div key={ln.id} className={styles.bodyLine}>
+                <span className={styles.bodyNum}>{li + 1}</span>
+                {renderBody ? renderBody(b, ln, li) : bodyContent()}
+              </div>
+            ))}
           </div>
         );
       })}

@@ -6,7 +6,7 @@ interface Props {
 }
 
 /**
- * GutterMarker — the left-gutter index (Figma 256:3067 / 256:2885).
+ * GutterMarker - the left-gutter index (Figma 256:3067 / 256:2885).
  * JetBrains Mono 13px, muted-soft. A bullet "·" marks frontmatter/section
  * headers; a number marks ordered steps.
  */

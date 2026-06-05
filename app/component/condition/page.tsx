@@ -8,12 +8,14 @@ let seq = 0;
 const nid = () => `b-${(seq += 1)}`;
 
 export default function ConditionComponentPage() {
-  const [branches, setBranches] = useState<Branch[]>([{ id: 'if', type: 'if', condition: [], body: [] }]);
+  const [branches, setBranches] = useState<Branch[]>([
+    { id: 'if', type: 'if', condition: [], lines: [{ id: 'if-l1', body: [] }] },
+  ]);
 
   const addBranch = (type: 'elseif' | 'else') =>
     setBranches((bs) => [
       ...bs,
-      { id: nid(), type, condition: type === 'else' ? undefined : [], body: [] },
+      { id: nid(), type, condition: type === 'else' ? undefined : [], lines: [{ id: nid(), body: [] }] },
     ]);
 
   const deleteBranch = (id: string) => setBranches((bs) => bs.filter((b) => b.id !== id));

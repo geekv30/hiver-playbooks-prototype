@@ -22,7 +22,7 @@ interface TagDef {
 const PALETTE = ['#16A34A', '#2563EB', '#D97706', '#DC2626', '#7C3AED', '#0891B2', '#BE185D', '#65A30D'];
 
 const SEED_TAGS: TagDef[] = [
-  { id: 't-kumano',     name: 'kumano-kodo',           color: '#16A34A', category: 'Tour',     description: 'Kumano Kodo enquiries',  usage: 42, spark: [2,3,5,4,8,6,9], lastUsed: '2h ago' },
+  { id: 't-kumano',     name: 'kumano-kodo',           color: '#16A34A', category: 'Tour',     description: 'Kumano Kodo inquiries',  usage: 42, spark: [2,3,5,4,8,6,9], lastUsed: '2h ago' },
   { id: 't-nakasendo',  name: 'nakasendo',             color: '#16A34A', category: 'Tour',     description: 'Nakasendo trail',        usage: 27, spark: [1,2,3,3,4,5,4], lastUsed: '4h ago' },
   { id: 't-priority',   name: 'priority',              color: '#DC2626', category: 'Priority', description: 'Drop-everything urgent', usage: 8,  spark: [0,1,0,2,0,1,1], lastUsed: '6h ago' },
   { id: 't-vip',        name: 'vip',                   color: '#D97706', category: 'Priority', description: 'Returning premium guest',usage: 15, spark: [1,2,2,3,1,2,3], lastUsed: '1h ago' },
@@ -253,7 +253,7 @@ export default function TagComponentPage() {
   const [managerQuery, setManagerQuery] = useState('');
   const [showArchived, setShowArchived] = useState(false);
 
-  // Outside-click closes picker — defer attach so the opening click doesn't immediately close
+  // Outside-click closes picker - defer attach so the opening click doesn't immediately close
   const pickerWrap1Ref = useRef<HTMLSpanElement | null>(null);
   const pickerWrap2Ref = useRef<HTMLSpanElement | null>(null);
   useEffect(() => {
@@ -302,13 +302,13 @@ export default function TagComponentPage() {
       <header className={styles.docbar}>
         <div className={styles.brand}>P</div>
         <div className={styles.crumb}>
-          <Link href="/">Playbooks</Link>
+          <Link href="/">AOPs</Link>
           <span className={styles.csep}>/</span>
           <Link href="/component/node">Components</Link>
           <span className={styles.csep}>/</span>
           <span className={styles.name}>Tag</span>
         </div>
-        <span className={styles.meta}>Extraction · 2026-05-23</span>
+        <span className={styles.meta}>Extraction · 05/23/2026</span>
         <span className={styles.tbDivider} />
         <span className={styles.meta}>Intercom (primary) · Linear (colors/groups) · GitHub (description)</span>
         <span className={styles.spacer} />
@@ -323,7 +323,7 @@ export default function TagComponentPage() {
           <h1 className={styles.h1}>Tag, extracted from Intercom and Linear</h1>
           <p className={styles.lede}>
             Tag is Intercom-native (ticketing primitive; OpenAI has none). We lift Intercom&apos;s structure: chip + typeahead picker + Manager with archive/delete.
-            We override Intercom&apos;s monochrome with Linear&apos;s coloured palette + label groups, because scanability matters when 8 steps each end with a tag.
+            We override Intercom&apos;s monochrome with Linear&apos;s colored palette + label groups, because scanability matters when 8 steps each end with a tag.
             We borrow GitHub&apos;s tag description as one extra field in the Manager.
           </p>
           <div className={styles.heroMeta}>
@@ -335,12 +335,12 @@ export default function TagComponentPage() {
         </div>
 
         {/* ============================================================ */}
-        {/* 01 Chip — all states                                          */}
+        {/* 01 Chip - all states                                          */}
         {/* ============================================================ */}
         <section className={styles.section}>
-          <span className={styles.seclabel}><span className={styles.secnum}>01</span> Tag chip — all states</span>
+          <span className={styles.seclabel}><span className={styles.secnum}>01</span> Tag chip - all states</span>
           <h2 className={styles.h2}>The atom in every visual state</h2>
-          <p className={styles.sub}>Hover any chip to see the × fade in. Coloured swatch on the left. Category prefix is optional.</p>
+          <p className={styles.sub}>Hover any chip to see the × fade in. Colored swatch on the left. Category prefix is optional.</p>
 
           <div className={styles.canvasSurface} style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'flex-start' }}>
             <TagChip unconfigured placeholder="Pick a tag…" />
@@ -506,7 +506,7 @@ export default function TagComponentPage() {
                   </div>
                   {t.description && <div className={styles.nameDesc}>{t.description}</div>}
                 </div>
-                <span className={styles.categoryCell}>{t.category ?? '—'}</span>
+                <span className={styles.categoryCell}>{t.category ?? '-'}</span>
                 <div className={styles.usageCell}>
                   <span className={styles.usageNum}>{t.usage}</span>
                   <Sparkline data={t.spark} />

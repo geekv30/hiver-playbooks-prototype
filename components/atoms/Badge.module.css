@@ -34,12 +34,32 @@
   background: #ede9fe;
   color: var(--state-running);
 }
-/* Draft — solid doc-status pill (Figma 256:3087: #97A3B7 fill, white label, pill).
-   Figma used Roboto/literal #97A3B7; mapped to Inter + --muted-soft (one-palette,
-   one-font). Slight positive tracking echoes the Figma 0.4px. */
+/* Draft — quiet neutral status pill (Figma 647:39845: Gray 6 #ECEFF6 fill, Gray 1
+   #3E4C5A label, Inter MEDIUM 13/19, px-7 py-2, pill, lowercase). */
 .draft {
-  background: var(--muted-soft);
-  color: #fff;
-  padding: 2px 8px;
-  letter-spacing: 0.01em;
+  background: var(--surface-card);
+  color: var(--ink-soft);
+  font-size: var(--fs-small); /* 13px (was 12px caption) */
+  font-weight: 500; /* Inter Medium (was Regular) */
+  line-height: 19px;
+  padding: 2px 7px;
+}
+/* Lifecycle siblings of .draft - same quiet pill, state-tinted (soft bg + state
+   text) so Active/Paused stay consistent with the subtle draft. No Figma for these
+   two; tinted from our state tokens. */
+.active {
+  background: var(--state-ok-bg);
+  color: var(--state-ok);
+  font-size: var(--fs-small);
+  font-weight: 500;
+  line-height: 19px;
+  padding: 2px 7px;
+}
+.paused {
+  background: var(--state-warn-bg);
+  color: var(--state-warn);
+  font-size: var(--fs-small);
+  font-weight: 500;
+  line-height: 19px;
+  padding: 2px 7px;
 }

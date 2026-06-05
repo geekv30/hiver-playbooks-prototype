@@ -15,7 +15,7 @@ export interface PaletteAction {
 
 export const REFERENCE_ID = 'reference';
 
-// Curated "Actions" group — the five the Figma shows first (verbatim), then the
+// Curated "Actions" group - the five the Figma shows first (verbatim), then the
 // rest of the vocabulary in plain labels.
 export const PALETTE_ACTIONS: PaletteAction[] = [
   { id: 'wait', label: 'wait' },
@@ -33,7 +33,7 @@ export const PALETTE_ACTIONS: PaletteAction[] = [
   { id: 'set_field', label: 'Set a field' },
   { id: 'approval', label: 'Request approval' },
   { id: 'wait_for_reply', label: 'Wait for reply' },
-  { id: 'end', label: 'End playbook' },
+  { id: 'end', label: 'End AOP' },
 ];
 
 // Connectors shown as brands (proper brand casing, not the Figma's "Hubspot"/"Clickup").
@@ -61,9 +61,9 @@ export function connectorVerbs(slug: ConnectorSlug): { id: string; label: string
 // Second-page value pickers.
 //
 // A parameterized action opens a second page inside the palette. Three shapes:
-//   pick-one  — choose one option, inserts immediately (Assign, Status, ...)
-//   pick-many — check several, confirm with the footer button (Tag)
-//   input     — type a free value, Enter inserts (KB search)
+//   pick-one  - choose one option, inserts immediately (Assign, Status, ...)
+//   pick-many - check several, confirm with the footer button (Tag)
+//   input     - type a free value, Enter inserts (KB search)
 // The picked value becomes the chip's meta, so the chip reads e.g. "Tag · VIP".
 // Absence from ACTION_BEHAVIOR (or mode 'insert') = insert directly, no page.
 // ---------------------------------------------------------------------------
@@ -85,7 +85,7 @@ export type ActionBehavior =
 // NOT a real Hiver account's tags / users / statuses. A believable support-team
 // seed so the pickers feel real; swap for live data when wiring to a backend.
 
-// Tag names per the updated Figma (283:28810) — dev-team flavoured.
+// Tag names per the updated Figma (283:28810) - dev-team flavored.
 export const SEED_TAGS: PickerOption[] = [
   { id: 'dev-support', label: 'dev-support' },
   { id: 'api-error', label: 'api-error' },
@@ -96,7 +96,7 @@ export const SEED_TAGS: PickerOption[] = [
   { id: 'escalation', label: 'escalation' },
 ];
 
-// Generic queues + roles only — no named individuals from any one account.
+// Generic queues + roles only - no named individuals from any one account.
 export const SEED_ASSIGNEES: PickerOption[] = [
   { id: 'me', label: 'Me', sub: 'Assign to myself' },
   { id: 'support-queue', label: 'Support queue', sub: 'Shared inbox' },
@@ -112,7 +112,7 @@ export const SEED_STATUSES: PickerOption[] = [
   { id: 'closed', label: 'Closed' },
 ];
 
-// Generic custom fields a support team might define — no story-specific fields.
+// Generic custom fields a support team might define - no story-specific fields.
 export const SEED_FIELDS: PickerOption[] = [
   { id: 'priority', label: 'Priority', sub: 'Single-select' },
   { id: 'category', label: 'Category', sub: 'Single-select' },
@@ -131,7 +131,7 @@ export const WAIT_PRESETS: PickerOption[] = [
   { id: '1w', label: '1 week' },
 ];
 
-// Reference picker — the @-mention's second page. Pick a field / step output;
+// Reference picker - the @-mention's second page. Pick a field / step output;
 // the chosen path becomes a @ref token (handled specially on insert).
 export const REFERENCE_OPTIONS: PickerOption[] = DEFAULT_REFS.map((r) => ({
   id: r.path,

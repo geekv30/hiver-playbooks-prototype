@@ -1,0 +1,54 @@
+/* SimEmptyState - the shared Simulate empty-state scaffold: a dimmed, fading
+   preview of the populated surface (the REAL cards, so it can never drift) + a
+   centered cluster (icon / headline / explanation / one light action). Used by
+   both the Scenarios and Custom test tabs. */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Faded preview of what the surface will hold. The real cards, dimmed and
+   fading out toward the cluster, so "empty" reads as "about to be full". */
+.ghosts {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  opacity: 0.5;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 28%, transparent 96%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 28%, transparent 96%);
+}
+
+.cluster {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  /* Pull up over the faded tail of the ghost rows so the cluster is the focus. */
+  margin-top: -28px;
+  padding: 0 16px;
+}
+.icon {
+  width: 22px;
+  height: 22px;
+  margin-bottom: 10px;
+  color: var(--muted-soft);
+}
+.title {
+  margin: 0;
+  font-size: var(--fs-body); /* 14px */
+  font-weight: 600;
+  letter-spacing: var(--ls-body);
+  color: var(--ink-soft);
+}
+.body {
+  margin: 6px 0 0;
+  max-width: 280px;
+  font-size: var(--fs-small); /* 13px */
+  line-height: 1.5;
+  letter-spacing: var(--ls-small);
+  color: var(--muted);
+}
+.action {
+  margin-top: 12px;
+}

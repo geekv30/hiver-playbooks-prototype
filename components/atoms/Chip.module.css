@@ -43,6 +43,27 @@
   border-color: var(--hairline-strong);
 }
 
+/* Placeholder variant ("@ action") - a uniform DASHED hairline (not the beveled
+   solid stroke) while the action is still being chosen/configured (Figma
+   647:41076). Gray-3 Medium text; no hover darkening (it's transient). */
+.placeholder,
+.placeholder:hover {
+  border-style: dashed;
+  border-color: var(--hairline); /* #D6DDE8 */
+  border-top-width: calc(1px / var(--app-scale));
+  border-left-width: calc(1px / var(--app-scale));
+  border-right-width: calc(1px / var(--app-scale));
+  border-bottom-width: calc(1px / var(--app-scale));
+  background: var(--info-subtle);
+  gap: 6px;
+  cursor: text;
+}
+.phText {
+  font-weight: 500; /* Inter Medium */
+  color: var(--muted); /* #6F7C90 Gray-3 */
+  letter-spacing: var(--ls-small);
+}
+
 /* Borderless variant (run trace): same content + icons, no pill chrome. */
 .plain,
 .plain:hover {
@@ -53,9 +74,12 @@
   cursor: default;
 }
 
-/* Condition mode: the not-yet-decided ELSE-IF / ELSE prompt uses a muted label
-   (Figma #97A3B7 vs IF's #343C45). Same tag chrome otherwise. */
-.verbSubtle {
+/* Condition mode: the not-yet-decided ELSE-IF / ELSE prompt fades its label AND
+   icon to Gray-4 #97A3B7 (Figma 334:37179) - the decided arms stay darker. Same
+   tag chrome (border / bg) otherwise. Compound selectors so these win over the
+   base .chipVerb / .chipIco colour regardless of source order. */
+.chipVerb.verbSubtle,
+.chipIco.icoSubtle {
   color: var(--hairline-strong);
 }
 
@@ -75,6 +99,7 @@
   display: grid;
   place-items: center;
   flex: none;
+  color: var(--body);   /* icon 1 level down from the chip ink (was inherited --ink-soft) - Figma 410:51257 */
 }
 
 .chipIco svg {
@@ -85,7 +110,7 @@
 
 .chipBrand {
   font-weight: 400;
-  color: var(--ink);
+  color: var(--body);   /* lead label - de-emphasised (was --ink) - Figma 410:51257 */
   pointer-events: none;
 }
 
@@ -96,17 +121,28 @@
 }
 
 .chipVerb {
-  font-weight: 500;
-  color: var(--ink);
+  font-weight: 400;   /* verb weight 1 level down: Medium -> Regular - Figma 410:51257 */
+  color: var(--body); /* lead label - de-emphasised (was --ink) */
   pointer-events: none;
 }
 
+/* The configured value - now the EMPHASISED element. Mono dropped (Inter,
+   inherited from .chip); weight up to Medium; colour up to --ink-soft. Figma
+   410:51257 (body/xs/medium, Gray 1). */
 .chipMeta {
-  font-family: var(--mono);
+  font-size: var(--fs-small);
+  color: var(--ink-soft);
+  font-weight: 500;
+  pointer-events: none;
+}
+
+/* @-reference value (e.g. an email / field ref) - the quiet LEAD style, not the
+   emphasised config value, so it can no longer share .chipMeta. Figma 410:51314
+   (attri): Inter Regular, Gray 2. */
+.chipRef {
   font-size: var(--fs-small);
   color: var(--body);
   font-weight: 400;
-  letter-spacing: -0.02em;
   pointer-events: none;
 }
 
@@ -128,11 +164,9 @@
 
 /* Connector setup-required state (Figma Status/Primary red #CD3746) */
 .chipSetup {
-  font-family: var(--mono);
-  font-size: var(--fs-small);
+  font-size: var(--fs-small);   /* mono dropped - Inter inherited from .chip - Figma 410:51338 */
   color: #cd3746;
   font-weight: 400;
-  letter-spacing: -0.02em;
   pointer-events: none;
 }
 

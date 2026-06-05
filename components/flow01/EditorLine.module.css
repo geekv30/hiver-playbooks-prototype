@@ -36,17 +36,26 @@
   margin: 0 4px;
   user-select: none;
 }
+/* A token at the visual line edge sits flush, so chip-first and prose-first
+   lines share the same left edge (Figma puts both at x=0). */
+.tokenLead {
+  margin-left: 0;
+}
+.tokenTrail {
+  margin-right: 0;
+}
 
 /* Placeholder — overlays the empty line, click-through to the caret. Flex so an
    inline key (the '@' pill) sits centered with the prose. */
 .placeholder {
   position: absolute;
-  left: 0;
-  top: 0;
+  /* Fill the line box (inset:0) and center, so the placeholder tracks whatever the
+     line-height is - 26px on a step, the condition field's 20px - and stays centered
+     to match the filled text (a fixed height mis-centered the shorter condition line). */
+  inset: 0;
   display: flex;
   align-items: center;
   gap: 6px;
-  height: 26px;
   color: var(--muted-soft);
   pointer-events: none;
   white-space: nowrap;

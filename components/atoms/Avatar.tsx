@@ -10,7 +10,7 @@ interface Props {
   ariaLabel?: string;
 }
 
-// Avatar — Figma 211:24039. Image or initials, optional online dot.
+// Avatar - Figma 211:24039. Image or initials, optional online dot.
 export default function Avatar({ initials, src, size = 24, color = '#8789C5', online, ariaLabel }: Props) {
   return (
     <span

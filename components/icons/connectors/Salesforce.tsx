@@ -1,6 +1,6 @@
 import type { SVGProps } from "react";
 
-// Salesforce cloud + white S — official mark (svgl). The cloud is ~1.43:1 wide, so the
+// Salesforce cloud + white S - official mark (svgl). The cloud is ~1.43:1 wide, so the
 // viewBox is normalized by footprint (not max-dimension) to read at the same optical
 // size as the other connector icons.
 export function SalesforceIcon(props: SVGProps<SVGSVGElement>) {

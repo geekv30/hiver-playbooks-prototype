@@ -74,7 +74,7 @@ export default function PlaybookTab({ playbook, onSetBindingActive, onOpenSetup 
         <div className={styles.label}>Recent runs</div>
         <div className={styles.placeholder}>
           No runs yet
-          <span className={styles.phHint}>activate the playbook to start tracking</span>
+          <span className={styles.phHint}>activate the AOP to start tracking</span>
         </div>
       </div>
     </div>

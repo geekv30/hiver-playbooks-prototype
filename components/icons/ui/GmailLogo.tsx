@@ -1,6 +1,6 @@
 import type { SVGProps } from 'react';
 
-// Gmail envelope mark — official multicolor logo (svgl / Google brand).
+// Gmail envelope mark - official multicolor logo (svgl / Google brand).
 // True brand fills hardcoded (not currentColor). Pair with a "Gmail" wordmark
 // in the top bar. viewBox kept from source so proportions stay exact.
 export function GmailLogo(props: SVGProps<SVGSVGElement>) {

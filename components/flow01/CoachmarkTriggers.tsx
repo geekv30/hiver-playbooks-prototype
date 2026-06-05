@@ -18,7 +18,7 @@ export default function CoachmarkTriggers() {
     try {
       if (!localStorage.getItem(SEEN_KEY)) setShow(true);
     } catch {
-      /* private mode / no storage — just skip */
+      /* private mode / no storage - just skip */
     }
   }, []);
 

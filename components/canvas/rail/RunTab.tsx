@@ -13,7 +13,7 @@ export default function RunTab({ playbook }: Props) {
         <div className={styles.label}>Recent runs</div>
         <div className={styles.placeholder}>
           No runs yet
-          <span className={styles.phHint}>activate the playbook to start tracking runs</span>
+          <span className={styles.phHint}>activate the AOP to start tracking runs</span>
         </div>
       </div>
       <div className={styles.section}>

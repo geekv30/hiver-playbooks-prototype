@@ -48,8 +48,8 @@ const FIELD_REFS: Array<{ type: FieldType; refPath: string }> = [
 const CONNECTOR_SLUGS: ConnectorSlug[] = ['shopify', 'hubspot', 'slack', 'salesforce', 'clickup'];
 
 const SAMPLE_FM_FILLED: FM = {
-  name: 'Tour enquiry — Walk Japan',
-  summary: 'When a tour-enquiry email lands, answer with availability + matching itineraries, draft a follow-up if needed, and log the lead.',
+  name: 'Tour inquiry - Walk Japan',
+  summary: 'When a tour-inquiry email lands, answer with availability + matching itineraries, draft a follow-up if needed, and log the lead.',
   triggerFragments: [
     { kind: 'text', text: 'Email lands in ' },
     { kind: 'ref', refPath: 'info@walkjapan.com' },
@@ -113,7 +113,7 @@ export default function PreviewPage() {
       <header className={styles.docbar}>
         <div className={styles.brand}>P</div>
         <div className={styles.crumb}>
-          <Link href="/">Playbooks · tour-enquiry</Link>
+          <Link href="/">AOPs · tour-inquiry</Link>
           <span className={styles.csep}>›</span>
           <span className={styles.name}>Design Preview</span>
         </div>
@@ -126,8 +126,8 @@ export default function PreviewPage() {
       </header>
 
       <div className={styles.wrap}>
-        <span className={styles.eyebrow}>Preview · v1 · 2026-05-23</span>
-        <h1 className={styles.h1}>Design Preview — every primitive in the new language</h1>
+        <span className={styles.eyebrow}>Preview · v1 · 05/23/2026</span>
+        <h1 className={styles.h1}>Design Preview - every primitive in the new language</h1>
         <p className={styles.lede}>
           Wipe-test surface for the new design language, built from real React components in this app.
           Updates automatically as components are refined. Approve here before each Pass 2 component change merges.
@@ -136,8 +136,8 @@ export default function PreviewPage() {
 
         <nav className={styles.toc}>
           <a href="#palette">01 · Palette</a>
-          <a href="#chip">02 · Chip — buckets</a>
-          <a href="#chipstates">03 · Chip — states</a>
+          <a href="#chip">02 · Chip - buckets</a>
+          <a href="#chipstates">03 · Chip - states</a>
           <a href="#fieldref">04 · Field ref</a>
           <a href="#connector">05 · Connector tile</a>
           <a href="#kbd">06 · Kbd</a>
@@ -205,7 +205,7 @@ export default function PreviewPage() {
             ))}
           </div>
 
-          <span className={styles.subhead}>Hiver tint — accent only</span>
+          <span className={styles.subhead}>Hiver tint - accent only</span>
           <div className={styles.swatchGrid}>
             {PALETTE_PRIMARY.map((s) => (
               <div key={s.name} className={styles.swatch}>
@@ -221,7 +221,7 @@ export default function PreviewPage() {
 
         {/* ============ 02 CHIP BUCKETS ============ */}
         <section id="chip" className={styles.section}>
-          <span className={styles.seclabel}><span className={styles.secnum}>02</span> Chip — by bucket</span>
+          <span className={styles.seclabel}><span className={styles.secnum}>02</span> Chip - by bucket</span>
           <h2 className={styles.h2}>Real Chip atom, one per bucket</h2>
           <p className={styles.sub}>Connector chips render brand + sep + verb; non-connector chips render the verb only. Meta in mono with hairline divider.</p>
 
@@ -245,7 +245,7 @@ export default function PreviewPage() {
 
         {/* ============ 03 CHIP STATES ============ */}
         <section id="chipstates" className={styles.section}>
-          <span className={styles.seclabel}><span className={styles.secnum}>03</span> Chip — states</span>
+          <span className={styles.seclabel}><span className={styles.secnum}>03</span> Chip - states</span>
           <h2 className={styles.h2}>Status variants from ChipStatus</h2>
           <p className={styles.sub}>Five statuses: ok, draft, warn, error, running. Currently only <code>draft</code> has dedicated styling; others use default. Pass 2 wires the remaining state visuals.</p>
 
@@ -266,7 +266,7 @@ export default function PreviewPage() {
         {/* ============ 04 FIELD REF ============ */}
         <section id="fieldref" className={styles.section}>
           <span className={styles.seclabel}><span className={styles.secnum}>04</span> Field ref</span>
-          <h2 className={styles.h2}>9 types — same atom</h2>
+          <h2 className={styles.h2}>9 types - same atom</h2>
           <p className={styles.sub}>Inline-prose ref pill. Mono path, hairline border, surface-soft fill. Used in NL prose and in WHEN.</p>
 
           <div className={styles.group}>
@@ -367,7 +367,7 @@ export default function PreviewPage() {
         <section id="frontmatter" className={styles.section}>
           <span className={styles.seclabel}><span className={styles.secnum}>08</span> Frontmatter</span>
           <h2 className={styles.h2}>Title (18px / 600), summary, WHEN trigger</h2>
-          <p className={styles.sub}>Real Frontmatter component. The 54px padding-left is preserved here — it aligns with the canvas step-body column in the live editor; in this isolated card it sits slightly indented from the card edge.</p>
+          <p className={styles.sub}>Real Frontmatter component. The 54px padding-left is preserved here - it aligns with the canvas step-body column in the live editor; in this isolated card it sits slightly indented from the card edge.</p>
 
           <div className={styles.group}>
             <div className={styles.groupHead}>
@@ -393,14 +393,14 @@ export default function PreviewPage() {
         {/* ============ 09 TOAST ============ */}
         <section id="toast" className={styles.section}>
           <span className={styles.seclabel}><span className={styles.secnum}>09</span> Toast</span>
-          <h2 className={styles.h2}>3 variants — default, success, warn</h2>
-          <p className={styles.sub}>Click below to fire — uses the real <code>ToastStack</code> renderer, top-right.</p>
+          <h2 className={styles.h2}>3 variants - default, success, warn</h2>
+          <p className={styles.sub}>Click below to fire - uses the real <code>ToastStack</code> renderer, top-right.</p>
 
           <div className={styles.group}>
             <div className={styles.groupBody}>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <button className={styles.btn} onClick={() => fireToast('default', 'Saved as draft')}>Default</button>
-                <button className={styles.btn} onClick={() => fireToast('success', 'Playbook activated')}>Success</button>
+                <button className={styles.btn} onClick={() => fireToast('success', 'AOP activated')}>Success</button>
                 <button className={styles.btn} onClick={() => fireToast('warn', 'Connector needs auth')}>Warn</button>
               </div>
             </div>
@@ -467,9 +467,9 @@ export default function PreviewPage() {
 
         <footer className={styles.footer}>
           <ul>
-            <li><a href="/">/ — assembled workspace</a></li>
+            <li><a href="/">/ - assembled workspace</a></li>
             <li><a href="https://github.com/geekv30/hiver-playbooks-prototype" target="_blank" rel="noreferrer">Repo</a></li>
-            <li><a href="/design-language-1">/design-language-1 — this page</a></li>
+            <li><a href="/design-language-1">/design-language-1 - this page</a></li>
           </ul>
         </footer>
 

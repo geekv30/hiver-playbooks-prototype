@@ -9,6 +9,8 @@ import styles from './RunTrace.module.css';
 
 interface Props {
   stepStatus: Record<string, StepStatus>;
+  /** Actual per-step elapsed ms for this run (shown instead of the base). */
+  stepMs?: Record<string, number>;
   /** The email's run outcome - adjusts the Condition step on a caught gap. */
   outcome?: SimStatusKind;
 }
@@ -16,7 +18,7 @@ interface Props {
 const LAST = SIM_TRACE.length - 1;
 
 /** RunTrace - the collapsible Trace section on an email card. */
-export default function RunTrace({ stepStatus, outcome }: Props) {
+export default function RunTrace({ stepStatus, stepMs, outcome }: Props) {
   const [open, setOpen] = useState(true);
   return (
     <div className={styles.trace}>
@@ -29,7 +31,7 @@ export default function RunTrace({ stepStatus, outcome }: Props) {
         <span className={styles.title}>Trace</span>
         <RiArrowDownSLine className={styles.chev} data-open={open || undefined} aria-hidden />
       </button>
-      {open && (
+      <div className={styles.stepsWrap} data-open={open || undefined}>
         <div className={styles.steps}>
           {SIM_TRACE.map((s, i) => {
             const noBranch = s.kind === 'condition' && outcome === 'attention';
@@ -39,13 +41,14 @@ export default function RunTrace({ stepStatus, outcome }: Props) {
                 key={s.id}
                 step={step}
                 status={stepStatus[s.id] ?? 'pending'}
+                runMs={stepMs?.[s.id]}
                 isLast={i === LAST}
                 branchWarn={noBranch}
               />
             );
           })}
         </div>
-      )}
+      </div>
     </div>
   );
 }

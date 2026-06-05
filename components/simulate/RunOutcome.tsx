@@ -1,16 +1,20 @@
 'use client';
 
 import { motion, useReducedMotion } from 'motion/react';
-import { RiCornerUpLeftLine, RiThumbUpLine, RiThumbDownLine, RiAlertLine } from 'react-icons/ri';
+import { RiCornerUpLeftLine, RiAlertLine, RiErrorWarningLine } from 'react-icons/ri';
+import ThumbsRating, { type Verdict } from '@/components/atoms/ThumbsRating';
 import { SIM_COPY } from '@/data/simFixtures';
 import { SIM_BRANCH, SIM_DRAFT } from './traceFixture';
 import styles from './RunOutcome.module.css';
 
-export type Verdict = 'up' | 'down';
+// Re-exported so existing consumers (EmailCard, EmailList, RecentEmails,
+// SimulatePanel) keep importing Verdict from here; the type now lives on the atom.
+export type { Verdict };
 
 interface Props {
-  /** 'passed' shows the drafted reply; 'attention' shows the caught-gap nudge. */
-  kind: 'passed' | 'attention';
+  /** 'passed' shows the drafted reply; 'attention' the caught-gap nudge; 'failed'
+   *  the failure reason. */
+  kind: 'passed' | 'attention' | 'failed';
   branch?: string;
   draft?: string;
   /** Controlled verdict (persisted by the panel, so it survives re-runs). */
@@ -29,6 +33,18 @@ export default function RunOutcome({ kind, branch = SIM_BRANCH, draft = SIM_DRAF
   const spring = { type: 'spring' as const, stiffness: 420, damping: 34 };
   const enter = reduce ? false : { opacity: 0, y: 6 };
 
+  if (kind === 'failed') {
+    return (
+      <motion.div className={styles.fail} initial={enter} animate={{ opacity: 1, y: 0 }} transition={spring}>
+        <div className={styles.failHead}>
+          <RiErrorWarningLine aria-hidden />
+          {SIM_COPY.failedHead}
+        </div>
+        <p className={styles.failBody}>{SIM_COPY.failedBody}</p>
+      </motion.div>
+    );
+  }
+
   if (kind === 'attention') {
     return (
       <motion.div className={styles.attn} initial={enter} animate={{ opacity: 1, y: 0 }} transition={spring}>
@@ -43,39 +59,20 @@ export default function RunOutcome({ kind, branch = SIM_BRANCH, draft = SIM_DRAF
 
   return (
     <motion.div className={styles.outcome} initial={enter} animate={{ opacity: 1, y: 0 }} transition={spring}>
-      <div className={styles.draft}>
-        <div className={styles.draftHead}>
-          <span className={styles.draftLabel}>
-            <RiCornerUpLeftLine aria-hidden />
-            Drafted reply
-          </span>
-          <div className={styles.verdict}>
-            <button
-              type="button"
-              className={styles.vbtn}
-              data-on={verdict === 'up' || undefined}
-              aria-pressed={verdict === 'up'}
-              aria-label="Looks right"
-              onClick={() => onVerdict?.('up')}
-            >
-              <RiThumbUpLine aria-hidden />
-            </button>
-            <button
-              type="button"
-              className={styles.vbtn}
-              data-down
-              data-on={verdict === 'down' || undefined}
-              aria-pressed={verdict === 'down'}
-              aria-label="Needs work"
-              onClick={() => onVerdict?.('down')}
-            >
-              <RiThumbDownLine aria-hidden />
-            </button>
-          </div>
-        </div>
-        <span className={styles.branchCaption}>matched: {branch}</span>
-        <p className={styles.draftBody}>{draft}</p>
+      <span className={styles.branchCaption}>Matched branch: {branch}</span>
+      <div className={styles.draftHead}>
+        <span className={styles.draftLabel}>
+          <RiCornerUpLeftLine aria-hidden />
+          Reply drafted
+        </span>
+        <ThumbsRating
+          verdict={verdict}
+          onVerdict={(v) => onVerdict?.(v)}
+          upLabel="Looks right"
+          downLabel="Needs work"
+        />
       </div>
+      <p className={styles.draftCard}>{draft}</p>
     </motion.div>
   );
 }

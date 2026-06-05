@@ -159,7 +159,7 @@ export const ACTIONS: ActionDef[] = [
 
   // flow
   { id: 'condition',            bucket: 'flow',                         verb: 'Condition',     name: 'Condition',             desc: 'Branch on an expression',                                              iconKey: 'condition' },
-  { id: 'end',                  bucket: 'flow',                         verb: 'End playbook',  name: 'End playbook',          desc: 'Stop here',                                                            iconKey: 'end' },
+  { id: 'end',                  bucket: 'flow',                         verb: 'End AOP',  name: 'End AOP',          desc: 'Stop here',                                                            iconKey: 'end' },
 ];
 
 export const BUCKET_TITLES: Record<Bucket, string> = {
@@ -210,10 +210,10 @@ export const REFS: Ref[] = [
 /* ============================================================ */
 export const WALK_JAPAN_SEED: Playbook = {
   frontmatter: {
-    name: 'Tour enquiry',
+    name: 'Tour inquiry',
     triggerFragments: [
       { kind: 'ref',  refPath: 'info@walkjapan.com' },
-      { kind: 'text', text: ' receives a tour enquiry.' },
+      { kind: 'text', text: ' receives a tour inquiry.' },
     ],
     summary: 'Get the team 80% of the way to a reply, then leave the last 20% to a human who can keep the Walk Japan voice.',
   },
@@ -224,7 +224,7 @@ export const WALK_JAPAN_SEED: Playbook = {
       fragments: [
         { kind: 'text', text: 'First, ' },
         { kind: 'chip', chip: { id: 'c-01', actionId: 'ai_extract', status: 'idle', meta: 'tour · dates · group size · concerns' } },
-        { kind: 'text', text: ' from the email in one line — which tour, what dates, group size, and any special concerns (fitness, dietary, accessibility).' },
+        { kind: 'text', text: ' from the email in one line - which tour, what dates, group size, and any special concerns (fitness, dietary, accessibility).' },
       ],
     },
     {
@@ -242,7 +242,7 @@ export const WALK_JAPAN_SEED: Playbook = {
       kind: 'action',
       fragments: [
         { kind: 'chip', chip: { id: 'c-03', actionId: 'hubspot_find', status: 'idle', meta: 'by from_email' } },
-        { kind: 'text', text: ' — are they a repeat guest, new, or have they enquired before?' },
+        { kind: 'text', text: ' - are they a repeat guest, new, or have they inquired before?' },
       ],
     },
     {
@@ -250,7 +250,7 @@ export const WALK_JAPAN_SEED: Playbook = {
       kind: 'action',
       fragments: [
         { kind: 'chip', chip: { id: 'c-04', actionId: 'kb_search', status: 'idle', meta: 'tour overview · fitness · dietary' } },
-        { kind: 'text', text: ' — the tour overview, the fitness-level guide, and the dietary FAQ. Keep those links handy for the draft.' },
+        { kind: 'text', text: ' - the tour overview, the fitness-level guide, and the dietary FAQ. Keep those links handy for the draft.' },
       ],
     },
     {
@@ -268,7 +268,7 @@ export const WALK_JAPAN_SEED: Playbook = {
               kind: 'action',
               fragments: [
                 { kind: 'chip', chip: { id: 'c-05a', actionId: 'draft_reply', status: 'idle', meta: 'warm + availability + KB links' } },
-                { kind: 'text', text: ' — warm voice, the availability, fitness/dietary notes from the right articles, help-center links, and an invitation to hold the dates.' },
+                { kind: 'text', text: ' - warm voice, the availability, fitness/dietary notes from the right articles, help-center links, and an invitation to hold the dates.' },
               ],
             },
           ],
@@ -283,7 +283,7 @@ export const WALK_JAPAN_SEED: Playbook = {
               kind: 'action',
               fragments: [
                 { kind: 'chip', chip: { id: 'c-05b', actionId: 'draft_reply', status: 'idle', meta: 'sorry + alternatives + similar tours' } },
-                { kind: 'text', text: ' — "sorry it’s not open then, but here’s what’s similar" — two alternative dates or two similar tours, with help-center links.' },
+                { kind: 'text', text: ' - "sorry it’s not open then, but here’s what’s similar" - two alternative dates or two similar tours, with help-center links.' },
               ],
             },
           ],
@@ -304,14 +304,14 @@ export const WALK_JAPAN_SEED: Playbook = {
       fragments: [
         { kind: 'text', text: 'Leave a private ' },
         { kind: 'chip', chip: { id: 'c-07', actionId: 'note', status: 'idle', meta: 'tour · dates · group size · concerns' } },
-        { kind: 'text', text: ' — so the sender has the full picture without re-reading the thread.' },
+        { kind: 'text', text: ' - so the sender has the full picture without re-reading the thread.' },
       ],
     },
     {
       id: 'step-08',
       kind: 'action',
       fragments: [
-        { kind: 'text', text: 'Log a row in our enquiries tracker: ' },
+        { kind: 'text', text: 'Log a row in our inquiries tracker: ' },
         { kind: 'chip', chip: { id: 'c-08', actionId: 'http', status: 'idle', meta: 'Airtable · customer · tour · dates · source · status' } },
         { kind: 'text', text: '.' },
       ],
@@ -339,20 +339,20 @@ export const WALK_JAPAN_SEED: Playbook = {
       fragments: [
         { kind: 'text', text: 'If we haven’t heard back, ' },
         { kind: 'chip', chip: { id: 'c-11', actionId: 'tag', status: 'idle', meta: 'warm-follow-up-needed' } },
-        { kind: 'text', text: ' and tell the human — we don’t auto-send nudges to enquiries. A human writes that one too.' },
+        { kind: 'text', text: ' and tell the human - we don’t auto-send nudges to inquiries. A human writes that one too.' },
       ],
     },
     {
       id: 'step-12',
       kind: 'end',
-      reason: 'enquiry handled',
+      reason: 'inquiry handled',
     },
   ],
 };
 
 /* ============================================================ */
-/* Devansh seed — Dev support API error reply with approval       */
-/* From PLAYBOOKS_STORIES.md Story 3 — the stress-test:           */
+/* Devansh seed - Dev support API error reply with approval       */
+/* From PLAYBOOKS_STORIES.md Story 3 - the stress-test:           */
 /* 4-way diagnose branching + multi-channel approval + timeout    */
 /* ============================================================ */
 export const DEVANSH_API_SEED: Playbook = {
@@ -371,7 +371,7 @@ export const DEVANSH_API_SEED: Playbook = {
       fragments: [
         { kind: 'text', text: 'First, ' },
         { kind: 'chip', chip: { id: 'dv-c01', actionId: 'ai_extract', status: 'idle', meta: 'error code · HTTP status · endpoint · when · SDK · payload (sanitized)' } },
-        { kind: 'text', text: ' — the bits that matter.' },
+        { kind: 'text', text: ' - the bits that matter.' },
       ],
     },
     {
@@ -387,7 +387,7 @@ export const DEVANSH_API_SEED: Playbook = {
       kind: 'action',
       fragments: [
         { kind: 'chip', chip: { id: 'dv-c03', actionId: 'hubspot_find', status: 'idle', meta: 'in HubSpot' } },
-        { kind: 'text', text: ' — which contact, which company.' },
+        { kind: 'text', text: ' - which contact, which company.' },
       ],
     },
     {
@@ -563,7 +563,7 @@ export const DEVANSH_API_SEED: Playbook = {
     {
       id: 'dv-11',
       kind: 'condition',
-      exprText: 'Did the approver authorize anything high-impact while reviewing? Those need a second approval — the reply itself can go; the bumps and acks wait.',
+      exprText: 'Did the approver authorize anything high-impact while reviewing? Those need a second approval - the reply itself can go; the bumps and acks wait.',
       branches: [
         {
           id: 'dv-b-bump',
@@ -610,7 +610,7 @@ export const DEVANSH_API_SEED: Playbook = {
 };
 
 /* ============================================================ */
-/* Playbook registry — drives the topbar switcher                 */
+/* AOP registry - drives the topbar switcher                      */
 /* ============================================================ */
 export interface PlaybookOption {
   id: string;
@@ -619,7 +619,7 @@ export interface PlaybookOption {
   seed: Playbook;
 }
 export const PLAYBOOKS: PlaybookOption[] = [
-  { id: 'walk-japan', label: 'Tour enquiry',     blurb: 'Walk Japan · inbound tour enquiries', seed: WALK_JAPAN_SEED },
+  { id: 'walk-japan', label: 'Tour inquiry',     blurb: 'Walk Japan · inbound tour inquiries', seed: WALK_JAPAN_SEED },
   { id: 'devansh',    label: 'API error reply',  blurb: 'Dev-support · API errors with approval', seed: DEVANSH_API_SEED },
 ];
 
@@ -627,12 +627,12 @@ export const PLAYBOOKS: PlaybookOption[] = [
 /* Mock test trace generator                                      */
 /* ============================================================ */
 export const MOCK_TRACE_OUTPUTS: Record<string, { input: string; output: string; errorMessage?: string }> = {
-  'c-01': { input: 'subject + body',           output: '{tour: "Nakasendo", dates: "Apr 4–8", group: 2, concerns: "fitness"}' },
+  'c-01': { input: 'subject + body',           output: '{tour: "Nakasendo", dates: "Apr 4-8", group: 2, concerns: "fitness"}' },
   'c-02': { input: 'tour: Nakasendo',          output: '[{date: Apr 4, status: open}, {date: Apr 11, status: full}]' },
   'c-03': { input: 'rhys@walkjapan.com',       output: '{contact: rhys@walkjapan.com, source: web}' },
   'c-04': { input: 'overview, fitness, dietary',output: '3 articles found' },
   'c-05a': { input: 'availability + KB links', output: 'Draft #4711 saved' },
-  'c-05b': { input: 'alternatives',             output: '(skipped — availability == "yes")' },
+  'c-05b': { input: 'alternatives',             output: '(skipped - availability == "yes")' },
   'c-06': { input: 'tag: Nakasendo',           output: 'tagged' },
   'c-07': { input: 'note body 4 lines',         output: 'note added' },
   'c-08': { input: 'POST Airtable',             output: '201 Created · row-id 5821' },

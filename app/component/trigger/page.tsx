@@ -21,7 +21,7 @@ interface FrontmatterState {
 }
 
 const DEFAULT_FM: FrontmatterState = {
-  name: 'Tour enquiry',
+  name: 'Tour inquiry',
   triggerFragments: [
     { kind: 'ref',  text: 'info@walkjapan.com' },
     { kind: 'text', text: ' receives an email containing ' },
@@ -100,7 +100,7 @@ function FrontmatterCard({
         className={styles.fmTitle}
         contentEditable={!readOnly}
         suppressContentEditableWarning
-        data-placeholder="Untitled playbook"
+        data-placeholder="Untitled AOP"
         onKeyDown={handleTitleKey}
         onBlur={(e) => onChange({ name: e.currentTarget.textContent ?? '' })}
       >
@@ -119,7 +119,7 @@ function FrontmatterCard({
         className={styles.fmSummary}
         contentEditable={!readOnly}
         suppressContentEditableWarning
-        data-placeholder="Add a short summary so the team knows what this playbook does..."
+        data-placeholder="Add a short summary so the team knows what this AOP does..."
         onBlur={(e) => onChange({ summary: e.currentTarget.textContent ?? '' })}
       >
         {state.summary}
@@ -168,7 +168,7 @@ const STATE_HINT: Record<CatalogState, string> = {
   configured: 'All values committed; no focus tints.',
   focused:    'Tab-stop highlighted; no cursor (not typing yet).',
   error:      'Required region empty; red helper line.',
-  disabled:   'Run mode — read-only + dimmed; status pill in corner.',
+  disabled:   'Run mode - read-only + dimmed; status pill in corner.',
 };
 
 function StateMock({ state }: { state: CatalogState }) {
@@ -187,10 +187,10 @@ function StateMock({ state }: { state: CatalogState }) {
             className={`${styles.miniTitle} ${state === 'focused' || state === 'typing' ? styles.miniFocused : ''} ${state === 'error' ? styles.miniError : ''}`}
           >
             {state === 'empty' || state === 'error'
-              ? <span className={styles.miniPlaceholder}>Untitled playbook</span>
+              ? <span className={styles.miniPlaceholder}>Untitled AOP</span>
               : state === 'typing'
-                ? <>Tour enq<span className={styles.miniCaret} /></>
-                : 'Tour enquiry'}
+                ? <>Tour inq<span className={styles.miniCaret} /></>
+                : 'Tour inquiry'}
           </div>
           {state === 'error' && (
             <div className={styles.miniErrLine}>Name is required</div>
@@ -221,7 +221,7 @@ function StateMock({ state }: { state: CatalogState }) {
 const CATALOG_ORDER: CatalogState[] = ['empty', 'typing', 'configured', 'focused', 'error', 'disabled'];
 
 /* ============================================================ */
-/* Variant strip — 5 trigger types                                */
+/* Variant strip - 5 trigger types                                */
 /* ============================================================ */
 interface VariantDef {
   id: string;
@@ -253,7 +253,7 @@ const VARIANTS: VariantDef[] = [
     status: 'future',
     fragments: [
       { kind: 'text', text: 'every business day at ' },
-      { kind: 'code', text: '09:00' },
+      { kind: 'code', text: '9:00 AM' },
       { kind: 'text', text: ' (' },
       { kind: 'ref',  text: 'Asia/Tokyo' },
       { kind: 'text', text: ')' },
@@ -267,7 +267,7 @@ const VARIANTS: VariantDef[] = [
     status: 'future',
     fragments: [
       { kind: 'text', text: 'webhook ' },
-      { kind: 'code', text: 'POST /playbooks/walkjapan/enquiry' },
+      { kind: 'code', text: 'POST /aops/walkjapan/inquiry' },
       { kind: 'text', text: ' receives payload' },
     ],
   },
@@ -290,7 +290,7 @@ const VARIANTS: VariantDef[] = [
     status: 'future',
     fragments: [
       { kind: 'text', text: 'form ' },
-      { kind: 'code', text: '"Tour enquiry"' },
+      { kind: 'code', text: '"Tour inquiry"' },
       { kind: 'text', text: ' is submitted' },
     ],
   },
@@ -343,13 +343,13 @@ export default function TriggerPage() {
       <header className={styles.docbar}>
         <div className={styles.brand}>P</div>
         <div className={styles.crumb}>
-          <Link href="/">Playbooks</Link>
+          <Link href="/">AOPs</Link>
           <span className={styles.csep}>/</span>
           <Link href="/component/inspector">Components</Link>
           <span className={styles.csep}>/</span>
           <span className={styles.name}>Trigger / Frontmatter</span>
         </div>
-        <span className={styles.meta}>Umbrella · 2026-05-23</span>
+        <span className={styles.meta}>Umbrella · 05/23/2026</span>
         <span className={styles.tbDivider} />
         <span className={styles.meta}>Fin (WHEN row) · OpenAI (start node) · Linear / Notion (title) · Hiver-prod</span>
         <span className={styles.spacer} />
@@ -362,9 +362,9 @@ export default function TriggerPage() {
       <div className={styles.wrap}>
         <div className={styles.hero}>
           <span className={styles.eyebrow}>Component · Trigger / Frontmatter · umbrella</span>
-          <h1 className={styles.h1}>The anchor row — playbook Name + WHEN trigger + Summary</h1>
+          <h1 className={styles.h1}>The anchor row - AOP Name + WHEN trigger + Summary</h1>
           <p className={styles.lede}>
-            One Frontmatter per canvas. Always first, never deletable. Holds the playbook&apos;s identity (Name + Summary) and its entry condition (WHEN). The Trigger row is the load-bearing part: it&apos;s what makes the playbook a playbook. Type freely into any region; <code>Tab</code> cycles Name → Trigger → Summary; values commit on blur.
+            One Frontmatter per canvas. Always first, never deletable. Holds the AOP&apos;s identity (Name + Summary) and its entry condition (WHEN). The Trigger row is the load-bearing part: it&apos;s what makes the AOP an AOP. Type freely into any region; <code>Tab</code> cycles Name → Trigger → Summary; values commit on blur.
           </p>
           <div className={styles.heroMeta}>
             <span><strong>Regions:</strong> 3 (Title · Trigger · Summary)</span>
@@ -380,7 +380,7 @@ export default function TriggerPage() {
         {/* ============================================================ */}
         <section className={styles.section}>
           <span className={styles.seclabel}><span className={styles.secnum}>01</span> Live demo</span>
-          <h2 className={styles.h2}>Type into any region — values commit on blur</h2>
+          <h2 className={styles.h2}>Type into any region - values commit on blur</h2>
           <p className={styles.sub}>The Frontmatter sits at the top of the canvas with a mock step below it for context. Tab cycles regions. Enter in Title/Trigger blurs; Enter in Summary inserts a line break. Switch modes to see read-only behavior.</p>
 
           <div className={styles.canvasToolbar}>
@@ -426,8 +426,8 @@ export default function TriggerPage() {
           </div>
 
           <div className={styles.canvasNote}>
-            <strong>Committed values</strong> · Name: <code>{fm.name || '—'}</code> · Summary:{' '}
-            <code>{fm.summary.length > 80 ? fm.summary.slice(0, 80) + '…' : fm.summary || '—'}</code>
+            <strong>Committed values</strong> · Name: <code>{fm.name || '-'}</code> · Summary:{' '}
+            <code>{fm.summary.length > 80 ? fm.summary.slice(0, 80) + '…' : fm.summary || '-'}</code>
           </div>
         </section>
 
@@ -451,7 +451,7 @@ export default function TriggerPage() {
         {/* ============================================================ */}
         <section className={styles.section}>
           <span className={styles.seclabel}><span className={styles.secnum}>03</span> 5 trigger types</span>
-          <h2 className={styles.h2}>v1 ships email-match — the other 4 are designed for, not shipped yet</h2>
+          <h2 className={styles.h2}>v1 ships email-match - the other 4 are designed for, not shipped yet</h2>
           <p className={styles.sub}>The Frontmatter shell is type-agnostic; only the WHEN fragment list differs per type. Static mocks of all 5 so the variant taxonomy is grounded before we ship the type-switcher (see Open Question 1 in the spec).</p>
 
           <div className={styles.variantGrid}>
@@ -488,7 +488,7 @@ export default function TriggerPage() {
             <div className={styles.sourceRow}>
               <div className={styles.sourceProp}>Fragment model (text · ref · code) in the WHEN row</div>
               <div className={styles.sourceFrom}>Hiver-prod</div>
-              <div className={styles.sourceNote}>Same model as step bodies — <code>types/playbook.ts</code> Fragment union. Trigger excludes <code>chip</code> kind (no action chips in WHEN).</div>
+              <div className={styles.sourceNote}>Same model as step bodies - <code>types/playbook.ts</code> Fragment union. Trigger excludes <code>chip</code> kind (no action chips in WHEN).</div>
             </div>
             <div className={styles.sourceRow}>
               <div className={styles.sourceProp}>Padding-left aligned to step body column</div>

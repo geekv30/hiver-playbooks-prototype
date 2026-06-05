@@ -1,0 +1,182 @@
+/* CopilotProposal - the reviewable apply card inside a Copilot reply. Clean
+   bordered card (no AI-slop gradient/chunky border): the user reviews the listed
+   additions and applies them, or dismisses. Settles to a compact confirmation. */
+
+.card {
+  margin-top: 8px;
+  padding: 12px;
+  background: var(--surface-soft);
+  border: 1px solid var(--hairline-soft);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: proposalIn var(--d-enter) var(--ease-snap) backwards;
+}
+@keyframes proposalIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.eyebrow {
+  font-size: var(--fs-caption); /* 12px */
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.title {
+  margin: 0;
+  font-size: var(--fs-small); /* 13px */
+  line-height: 19px;
+  font-weight: 500;
+  letter-spacing: var(--ls-body);
+  color: var(--ink);
+}
+
+.list {
+  list-style: none;
+  margin: 2px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+/* "+" addition marker, ok-toned (these lines will be ADDED). */
+.bullet {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  border-radius: var(--r-sm);
+  background: var(--state-ok-bg);
+  color: var(--state-ok);
+}
+.bullet svg {
+  width: 12px;
+  height: 12px;
+}
+.itemText {
+  font-size: var(--fs-small);
+  line-height: 18px;
+  letter-spacing: var(--ls-body);
+  color: var(--body);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+/* ---- settled states (applied / dismissed) ---- */
+.settled {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--r-md);
+  background: var(--surface-soft);
+  border: 1px solid var(--hairline-soft);
+  animation: proposalIn var(--d-enter) var(--ease-snap) backwards;
+}
+.settled[data-muted] {
+  background: transparent;
+  border-color: transparent;
+  padding: 4px 0;
+}
+/* Success check pops in (transitions.dev success-check idiom). */
+.checkRing {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--state-ok);
+  color: #fff;
+  animation: checkPop var(--d-enter) var(--ease-snap) backwards;
+}
+.checkRing svg {
+  width: 12px;
+  height: 12px;
+}
+@keyframes checkPop {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.settledText {
+  flex: 1;
+  font-size: var(--fs-small);
+  line-height: 18px;
+  letter-spacing: var(--ls-body);
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+.settledText[data-muted] {
+  color: var(--muted);
+  font-weight: 400;
+}
+.undo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  margin: 0;
+  border: none;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  cursor: pointer;
+  transition:
+    background var(--d-hover) var(--ease-snap),
+    color var(--d-hover) var(--ease-snap);
+}
+.undo:hover {
+  background: var(--card);
+  color: var(--ink-soft);
+}
+.undo svg {
+  width: 13px;
+  height: 13px;
+}
+.undo:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .settled,
+  .checkRing {
+    animation: none;
+  }
+}

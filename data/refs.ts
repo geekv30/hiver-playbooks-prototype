@@ -12,7 +12,7 @@ export const REF_GROUPS: RefGroup[] = [
 ];
 
 // GENERIC, case-agnostic references ONLY. These ticket/email fields exist on
-// any conversation regardless of the problem being solved — never story data
+// any conversation regardless of the problem being solved - never story data
 // (no tour/dietary/bookings). "From earlier steps" outputs are derived
 // dynamically from the current doc, not hardcoded here.
 export const DEFAULT_REFS: Ref[] = [

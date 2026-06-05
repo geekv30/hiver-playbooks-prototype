@@ -2,6 +2,7 @@
 
 import {
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -18,9 +19,9 @@ import {
   RiCornerDownLeftLine,
   RiArrowLeftSLine,
   RiArrowRightSLine,
-  RiCheckLine,
 } from 'react-icons/ri';
 import type { ConnectorSlug } from '@/types/playbook';
+import Checkbox from '@/components/atoms/Checkbox';
 import { findAction } from '@/data/library';
 import { ACTION_ICON } from '@/components/icons/ui';
 import { CONNECTOR_ICON } from '@/components/icons/connectors';
@@ -38,20 +39,24 @@ import styles from './CommandPalette.module.css';
 type IconCmp = ComponentType<SVGProps<SVGSVGElement>>;
 
 // Which page the palette is showing. null = root.
-type Drill =
-  | { type: 'connector'; slug: ConnectorSlug }
-  | { type: 'action'; id: string };
+type Drill = { type: 'connector'; slug: ConnectorSlug } | { type: 'action'; id: string };
 
 interface Props {
   /** Caret anchor in visual viewport coords (left, line top/bottom). */
   anchor: { left: number; top: number; bottom: number };
   /** Insert: an ACTIONS id (with optional meta value), or 'reference' + ref path. */
   onSelect: (actionId: string, meta?: string) => void;
+  /** Realtime: the in-progress selection (action + live config), so the parent can
+   *  update the "@ action" placeholder chip as the user navigates. null = none yet. */
+  onPreview?: (actionId: string | null, meta?: string) => void;
   onClose: () => void;
   /** Which world to open on: '/' lands on Actions (root), '@' on References. */
   initialScope?: 'actions' | 'references';
-  /** Render in-flow (relative) instead of a fixed caret popover — for the review page. */
+  /** Render in-flow (relative) instead of a fixed caret popover - for the review page. */
   presentation?: boolean;
+  /** Hide the "Condition" action - used inside a branch body, where nesting another
+   *  condition is disallowed (the block stays one level deep). */
+  noCondition?: boolean;
 }
 
 interface Row {
@@ -60,7 +65,7 @@ interface Row {
   sub?: string;
   Icon: IconCmp | null;
   brand: boolean; // brand icon → render in true color, not currentColor
-  drill: boolean; // trailing chevron — opens another page
+  drill: boolean; // trailing chevron - opens another page
   selectable: boolean; // multi-select → right-aligned check
   selected: boolean;
   activate: () => void; // click / Enter
@@ -78,7 +83,15 @@ function actionIcon(id: string): IconCmp | null {
   return (a && ACTION_ICON[a.iconKey]) || null;
 }
 
-export default function CommandPalette({ anchor, onSelect, onClose, initialScope, presentation }: Props) {
+export default function CommandPalette({
+  anchor,
+  onSelect,
+  onPreview,
+  onClose,
+  initialScope,
+  presentation,
+  noCondition,
+}: Props) {
   const [query, setQuery] = useState('');
   // '@' opens straight on the References picker; '/' (default) opens the root
   // Actions+Connectors view. Back/cross-links keep the two worlds reachable.
@@ -87,6 +100,8 @@ export default function CommandPalette({ anchor, onSelect, onClose, initialScope
   );
   const [picked, setPicked] = useState<Set<string>>(new Set()); // pick-many state
   const [active, setActive] = useState(0);
+  // Drill navigation direction, for the page slide. null on first open (no slide).
+  const [dir, setDir] = useState<'fwd' | 'back' | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const popRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -106,12 +121,15 @@ export default function CommandPalette({ anchor, onSelect, onClose, initialScope
 
   // Insert a single picked value (pick-one). Reference inserts a @ref instead.
   const choose = (actionId: string, opt: PickerOption) => {
-    if (actionId === REFERENCE_ID) onSelect(REFERENCE_ID, opt.id); // opt.id = ref path
+    if (actionId === REFERENCE_ID)
+      onSelect(REFERENCE_ID, opt.id); // opt.id = ref path
     else onSelect(actionId, opt.label);
   };
 
   const groups: Group[] = useMemo(() => {
     const q = query.trim().toLowerCase();
+    // Inside a branch body, "Condition" is omitted - an arm never nests a condition.
+    const actions = noCondition ? PALETTE_ACTIONS.filter((a) => a.id !== 'condition') : PALETTE_ACTIONS;
 
     // --- Action page (pick-one / pick-many / input) --------------------------
     if (drill?.type === 'action' && behavior && behavior.mode !== 'insert') {
@@ -162,22 +180,22 @@ export default function CommandPalette({ anchor, onSelect, onClose, initialScope
 
     // --- Flat search across everything ---------------------------------------
     if (q) {
-      const actionRows: Row[] = PALETTE_ACTIONS.filter((a) => a.label.toLowerCase().includes(q)).map(
-        (a) => {
-          const b = actionBehavior(a.id);
-          const drills = b.mode !== 'insert';
-          return {
-            key: a.id,
-            label: a.label,
-            Icon: actionIcon(a.id),
-            brand: false,
-            drill: drills,
-            selectable: false,
-            selected: false,
-            activate: drills ? () => openAction(a.id) : () => onSelect(a.id),
-          };
-        },
-      );
+      const actionRows: Row[] = actions.filter((a) =>
+        a.label.toLowerCase().includes(q),
+      ).map((a) => {
+        const b = actionBehavior(a.id);
+        const drills = b.mode !== 'insert';
+        return {
+          key: a.id,
+          label: a.label,
+          Icon: actionIcon(a.id),
+          brand: false,
+          drill: drills,
+          selectable: false,
+          selected: false,
+          activate: drills ? () => openAction(a.id) : () => onSelect(a.id),
+        };
+      });
 
       const verbRows: Row[] = [];
       PALETTE_CONNECTORS.forEach((slug) => {
@@ -204,7 +222,7 @@ export default function CommandPalette({ anchor, onSelect, onClose, initialScope
     }
 
     // --- Root ----------------------------------------------------------------
-    const actionRows: Row[] = PALETTE_ACTIONS.map((a) => {
+    const actionRows: Row[] = actions.map((a) => {
       const b = actionBehavior(a.id);
       const drills = b.mode !== 'insert';
       return {
@@ -226,16 +244,20 @@ export default function CommandPalette({ anchor, onSelect, onClose, initialScope
       drill: true,
       selectable: false,
       selected: false,
-      activate: () => setDrill({ type: 'connector', slug }),
+      activate: () => {
+        setDir('fwd');
+        setDrill({ type: 'connector', slug });
+      },
     }));
     return [
       { key: 'actions', label: 'Actions', rows: actionRows },
       { key: 'connectors', label: 'Connectors', rows: brandRows },
     ];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, drill, behavior, picked, onSelect]);
+  }, [query, drill, behavior, picked, onSelect, noCondition]);
 
   function openAction(id: string) {
+    setDir('fwd');
     setQuery('');
     setPicked(new Set());
     setDrill({ type: 'action', id });
@@ -249,6 +271,25 @@ export default function CommandPalette({ anchor, onSelect, onClose, initialScope
   }, [drill]);
   useEffect(() => setActive(0), [query, drill]);
 
+  // Realtime preview: reflect the in-progress selection onto the "@ action"
+  // placeholder chip as the user drills + toggles (Figma 647:41314 - the chip
+  // updates live to "Tag · dev-support, api error"). Root/connector pages keep it
+  // a placeholder; an action page shows the action + (for pick-many) the values.
+  useEffect(() => {
+    if (!onPreview) return;
+    if (drill?.type === 'action' && behavior && behavior.mode !== 'insert') {
+      if (behavior.mode === 'pick-many') {
+        const labels = behavior.options.filter((o) => picked.has(o.id)).map((o) => o.label);
+        onPreview(drill.id, labels.join(', '));
+      } else {
+        onPreview(drill.id, '');
+      }
+    } else {
+      onPreview(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drill, picked, behavior]);
+
   // Keep the active row in view.
   useEffect(() => {
     const el = listRef.current?.querySelector<HTMLElement>(`[data-row="${active}"]`);
@@ -256,13 +297,14 @@ export default function CommandPalette({ anchor, onSelect, onClose, initialScope
   }, [active]);
 
   const goBack = () => {
+    setDir('back');
     setQuery('');
     setPicked(new Set());
     setDrill(null);
   };
 
   // Closing a pick-many page commits the checked values (there is no confirm
-  // button — per the Figma, esc/outside-click "close" finalizes the selection).
+  // button - per the Figma, esc/outside-click "close" finalizes the selection).
   const closePalette = () => {
     if (drill?.type === 'action' && behavior?.mode === 'pick-many' && picked.size > 0) {
       confirmMany(); // inserts → parent unmounts the palette
@@ -271,7 +313,7 @@ export default function CommandPalette({ anchor, onSelect, onClose, initialScope
     }
   };
 
-  // Close on outside click (not in presentation mode — it's an in-flow demo).
+  // Close on outside click (not in presentation mode - it's an in-flow demo).
   useEffect(() => {
     if (presentation) return;
     const onDown = (e: MouseEvent) => {
@@ -310,18 +352,58 @@ export default function CommandPalette({ anchor, onSelect, onClose, initialScope
     }
   };
 
-  // Position below the caret. Anchor is visual coords; this popover is fixed
-  // inside the zoomed .app-scale, so divide by the scale.
+  // Position the popover. Anchor is visual-viewport coords; this popover is fixed
+  // inside the zoomed .app-scale, so CSS left/top live in layout px (= visual / zoom).
   // SSR-safe: only touches window/document on the client and when fixed.
   const width = 324;
   let left = 0;
   let top = 0;
   if (!presentation && typeof window !== 'undefined') {
-    const zoom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--app-scale')) || 1;
+    const zoom =
+      parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--app-scale')) || 1;
     const visualLeft = Math.max(12, Math.min(anchor.left, window.innerWidth - width * zoom - 12));
     left = visualLeft / zoom;
-    top = (anchor.bottom + 6) / zoom;
+    top = (anchor.bottom + 6) / zoom; // first-pass: below the caret (refined below)
   }
+
+  // Measured vertical placement: prefer below the caret, flip ABOVE when the
+  // popover would run off the bottom, and clamp into the viewport when neither
+  // side fully fits (the results card scrolls internally). Runs before paint, so
+  // the corrected position is the first thing shown - no flash, no off-screen menu.
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+  useLayoutEffect(() => {
+    if (presentation || typeof window === 'undefined') return;
+    const el = popRef.current;
+    if (!el) return;
+    const zoom =
+      parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--app-scale')) || 1;
+    const margin = 12;
+    const vh = window.innerHeight;
+    // getBoundingClientRect returns visual (zoom-applied) px - the same space as anchor.
+    const h = el.getBoundingClientRect().height;
+    const spaceBelow = vh - anchor.bottom - margin;
+    const spaceAbove = anchor.top - margin;
+
+    let visualTop: number;
+    if (h <= spaceBelow) {
+      visualTop = anchor.bottom + 6; // fits below
+    } else if (h <= spaceAbove) {
+      visualTop = anchor.top - 6 - h; // flip above
+    } else if (spaceBelow >= spaceAbove) {
+      visualTop = vh - margin - h; // clamp to the bottom edge
+    } else {
+      visualTop = margin; // clamp to the top edge
+    }
+    visualTop = Math.max(margin, Math.min(visualTop, vh - margin - h));
+
+    const visualLeft = Math.max(margin, Math.min(anchor.left, window.innerWidth - width * zoom - margin));
+    const next = { left: visualLeft / zoom, top: visualTop / zoom };
+    setPos((prev) =>
+      prev && Math.abs(prev.left - next.left) < 0.5 && Math.abs(prev.top - next.top) < 0.5
+        ? prev
+        : next,
+    );
+  });
 
   // Drill-page header (single row: back chevron + page icon + title).
   let PageIcon: IconCmp | null = null;
@@ -338,11 +420,19 @@ export default function CommandPalette({ anchor, onSelect, onClose, initialScope
 
   let rowIndex = -1;
 
+  // Remount key for the drill page - changes only when the drill TARGET changes
+  // (not on query/pick), so typing or toggling never replays the slide.
+  const pageKey = drill
+    ? drill.type === 'connector'
+      ? `c:${drill.slug}`
+      : `a:${drill.id}`
+    : 'root';
+
   return (
     <div
       ref={popRef}
       className={`${styles.pop} ${presentation ? styles.popStatic : ''}`}
-      style={presentation ? { width } : { left, top, width }}
+      style={presentation ? { width } : { left: pos?.left ?? left, top: pos?.top ?? top, width }}
       role="dialog"
       aria-label="Insert action"
     >
@@ -366,86 +456,100 @@ export default function CommandPalette({ anchor, onSelect, onClose, initialScope
 
       {/* Results card */}
       <div className={styles.card} ref={listRef}>
-        {drill && (
-          <button type="button" className={styles.pageHead} onClick={goBack}>
-            <RiArrowLeftSLine className={styles.pageHeadBack} aria-hidden />
-            {PageIcon && (
-              <span className={`${styles.pageHeadIco} ${pageIsBrand ? styles.pageHeadIcoBrand : ''}`}>
-                <PageIcon />
-              </span>
-            )}
-            <span className={styles.pageHeadTitle}>{pageTitle}</span>
-          </button>
-        )}
-
-        {isInputPage && behavior?.mode === 'input' && (
-          <div className={styles.inputPage}>
-            <div className={styles.inputHint}>
-              {query.trim() ? (
-                <>Press <kbd className={styles.cap}><RiCornerDownLeftLine /></kbd> to insert</>
-              ) : (
-                behavior.title
+        <div className={styles.page} data-dir={dir ?? undefined} key={pageKey}>
+          {drill && (
+            <button type="button" className={styles.pageHead} onClick={goBack}>
+              <RiArrowLeftSLine className={styles.pageHeadBack} aria-hidden />
+              {PageIcon && (
+                <span
+                  className={`${styles.pageHeadIco} ${pageIsBrand ? styles.pageHeadIcoBrand : ''}`}
+                >
+                  <PageIcon />
+                </span>
               )}
-            </div>
-          </div>
-        )}
+              <span className={styles.pageHeadTitle}>{pageTitle}</span>
+            </button>
+          )}
 
-        {!isInputPage && flatRows.length === 0 && (
-          <div className={styles.empty}>No matches for “{query.trim()}”.</div>
-        )}
-
-        {!isInputPage &&
-          groups.map((g) => (
-            <div key={g.key} className={styles.group}>
-              {!drill && <div className={styles.groupLabel}>{g.label}</div>}
-              <div className={styles.rows}>
-                {g.rows.map((row) => {
-                  rowIndex += 1;
-                  const idx = rowIndex;
-                  const isActive = idx === active;
-                  // Toggle rows (pick-many) use mousedown+preventDefault to keep
-                  // the search input focused; navigation/insert rows use click so
-                  // the press completes before the list changes underneath.
-                  const handlers = row.selectable
-                    ? {
-                        onMouseDown: (e: ReactMouseEvent) => {
-                          e.preventDefault();
-                          row.activate();
-                        },
-                      }
-                    : { onClick: () => row.activate() };
-                  return (
-                    <button
-                      key={row.key}
-                      type="button"
-                      data-row={idx}
-                      className={`${styles.row} ${row.selectable || (!row.Icon && !row.brand) ? styles.rowPlain : ''} ${isActive ? styles.rowActive : ''}`}
-                      onMouseEnter={() => setActive(idx)}
-                      role="option"
-                      aria-selected={isActive}
-                      {...handlers}
-                    >
-                      {row.Icon && !row.selectable && (
-                        <span className={`${styles.rowIco} ${row.brand ? styles.rowIcoBrand : ''}`}>
-                          <row.Icon />
-                        </span>
-                      )}
-                      <span className={styles.rowText}>
-                        <span className={styles.rowLabel}>{row.label}</span>
-                        {row.sub && <span className={styles.rowSub}>{row.sub}</span>}
-                      </span>
-                      {row.drill && <RiArrowRightSLine className={styles.rowChevron} aria-hidden />}
-                      {row.selectable && (
-                        <span className={styles.rowCheck} aria-hidden>
-                          {row.selected && <RiCheckLine />}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
+          {isInputPage && behavior?.mode === 'input' && (
+            <div className={styles.inputPage}>
+              <div className={styles.inputHint}>
+                {query.trim() ? (
+                  <>
+                    Press{' '}
+                    <kbd className={styles.cap}>
+                      <RiCornerDownLeftLine />
+                    </kbd>{' '}
+                    to insert
+                  </>
+                ) : (
+                  behavior.title
+                )}
               </div>
             </div>
-          ))}
+          )}
+
+          {!isInputPage && flatRows.length === 0 && (
+            <div className={styles.empty}>No matches for “{query.trim()}”.</div>
+          )}
+
+          {!isInputPage &&
+            groups.map((g) => (
+              <div key={g.key} className={styles.group}>
+                {!drill && <div className={styles.groupLabel}>{g.label}</div>}
+                <div className={styles.rows}>
+                  {g.rows.map((row) => {
+                    rowIndex += 1;
+                    const idx = rowIndex;
+                    const isActive = idx === active;
+                    // Toggle rows (pick-many) use mousedown+preventDefault to keep
+                    // the search input focused; navigation/insert rows use click so
+                    // the press completes before the list changes underneath.
+                    const handlers = row.selectable
+                      ? {
+                          onMouseDown: (e: ReactMouseEvent) => {
+                            e.preventDefault();
+                            row.activate();
+                          },
+                        }
+                      : { onClick: () => row.activate() };
+                    return (
+                      <button
+                        key={row.key}
+                        type="button"
+                        data-row={idx}
+                        className={`${styles.row} ${row.selectable || (!row.Icon && !row.brand) ? styles.rowPlain : ''} ${isActive ? styles.rowActive : ''}`}
+                        onMouseEnter={() => setActive(idx)}
+                        role="option"
+                        aria-selected={isActive}
+                        {...handlers}
+                      >
+                        {row.Icon && !row.selectable && (
+                          <span
+                            className={`${styles.rowIco} ${row.brand ? styles.rowIcoBrand : ''}`}
+                          >
+                            <row.Icon />
+                          </span>
+                        )}
+                        <span className={styles.rowText}>
+                          <span className={styles.rowLabel}>{row.label}</span>
+                          {row.sub && <span className={styles.rowSub}>{row.sub}</span>}
+                        </span>
+                        {row.drill && (
+                          <RiArrowRightSLine className={styles.rowChevron} aria-hidden />
+                        )}
+                        {row.selectable && (
+                          <span className={styles.rowBox}>
+                            <Checkbox presentational size={16} checked={row.selected} />
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+        </div>
       </div>
 
       {/* Footer hints */}
@@ -453,7 +557,9 @@ export default function CommandPalette({ anchor, onSelect, onClose, initialScope
         {isInputPage ? (
           <>
             <span className={styles.hint}>
-              <kbd className={styles.cap}><RiCornerDownLeftLine /></kbd>
+              <kbd className={styles.cap}>
+                <RiCornerDownLeftLine />
+              </kbd>
               insert
             </span>
             <span className={styles.hint}>
@@ -465,18 +571,24 @@ export default function CommandPalette({ anchor, onSelect, onClose, initialScope
           <>
             <span className={styles.hint}>
               <span className={styles.keys}>
-                <kbd className={styles.cap}><RiArrowUpLine /></kbd>
-                <kbd className={styles.cap}><RiArrowDownLine /></kbd>
+                <kbd className={styles.cap}>
+                  <RiArrowUpLine />
+                </kbd>
+                <kbd className={styles.cap}>
+                  <RiArrowDownLine />
+                </kbd>
               </span>
               navigate
             </span>
             <span className={styles.hint}>
-              <kbd className={styles.cap}><RiCornerDownLeftLine /></kbd>
+              <kbd className={styles.cap}>
+                <RiCornerDownLeftLine />
+              </kbd>
               select
             </span>
             <span className={styles.hint}>
               <kbd className={`${styles.cap} ${styles.capWide}`}>esc</kbd>
-              close
+              {isPickMany ? 'save & close' : 'close'}
             </span>
           </>
         )}

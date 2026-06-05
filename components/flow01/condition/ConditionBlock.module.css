@@ -30,18 +30,21 @@
 }
 
 
-/* tag + condition field row (Figma: gap 10, px 10 / py 8) */
+/* tag + condition field row. NO left/right inset: the IF/ELSE-IF/ELSE tag must
+   start at the SAME x as the main editor step content (the block already sits in
+   the step's content column), and the field fills to the content's right edge -
+   consistent with the editor-canvas row spec. */
 .head {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
-  padding: 8px 10px;
+  padding: 8px 0;
 }
 
-/* the resizable NL condition field. Figma: 1px #ECEFF6, radius 10, pad 10/16,
-   grows to fill, content-driven height. Native vertical resize (the trigger
-   field's grip pattern). */
+/* the NL condition field. Figma 334:36717: 1px #ECEFF6, radius 10, pad 10/16,
+   line-height 20 -> a single line is exactly 42px (20 + 10/10 pad + 1px border).
+   Height is content-driven (grows when the predicate wraps); NO resize grip. */
 .condField {
   flex: 1 0 0;
   min-width: 0;
@@ -52,30 +55,42 @@
   font-size: var(--fs-body);
   line-height: 20px;             /* Figma typography/line_height/20 */
   color: var(--ink-soft);        /* condition value = #3E4C5A (Gray1) */
-  resize: vertical;
-  overflow: auto;
-  min-height: 40px;
+  min-height: 42px;
   outline: none;
+  transition: border-color var(--d-hover) var(--ease-snap);
+}
+/* The condition expression is an NL predicate line, set at line-height 20 (not
+   the 26px step line) so the field lands at exactly 42px per Figma. */
+.condField [role='textbox'] {
+  line-height: 20px;
+  min-height: 20px;
 }
 .condField:empty::before {
   content: attr(data-placeholder);
   color: var(--hairline-strong);
   pointer-events: none;
 }
-.condField:focus {
+/* Active state: the same simple, neutral border as the trigger field (the caret
+   lives on the inner editable line, so it keys on :focus-within, not :focus). */
+.condField:focus-within {
   border-color: var(--hairline-strong);
 }
 
-/* body line: number + NL prompt + the @ affordance (Figma: white, px 10/py 2) */
+/* body line: a nested step row. The number sits at the main-content x (under the
+   tag, NO inset) and the body content is offset by a ~26px gutter, so the body
+   reads as a step with the same rhythm (46px) as a main editor row (Figma 334:36725). */
 .bodyLine {
   display: flex;
   align-items: center;
+  min-height: 46px;
   gap: 4px;
-  padding: 2px 10px;
+  /* A small left indent nests the branch body under its IF/ELSE-IF/ELSE tag. */
+  padding: 0 0 0 20px;
   background: #fff;
 }
 .bodyNum {
   flex: none;
+  width: 22px; /* number gutter: body content lands ~26px in (22 + 4 gap), a nested step */
   font-family: var(--mono);
   font-size: var(--fs-small);
   line-height: 20px; /* match the body text line-height so the digit shares its baseline */

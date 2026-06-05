@@ -12,3 +12,11 @@
     transform: rotate(360deg);
   }
 }
+
+/* Respect reduced-motion: hold still rather than spin (shared atom, so this
+   covers every Spinner usage). */
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}

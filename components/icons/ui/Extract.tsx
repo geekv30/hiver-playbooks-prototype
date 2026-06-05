@@ -1,6 +1,6 @@
 import type { SVGProps } from 'react';
 
-// AI Extract — document with sparkle. Path lifted verbatim from the Figma
+// AI Extract - document with sparkle. Path lifted verbatim from the Figma
 // action-tag spec (node 241:16560, viewBox 14, filled). Horizontally mirrored
 // to match the displayed orientation (sparkle top-left, folded corner top-right).
 export function ExtractIcon(props: SVGProps<SVGSVGElement>) {

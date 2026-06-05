@@ -10,6 +10,8 @@ import styles from './TraceStep.module.css';
 interface Props {
   step: TraceStepDef;
   status: StepStatus;
+  /** Actual elapsed ms for this run (falls back to the base step.ms). */
+  runMs?: number;
   isLast: boolean;
   /** Style the branch line as a caught gap (amber). */
   branchWarn?: boolean;
@@ -73,15 +75,13 @@ export default function TraceStep({ step, status, isLast, branchWarn }: Props) {
             {step.branch}
           </motion.div>
         )}
-        {done && (
+        {done && step.output && (
           <motion.div className={styles.detail} initial={enter} animate={{ opacity: 1, y: 0 }} transition={spring}>
-            <div className={styles.timing}>{step.ms} ms</div>
-            {step.output && <div className={styles.output}>{step.output}</div>}
+            <div className={styles.output}>{step.output}</div>
           </motion.div>
         )}
         {failed && (
           <motion.div className={styles.detail} initial={enter} animate={{ opacity: 1, y: 0 }} transition={spring}>
-            <div className={styles.timing}>{step.ms} ms</div>
             <div className={styles.error}>{SIM_COPY.stepError}</div>
           </motion.div>
         )}
