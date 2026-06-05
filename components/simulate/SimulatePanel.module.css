@@ -11,13 +11,15 @@
   width: 0;
   overflow: hidden;
   background: var(--card);
-  border-left: 1px solid var(--hairline-soft);
   /* Top separation is handled by the toolbar's bottom border (full width). */
   transition: width 240ms var(--ease-snap);
   will-change: width;
 }
 .panel[data-open] {
   width: var(--sim-w);
+  /* Left separator ONLY when open - a 0-width closed panel must not paint a
+     stray 1px divider between the editor and an adjacent panel. */
+  border-left: 1px solid var(--hairline-soft);
 }
 
 .inner {
@@ -28,97 +30,203 @@
   flex-direction: column;
 }
 
-/* Tabs - Scenarios | Custom test (Figma 211:18583: 48px row, px-18, gap-16,
-   each TabItem px-24, active = #196FE0 Medium + a full-width 2px underline). */
-.tabs {
-  flex: none;
+/* Floating mode (Copilot routes): the panel becomes the SAME floating rounded
+   card as CopilotPanel - a transparent slot wrapping a margined, rounded,
+   shadowed inner card (no flush left border). */
+.panel[data-floating] {
+  /* MUST equal CopilotPanel --panel-w (420) so toggling between the two right
+     surfaces is jump-free - identical card width + 32px margins + 240ms timing. */
+  --float-w: 420px;
+  background: transparent;
   display: flex;
-  gap: 16px;
-  padding: 0 18px;
-  border-bottom: 1px solid var(--hairline);
+  flex-direction: column;
 }
-.tab {
+.panel[data-floating][data-open] {
+  width: calc(var(--float-w) + 32px); /* + 16px side margins on the inner card */
+  border-left: none;
+}
+.panel[data-floating] .inner {
+  width: var(--float-w);
   flex: 1;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  appearance: none;
-  background: none;
-  border: none;
-  margin: 0;
-  padding: 0 24px;
-  font-family: var(--font);
-  font-size: var(--fs-body);
-  font-weight: 400; /* inactive = Regular */
-  letter-spacing: var(--ls-body);
-  color: var(--muted); /* Gray 3 #6F7C90 */
-  white-space: nowrap;
-  cursor: pointer;
-  position: relative;
-  transition: color var(--d-hover) var(--ease-snap);
+  min-height: 0;
+  height: auto;
+  /* aligns with the builder-canvas card top, matching CopilotPanel (--panel-top
+     overrides the 24px default when a canvas toolbar pushes the card down). */
+  margin: var(--panel-top, 24px) 16px 16px;
+  border-radius: 12px;
+  background: var(--card);
+  overflow: hidden;
+  box-shadow:
+    0 1px 2px rgba(52, 60, 69, 0.05),
+    0 8px 24px rgba(52, 60, 69, 0.08);
+  /* Panel-reveal: the Eval card fades + settles in place as a DISTINCT surface
+     (matching CopilotPanel), so switching tools reads as a dissolve, not a slide. */
+  opacity: 0;
+  transform: scale(0.985);
+  transition: opacity var(--d-exit) var(--ease-snap), transform var(--d-exit) var(--ease-snap);
 }
-.tab:hover {
-  color: var(--ink-soft);
-}
-.tab:focus-visible {
-  outline: 2px solid var(--hairline-strong);
-  outline-offset: -4px;
-  border-radius: var(--r-sm);
-}
-.tab[data-active] {
-  color: var(--accent); /* Figma "Blue/Primary Blue" #196FE0 */
-  font-weight: 500; /* active = Medium */
-}
-.tab[data-active]::after {
-  content: '';
-  position: absolute;
-  left: 0; /* underline spans the full tab item (Figma border-b-2 on TabItem) */
-  right: 0;
-  bottom: -1px; /* sit on the tabs' bottom hairline */
-  height: 2px;
-  background: var(--accent);
+.panel[data-floating][data-open] .inner {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity var(--d-enter) var(--ease-snap), transform var(--d-enter) var(--ease-snap);
 }
 
-/* Body - 20px gap below the tabs, 18px side padding (cards are 428px). */
+/* Docked inside the SidePanel's Simulate tab: fill the area below the tab header,
+   no panel chrome (the SidePanel owns the card + the Copilot|Simulate header). */
+.panel[data-docked] {
+  width: 100%;
+  height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  background: transparent;
+  overflow: visible;
+  transition: none;
+  will-change: auto;
+}
+.panel[data-docked] .inner {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  opacity: 1;
+  transform: none;
+  background: var(--card);
+}
+
+/* Header - "Evaluate" + close X (Figma 530:19772: 66px band, border-bottom). */
+.header {
+  flex: none;
+  height: 66px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--hairline);
+}
+.headerTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.headerIcon {
+  width: 20px;
+  height: 20px;
+  color: var(--ink);
+}
+.headerText {
+  font-size: var(--fs-body); /* 14px */
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: var(--ls-body);
+  color: var(--ink);
+}
+.headerClose {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap), color var(--d-hover) var(--ease-snap);
+}
+.headerClose svg {
+  width: 20px;
+  height: 20px;
+}
+.headerClose:hover {
+  background: var(--surface-soft);
+  color: var(--ink);
+}
+
+/* Tabs row - the 3-tab segmented control (Figma 530:33967: 20/14/16/14 pad). */
+.tabsRow {
+  flex: none;
+  padding: 20px 14px 16px;
+}
+
+/* The current view (menu / a flow), keyed so entering or leaving a flow plays the
+   directional drill slide. Fills the panel below any floating header. */
+.viewWrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* clip the drill slide's small translateX */
+}
+.viewWrap[data-dir='fwd'] {
+  animation: drillInFwd var(--d-enter) var(--ease-snap);
+}
+.viewWrap[data-dir='back'] {
+  animation: drillInBack var(--d-enter) var(--ease-snap);
+}
+
+/* A flow column: its own top back-header + scrollable body + optional bottom bar. */
+.flow {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Body - the per-tab content region. The three panes stay mounted and cross-fade
+   (state survives a tab switch). */
 .body {
   flex: 1;
   min-height: 0;
+  position: relative;
+}
+.pane {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--d-crossfade) var(--ease-snap);
+}
+.pane[data-active] {
+  opacity: 1;
+  pointer-events: auto;
+}
+/* Padded, scrollable wrapper for the scenarios + custom tabs. */
+.scroll {
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden; /* clip the list<->detail drill slide */
   padding: 20px 18px;
 }
 
-/* Custom test tab - a clear "coming soon" empty state (not a blank panel). */
-.custom {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 64px 24px 24px;
-  text-align: center;
+/* List <-> detail drill (the scenario list <-> a topic's emails) - the same
+   directional slide as the command palette, the sibling flagged in review. */
+.slide[data-dir='fwd'] {
+  animation: drillInFwd var(--d-enter) var(--ease-snap);
 }
-.customIcon {
-  width: 28px;
-  height: 28px;
-  margin-bottom: 4px;
-  color: var(--muted-soft);
+.slide[data-dir='back'] {
+  animation: drillInBack var(--d-enter) var(--ease-snap);
 }
-.customTitle {
-  margin: 0;
-  font-size: var(--fs-body);
-  font-weight: 600;
-  color: var(--ink-soft);
+@keyframes drillInFwd {
+  from { opacity: 0; transform: translateX(12px); filter: blur(3px); }
+  to   { opacity: 1; transform: translateX(0); filter: blur(0); }
 }
-.customBody {
-  margin: 0;
-  max-width: 260px;
-  font-size: var(--fs-small);
-  line-height: 1.5;
-  color: var(--muted);
+@keyframes drillInBack {
+  from { opacity: 0; transform: translateX(-12px); filter: blur(3px); }
+  to   { opacity: 1; transform: translateX(0); filter: blur(0); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .panel {
+  .panel,
+  .panel[data-floating] .inner,
+  .pane {
     transition: none;
+  }
+  .slide[data-dir],
+  .viewWrap[data-dir] {
+    animation: none;
   }
 }

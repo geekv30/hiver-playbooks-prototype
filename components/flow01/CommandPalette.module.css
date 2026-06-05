@@ -61,9 +61,36 @@
   min-height: 0;
   max-height: 332px;
   overflow-y: auto;
+  overflow-x: hidden;   /* clip the drill slide-in so it never flashes an x-scrollbar */
   background: #fff;
   border-radius: 7px;
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.01), 0 1px 1.5px rgba(0, 0, 0, 0.05);
+}
+
+/* Drill transition - the detail page slides + blurs in (right = drilling deeper
+   into a connector/tag, left = going back). Adapts transitions.dev
+   page-side-by-side (08) to our DYNAMIC drill stack: a keyed enter on the page
+   content rather than two permanently-mounted pages. data-dir is unset on first
+   open (the .pop already animates in), so the slide only fires on navigation. */
+.page {
+  position: relative;
+}
+.page[data-dir='fwd'] {
+  animation: pageInFwd var(--d-enter) var(--ease-snap);
+}
+.page[data-dir='back'] {
+  animation: pageInBack var(--d-enter) var(--ease-snap);
+}
+@keyframes pageInFwd {
+  from { opacity: 0; transform: translateX(10px); filter: blur(3px); }
+  to   { opacity: 1; transform: translateX(0); filter: blur(0); }
+}
+@keyframes pageInBack {
+  from { opacity: 0; transform: translateX(-10px); filter: blur(3px); }
+  to   { opacity: 1; transform: translateX(0); filter: blur(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page[data-dir] { animation: none; }
 }
 
 .group {
@@ -158,20 +185,13 @@
   padding-left: 14px;
 }
 
-/* Right-aligned selection check (pick-many). The slot reserves space; the glyph
-   only appears when selected (Figma 283:28810 — opacity-toggled check). */
-.rowCheck {
-  width: 20px;
-  height: 20px;
+/* Right-aligned selection checkbox (pick-many). The row owns the toggle, so the
+   box is a presentational Checkbox atom (Figma 745:20564 — 16px checkbox). */
+.rowBox {
   flex: none;
   margin-left: auto;
   display: grid;
   place-items: center;
-  color: var(--body); /* ink-grey check, not a brand fill */
-}
-.rowCheck svg {
-  width: 14px;
-  height: 14px;
 }
 
 /* Drill-page header — single row: back chevron + page icon + quiet title.

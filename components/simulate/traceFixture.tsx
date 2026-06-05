@@ -9,7 +9,8 @@ export interface TraceStepDef {
   actionId: string;
   /** Mono detail after the " · " (overrides the action's default meta). */
   meta?: string;
-  /** Simulated duration (ms) shown in the trace. */
+  /** Base duration (ms) for this op. The run engine jitters it per-run and the
+   *  trace shows the ACTUAL elapsed time, so each run feels like a real one. */
   ms: number;
   /** Result line shown once the step is done. */
   output?: string;
@@ -27,28 +28,27 @@ export const SIM_TRACE: TraceStepDef[] = [
     id: 's1',
     actionId: 'ai_extract',
     meta: 'summary',
-    ms: 450,
+    ms: 700,
     output: 'summary returned: 404, not found, 11:34, v1.2.1, southern-S3',
   },
   {
     id: 's2',
     actionId: 'tag',
     meta: 'api-error, support',
-    ms: 120,
+    ms: 150,
     output: 'ticket tagged: api-error, support',
   },
   {
     id: 's3',
     actionId: 'hubspot_get_contact',
-    meta: 'contact, company',
-    ms: 380,
+    ms: 950,
     output: 'contact: John Doe, company: hiverhq.com',
   },
   {
     id: 's4',
     actionId: 'kb_search',
     meta: 'Engg-docs',
-    ms: 210,
+    ms: 450,
     output: 'returned: 200 ok',
   },
   {
@@ -62,8 +62,8 @@ export const SIM_TRACE: TraceStepDef[] = [
   {
     id: 's6',
     actionId: 'draft_reply',
-    meta: 'with the fix',
-    ms: 1200,
+    meta: 'draft',
+    ms: 1300,
     output: 'drafted reply ready',
   },
 ];

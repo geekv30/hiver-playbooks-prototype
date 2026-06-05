@@ -1,0 +1,39 @@
+/* Docked side panel card (Figma 647:40108): 432px wide, fills the stage height
+   (equal to the canvas window), rounded-12, hairline border + soft elevation. */
+.panel {
+  flex: 0 0 432px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--card);
+  border: 1px solid var(--hairline-soft);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow:
+    0 1px 2px rgba(52, 60, 69, 0.04),
+    0 4px 14px rgba(52, 60, 69, 0.05);
+}
+
+/* Below the tab header: the two panes stack and cross-fade (both mounted so
+   their state survives a tab switch). */
+.body {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  display: flex;
+}
+.pane {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--d-crossfade, 180ms) var(--ease-snap);
+}
+.pane[data-active] {
+  opacity: 1;
+  pointer-events: auto;
+}

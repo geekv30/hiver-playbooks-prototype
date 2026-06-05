@@ -1,0 +1,610 @@
+/* ColdStartModal - "draft your playbook with AI" cold-start entry.
+   Net-new surface, built from existing atoms + the ChatBar gradient idiom.
+   One saturated AI moment only: the gradient input focus ring. Everything else
+   is the cool-neutral Linear/Attio register - hairlines + one subtle hover tint. */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(52, 60, 69, 0.32); /* --ink at 32% */
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  animation: scrimIn var(--d-crossfade) var(--ease-snap);
+}
+@keyframes scrimIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.dialog {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 644px;
+  max-width: calc(100vw - 48px);
+  min-height: 408px;
+  padding: 0;
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  box-shadow:
+    0 1px 2px rgba(52, 60, 69, 0.08),
+    0 12px 40px rgba(52, 60, 69, 0.14);
+  animation: dialogIn var(--d-enter) var(--ease-snap);
+}
+@keyframes dialogIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Graceful close - the exit mirrors the entry so dismiss is no longer a hard
+   cut. JS sets data-closing on the scrim, then unmounts after this finishes. */
+.scrim[data-closing] {
+  animation: scrimOut var(--d-crossfade) var(--ease-snap) forwards;
+}
+.scrim[data-closing] .dialog {
+  animation: dialogOut var(--d-exit) var(--ease-snap) forwards;
+}
+@keyframes scrimOut {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes dialogOut {
+  to {
+    opacity: 0;
+    transform: translateY(4px) scale(0.99);
+  }
+}
+
+/* Close - top-right, quiet ghost. */
+.close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--muted-soft);
+  cursor: pointer;
+  transition:
+    color var(--d-hover) var(--ease-snap),
+    background var(--d-hover) var(--ease-snap);
+}
+.close svg {
+  width: 18px;
+  height: 18px;
+}
+.close:hover {
+  color: var(--ink-soft);
+  background: var(--surface-soft);
+}
+
+/* Header - left-aligned, full-width divider below (matches the Enable modal). */
+.head {
+  margin: 0;
+  padding: 18px 56px 18px 24px; /* right pad clears the close button */
+  border-bottom: 1px solid var(--hairline);
+}
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.titleIco {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: var(--accent);
+}
+.title {
+  margin: 0;
+  font-size: var(--fs-h4); /* 18px */
+  font-weight: 600;
+  letter-spacing: var(--ls-h4);
+  color: var(--ink);
+}
+.subtitle {
+  margin: 8px 0 0;
+  max-width: 460px;
+  font-size: var(--fs-small); /* 13px */
+  line-height: 1.5;
+  letter-spacing: var(--ls-small);
+  color: var(--muted);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 18px 24px;
+}
+
+/* Hero input -------------------------------------------------------------- */
+/* Drop target wrapper; the brand-gradient border lives on .field::before below. */
+.shell {
+  border-radius: var(--r-md);
+  padding: 0;
+  background: transparent;
+}
+
+/* The body label above the input (Figma 724:37477). */
+.label {
+  margin: 0 0 12px;
+  font-size: var(--fs-small); /* 13px */
+  font-weight: 500;
+  line-height: 19px;
+  letter-spacing: var(--ls-body);
+  color: var(--ink-soft);
+}
+
+.field {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border: 1px solid var(--hairline); /* neutral settled border */
+  border-radius: 12px;
+}
+/* The Copilot brand gradient revolves around the border ONCE on open, then fades
+   to the neutral border - the same one-shot sweep as the Copilot composer
+   (@property --copilot-angle lives in globals.css so the conic angle interpolates
+   instead of jumping). */
+.field::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(from var(--copilot-angle), #31e3de, #662bf5, #e4b2a2, #31e3de);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  pointer-events: none;
+  animation: csBorderSweep 1100ms var(--ease-snap) 240ms 1 forwards;
+}
+@keyframes csBorderSweep {
+  0% {
+    --copilot-angle: 0deg;
+    opacity: 1;
+  }
+  78% {
+    opacity: 1;
+  }
+  100% {
+    --copilot-angle: 360deg;
+    opacity: 0;
+  }
+}
+
+.textarea {
+  width: 100%;
+  min-height: 150px;
+  max-height: 210px;
+  margin: 0;
+  padding: 12px 14px 4px;
+  border: none;
+  outline: none;
+  background: transparent;
+  resize: none;
+  overflow-y: auto;
+  font-family: var(--font);
+  font-size: var(--fs-body); /* 14px */
+  line-height: 1.5;
+  letter-spacing: var(--ls-body);
+  color: var(--ink);
+}
+.textarea::placeholder {
+  color: var(--muted-soft);
+}
+
+/* Card toolbar - the SOP upload affordance / selected-file chip. */
+.cardBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 38px;
+  padding: 4px 8px 8px;
+}
+.cardBarLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+/* + (add) + send pills inside the input bottom row (Figma 724:37490/37492). */
+.addBtn,
+.sendBtn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  padding: 0;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  transition:
+    background var(--d-hover) var(--ease-snap),
+    color var(--d-hover) var(--ease-snap),
+    border-color var(--d-hover) var(--ease-snap);
+}
+.addBtn {
+  border: 1px solid var(--hairline-soft);
+  background: var(--card);
+  color: var(--body);
+}
+.addBtn:hover {
+  border-color: var(--hairline-strong);
+  color: var(--ink-soft);
+}
+.addBtn svg {
+  width: 18px;
+  height: 18px;
+}
+.sendBtn {
+  border: none;
+  background: var(--surface-card); /* grey (Figma 724:37492 - the CTA is "Generate AOP") */
+  color: var(--body);
+}
+.sendBtn svg {
+  width: 18px;
+  height: 18px;
+}
+.sendBtn:not(:disabled):hover {
+  background: var(--hairline);
+}
+.sendBtn:disabled {
+  color: var(--muted-soft);
+  cursor: default;
+}
+.addBtn:focus-visible,
+.sendBtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 7px;
+  margin: 0;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  font-family: var(--font);
+  font-size: var(--fs-small);
+  font-weight: 500;
+  letter-spacing: var(--ls-small);
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    color var(--d-hover) var(--ease-snap),
+    background var(--d-hover) var(--ease-snap);
+}
+.upload:hover {
+  color: var(--ink-soft);
+  background: var(--surface-soft);
+}
+.uploadIco {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+.uploadHint {
+  font-size: var(--fs-caption); /* 12px */
+  color: var(--muted-soft);
+}
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Selected-file chip - compact, neutral (no chunky/colored border). */
+.fileChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 4px 4px 4px 8px;
+  background: var(--surface-soft);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-sm);
+}
+.fileIco {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  color: var(--muted);
+}
+.fileName {
+  min-width: 0;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-small);
+  color: var(--ink-soft);
+}
+.fileSize {
+  flex: none;
+  font-family: var(--mono);
+  font-size: var(--fs-caption);
+  color: var(--muted);
+}
+.fileRemove {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex: none;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-xs);
+  background: transparent;
+  color: var(--muted-soft);
+  cursor: pointer;
+  transition:
+    color var(--d-hover) var(--ease-snap),
+    background var(--d-hover) var(--ease-snap);
+}
+.fileRemove svg {
+  width: 14px;
+  height: 14px;
+}
+.fileRemove:hover {
+  color: var(--ink-soft);
+  background: var(--hairline-soft);
+}
+
+/* Drag-over overlay (the whole card is a drop target). */
+.dropHint {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--r-md);
+  background: rgba(246, 248, 252, 0.94); /* --surface-soft, near-opaque */
+  font-size: var(--fs-small);
+  font-weight: 500;
+  color: var(--body);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--d-hover) var(--ease-snap);
+}
+.dragging .dropHint {
+  opacity: 1;
+}
+
+/* Suggestion bubbles ------------------------------------------------------ */
+/* "OR" centered on a hairline rule: a 1px line fills each side (equal flex), so
+   the label sits perfectly centered between the two segments. */
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0 20px;
+  font-size: var(--fs-small); /* 13px */
+  font-weight: 500;
+  letter-spacing: var(--ls-body);
+  color: var(--muted-soft);
+}
+.eyebrow::before,
+.eyebrow::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--hairline-soft); /* very subtle */
+}
+.bubbles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.bubble {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 11px;
+  margin: 0;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  background: var(--card);
+  font-family: var(--font);
+  font-size: var(--fs-small); /* 13px */
+  font-weight: 500;
+  letter-spacing: var(--ls-small);
+  color: var(--body);
+  cursor: pointer;
+  transition:
+    background var(--d-hover) var(--ease-snap),
+    border-color var(--d-hover) var(--ease-snap),
+    color var(--d-hover) var(--ease-snap);
+}
+.bubble:hover {
+  background: var(--surface-soft);
+  border-color: var(--hairline-strong);
+  color: var(--ink-soft);
+}
+.bubbleIco {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  color: var(--muted);
+}
+/* Armed (its prompt is in the field) - quiet accent tint, not a fill flood. */
+.bubble[data-active] {
+  background: var(--accent-bg);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.bubble[data-active] .bubbleIco {
+  color: var(--accent);
+}
+
+.privacy {
+  margin: 14px 0 0;
+  font-size: var(--fs-caption);
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+/* Inline upload error (wrong type / too large). */
+.uploadError {
+  margin: 10px 0 0;
+  font-size: var(--fs-caption);
+  line-height: 1.45;
+  color: var(--state-error);
+}
+
+/* Visually hidden, but present in the a11y tree (for the live status region). */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Footer - full-width divider above (matches the Enable modal). */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0;
+  padding: 16px 24px;
+  border-top: 1px solid var(--hairline);
+}
+.skip {
+  padding: 4px 2px;
+  margin: 0;
+  border: none;
+  background: transparent;
+  font-family: var(--font);
+  font-size: var(--fs-small);
+  letter-spacing: var(--ls-small);
+  color: var(--muted);
+  cursor: pointer;
+  transition: color var(--d-hover) var(--ease-snap);
+}
+.skip:hover {
+  color: var(--ink-soft);
+}
+
+/* Generating state -------------------------------------------------------- */
+.generating {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  justify-content: center;
+  gap: 14px;
+  padding: 28px 24px;
+}
+.genHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.genSparkle {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: var(--accent);
+}
+.genTitle {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  letter-spacing: var(--ls-body);
+  color: var(--ink);
+}
+.fileChipRead {
+  align-self: flex-start;
+  background: var(--surface-soft);
+}
+.statusRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.statusText {
+  font-size: var(--fs-small);
+  letter-spacing: var(--ls-small);
+  color: var(--muted);
+}
+.progress {
+  position: relative;
+  height: 3px;
+  border-radius: var(--r-pill);
+  background: var(--surface-card);
+  overflow: hidden;
+}
+.progressBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 38%;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  animation: indeterminate 1.25s var(--ease-snap) infinite;
+}
+@keyframes indeterminate {
+  0% {
+    transform: translateX(-110%);
+  }
+  100% {
+    transform: translateX(360%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scrim,
+  .dialog,
+  .progressBar,
+  .field::before {
+    animation: none;
+  }
+  .shell,
+  .field,
+  .bubble,
+  .upload,
+  .close,
+  .dropHint {
+    transition: none;
+  }
+}

@@ -31,8 +31,10 @@ export const ACTIONS: ActionDef[] = [
   // Touch the ticket (7)
   { id: 'tag',                     name: 'Tag',                       desc: 'Apply one or more tags',                       bucket: 'ticket',   iconKey: 'tag' },
   { id: 'note',                    name: 'Note',                      desc: 'Add an internal-only note',                    meta: 'internal',             bucket: 'ticket',   iconKey: 'note' },
-  { id: 'draft_reply',             name: 'Draft Reply',               desc: 'Save a draft for the agent to send',           meta: 'save as draft',        bucket: 'ticket',   iconKey: 'reply' },
-  { id: 'send_reply',              name: 'Send reply',                desc: 'Send a reply immediately',                     meta: 'Hiver',                bucket: 'ticket',   iconKey: 'reply' },
+  // Reply is ONE verb with a structured MODE attribute: draft | send (a pickable
+  // enum value, not prose). The "what to say" stays natural language on the line.
+  { id: 'draft_reply',             name: 'Reply',                     desc: 'Save a draft for the agent to send',           meta: 'draft',                bucket: 'ticket',   iconKey: 'reply' },
+  { id: 'send_reply',              name: 'Reply',                     desc: 'Send a reply immediately',                     meta: 'send',                 bucket: 'ticket',   iconKey: 'reply' },
   { id: 'assign',                  name: 'Assign',                    desc: 'Reassign to a user or queue',                  bucket: 'ticket',   iconKey: 'tag' },
   { id: 'change_status',           name: 'Change status',             desc: 'Open / Pending / Closed / custom',             bucket: 'ticket',   iconKey: 'tag' },
   { id: 'set_field',               name: 'Set custom field',          desc: 'Update a custom field value',                  bucket: 'ticket',   iconKey: 'tag' },

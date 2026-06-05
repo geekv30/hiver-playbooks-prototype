@@ -23,6 +23,7 @@ import Textarea from '@/components/atoms/Textarea';
 import GutterMarker from '@/components/atoms/GutterMarker';
 import { GmailLogo } from '@/components/icons/ui/GmailLogo';
 import CommandPalette from '@/components/flow01/CommandPalette';
+import ActionHint from '@/components/flow01/ActionHint';
 import type { Chip as ChipModel } from '@/types/playbook';
 import styles from './page.module.css';
 
@@ -52,17 +53,18 @@ const VERB_ONLY: Variant[] = [
 const VERB_META: Variant[] = [
   { k: 'ai', label: 'AI Extract · meta', chip: mk('g-ai', 'ai_extract'), meta: 'summary' },
   { k: 'kb', label: 'Search knowledge · meta', chip: mk('g-kb', 'kb_search'), meta: 'Engg-docs' },
-  { k: 'draft', label: 'Draft Reply · meta', chip: mk('g-draft', 'draft_reply'), meta: 'draft' },
-  { k: 'send', label: 'Send reply · meta', chip: mk('g-send', 'send_reply'), meta: 'Hiver' },
+  { k: 'draft', label: 'Reply · draft', chip: mk('g-draft', 'draft_reply') },
+  { k: 'send', label: 'Reply · send', chip: mk('g-send', 'send_reply') },
   { k: 'tagm', label: 'Tag · meta', chip: mk('g-tag', 'tag'), meta: 'api-error, support' },
   { k: 'wait', label: 'Wait · meta', chip: mk('g-wait', 'wait'), meta: '1 business hour' },
 ];
 const CONNECTOR: Variant[] = [
-  { k: 'hs', label: 'HubSpot · verb · meta', chip: mk('g-hs', 'hubspot_get_contact'), meta: 'contact, company association' },
-  { k: 'shop', label: 'Shopify · verb · meta', chip: mk('g-shop', 'shopify_get_order'), meta: 'by order #' },
-  { k: 'slack', label: 'Slack · verb · meta', chip: mk('g-slack', 'slack_send_message'), meta: '#eng-support' },
-  { k: 'sf', label: 'Salesforce · verb · meta', chip: mk('g-sf', 'salesforce_get_account'), meta: 'by account name' },
-  { k: 'cu', label: 'ClickUp · verb · meta', chip: mk('g-cu', 'clickup_get_task'), meta: 'by task id' },
+  { k: 'hs', label: 'HubSpot · verb', chip: mk('g-hs', 'hubspot_get_contact') },
+  { k: 'shop', label: 'Shopify · verb', chip: mk('g-shop', 'shopify_get_order') },
+  { k: 'sf', label: 'Salesforce · verb', chip: mk('g-sf', 'salesforce_get_account') },
+  { k: 'cu', label: 'ClickUp · verb', chip: mk('g-cu', 'clickup_get_task') },
+  // Slack is the only connector that surfaces a 3rd attribute - the channel.
+  { k: 'slack', label: 'Slack · verb · channel', chip: mk('g-slack', 'slack_send_message'), meta: '#eng-support' },
 ];
 const REFERENCE: Variant[] = [
   { k: 'ref1', label: '@ email', mode: 'ref', value: 'engg.hiver@grexit.com' },
@@ -134,10 +136,26 @@ export default function ComponentsReview() {
         </div>
         <Group label="Verb only" variants={VERB_ONLY} />
         <Group label="Verb + meta" variants={VERB_META} />
-        <Group label="Brand + verb + meta (connector)" variants={CONNECTOR} />
+        <Group label="Brand + verb (connector · Slack adds a channel)" variants={CONNECTOR} />
         <Group label="Reference (@)" variants={REFERENCE} />
         <Group label="Condition / flow" variants={CONDITION} />
         <Group label="States" variants={STATES} />
+      </section>
+
+      {/* Editor affordances */}
+      <section className={styles.section}>
+        <div className={styles.sectionHead}>
+          <h2>Editor affordances</h2>
+          <span className={styles.status}>reconciled to Figma 647:40172</span>
+        </div>
+        <div className={styles.row}>
+          <Specimen label='"@ for actions" hint'>
+            <ActionHint />
+          </Specimen>
+          <Specimen label='"@ action" placeholder chip'>
+            <Chip mode="placeholder" />
+          </Specimen>
+        </div>
       </section>
 
       {/* Button */}

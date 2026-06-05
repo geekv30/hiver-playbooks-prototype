@@ -1,0 +1,52 @@
+/* EvalBackHeader - the entered-flow header (Figma 695:15007). Same 66px height as
+   the tab header so swapping tabs <-> back-header never shifts the body. */
+.header {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 66px;
+  padding: 0 20px;
+  background: var(--card);
+  border-bottom: 1px solid var(--hairline); /* #D6DDE8 */
+}
+
+.back {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-left: -4px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 7px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap);
+}
+.back:hover {
+  background: var(--surface-soft);
+}
+.back:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.back svg {
+  width: 20px;
+  height: 20px;
+}
+
+.title {
+  font-size: var(--fs-body); /* 14px - Figma 695:15016 (was wrongly 16px) */
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--ink-soft); /* Neutrals/Gray 1 #3E4C5A */
+  letter-spacing: var(--ls-body); /* -0.005em (Figma -0.07px on 14) */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .back {
+    transition: none;
+  }
+}

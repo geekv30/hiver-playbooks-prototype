@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import styles from './Badge.module.css';
 
-type Intent = 'neutral' | 'success' | 'warning' | 'error' | 'running' | 'draft';
+type Intent = 'neutral' | 'success' | 'warning' | 'error' | 'running' | 'draft' | 'active' | 'paused';
 
 interface Props {
   children: ReactNode;

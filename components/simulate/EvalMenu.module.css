@@ -1,0 +1,89 @@
+/* EvalMenu - the Evaluate root entry cards (Figma 647:43211). */
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 28px 18px 20px;
+}
+
+.heading {
+  margin: 0 0 0 2px;
+  font-size: var(--fs-h5); /* 16px */
+  font-weight: 500;
+  line-height: 24px;
+  color: var(--ink); /* Neutrals/Black #343C45 */
+  letter-spacing: -0.011em;
+}
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* One entry card: title + subtitle on the left, a chevron on the right. */
+.card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 16px 20px;
+  border: 1px solid var(--hairline-soft); /* Gray 6 #ECEFF6 */
+  border-radius: 10px;
+  background: var(--card);
+  text-align: left;
+  cursor: pointer;
+  /* Buttons don't inherit the document font - without this the title rendered in
+     Arial, not Inter (the "font weights look off" report). */
+  font-family: var(--font);
+  transition:
+    border-color var(--d-hover) var(--ease-snap),
+    background var(--d-hover) var(--ease-snap),
+    box-shadow var(--d-hover) var(--ease-snap);
+}
+.card:hover {
+  border-color: var(--hairline);
+  background: var(--surface-soft);
+}
+.card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.text {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+.title {
+  font-size: var(--fs-body); /* 14px */
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--ink-soft); /* Gray 1 #3E4C5A */
+}
+.sub {
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--body); /* Gray 2 #4D596C */
+}
+
+.chevron {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--muted-soft);
+  transition: transform var(--d-hover) var(--ease-snap);
+}
+.card:hover .chevron {
+  transform: translateX(2px);
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .chevron {
+    transition: none;
+  }
+}

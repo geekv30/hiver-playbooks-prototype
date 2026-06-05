@@ -1,0 +1,85 @@
+/* CopilotRail - the canonical /canvas tool-switcher.
+   Figma 520:17882 (Copilot active) / 536:34810 (Evaluate active): a vertical
+   2-tab segmented control on a Gray-6a track; the ACTIVE tab lifts as a white
+   slot (Shadows/sm). The rail reserves NO column - the switcher floats, pinned
+   to the canvas-card top, so an idle workspace shows no empty rail and the
+   editor sits truly centred. */
+
+.rail {
+  flex: none;
+  width: 62px; /* the switcher footprint - a snug column between editor and panel */
+  align-self: stretch;
+  position: relative;
+}
+
+/* The tool-switcher (Figma "Tabs"): 4px padding, radius 12. The Figma track is a
+   flat Gray-6a fill, but the workspace IS Gray-6a, so the fill is dropped (Varun) -
+   the switcher is a transparent column; only the active tab paints (white slot +
+   shadow), the inactive tab is a quiet ghost icon. */
+.switcher {
+  position: absolute;
+  top: 24px; /* aligns with the canvas-card top (docScroll padding) */
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  background: transparent;
+  border-radius: 12px;
+}
+
+/* A tab slot (Figma "Tab2 States"): 6/8 padding, radius 10. Active = white slot
+   + Shadows/sm; the icons never recolour (the slot carries the active read). */
+.tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 8px;
+  margin: 0;
+  appearance: none;
+  border: none;
+  background: none;
+  border-radius: var(--r-lg);
+  cursor: pointer;
+  transition:
+    background var(--d-hover) var(--ease-snap),
+    box-shadow var(--d-hover) var(--ease-snap);
+}
+.tab:hover:not([data-active]) {
+  background: rgba(52, 60, 69, 0.04);
+}
+/* Active = white slot with the Figma "Tab2 States" drop-shadow (Figma uses a
+   filter drop-shadow with NO negative spread; the earlier Shadows/sm token had
+   spread -4, which contracted it to invisible). */
+.tab[data-active] {
+  background: var(--card);
+  box-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.01),
+    0 1px 2px rgba(0, 0, 0, 0.1);
+}
+.tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* The icon holder (Figma "Secondary Button"): a 38px circle, icon centred. */
+.iconBtn {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-pill);
+}
+
+/* Play glyph = Gray 1, constant. The sparkle carries its own gradient. */
+.playIcon {
+  width: 20px;
+  height: 20px;
+  color: var(--ink-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab {
+    transition: none;
+  }
+}

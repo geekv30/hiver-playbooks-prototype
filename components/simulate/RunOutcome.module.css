@@ -5,11 +5,10 @@
 .outcome {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
-/* Branch attribution - lives INSIDE the draft box so the matched branch and the
-   reply it produced read as connected. Neutral/muted (B2B restraint). */
+/* Matched-branch attribution above the reply (Figma 745:19707) - quiet/muted. */
 .branchCaption {
   font-size: var(--fs-caption); /* 12px */
   line-height: 16px;
@@ -18,16 +17,7 @@
   color: var(--muted);
 }
 
-/* Drafted reply box. */
-.draft {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 10px 12px;
-  background: var(--surface-soft);
-  border: 1px solid var(--hairline-soft);
-  border-radius: var(--r-md); /* 8px */
-}
+/* "Reply drafted" label + the human verdict thumbs, above the reply card. */
 .draftHead {
   display: flex;
   align-items: center;
@@ -38,69 +28,26 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: var(--fs-caption);
+  font-size: var(--fs-small); /* 13px */
   line-height: 18px;
   font-weight: 500;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--muted);
+  color: var(--ink-soft);
 }
 .draftLabel svg {
-  width: 13px;
-  height: 13px;
-}
-.draftBody {
-  margin: 0;
-  font-size: var(--fs-small); /* 13px */
-  line-height: 1.5;
-  color: var(--ink-soft);
-}
-
-/* Human verdict - icon-only thumbs in the reply box header. */
-.verdict {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-.vbtn {
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  margin: 0;
-  padding: 0;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: var(--r-sm);
-  color: var(--muted-soft);
-  cursor: pointer;
-  transition:
-    color var(--d-hover) var(--ease-snap),
-    background var(--d-hover) var(--ease-snap),
-    border-color var(--d-hover) var(--ease-snap);
-}
-.vbtn svg {
   width: 14px;
   height: 14px;
+  color: var(--muted);
 }
-.vbtn:hover {
+
+/* The drafted reply itself, in a soft rounded card (Figma 745:19707). */
+.draftCard {
+  margin: 0;
+  padding: 12px 14px;
+  background: var(--surface-soft);
+  border-radius: 10px;
+  font-size: var(--fs-small); /* 13px */
+  line-height: 1.55;
   color: var(--ink-soft);
-  background: var(--card);
-  border-color: var(--hairline);
-}
-.vbtn[data-on] {
-  color: var(--state-ok);
-  border-color: var(--state-ok);
-  background: var(--state-ok-bg);
-}
-.vbtn[data-down][data-on] {
-  color: var(--state-warn);
-  border-color: var(--state-warn);
-  background: var(--state-warn-bg);
-}
-.vbtn:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
 }
 
 /* Needs-attention (caught gap). */
@@ -127,6 +74,36 @@
   height: 15px;
 }
 .attnBody {
+  margin: 0;
+  font-size: var(--fs-small);
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* Failed run - the failure reason (mirrors .attn, error-toned). */
+.fail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--state-error-bg);
+  border: 1px solid color-mix(in srgb, var(--state-error) 28%, transparent);
+  border-radius: var(--r-md);
+}
+.failHead {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-small);
+  line-height: 19px;
+  font-weight: 600;
+  color: var(--state-error);
+}
+.failHead svg {
+  width: 15px;
+  height: 15px;
+}
+.failBody {
   margin: 0;
   font-size: var(--fs-small);
   line-height: 1.5;

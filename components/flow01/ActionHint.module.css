@@ -1,0 +1,54 @@
+/* "@ for actions" hint pill - Figma 647:40172. A full-radius pill holding an
+   @-icon chip + "for actions" label; opens the actions command palette. */
+.hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px; /* Figma inner wrap gap-[0px_2px] */
+  padding: 6px 9px 6px 8px; /* Figma py-6 pl-8 pr-9 */
+  border: 1px solid var(--hairline-soft); /* #ECEFF6 Gray 6 */
+  border-radius: 999px; /* full pill */
+  background: var(--card);
+  color: var(--body);
+  font-size: var(--fs-small); /* 13px */
+  line-height: 19px;
+  letter-spacing: var(--ls-small);
+  cursor: pointer;
+  /* Shadows/md */
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  transition:
+    border-color var(--d-hover) var(--ease-snap),
+    color var(--d-hover) var(--ease-snap),
+    box-shadow var(--d-hover) var(--ease-snap);
+}
+.hint:hover {
+  border-color: var(--hairline); /* Gray 6 -> Gray 5 on hover */
+  color: var(--ink-soft);
+}
+.hint:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* @-icon chip: a 19px info-subtle square holding the 14px @ glyph (Figma
+   647:40174 - the leading icon slot of the action chip, label hidden). */
+.at {
+  display: grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  border-radius: 4px;
+  background: var(--info-subtle); /* #FAFDFF */
+  color: var(--ink-soft);
+}
+.at svg {
+  width: 14px;
+  height: 14px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hint {
+    transition: none;
+  }
+}

@@ -1,0 +1,133 @@
+/* Dropdown - a design-language select (replaces native <select>). The menu grows
+   from the trigger (menu-dropdown technique, adapted to our motion tokens). */
+
+.root {
+  position: relative;
+}
+
+.trigger {
+  width: 100%;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  background: var(--card);
+  color: var(--ink-soft);
+  font-family: var(--font);
+  font-size: var(--fs-body);
+  line-height: 20px;
+  letter-spacing: var(--ls-body);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--d-hover) var(--ease-snap), box-shadow var(--d-hover) var(--ease-snap);
+}
+.trigger:hover {
+  border-color: var(--hairline-strong);
+}
+.trigger[data-open],
+.trigger:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+.trigger[data-empty] .value {
+  color: var(--muted);
+}
+.value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chevron {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+  transition: transform var(--d-hover) var(--ease-snap);
+}
+.trigger[data-open] .chevron {
+  transform: rotate(180deg);
+}
+
+/* Menu - grows from the top edge of the trigger. */
+.menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  max-height: 248px;
+  overflow-y: auto;
+  background: var(--card);
+  border: 1px solid var(--hairline-soft);
+  border-radius: var(--r-md);
+  box-shadow:
+    0 4px 16px rgba(52, 60, 69, 0.12),
+    0 1px 3px rgba(52, 60, 69, 0.06);
+  transform-origin: top center;
+  animation: ddIn var(--d-enter) var(--ease-snap);
+}
+@keyframes ddIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  margin: 0;
+  border: none;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--ink-soft);
+  font-family: var(--font);
+  font-size: var(--fs-body);
+  line-height: 20px;
+  letter-spacing: var(--ls-body);
+  text-align: left;
+  cursor: pointer;
+}
+.option[data-active] {
+  background: var(--surface-soft);
+}
+.option[aria-selected='true'] {
+  color: var(--ink);
+  font-weight: 500;
+}
+.optionCheck {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu {
+    animation: none;
+  }
+  .chevron,
+  .trigger {
+    transition: none;
+  }
+}

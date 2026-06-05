@@ -1,0 +1,825 @@
+/* CopilotPanel - the Copilot tab, rebuilt as a ChatGPT-faithful clone (chat +
+   Canvas patterns) within our existing side panel. The empty state is a CENTERED
+   hero group (mark + greeting + composer + starter pill-chips), never a
+   bottom-pinned void; the composer is a clean two-row card (1px hairline, NO
+   gradient); the assistant message has no avatar/bubble (full-panel, document-
+   like) while the user gets a right-aligned pill. Motion adapts transitions.dev
+   techniques to our tokens (no _root.css import). */
+
+.slot {
+  --panel-w: 420px; /* Figma 518:16711 panel = 420px wide */
+  flex: none;
+  width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width 240ms var(--ease-snap);
+}
+.slot[data-open] {
+  /* panel + 16px left gap + 16px right gap (to the rail). */
+  width: calc(var(--panel-w) + 32px);
+}
+
+.panel {
+  flex: 1;
+  width: var(--panel-w); /* fixed so content doesn't reflow as width animates */
+  /* top aligns with the builder-canvas card top: 24px (= docScroll padding-top)
+     by default, overridden via --panel-top when a canvas toolbar pushes the card
+     down. */
+  margin: var(--panel-top, 24px) 16px 16px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  /* No border (Figma floats on a drop-shadow only; a full border's left edge
+     reads as a stray divider against the editor). Radius 12 per Figma 518:16711;
+     the elevation is a tasteful float for the on-canvas docking context. */
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow:
+    0 1px 2px rgba(52, 60, 69, 0.05),
+    0 8px 24px rgba(52, 60, 69, 0.08);
+  /* Panel-reveal: the card fades + settles in place (a distinct surface
+     appearing in the dock), NOT a horizontal page-slide. */
+  opacity: 0;
+  transform: scale(0.985);
+  transition:
+    opacity var(--d-exit) var(--ease-snap),
+    transform var(--d-exit) var(--ease-snap);
+}
+.slot[data-open] .panel {
+  opacity: 1;
+  transform: scale(1);
+  transition:
+    opacity var(--d-enter) var(--ease-snap),
+    transform var(--d-enter) var(--ease-snap);
+}
+
+/* Docked inside the SidePanel card: drop all floating chrome and fill the area
+   below the tab header (the SidePanel owns the card + header). */
+.slot[data-docked] {
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: visible;
+  transition: none;
+}
+.panel[data-docked] {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+/* ---- header (only in the floating variant; docked uses the SidePanel tabs) -- */
+.header {
+  flex: none;
+  height: 66px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--hairline);
+}
+.title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.titleText {
+  font-size: var(--fs-body); /* 14px (Figma body/md/Medium) */
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: var(--ls-body);
+  color: var(--ink);
+}
+.close {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    background var(--d-hover) var(--ease-snap),
+    color var(--d-hover) var(--ease-snap);
+}
+.close svg {
+  width: 20px;
+  height: 20px;
+}
+.close:hover {
+  background: var(--surface-soft);
+  color: var(--ink);
+}
+
+/* ---- body ---- */
+.body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 16px 16px;
+  overflow: hidden;
+}
+
+/* ---- EMPTY STATE: header centered in the space at the top, then the starter
+        pills sitting directly on top of the composer pinned at the bottom
+        (header / pills / input). ---- */
+.empty {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end; /* Rovo: the group hugs the bottom; the empty space is at the top */
+  gap: 12px;
+  padding-bottom: 2px;
+  animation: emptyIn var(--d-enter) var(--ease-snap) both;
+}
+@keyframes emptyIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: 0 8px;
+  margin-bottom: 10px; /* a touch more breathing room above the list */
+}
+.heroMark {
+  display: grid;
+  place-items: center;
+  color: var(--accent); /* the flat sparkle, one solid brand color (no gradient) */
+}
+.heroTitle {
+  margin: 0;
+  font-size: var(--fs-h4); /* 18px */
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: var(--ls-h4);
+  color: var(--ink);
+}
+.heroSub {
+  margin: 0;
+  max-width: 290px;
+  font-size: var(--fs-small); /* 13px */
+  line-height: 1.5;
+  letter-spacing: var(--ls-body);
+  color: var(--muted);
+}
+
+/* Starter suggestions: a left-aligned vertical list (the Rovo pattern) - each row
+   is an icon in a rounded-square tile + a label, quiet until hover. Sits directly
+   above the composer. */
+.starters {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+}
+.starter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 8px;
+  margin: 0;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: var(--fs-small); /* 13px */
+  line-height: 18px;
+  letter-spacing: var(--ls-body);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap);
+}
+.starter:hover {
+  background: var(--surface-soft);
+}
+.starterIco {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border: 1px solid var(--hairline);
+  border-radius: 7px;
+  background: var(--card);
+  color: var(--muted);
+}
+.starterIco svg {
+  width: 15px;
+  height: 15px;
+}
+.starterReveal {
+  opacity: 0;
+  transform: translateY(6px);
+  animation: followIn var(--d-enter) var(--ease-snap) forwards;
+  animation-delay: calc(var(--i) * 40ms + 60ms);
+}
+
+/* ---- conversation ---- */
+/* "New chat" affordance, right-aligned above the thread (ChatGPT's top-bar
+   compose). Quiet ghost button; disabled while a reply is in flight. */
+.convoHead {
+  flex: none;
+  display: flex;
+  justify-content: flex-end;
+  padding-bottom: 8px;
+}
+.newChat {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  margin: 0;
+  border: none;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: var(--fs-caption); /* 12px */
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: var(--ls-body);
+  cursor: pointer;
+  transition:
+    background var(--d-hover) var(--ease-snap),
+    color var(--d-hover) var(--ease-snap);
+}
+.newChat svg {
+  width: 15px;
+  height: 15px;
+}
+.newChat:hover:not(:disabled) {
+  background: var(--surface-soft);
+  color: var(--ink-soft);
+}
+.newChat:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.newChat:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.convo {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-bottom: 16px;
+}
+.msg {
+  display: flex;
+  animation: msgIn var(--d-enter) var(--ease-snap) backwards;
+}
+@keyframes msgIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* User = a right-aligned grey pill that hugs its content (the ChatGPT asymmetry:
+   the user is a chat line, the assistant is a document). */
+.msgUser {
+  justify-content: flex-end;
+}
+.bubbleUser {
+  max-width: 84%;
+  padding: 8px 13px;
+  border-radius: 16px 16px 5px 16px;
+  background: var(--surface-soft);
+  color: var(--ink);
+  font-size: var(--fs-body); /* 14px */
+  line-height: 20px;
+  letter-spacing: var(--ls-body);
+  white-space: pre-wrap;
+}
+/* Assistant = NO bubble, NO avatar: full-panel-width, left-aligned, on the card
+   background, so the reply reads as a document not a chat pill. */
+.msgAssistant {
+  align-items: flex-start;
+}
+.bubbleAssistant {
+  font-size: var(--fs-body); /* 14px */
+  line-height: 22px;
+  letter-spacing: var(--ls-body);
+  color: var(--ink-soft);
+  white-space: pre-wrap;
+}
+
+/* ---- thinking / working steps (cold-start handoff) ---- */
+.thinking {
+  list-style: none;
+  margin: 2px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.thinkStep {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-small);
+  line-height: 19px;
+  color: var(--muted);
+}
+.thinkStep[data-state='pending'] {
+  opacity: 0.55;
+}
+.thinkIco {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  color: var(--muted);
+}
+.thinkIco svg {
+  width: 14px;
+  height: 14px;
+}
+.thinkStep[data-state='done'] .thinkIco {
+  color: var(--state-ok);
+}
+.thinkStep[data-state='done'] .thinkLabel {
+  color: var(--body);
+}
+.thinkDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--hairline-strong);
+}
+/* Calm shimmer while a step is in flight (no harsh pulse). */
+.thinkStep[data-state='active'] .thinkLabel {
+  background: linear-gradient(90deg, var(--muted) 30%, var(--ink-soft) 50%, var(--muted) 70%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: copilotShimmer 1.6s linear infinite;
+}
+@keyframes copilotShimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* Stored thought: once thinking ends, the working steps collapse into an
+   expandable "Thought for Ns" (not always open). Expand uses the transitions.dev
+   card-resize technique (grid 0fr<->1fr) on our --d-indicator token. */
+.thought {
+  display: flex;
+  flex-direction: column;
+}
+.thoughtToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  padding: 2px 6px 2px 2px;
+  margin: 0 0 1px -2px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: var(--fs-caption); /* 12px */
+  line-height: 16px;
+  cursor: pointer;
+  transition:
+    background var(--d-hover) var(--ease-snap),
+    color var(--d-hover) var(--ease-snap);
+}
+.thoughtToggle:hover {
+  background: var(--surface-soft);
+  color: var(--ink-soft);
+}
+.thoughtToggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.thoughtCaret {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  transition: transform var(--d-indicator) var(--ease-snap);
+}
+.thoughtCaret[data-open] {
+  transform: rotate(90deg);
+}
+.thoughtBody {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--d-indicator) var(--ease-snap);
+}
+.thoughtBody[data-open] {
+  grid-template-rows: 1fr;
+}
+.thoughtSteps {
+  overflow: hidden;
+  min-height: 0;
+  list-style: none;
+  margin: 0;
+  padding: 2px 0 2px 20px;
+}
+.thoughtSteps li {
+  position: relative;
+  font-size: var(--fs-caption); /* 12px */
+  line-height: 1.7;
+  color: var(--muted);
+}
+.thoughtSteps li::before {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: 0.72em;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--muted-soft);
+}
+
+/* assistant message wrapper: holds the reply text + the affordances. */
+.assistantWrap {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* "Thinking" shimmer while a follow-up reply is being prepared. */
+.shimmerLine {
+  align-self: flex-start;
+  font-size: var(--fs-small);
+  line-height: 19px;
+  background: linear-gradient(90deg, var(--muted) 30%, var(--ink-soft) 50%, var(--muted) 70%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: copilotShimmer 1.6s linear infinite;
+}
+
+/* Streaming caret trailing the reply text as it arrives. */
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 14px;
+  margin-left: 2px;
+  vertical-align: -2px;
+  background: var(--ink-soft);
+  animation: copilotCaret 1.1s ease-in-out infinite;
+}
+@keyframes copilotCaret {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+
+/* Message actions row: a quiet ghost icon strip. Reveals on hover / for the last
+   reply / once a verdict is set (calm B2B restraint, never a loud container). */
+/* A single quiet ghost icon strip (copy / regenerate / thumbs), left-aligned
+   under the assistant turn - the ChatGPT action row. */
+.actionsRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 2px;
+  margin-top: 2px;
+  opacity: 0;
+  transition: opacity var(--d-hover) var(--ease-snap);
+}
+.assistantWrap:hover .actionsRow,
+.assistantWrap[data-last] .actionsRow,
+.actionsRow[data-has-verdict],
+.actionsRow:focus-within {
+  opacity: 1;
+}
+
+/* Ghost icon button: copy / regenerate (and the shape ThumbsRating's icons
+   echo). No fill, no border; a faint hover wash. ~16px glyph in a 26px target. */
+.iconBtn {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    background var(--d-hover) var(--ease-snap),
+    color var(--d-hover) var(--ease-snap);
+}
+.iconBtn:hover {
+  background: var(--surface-soft);
+  color: var(--ink-soft);
+}
+.iconBtn svg {
+  width: 16px;
+  height: 16px;
+}
+.copyIco {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+}
+.copyIco[data-copied] {
+  color: var(--state-ok);
+}
+
+/* ---- follow-up quick-replies (under the latest settled reply) ---- */
+.followups {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.followChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  margin: 0;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+  background: var(--card);
+  color: var(--body);
+  font-family: var(--font);
+  font-size: var(--fs-caption); /* 12px */
+  line-height: 16px;
+  letter-spacing: var(--ls-body);
+  cursor: pointer;
+  transition:
+    background var(--d-hover) var(--ease-snap),
+    color var(--d-hover) var(--ease-snap),
+    border-color var(--d-hover) var(--ease-snap);
+}
+.followChip:hover {
+  background: var(--surface-soft);
+  color: var(--ink-soft);
+  border-color: var(--hairline-strong);
+}
+.followChip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* texts-reveal stagger as the chips appear. */
+.followReveal {
+  opacity: 0;
+  transform: translateY(6px);
+  animation: followIn var(--d-enter) var(--ease-snap) forwards;
+  animation-delay: calc(var(--i) * 50ms);
+}
+@keyframes followIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---- composer: a clean two-row card. Row 1 = the textarea; Row 2 = a control
+        bar (attach far-left, send bottom-right). 1px hairline + faint shadow,
+        NO gradient. The send button is the ONE filled/colored element and makes
+        a gray->accent contrast jump when there's something to send. ---- */
+.composer {
+  position: relative;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px 10px;
+  border: 1px solid var(--hairline);
+  border-radius: 16px;
+  background: var(--card);
+  box-shadow: 0 1px 2px rgba(52, 60, 69, 0.04);
+  transition:
+    border-color var(--d-hover) var(--ease-snap),
+    box-shadow var(--d-hover) var(--ease-snap);
+}
+.composer:focus-within {
+  border-color: var(--hairline-strong);
+  box-shadow: 0 2px 10px rgba(52, 60, 69, 0.07);
+}
+/* Brand-gradient stroke that revolves around the border ONCE on focus, then fades
+   to reveal the neutral focused border. The conic gradient is masked to a 1px ring
+   (the Copilot brand colors); @property --copilot-angle (globals.css) lets the
+   angle interpolate so it sweeps rather than jumps. */
+.composer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(from var(--copilot-angle), #31e3de, #662bf5, #e4b2a2, #31e3de);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  pointer-events: none;
+}
+/* One-shot: the sweep runs once when the composer is first revealed (data-intro
+   set after the cold-start modal closes), NOT on every focus. */
+.composer[data-intro]::before {
+  animation: copilotBorderSweep 1100ms var(--ease-snap) 1 forwards;
+}
+@keyframes copilotBorderSweep {
+  0% {
+    --copilot-angle: 0deg;
+    opacity: 1;
+  }
+  78% {
+    opacity: 1;
+  }
+  100% {
+    --copilot-angle: 360deg;
+    opacity: 0;
+  }
+}
+.input {
+  width: 100%;
+  border: none;
+  outline: none;
+  resize: none;
+  background: transparent;
+  font-family: var(--font);
+  font-size: var(--fs-body); /* 14px */
+  line-height: 20px;
+  letter-spacing: var(--ls-body);
+  color: var(--ink);
+  min-height: 24px; /* one line; grows to max then scrolls internally */
+  max-height: 140px;
+  padding: 2px 4px 0;
+}
+.input::placeholder {
+  color: var(--muted-soft);
+}
+.composerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.add {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    background var(--d-hover) var(--ease-snap),
+    color var(--d-hover) var(--ease-snap);
+}
+.add svg {
+  width: 18px;
+  height: 18px;
+}
+.add:hover {
+  background: var(--surface-soft);
+  color: var(--ink-soft);
+}
+.send {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--surface-card); /* gray + inert when there's nothing to send */
+  color: var(--muted-soft);
+  cursor: pointer;
+  transition:
+    background var(--d-hover) var(--ease-snap),
+    color var(--d-hover) var(--ease-snap),
+    transform var(--d-press) var(--ease-snap);
+}
+.send svg {
+  width: 16px;
+  height: 16px;
+}
+/* The contrast jump: once there's text (or while busy, when it acts as Stop) the
+   send becomes the single darkest/most-saturated element on the card. */
+.send[data-ready] {
+  background: var(--accent);
+  color: #fff;
+}
+.send[data-ready]:hover {
+  background: var(--accent-hover);
+}
+.send[data-ready]:active {
+  transform: scale(0.94);
+}
+/* Stop affordance while busy: a filled square reads as "interrupt". */
+.send[data-stop] svg {
+  width: 12px;
+  height: 12px;
+}
+.send:disabled {
+  cursor: default;
+}
+
+/* Focus-visible affordances - keyboard parity with the rail's accent ring. */
+.close:focus-visible,
+.starter:focus-visible,
+.add:focus-visible,
+.send:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slot,
+  .panel,
+  .close,
+  .starter,
+  .add,
+  .send,
+  .composer {
+    transition: none;
+  }
+  .empty,
+  .starterReveal,
+  .followReveal,
+  .msg {
+    transform: none;
+    opacity: 1;
+    animation: none;
+  }
+  .actionsRow {
+    transition: none;
+  }
+  .thinkStep[data-state='active'] .thinkLabel,
+  .shimmerLine {
+    animation: none;
+    -webkit-text-fill-color: currentColor;
+    color: var(--muted);
+  }
+  .caret {
+    animation: none;
+  }
+  .composer::before {
+    animation: none;
+  }
+  .thoughtBody,
+  .thoughtCaret,
+  .newChat {
+    transition: none;
+  }
+}

@@ -7,6 +7,7 @@ import type { SimEmail, SimStatusKind } from '@/data/simFixtures';
 export interface EmailRun {
   status: SimStatusKind; // idle | running | passed | failed | attention
   steps: Record<string, StepStatus>;
+  durations: Record<string, number>; // actual per-step run duration (ms) THIS run
 }
 
 export type RunPhase = 'idle' | 'running' | 'done';
@@ -18,13 +19,16 @@ function freshSteps(): Record<string, StepStatus> {
   return Object.fromEntries(STEP_IDS.map((id) => [id, 'pending'])) as Record<string, StepStatus>;
 }
 function emptyRun(): EmailRun {
-  return { status: 'idle', steps: freshSteps() };
+  return { status: 'idle', steps: freshSteps(), durations: {} };
 }
-// Use the step's stated duration (with a readable floor) so the run feels like
-// a real one - fast steps are quick, the AI draft visibly takes longer. A real
-// run would track actual AI/connector latency; this approximates it.
-function stepDelay(i: number): number {
-  return Math.max(350, SIM_TRACE[i]!.ms);
+// The duration step i runs for THIS pass: the op's realistic base, jittered
+// 0.8x-1.25x so no two runs are identical - a network call to HubSpot can
+// linger, a local tag write is near-instant. The trace displays this exact
+// value, so the number shown matches how long the step actually pulsed.
+function stepDuration(i: number): number {
+  const base = SIM_TRACE[i]!.ms;
+  const jitter = 0.8 + Math.random() * 0.45; // 0.80x - 1.25x
+  return Math.max(70, Math.round(base * jitter));
 }
 
 // Resolve an email's run UP FRONT: the final per-step status, the email's final
@@ -94,15 +98,18 @@ export function useSimRun(emails: SimEmail[]) {
 
     if (!atLast) {
       const nextId = STEP_IDS[idx + 1]!;
+      const nextDur = stepDuration(idx + 1);
       setRuns((prev) => {
         const run = { ...(prev[email.id] ?? emptyRun()) };
         run.steps = { ...run.steps, [curId]: curFinal, [nextId]: 'running' };
+        run.durations = { ...run.durations, [nextId]: nextDur };
         return { ...prev, [email.id]: run };
       });
       si.current = idx + 1;
-      timer.current = setTimeout(advance, stepDelay(si.current));
+      timer.current = setTimeout(advance, nextDur);
     } else {
       const nextEmail = emails[ei.current + 1];
+      const nextDur0 = nextEmail ? stepDuration(0) : 0;
       setRuns((prev) => {
         const run = { ...(prev[email.id] ?? emptyRun()) };
         run.steps = { ...run.steps, ...res.stepFinal }; // apply finals incl. skipped
@@ -112,6 +119,7 @@ export function useSimRun(emails: SimEmail[]) {
           const nr = emptyRun();
           nr.status = 'running';
           nr.steps[STEP_IDS[0]!] = 'running';
+          nr.durations[STEP_IDS[0]!] = nextDur0;
           out[nextEmail.id] = nr;
         }
         return out;
@@ -119,7 +127,7 @@ export function useSimRun(emails: SimEmail[]) {
       if (nextEmail) {
         ei.current += 1;
         si.current = 0;
-        timer.current = setTimeout(advance, stepDelay(0));
+        timer.current = setTimeout(advance, nextDur0);
       } else {
         setPhase('done');
       }
@@ -138,25 +146,27 @@ export function useSimRun(emails: SimEmail[]) {
       const done: Record<string, EmailRun> = {};
       emails.forEach((e) => {
         const res = resolveEmail(e);
-        done[e.id] = { status: res.finalStatus, steps: { ...res.stepFinal } };
+        done[e.id] = { status: res.finalStatus, steps: { ...res.stepFinal }, durations: {} };
       });
       setRuns(done);
       setPhase('done');
       return;
     }
 
+    const dur0 = stepDuration(0);
     const init: Record<string, EmailRun> = {};
     emails.forEach((e, idx) => {
       const r = emptyRun();
       if (idx === 0) {
         r.status = 'running';
         r.steps[STEP_IDS[0]!] = 'running';
+        r.durations[STEP_IDS[0]!] = dur0;
       }
       init[e.id] = r;
     });
     setRuns(init);
     setPhase('running');
-    timer.current = setTimeout(advance, stepDelay(0));
+    timer.current = setTimeout(advance, dur0);
   }, [emails, advance, clear]);
 
   const stop = useCallback(() => {

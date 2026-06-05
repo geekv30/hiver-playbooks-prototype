@@ -38,13 +38,26 @@
   transform: rotate(180deg);
 }
 
+/* Expand / collapse - the grid 0fr<->1fr trick tweens the steps' height
+   (card-resize idiom) instead of snapping open/closed. */
+.stepsWrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--d-enter) var(--ease-snap);
+}
+.stepsWrap[data-open] {
+  grid-template-rows: 1fr;
+}
 .steps {
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .chev {
+  .chev,
+  .stepsWrap {
     transition: none;
   }
 }

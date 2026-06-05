@@ -1,7 +1,7 @@
-/* EmailList - cards stacked under the topic header (16px below it, 14px apart). */
+/* EmailList - cards stacked 14px apart. (No top margin: the scroll container owns
+   the consistent 20px top padding shared by every drill-down view.) */
 .list {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  margin-top: 16px;
 }

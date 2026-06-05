@@ -1,0 +1,73 @@
+/* ThumbsRating - icon-only up/down verdict. The single renderer for "rate this"
+   (Simulate run outcome + Copilot reply). Lifted verbatim from RunOutcome's
+   former inline .verdict/.vbtn so both surfaces stay pixel-identical. */
+
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.btn {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  color: var(--muted-soft);
+  cursor: pointer;
+  transition:
+    color var(--d-hover) var(--ease-snap),
+    background var(--d-hover) var(--ease-snap),
+    border-color var(--d-hover) var(--ease-snap);
+}
+.btn svg {
+  width: 14px;
+  height: 14px;
+}
+.btn:hover {
+  color: var(--ink-soft);
+  background: var(--card);
+  border-color: var(--hairline);
+}
+.btn[data-on] {
+  color: var(--state-ok);
+  border-color: var(--state-ok);
+  background: var(--state-ok-bg);
+}
+.btn[data-down][data-on] {
+  color: var(--state-warn);
+  border-color: var(--state-warn);
+  background: var(--state-warn-bg);
+}
+.btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+/* The picked thumb pops once (transitions.dev number-pop idiom) - a small,
+   purposeful confirmation, not a loop. */
+.btn[data-on] svg {
+  animation: thumbPop var(--d-enter) var(--ease-spring, var(--ease-snap));
+}
+@keyframes thumbPop {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.22);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn {
+    transition: none;
+  }
+  .btn[data-on] svg {
+    animation: none;
+  }
+}

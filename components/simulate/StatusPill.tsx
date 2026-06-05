@@ -3,7 +3,7 @@ import styles from './StatusPill.module.css';
 export type PillStatus = 'running' | 'passed' | 'failed' | 'attention';
 
 const LABEL: Record<PillStatus, string> = {
-  running: 'Running',
+  running: 'Running evaluation',
   passed: 'Passed',
   failed: 'Failed',
   attention: 'Needs attention',

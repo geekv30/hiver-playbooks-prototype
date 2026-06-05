@@ -8,7 +8,7 @@ import { BranchIcon } from '@/components/icons/ui/Branch';
 import { RiAtLine } from 'react-icons/ri';
 import styles from './Chip.module.css';
 
-type ChipMode = 'action' | 'ref' | 'condition';
+type ChipMode = 'action' | 'ref' | 'condition' | 'placeholder';
 
 interface Props {
   /** Required for mode 'action'. Omit for 'ref' / 'condition'. */
@@ -39,7 +39,23 @@ export default function Chip({ chip, metaText, onClick, mode = 'action', label, 
     return (
       <span className={styles.chip} contentEditable={false} suppressContentEditableWarning>
         <span className={styles.chipAt} aria-hidden="true"><RiAtLine /></span>
-        <span className={styles.chipMeta}>{label}</span>
+        <span className={styles.chipRef}>{label}</span>
+      </span>
+    );
+  }
+
+  // Placeholder ("@ action") - the dashed pill shown inline the moment the user
+  // types '@', held until they pick + finalise the action (Figma 647:41076).
+  if (mode === 'placeholder') {
+    return (
+      <span
+        className={`${styles.chip} ${styles.placeholder}`}
+        data-chip-id={chip?.id}
+        contentEditable={false}
+        suppressContentEditableWarning
+      >
+        <span className={styles.phText}>@</span>
+        <span className={styles.phText}>action</span>
       </span>
     );
   }
@@ -50,9 +66,11 @@ export default function Chip({ chip, metaText, onClick, mode = 'action', label, 
   if (mode === 'condition') {
     const condCls = `${styles.chip} ${plain ? styles.plain : ''} ${onConditionClick ? styles.condButton : ''}`.trim();
     const verbCls = `${styles.chipVerb} ${subtle ? styles.verbSubtle : ''}`.trim();
+    // The undecided ELSE-IF / ELSE prompt fades BOTH its label and icon (Figma 334:37179).
+    const icoCls = `${styles.chipIco} ${subtle ? styles.icoSubtle : ''}`.trim();
     const inner = (
       <>
-        <span className={styles.chipIco}><BranchIcon /></span>
+        <span className={icoCls}><BranchIcon /></span>
         <span className={verbCls}>{label}</span>
       </>
     );
@@ -127,7 +145,10 @@ export default function Chip({ chip, metaText, onClick, mode = 'action', label, 
         </>
       ) : (
         <>
-          <span className={styles.chipVerb}>{verbText}</span>
+          {/* A standalone verb is the de-emphasised lead (chipVerb); a connector
+              operation that follows a brand is the emphasised value (chipMeta) -
+              Figma 410:51320 renders "get-contact" in Medium/ink-soft. */}
+          <span className={brandText ? styles.chipMeta : styles.chipVerb}>{verbText}</span>
           {meta && (
             <>
               <span className={styles.chipSep}>·</span>

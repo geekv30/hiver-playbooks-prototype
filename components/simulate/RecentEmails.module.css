@@ -1,0 +1,159 @@
+/* RecentEmails - the "Recent emails" eval tab. Pick a mailbox -> selectable
+   email list -> Evaluate -> per-email trace results. Figma 530:19771 / 557:* . */
+
+.recent {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* SM picker row (Figma 536:33992): 12px 18px padding, a label + a select. */
+.pickerRow {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  /* 20px top to match the AI scenarios / Custom email flows (consistent gap below
+     the back-header across every drill-down view). */
+  padding: 20px 18px 12px;
+}
+.pickerLabel {
+  font-size: var(--fs-small); /* 13px */
+  font-weight: 500;
+  line-height: 19px;
+  letter-spacing: var(--ls-body);
+  color: var(--ink-soft);
+}
+/* Email list (select cards) / result list (run cards). */
+.list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 16px 16px;
+}
+/* During a run the picker + tabs are hidden, so the list sits directly under the
+   header - give it the same 20px top breathing room the other panes have (the
+   picker provides that spacing in the select state). */
+.list[data-running] {
+  padding-top: 20px;
+}
+/* Cards stagger in when the inbox loads (texts-reveal technique). */
+.cardReveal {
+  animation: recentCardIn var(--d-enter) var(--ease-snap) backwards;
+  animation-delay: calc(var(--i) * 45ms);
+}
+@keyframes recentCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cardReveal {
+    animation: none;
+  }
+}
+
+/* Empty inbox - a quiet mailbox with no recent emails to evaluate. */
+.emptyState {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 24px;
+  text-align: center;
+}
+.emptyIcon {
+  width: 28px;
+  height: 28px;
+  margin-bottom: 4px;
+  color: var(--muted-soft);
+}
+.emptyText {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+.emptyHint {
+  margin: 0;
+  font-size: var(--fs-small);
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+/* Footer CTA (Figma 557:37159 / 571:17414): Evaluate (disabled -> accent) or
+   the secondary Stop Test while a run is in flight. */
+.footer {
+  flex: none;
+  padding: 16px 18px;
+  border-top: 1px solid var(--hairline);
+}
+.evalBtn,
+.stopBtn {
+  width: 100%;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 12px;
+  border-radius: var(--r-sm); /* 6px */
+  font-family: var(--font);
+  font-size: var(--fs-body); /* 14px */
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: var(--ls-body);
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap), color var(--d-hover) var(--ease-snap),
+    border-color var(--d-hover) var(--ease-snap);
+}
+.evalBtn svg,
+.stopBtn svg {
+  width: 18px;
+  height: 18px;
+}
+/* Evaluate: disabled (Gray 6 / Gray 4 text) -> enabled (accent / white). */
+.evalBtn {
+  border: none;
+  background: var(--surface-card);
+  color: var(--muted-soft);
+}
+.evalBtn[data-ready] {
+  background: var(--accent);
+  color: #fff;
+}
+.evalBtn[data-ready]:hover {
+  background: var(--accent-hover);
+}
+.evalBtn:disabled {
+  cursor: default;
+}
+/* Stop Test: a secondary outline button. */
+.stopBtn {
+  border: 1px solid var(--hairline);
+  background: var(--card);
+  color: var(--ink-soft);
+}
+.stopBtn:hover {
+  border-color: var(--hairline-strong);
+}
+.evalBtn:focus-visible,
+.stopBtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

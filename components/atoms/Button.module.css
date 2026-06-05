@@ -63,6 +63,19 @@
   background: var(--hairline);
 }
 
+/* Accent — the saturated "go / generate" primary (Primary purple #506DFF).
+   Reserved for top-level AI actions; matches the Simulate Test-all CTA register. */
+.accent {
+  background: var(--accent);
+  color: #fff;
+}
+.accent:hover {
+  background: var(--accent-hover);
+}
+.accent:active {
+  background: var(--accent-hover);
+}
+
 /* Tertiary — ghost. */
 .tertiary {
   background: transparent;
@@ -121,6 +134,11 @@
 .btn:disabled:hover {
   background: var(--surface-card);
   border-color: transparent;
+}
+/* Disabled accent collapses to an inert neutral fill (not a dimmed purple). */
+.accent:disabled,
+.accent:disabled:hover {
+  background: var(--surface-card);
 }
 .secondary:disabled:hover {
   background: var(--surface-soft);

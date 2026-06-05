@@ -69,6 +69,18 @@
   text-overflow: ellipsis;
 }
 
+/* Recent-emails select mode: the whole card is a toggle. */
+.card[data-selectable] {
+  cursor: pointer;
+  transition: border-color var(--d-hover) var(--ease-snap);
+}
+.card[data-selectable]:hover {
+  border-color: var(--hairline);
+}
+.card[data-selected] {
+  border-color: var(--hairline-strong);
+}
+
 /* Run section. */
 .pillRow {
   display: flex;
