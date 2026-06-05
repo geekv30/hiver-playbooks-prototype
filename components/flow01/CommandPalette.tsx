@@ -68,6 +68,7 @@ interface Row {
   drill: boolean; // trailing chevron - opens another page
   selectable: boolean; // multi-select → right-aligned check
   selected: boolean;
+  desc?: string; // hover/keyboard tooltip copy (omitted for value-picker rows)
   activate: () => void; // click / Enter
 }
 
@@ -82,6 +83,15 @@ function actionIcon(id: string): IconCmp | null {
   const a = findAction(id);
   return (a && ACTION_ICON[a.iconKey]) || null;
 }
+
+// Brief, plain-language tooltip copy. Catalog actions carry their own `desc`;
+// these cover the palette-only entries that have no ActionDef.
+const PALETTE_DESC: Record<string, string> = {
+  condition: 'Branch the AOP - take a different path when a condition is true or false.',
+  [REFERENCE_ID]: 'Insert a value from the email, the customer, or a connector.',
+  wait: 'Pause the AOP until a set time.',
+};
+const rowDesc = (id: string): string | undefined => findAction(id)?.desc ?? PALETTE_DESC[id];
 
 export default function CommandPalette({
   anchor,
@@ -173,6 +183,7 @@ export default function CommandPalette({
         drill: false,
         selectable: false,
         selected: false,
+        desc: findAction(v.id)?.desc,
         activate: () => onSelect(v.id),
       }));
       return [{ key: 'verbs', label: `${connectorName(drill.slug)} actions`, rows }];
@@ -193,6 +204,7 @@ export default function CommandPalette({
           drill: drills,
           selectable: false,
           selected: false,
+          desc: rowDesc(a.id),
           activate: drills ? () => openAction(a.id) : () => onSelect(a.id),
         };
       });
@@ -209,6 +221,7 @@ export default function CommandPalette({
               drill: false,
               selectable: false,
               selected: false,
+              desc: findAction(v.id)?.desc,
               activate: () => onSelect(v.id),
             });
           }
@@ -233,6 +246,7 @@ export default function CommandPalette({
         drill: drills,
         selectable: false,
         selected: false,
+        desc: rowDesc(a.id),
         activate: drills ? () => openAction(a.id) : () => onSelect(a.id),
       };
     });
@@ -244,6 +258,7 @@ export default function CommandPalette({
       drill: true,
       selectable: false,
       selected: false,
+      desc: `Run a ${connectorName(slug)} action.`,
       activate: () => {
         setDir('fwd');
         setDrill({ type: 'connector', slug });
@@ -405,6 +420,61 @@ export default function CommandPalette({
     );
   });
 
+  // Hover/keyboard tooltip: a brief description of the active row, shown to the
+  // side of the palette (the Fin pattern). It follows `active`, which BOTH hover
+  // (onMouseEnter) and arrow-key nav update - so one tooltip serves both. A short
+  // open delay on first appearance; once open it tracks the active row instantly.
+  const TIP_W = 236; // layout px
+  const [tip, setTip] = useState<{ text: string; left: number; top: number; side: 'right' | 'left' } | null>(
+    null,
+  );
+  const tipOpened = useRef(false);
+  const tipTimer = useRef<number | null>(null);
+  useEffect(() => {
+    if (presentation || typeof window === 'undefined') return;
+    const text = flatRows[active]?.desc;
+    if (!text) {
+      setTip(null);
+      if (tipTimer.current) window.clearTimeout(tipTimer.current);
+      return;
+    }
+    const place = () => {
+      const el = listRef.current?.querySelector<HTMLElement>(`[data-row="${active}"]`);
+      const pop = popRef.current;
+      if (!el || !pop) return;
+      const zoom =
+        parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--app-scale')) || 1;
+      const pr = pop.getBoundingClientRect();
+      const rr = el.getBoundingClientRect();
+      const gap = 10;
+      const margin = 12;
+      const tipWv = TIP_W * zoom;
+      const rowCenter = rr.top + rr.height / 2;
+      // Prefer the right of the palette; flip left when it would run off-screen.
+      let side: 'right' | 'left' = 'right';
+      let leftV = pr.right + gap;
+      if (leftV + tipWv > window.innerWidth - margin) {
+        side = 'left';
+        leftV = pr.left - gap - tipWv;
+      }
+      setTip({ text, left: leftV / zoom, top: rowCenter / zoom, side });
+    };
+    const run = () => requestAnimationFrame(place);
+    if (tipOpened.current) {
+      run();
+    } else {
+      if (tipTimer.current) window.clearTimeout(tipTimer.current);
+      tipTimer.current = window.setTimeout(() => {
+        tipOpened.current = true;
+        run();
+      }, 320);
+    }
+    return () => {
+      if (tipTimer.current) window.clearTimeout(tipTimer.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, flatRows, presentation]);
+
   // Drill-page header (single row: back chevron + page icon + title).
   let PageIcon: IconCmp | null = null;
   let pageIsBrand = false;
@@ -429,6 +499,7 @@ export default function CommandPalette({
     : 'root';
 
   return (
+    <>
     <div
       ref={popRef}
       className={`${styles.pop} ${presentation ? styles.popStatic : ''}`}
@@ -594,5 +665,17 @@ export default function CommandPalette({
         )}
       </div>
     </div>
+    {tip && (
+      <div
+        className={styles.tooltip}
+        data-side={tip.side}
+        style={{ left: tip.left, top: tip.top, width: TIP_W }}
+        role="tooltip"
+        aria-hidden
+      >
+        {tip.text}
+      </div>
+    )}
+    </>
   );
 }

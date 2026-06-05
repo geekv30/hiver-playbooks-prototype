@@ -1,6 +1,50 @@
 /* CommandPalette — Figma 283:28427. Layered: faint container > search > white
    results card > pinned footer hints. */
 
+/* Hover/keyboard row tooltip (Fin pattern): a brief description floated to the side
+   of the palette. Light frosted glass so it reads as a soft overlay, not a hard
+   card; ink-tinted shadow + hairline separate it from the light canvas. The element
+   persists across rows (the entry anim runs once on appear), and `top` transitions
+   so it glides between rows as the active row changes. */
+.tooltip {
+  position: fixed;
+  z-index: 90; /* above .pop (80) */
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.82);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  backdrop-filter: blur(14px) saturate(1.3);
+  border: 1px solid var(--hairline-soft);
+  box-shadow:
+    0 10px 26px -8px rgba(52, 60, 69, 0.22),
+    0 2px 6px -2px rgba(52, 60, 69, 0.12);
+  font-family: var(--font);
+  font-size: var(--fs-small); /* 13px */
+  line-height: 18px;
+  letter-spacing: var(--ls-body);
+  color: var(--ink-soft);
+  pointer-events: none;
+  transform: translateY(-50%); /* vertically center on the active row */
+  transition: top 120ms var(--ease-snap);
+}
+.tooltip[data-side='right'] {
+  animation: tipInR var(--d-enter) var(--ease-snap);
+}
+.tooltip[data-side='left'] {
+  animation: tipInL var(--d-enter) var(--ease-snap);
+}
+@keyframes tipInR {
+  from { opacity: 0; transform: translateY(-50%) translateX(-4px); }
+  to   { opacity: 1; transform: translateY(-50%) translateX(0); }
+}
+@keyframes tipInL {
+  from { opacity: 0; transform: translateY(-50%) translateX(4px); }
+  to   { opacity: 1; transform: translateY(-50%) translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tooltip { animation: none; transition: none; }
+}
+
 .pop {
   position: fixed;
   z-index: 80;
