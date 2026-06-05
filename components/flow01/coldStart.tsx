@@ -16,12 +16,12 @@ import {
 } from './doc';
 
 // ---------------------------------------------------------------------------
-// Cold-start "draft your playbook with AI" data + doc builders.
+// Cold-start "draft your AOP with AI" data + doc builders.
 //
 // Everything here is GENERIC + reusable - universal support workflows any team
 // has (triage bug reports, billing, feature requests, KB replies). NO named
 // customer / person / company / one story's data (see feedback-reusability-
-// principle). All paths funnel through ONE builder so the generated playbook is
+// principle). All paths funnel through ONE builder so the generated AOP is
 // data-driven, never bespoke per starter.
 // ---------------------------------------------------------------------------
 
@@ -58,7 +58,7 @@ export interface StarterSpec {
   Icon: IconCmp;
   /** Prefill written into the prompt field on click (the user can edit before generating). */
   prompt: string;
-  /** Resulting playbook fields. */
+  /** Resulting AOP fields. */
   title: string;
   trigger: string;
   steps: StarterStep[];
@@ -110,7 +110,7 @@ export const STARTERS: StarterSpec[] = [
     label: 'Route feature requests',
     Icon: RiLightbulbFlashLine,
     prompt:
-      'When a customer suggests a new feature, summarise the request, log it to the product backlog, and reply to thank them and set expectations.',
+      'When a customer suggests a new feature, summarize the request, log it to the product backlog, and reply to thank them and set expectations.',
     title: 'Feature requests',
     trigger: 'When a customer suggests a new feature or an improvement.',
     steps: [

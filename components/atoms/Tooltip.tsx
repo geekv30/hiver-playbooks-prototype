@@ -19,7 +19,7 @@ interface TooltipProps {
 }
 
 /**
- * Tooltip — hover/focus advisory bubble.
+ * Tooltip - hover/focus advisory bubble.
  *
  * Figma note: the file's tooltip instance (258:21951) only places the info-icon
  * trigger; the bubble is a shared-library overlay that isn't statically placed.

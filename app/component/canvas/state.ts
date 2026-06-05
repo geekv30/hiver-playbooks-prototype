@@ -136,8 +136,8 @@ function reducer(state: CanvasState, action: Action): CanvasState {
     }
     case 'setConfigChipId':    return { ...state, configChipId: action.id };
     case 'loadPlaybook': {
-      // Replace playbook entirely. Reset transient state — trace, statuses, history,
-      // clean-wipe snapshot, configChipId — so the user starts fresh on the new playbook.
+      // Replace the AOP entirely. Reset transient state - trace, statuses, history,
+      // clean-wipe snapshot, configChipId - so the user starts fresh on the new AOP.
       return {
         ...state,
         playbook: action.playbook,
@@ -182,7 +182,7 @@ const INITIAL_STATE: CanvasState = {
 };
 
 /* ============================================================ */
-/* Helpers — walk steps                                           */
+/* Helpers - walk steps                                           */
 /* ============================================================ */
 export function flattenActionSteps(steps: AnyStep[]): { stepId: string; chipIds: string[] }[] {
   const out: { stepId: string; chipIds: string[] }[] = [];
@@ -274,7 +274,7 @@ export function useCanvasState() {
         fragments: [{ kind: 'chip', chip: newChip }],
       };
 
-      // T1.4 — if there's an empty action step, REPLACE it instead of adding alongside
+      // T1.4 - if there's an empty action step, REPLACE it instead of adding alongside
       const emptyIdx = pb.steps.findIndex((s) =>
         s.kind === 'action' &&
         !s.fragments.some((f) => f.kind === 'chip') &&
@@ -786,8 +786,8 @@ export function useCanvasState() {
         }
       }
     };
-    collect(INITIAL_STATE.playbook.steps); // use snapshot pattern — execute against current playbook
-    // Actually walk the LIVE playbook, not the initial seed
+    collect(INITIAL_STATE.playbook.steps); // use snapshot pattern - execute against current AOP
+    // Actually walk the LIVE AOP, not the initial seed
     order.length = 0;
     collect(state.playbook.steps);
 
@@ -816,7 +816,7 @@ export function useCanvasState() {
         const isError = cur.chipId === 'c-08' && Math.random() < 0.0; // disabled by default; flip to 0.15 to seed errors
         const finalStatus: ChipStatus = isError ? 'error' : 'ok';
         dispatch({ type: 'setChipStatus', chipId: cur.chipId, status: finalStatus });
-        const mock = MOCK_TRACE_OUTPUTS[cur.chipId] || { input: '—', output: '—' };
+        const mock = MOCK_TRACE_OUTPUTS[cur.chipId] || { input: '-', output: '-' };
         dispatch({ type: 'appendTrace', entry: {
           stepId: cur.stepId, chipId: cur.chipId, status: finalStatus,
           durationMs: STEP_MS - 50,

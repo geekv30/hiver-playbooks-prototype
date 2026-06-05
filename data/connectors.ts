@@ -7,7 +7,7 @@ export interface ConnectorMeta {
   fakeAuthedLabel: string;
 }
 
-// Generic account placeholders only — no specific customer's workspace.
+// Generic account placeholders only - no specific customer's workspace.
 export const CONNECTOR_META: Record<ConnectorSlug, ConnectorMeta> = {
   shopify:    { slug: 'shopify',    name: 'Shopify',    accountLabelPlaceholder: 'your-store.myshopify.com',  fakeAuthedLabel: 'your-store.myshopify.com' },
   hubspot:    { slug: 'hubspot',    name: 'HubSpot',    accountLabelPlaceholder: 'your-team.hubspot.com',     fakeAuthedLabel: 'your-team.hubspot.com' },

@@ -45,7 +45,7 @@ export default function Chip({ chip, metaText, onClick, mode = 'action', label, 
   }
 
   // Placeholder ("@ action") - the dashed pill shown inline the moment the user
-  // types '@', held until they pick + finalise the action (Figma 647:41076).
+  // types '@', held until they pick + finalize the action (Figma 647:41076).
   if (mode === 'placeholder') {
     return (
       <span
@@ -145,8 +145,8 @@ export default function Chip({ chip, metaText, onClick, mode = 'action', label, 
         </>
       ) : (
         <>
-          {/* A standalone verb is the de-emphasised lead (chipVerb); a connector
-              operation that follows a brand is the emphasised value (chipMeta) -
+          {/* A standalone verb is the de-emphasized lead (chipVerb); a connector
+              operation that follows a brand is the emphasized value (chipMeta) -
               Figma 410:51320 renders "get-contact" in Medium/ink-soft. */}
           <span className={brandText ? styles.chipMeta : styles.chipVerb}>{verbText}</span>
           {meta && (

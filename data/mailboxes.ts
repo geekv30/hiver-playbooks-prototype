@@ -1,5 +1,5 @@
 // Generic shared-mailbox options for the Enable flow's mailbox picker.
-// Placeholder / config data - identical regardless of the playbook being built
+// Placeholder / config data - identical regardless of the AOP being built
 // (reusability rule: no customer-specific names anywhere user-reachable). Sized
 // to ~30+ to exercise the searchable, scrollable picker at realistic scale.
 

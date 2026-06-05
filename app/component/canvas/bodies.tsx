@@ -30,7 +30,7 @@ function FieldRow({
 }
 
 /* ============================================================ */
-/* Read body — generic but specialized for AI Extract             */
+/* Read body - generic but specialized for AI Extract             */
 /* ============================================================ */
 function ReadBody({ chip }: BodyProps) {
   const action = findAction(chip.actionId);
@@ -66,7 +66,7 @@ function ReadBody({ chip }: BodyProps) {
 }
 
 /* ============================================================ */
-/* Ticket body — Tag / Note / Reply / Assign all routed here      */
+/* Ticket body - Tag / Note / Reply / Assign all routed here      */
 /* ============================================================ */
 function TicketBody({ chip, onMetaChange }: BodyProps) {
   const action = findAction(chip.actionId);
@@ -76,7 +76,7 @@ function TicketBody({ chip, onMetaChange }: BodyProps) {
       <>
         <FieldRow label="Tags" hint="required">
           <div className={styles.tagRow}>
-            <span className={styles.tagChip}>tour-enquiry<button className={styles.pillX}><RiCloseLine /></button></span>
+            <span className={styles.tagChip}>tour-inquiry<button className={styles.pillX}><RiCloseLine /></button></span>
             <span className={styles.tagChip} data-color="ref">@tour.name<button className={styles.pillX}><RiCloseLine /></button></span>
             <button className={styles.pillAdd} type="button"><RiAddLine /> Add tag</button>
           </div>
@@ -104,7 +104,7 @@ function TicketBody({ chip, onMetaChange }: BodyProps) {
         </FieldRow>
         {chip.actionId === 'note' && (
           <FieldRow label="Visibility">
-            <div className={styles.readonlyDisplay}>Internal — visible to your team only</div>
+            <div className={styles.readonlyDisplay}>Internal - visible to your team only</div>
           </FieldRow>
         )}
       </>
@@ -168,14 +168,14 @@ function ExternalBody({ chip, onMetaChange }: BodyProps) {
             />
           </FieldRow>
           <FieldRow label="Message" helper="Supports {{ref}}.">
-            <textarea className={styles.textArea} rows={4} defaultValue={'New tour enquiry — {{from.name}}, tour: {{ai_extract.output.tour}}.'} />
+            <textarea className={styles.textArea} rows={4} defaultValue={'New tour inquiry - {{from.name}}, tour: {{ai_extract.output.tour}}.'} />
           </FieldRow>
         </>
       )}
       {isHttp && (
         <>
           <FieldRow label="Method"><input className={styles.textInputSmall} type="text" defaultValue="POST" /></FieldRow>
-          <FieldRow label="URL"><input className={styles.textInput} type="text" defaultValue="https://api.airtable.com/v0/walkjapan/enquiries" /></FieldRow>
+          <FieldRow label="URL"><input className={styles.textInput} type="text" defaultValue="https://api.airtable.com/v0/walkjapan/inquiries" /></FieldRow>
           <FieldRow label="Body" helper="JSON, supports {{ref}}.">
             <textarea className={styles.textArea} rows={5} defaultValue={'{\n  "tour": "{{ai_extract.output.tour}}",\n  "dates": "{{ai_extract.output.dates}}"\n}'} />
           </FieldRow>
@@ -212,7 +212,7 @@ function HumanBody({ chip }: BodyProps) {
         <textarea className={styles.textArea} rows={3} defaultValue="Please review this draft before sending." />
       </FieldRow>
       <FieldRow label="Approve label"><input className={styles.textInput} type="text" defaultValue="Approve & send" /></FieldRow>
-      <FieldRow label="Reject label"><input className={styles.textInput} type="text" defaultValue="Reject — send alternatives" /></FieldRow>
+      <FieldRow label="Reject label"><input className={styles.textInput} type="text" defaultValue="Reject - send alternatives" /></FieldRow>
       <FieldRow label="Timeout" helper="Auto-resolves to Reject after this window.">
         <div className={styles.unitRow}>
           <input className={styles.textInputSmall} type="number" defaultValue="24" />
@@ -258,7 +258,7 @@ function WaitBody({ chip, onMetaChange }: BodyProps) {
       )}
       {tab === 'until' && (
         <FieldRow label="Until">
-          <input className={styles.textInput} type="text" defaultValue="2026-06-01 09:00" />
+          <input className={styles.textInput} type="text" defaultValue="06/01/2026 9:00 AM" />
         </FieldRow>
       )}
       {tab === 'for-reply' && (
@@ -289,7 +289,7 @@ function FlowBody({ chip }: BodyProps) {
     return (
       <>
         <FieldRow label="Reason tag" helper="Tag this end-point for analytics.">
-          <input className={styles.textInput} type="text" defaultValue="tour-enquiry handled" />
+          <input className={styles.textInput} type="text" defaultValue="tour-inquiry handled" />
         </FieldRow>
         <FieldRow label="Notify">
           <label className={styles.toggleRow}>

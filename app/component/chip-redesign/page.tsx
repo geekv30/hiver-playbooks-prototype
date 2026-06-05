@@ -149,7 +149,7 @@ const VARIANTS: {
   {
     id: 'A',
     letter: 'A',
-    name: 'Current — bordered pill',
+    name: 'Current - bordered pill',
     philosophy: 'Today\'s atom. 1px hairline border, white bg, icon + verb + meta with hairline divider.',
     pros: ['Status states are unambiguous', 'Buckets read at a glance via icon'],
     cons: ['Reads as a button, not a word', 'Multi-chip lines look like a toolbar', 'Heaviest visual weight in the prose'],
@@ -169,7 +169,7 @@ const VARIANTS: {
     letter: 'C',
     name: 'Underlined verb (link-style)',
     philosophy: 'No bg, no border. Tiny colored dot prefix + verb with dotted underline. Meta as muted mono. Reads as a hyperlink in prose.',
-    pros: ['Most prose-friendly — reads as text', 'Bucket signaled by tiny dot color', 'Almost zero visual weight'],
+    pros: ['Most prose-friendly - reads as text', 'Bucket signaled by tiny dot color', 'Almost zero visual weight'],
     cons: ['Status states are harder to layer', 'Hover/focus needs more care'],
     render: (chip) => <ChipC chip={chip} />,
   },
@@ -178,7 +178,7 @@ const VARIANTS: {
     letter: 'D',
     name: 'Bracketed text',
     philosophy: 'Literal `[Brand: Verb → meta]` brackets in mono. No background, no border at all.',
-    pros: ['Most "natural-language" — looks like an annotation', 'Zero chrome'],
+    pros: ['Most "natural-language" - looks like an annotation', 'Zero chrome'],
     cons: ['Brackets add visual noise', 'Hard to distinguish bucket without icon'],
     render: (chip) => <ChipD chip={chip} />,
   },
@@ -206,7 +206,7 @@ const VARIANTS: {
     name: 'Inline code (function-call)',
     philosophy: 'Mono font, looks like inline code. `slack.send_message("#tour-team")`.',
     pros: ['Programmer-y but compact', 'Already familiar mono+code-bg idiom'],
-    cons: ['Reads as code, not prose — alienates non-technical users', 'Loses the verb-as-prose intent'],
+    cons: ['Reads as code, not prose - alienates non-technical users', 'Loses the verb-as-prose intent'],
     render: (chip) => <ChipG chip={chip} />,
   },
   {
@@ -215,7 +215,7 @@ const VARIANTS: {
     name: 'Bucket-tinted soft pill',
     philosophy: 'B but the bg is bucket-tinted. read=amber, ticket=sky, external=mint, human=lavender, wait=sand, flow=peach. Bucket color does the signaling currently done by icon weight.',
     pros: ['Bucket affordance built into bg color', 'Light visual weight', 'Status states map cleanly (saturate tint)'],
-    cons: ['Color blindness — bucket signal lost', 'Tints need a dark-mode pairing later'],
+    cons: ['Color blindness - bucket signal lost', 'Tints need a dark-mode pairing later'],
     render: (chip) => <ChipH chip={chip} />,
   },
 ];
@@ -239,7 +239,7 @@ export default function ChipRedesignPage() {
       <header className={styles.docbar}>
         <Link href="/" className={styles.brand}>P</Link>
         <div className={styles.crumb}>
-          <Link href="/component/canvas">Playbooks</Link>
+          <Link href="/component/canvas">AOPs</Link>
           <span className={styles.csep}>/</span>
           <span className={styles.name}>Chip redesign</span>
         </div>
@@ -252,7 +252,7 @@ export default function ChipRedesignPage() {
       <div className={styles.wrap}>
         <div className={styles.hero}>
           <span className={styles.eyebrow}>Exploration · chip atom redesign</span>
-          <h1 className={styles.h1}>Eight ways to render an inline action — pick the one that doesn&apos;t intrude in prose</h1>
+          <h1 className={styles.h1}>Eight ways to render an inline action - pick the one that doesn&apos;t intrude in prose</h1>
           <p className={styles.lede}>
             The current chip (A) looks like a button sitting in the sentence. Multi-chip lines read as a toolbar, not a sentence. This route shows the same Walk Japan opener rendered eight ways. Skim, pick a winner, the canvas will use it.
           </p>
@@ -347,9 +347,9 @@ export default function ChipRedesignPage() {
 
         <section className={styles.recoBlock}>
           <span className={styles.eyebrow}>Recommended</span>
-          <h2 className={styles.recoTitle}>Design H — bucket-tinted soft pill (with C as runner-up)</h2>
+          <h2 className={styles.recoTitle}>Design H - bucket-tinted soft pill (with C as runner-up)</h2>
           <p className={styles.recoBody}>
-            H removes the heaviest visual weight (the border) while keeping the chip identifiable in prose. The bucket-color tint replaces the icon as the &quot;what kind of action&quot; signal. Status states map cleanly by saturating the tint. C is a strong runner-up — most prose-friendly — but layering test-run states on top of a flat underline is fiddly.
+            H removes the heaviest visual weight (the border) while keeping the chip identifiable in prose. The bucket-color tint replaces the icon as the &quot;what kind of action&quot; signal. Status states map cleanly by saturating the tint. C is a strong runner-up - most prose-friendly - but layering test-run states on top of a flat underline is fiddly.
           </p>
           <p className={styles.recoBody}>
             <strong>If you pick differently:</strong> tell me which letter and I&apos;ll apply it across canvas + inline-actions + inspector + tag in one pass.

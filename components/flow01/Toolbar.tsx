@@ -36,12 +36,12 @@ interface Props {
   simulating?: boolean;
   /** Hide the top-bar Simulate button (the companion model moves "Evaluate" onto the canvas). */
   hideSimulate?: boolean;
-  /** Hide the title + status here (when the playbook identity moves onto a canvas
+  /** Hide the title + status here (when the AOP identity moves onto a canvas
    *  header). The Back button stays. */
   hideIdentity?: boolean;
 }
 
-// Editor toolbar. Left = back + the playbook identity (title + status pill).
+// Editor toolbar. Left = back + the AOP identity (title + status pill).
 // Right = an optional Simulate check + one state-driven primary control: "Enable"
 // (draft/paused) -> opens the Guardrails commit flow; "Pause" (active) -> instant
 // stop. Undo/redo are keyboard-only (Cmd+Z / Cmd+Shift+Z), so the bar stays clean.

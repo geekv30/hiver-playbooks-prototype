@@ -54,7 +54,7 @@ export interface CopilotProposalData {
 export interface CopilotMessage {
   role: 'user' | 'assistant';
   text: string;
-  /** The labelled working steps (cold-start handoff + follow-up reasoning). */
+  /** The labeled working steps (cold-start handoff + follow-up reasoning). */
   steps?: string[];
   stepIdx?: number;
   /** Live thinking phase: the working steps animate (driven by stepIdx). */
@@ -66,7 +66,7 @@ export interface CopilotMessage {
   pending?: boolean;
   /** The assistant reply is still streaming in. */
   streaming?: boolean;
-  /** A reviewable change the user can apply to the playbook. */
+  /** A reviewable change the user can apply to the AOP. */
   proposal?: CopilotProposalData;
   /** Resolution of the proposal card (defaults to 'open' when a proposal exists). */
   proposalState?: ProposalState;

@@ -18,7 +18,7 @@ interface Props<T extends string> {
 /**
  * A white-chip-on-track segmented control (Figma 530:33976). The active segment
  * is a white chip with a barely-there lift (Shadows/sm) that SLIDES between
- * equal-width segments; labels recolour muted -> ink. Generic over any N tabs.
+ * equal-width segments; labels recolor muted -> ink. Generic over any N tabs.
  * Conformant tablist: roving tabindex + arrow/Home/End keyboard navigation.
  */
 export default function SegmentedControl<T extends string>({

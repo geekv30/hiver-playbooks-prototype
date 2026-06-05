@@ -63,7 +63,7 @@ const STEP_PLACEHOLDER = 'Write what to do. Type ‘@’ for actions';
 
 // The tag-owning mailboxes pre-selected when enabling. Shown ONLY when the AOP
 // actually uses tags (see docUsesTags) so the banner never asserts a false claim
-// on a tag-less playbook. Generic/config (reusability rule).
+// on a tag-less AOP. Generic/config (reusability rule).
 const PRE_ENABLED_MAILBOXES = ['support', 'sales'];
 
 // Does the doc use any Tag action? (a chip with actionId 'tag', anywhere -
@@ -77,7 +77,7 @@ function docUsesTags(doc: EditorDoc): boolean {
   return found;
 }
 
-// Copilot cold-start handoff: the working steps shown while the playbook drafts,
+// Copilot cold-start handoff: the working steps shown while the AOP drafts,
 // then a short generic acknowledgement (reusability rule: generic copy).
 const COPILOT_THINK_STEPS = [
   'Thinking through your request',
@@ -182,7 +182,7 @@ function updateLastAssistant(
 }
 
 interface Props {
-  /** Optional starting document. Omit for a fresh empty playbook (/canvas);
+  /** Optional starting document. Omit for a fresh empty AOP (/canvas);
    *  /api-example passes the seeded example. */
   initialDoc?: EditorDoc;
   /** Mount the Copilot + Evaluate companions: the floating tool-switcher rail and
@@ -205,7 +205,7 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
   const [palette, setPalette] = useState<PaletteState | null>(null);
   // The "@ action" placeholder chip currently being configured in the palette
   // (Figma 647:41076). It's inserted on '@', updated in realtime as the user
-  // picks/configures, and finalised (or removed) when the palette closes.
+  // picks/configures, and finalized (or removed) when the palette closes.
   const [pendingChip, setPendingChip] = useState<{ target: LineTarget; chipId: string } | null>(
     null,
   );
@@ -219,7 +219,7 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
   // Step reorder (drag the row handle) + the row 3-dot menu (Figma 647:40811).
   // `drag` = the step being dragged; `dropIdx` = the gap it would drop into (0..N);
   // `menuStepId` = the step whose kebab menu is open. The row chrome (handle +
-  // kebab) reveals on row-hover; each icon greys only on its own hover (CSS).
+  // kebab) reveals on row-hover; each icon grays only on its own hover (CSS).
   const [drag, setDrag] = useState<{ id: string } | null>(null);
   const [dropIdx, setDropIdx] = useState<number | null>(null);
   const [menuStepId, setMenuStepId] = useState<string | null>(null);
@@ -329,7 +329,7 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
 
   // Cold-start -> Copilot continuity. Generate seeds the query as the user's first
   // Copilot message, opens Copilot, and runs a short "working" animation; when it
-  // finishes the drafted playbook loads on the left and Copilot posts an ack, so
+  // finishes the drafted AOP loads on the left and Copilot posts an ack, so
   // any follow-up continues in the Copilot thread. Skip lands on a blank canvas.
   const handleColdStartGenerate = useCallback((genDoc: EditorDoc, query: string) => {
     setColdStartOpen(false);
@@ -851,7 +851,7 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
   // Realtime: as the user picks/configures in the palette, update the pending
   // chip in place. actionId null -> back to the "@ action" placeholder; otherwise
   // the chip shows the chosen action + (live) configured value. All updates +
-  // the insert + the finalise coalesce into ONE undo entry.
+  // the insert + the finalize coalesce into ONE undo entry.
   const previewChip = (actionId: string | null, meta?: string) => {
     if (!pendingChip) return;
     const { target, chipId } = pendingChip;
@@ -924,7 +924,7 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
       }
       return;
     }
-    // Finalise the pending chip in place: 'reference' becomes an @-ref token,
+    // Finalize the pending chip in place: 'reference' becomes an @-ref token,
     // everything else a real action chip (with the picked value as its meta).
     const finalFrag: Fragment =
       actionId === REFERENCE_ID ? makeRef(meta ?? '') : makeChip(actionId, meta);

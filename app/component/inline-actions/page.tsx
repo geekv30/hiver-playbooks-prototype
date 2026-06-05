@@ -57,7 +57,7 @@ const ACTIONS: Action[] = [
 
   // Flow
   { id: 'condition', bucket: 'flow', name: 'Condition', verb: 'Condition', meta: 'if / else if / else', desc: 'Branch on an expression', slug: 'flow.condition', icon: RiGitBranchLine },
-  { id: 'end', bucket: 'flow', name: 'End playbook', verb: 'End playbook', desc: 'Stop here, no further steps run', slug: 'flow.end', icon: RiStopCircleLine },
+  { id: 'end', bucket: 'flow', name: 'End AOP', verb: 'End AOP', desc: 'Stop here, no further steps run', slug: 'flow.end', icon: RiStopCircleLine },
 ];
 
 const BUCKET_META: Record<Bucket, { name: string; tag: string; sub: string }> = {
@@ -114,7 +114,7 @@ function Chip({ action, status, selected, unconfigured, disabled, error, onClick
 }
 
 export default function InlineActionsPage() {
-  // Slash menu state — handled with useRef + useEffect outside-click (no React bubbling games)
+  // Slash menu state - handled with useRef + useEffect outside-click (no React bubbling games)
   const [slashOpen, setSlashOpen] = useState(false);
   const [slashQuery, setSlashQuery] = useState('');
   const [slashIdx, setSlashIdx] = useState(0);
@@ -205,13 +205,13 @@ export default function InlineActionsPage() {
       <header className={styles.docbar}>
         <div className={styles.brand}>P</div>
         <div className={styles.crumb}>
-          <Link href="/">Playbooks</Link>
+          <Link href="/">AOPs</Link>
           <span className={styles.csep}>/</span>
           <Link href="/component/node">Components</Link>
           <span className={styles.csep}>/</span>
           <span className={styles.name}>Inline Actions</span>
         </div>
-        <span className={styles.meta}>Umbrella · 2026-05-23</span>
+        <span className={styles.meta}>Umbrella · 05/23/2026</span>
         <span className={styles.tbDivider} />
         <span className={styles.meta}>Fin (ticket) · OpenAI (test/run) · Pylon (slash)</span>
         <span className={styles.spacer} />
@@ -226,7 +226,7 @@ export default function InlineActionsPage() {
           <span className={styles.eyebrow}>Component · Inline Actions · umbrella</span>
           <h1 className={styles.h1}>The chip atom + 6 buckets + slash menu</h1>
           <p className={styles.lede}>
-            Every verb a playbook can run is an Inline Action — rendered as an atomic chip inside a Node body.
+            Every verb an AOP can run is an Inline Action - rendered as an atomic chip inside a Node body.
             29 actions across 6 buckets share one shell. Click any chip → contextual Inspector. Press <strong>/</strong> inside a Node → discover all actions.
             This umbrella is the structural foundation; each variant (Tag, Note, Approval, Condition…) has its own child extraction for its variant-specific config.
           </p>
@@ -254,27 +254,27 @@ export default function InlineActionsPage() {
               <div className={styles.legend}>
                 <div className={styles.legendRow}>
                   <span className={styles.legendKey}>A</span>
-                  <span className={styles.legendDesc}><strong>Icon</strong> — 14×14 inside a 16×16 slot. <code>react-icons/ri</code> (UI) + <code>react-icons/si</code> (brand). <code>currentColor</code>.</span>
+                  <span className={styles.legendDesc}><strong>Icon</strong> - 14×14 inside a 16×16 slot. <code>react-icons/ri</code> (UI) + <code>react-icons/si</code> (brand). <code>currentColor</code>.</span>
                 </div>
                 <div className={styles.legendRow}>
                   <span className={styles.legendKey}>B</span>
-                  <span className={styles.legendDesc}><strong>Brand</strong> — Inter 12.5/400/<code>--muted</code>. Connector chips only.</span>
+                  <span className={styles.legendDesc}><strong>Brand</strong> - Inter 12.5/400/<code>--muted</code>. Connector chips only.</span>
                 </div>
                 <div className={styles.legendRow}>
                   <span className={styles.legendKey}>C</span>
-                  <span className={styles.legendDesc}><strong>Separator</strong> — <code>·</code> in <code>--muted-soft</code>. Only with brand.</span>
+                  <span className={styles.legendDesc}><strong>Separator</strong> - <code>·</code> in <code>--muted-soft</code>. Only with brand.</span>
                 </div>
                 <div className={styles.legendRow}>
                   <span className={styles.legendKey}>D</span>
-                  <span className={styles.legendDesc}><strong>Verb</strong> — Inter 12.5/500/<code>--ink</code>. The action name.</span>
+                  <span className={styles.legendDesc}><strong>Verb</strong> - Inter 12.5/500/<code>--ink</code>. The action name.</span>
                 </div>
                 <div className={styles.legendRow}>
                   <span className={styles.legendKey}>E</span>
-                  <span className={styles.legendDesc}><strong>Meta</strong> — Mono 10.5/<code>--muted</code> with 1px hairline left divider. The configured value.</span>
+                  <span className={styles.legendDesc}><strong>Meta</strong> - Mono 10.5/<code>--muted</code> with 1px hairline left divider. The configured value.</span>
                 </div>
                 <div className={styles.legendRow}>
                   <span className={styles.legendKey}>F</span>
-                  <span className={styles.legendDesc}><strong>Status ring</strong> — 8px circle at bottom-right. Only in Test/Run modes or on error.</span>
+                  <span className={styles.legendDesc}><strong>Status ring</strong> - 8px circle at bottom-right. Only in Test/Run modes or on error.</span>
                 </div>
               </div>
             </div>
@@ -370,7 +370,7 @@ export default function InlineActionsPage() {
           </p>
 
           <div className={styles.slashHost}>
-            <span className={styles.placeholder}>Walk Japan tour enquiry · pause and try the slash menu →</span>{' '}
+            <span className={styles.placeholder}>Walk Japan tour inquiry · pause and try the slash menu →</span>{' '}
             <span className={styles.slashAnchor} ref={slashAnchorRef}>
               <button
                 type="button"
@@ -511,7 +511,7 @@ export default function InlineActionsPage() {
               <tr>
                 <td>Approval</td>
                 <td><span className="bucketPill">human</span></td>
-                <td><span className="statusParked">parked (likely own umbrella — rich-block atom)</span></td>
+                <td><span className="statusParked">parked (likely own umbrella - rich-block atom)</span></td>
               </tr>
               <tr>
                 <td>Wait / Wait for reply / Wait until</td>

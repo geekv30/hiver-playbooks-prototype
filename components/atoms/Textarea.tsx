@@ -20,7 +20,7 @@ interface Props
 }
 
 /**
- * Textarea — the bordered NL field (Figma trigger field 256:2895).
+ * Textarea - the bordered NL field (Figma trigger field 256:2895).
  * Border 1px hairline-soft, radius 10, padding 16/10, muted-soft placeholder,
  * auto-grows with content, optional corner info-Tooltip.
  *

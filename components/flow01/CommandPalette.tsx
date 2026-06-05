@@ -52,7 +52,7 @@ interface Props {
   onClose: () => void;
   /** Which world to open on: '/' lands on Actions (root), '@' on References. */
   initialScope?: 'actions' | 'references';
-  /** Render in-flow (relative) instead of a fixed caret popover — for the review page. */
+  /** Render in-flow (relative) instead of a fixed caret popover - for the review page. */
   presentation?: boolean;
   /** Hide the "Condition" action - used inside a branch body, where nesting another
    *  condition is disallowed (the block stays one level deep). */
@@ -65,7 +65,7 @@ interface Row {
   sub?: string;
   Icon: IconCmp | null;
   brand: boolean; // brand icon → render in true color, not currentColor
-  drill: boolean; // trailing chevron — opens another page
+  drill: boolean; // trailing chevron - opens another page
   selectable: boolean; // multi-select → right-aligned check
   selected: boolean;
   activate: () => void; // click / Enter
@@ -304,7 +304,7 @@ export default function CommandPalette({
   };
 
   // Closing a pick-many page commits the checked values (there is no confirm
-  // button — per the Figma, esc/outside-click "close" finalizes the selection).
+  // button - per the Figma, esc/outside-click "close" finalizes the selection).
   const closePalette = () => {
     if (drill?.type === 'action' && behavior?.mode === 'pick-many' && picked.size > 0) {
       confirmMany(); // inserts → parent unmounts the palette
@@ -313,7 +313,7 @@ export default function CommandPalette({
     }
   };
 
-  // Close on outside click (not in presentation mode — it's an in-flow demo).
+  // Close on outside click (not in presentation mode - it's an in-flow demo).
   useEffect(() => {
     if (presentation) return;
     const onDown = (e: MouseEvent) => {

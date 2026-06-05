@@ -7,14 +7,14 @@ import TopicCard from './TopicCard';
 import SimEmptyState from './SimEmptyState';
 
 interface Props {
-  /** Whether the live playbook has a trigger yet (drives the action). */
+  /** Whether the live AOP has a trigger yet (drives the action). */
   hasTrigger: boolean;
   /** Focus the trigger line in the editor (the "add a trigger" action). */
   onAddTrigger?: () => void;
 }
 
 // Generic preview rows - universal support topics, NOT one customer's data. They
-// only exist to show what AI-grouped scenarios will look like once a playbook has
+// only exist to show what AI-grouped scenarios will look like once an AOP has
 // a trigger. Rendered through the REAL TopicCard (dimmed), so this stays in sync
 // with the live component (one renderer per pattern).
 const GHOST_TOPICS: SimTopic[] = [

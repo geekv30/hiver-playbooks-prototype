@@ -44,7 +44,7 @@ function mk(id: string, actionId: string, status: ChipModel['status'] = 'ok'): C
   return { id, actionId, status, config: {} };
 }
 
-// ---- Action-tag (chip) — full Figma spec (component 241:16557) ----
+// ---- Action-tag (chip) - full Figma spec (component 241:16557) ----
 const VERB_ONLY: Variant[] = [
   { k: 'tag0', label: 'verb only', chip: mk('g-tag-bare', 'tag') },
   { k: 'assign', label: 'verb only', chip: mk('g-assign', 'assign') },
@@ -331,7 +331,7 @@ export default function ComponentsReview() {
         </div>
       </section>
 
-      {/* Flow-01 atoms — the leaf units that compose screen 256:2880 */}
+      {/* Flow-01 atoms - the leaf units that compose screen 256:2880 */}
       <section className={styles.section}>
         <div className={styles.sectionHead}>
           <h2>Flow-01 atoms</h2>
@@ -339,7 +339,7 @@ export default function ComponentsReview() {
         </div>
 
         <div className={styles.group}>
-          <p className={styles.groupLabel}>Textarea — trigger field (256:2895)</p>
+          <p className={styles.groupLabel}>Textarea - trigger field (256:2895)</p>
           <div className={styles.row}>
             <Specimen label="placeholder">
               <div style={{ width: 440 }}>
@@ -398,7 +398,7 @@ export default function ComponentsReview() {
         </div>
 
         <div className={styles.group}>
-          <p className={styles.groupLabel}>Chat input bar (258:7073) — pill container + Textarea + send</p>
+          <p className={styles.groupLabel}>Chat input bar (258:7073) - pill container + Textarea + send</p>
           <div className={styles.row}>
             <div className={styles.chatPreview}>
               <span className={styles.chatPlaceholder}>ask a question...</span>
@@ -425,10 +425,10 @@ export default function ComponentsReview() {
       <section className={styles.section}>
         <div className={styles.sectionHead}>
           <h2>Command palette</h2>
-          <span className={styles.status}>Figma 283:28427 — search, Actions/Connectors, connector drill-down, footer hints. Interactive.</span>
+          <span className={styles.status}>Figma 283:28427 - search, Actions/Connectors, connector drill-down, footer hints. Interactive.</span>
         </div>
         <div className={styles.group}>
-          <p className={styles.groupLabel}>Default (interactive — type to filter, click a connector to drill in)</p>
+          <p className={styles.groupLabel}>Default (interactive - type to filter, click a connector to drill in)</p>
           <div className={styles.row}>
             <CommandPalette
               presentation

@@ -30,7 +30,7 @@ export { AgentsIcon } from './Agents';
 export { CopilotIcon } from './Copilot';
 export { AutopilotIcon } from './Autopilot';
 
-// Missing icons — not in canvas, Lucide-style fallbacks
+// Missing icons - not in canvas, Lucide-style fallbacks
 export { ExtractIcon } from './Extract';
 export { ReplyIcon } from './Reply';
 export { HttpIcon } from './Http';

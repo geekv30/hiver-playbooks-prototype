@@ -1,4 +1,4 @@
-// Per-step status during a run. grey dot -> green as each step succeeds.
+// Per-step status during a run. gray dot -> green as each step succeeds.
 export type StepStatus = 'pending' | 'running' | 'done' | 'failed' | 'skipped';
 
 export interface TraceStepDef {
@@ -21,7 +21,7 @@ export interface TraceStepDef {
   branch?: string;
 }
 
-// The trace template (the illustrative API playbook, mirroring the example doc).
+// The trace template (the illustrative API AOP, mirroring the example doc).
 // actionIds map to the action library so the Chip atom draws them.
 export const SIM_TRACE: TraceStepDef[] = [
   {

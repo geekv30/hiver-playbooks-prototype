@@ -344,7 +344,7 @@ function StepRow({
     return (
       <div className={`${styles.stepRow} ${styles.stepEnd}`} data-step-id={step.id}>
         <span className={styles.endIcon}><RiStopCircleLine /></span>
-        <span className={styles.endLabel}>End playbook</span>
+        <span className={styles.endLabel}>End AOP</span>
         {step.reason && <span className={styles.endReason}>{step.reason}</span>}
       </div>
     );
@@ -542,8 +542,8 @@ function PlaybookSwitcher({ state }: { state: ReturnType<typeof useCanvasState> 
   const btnRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
-  // Match the currently-loaded playbook to a registry entry by frontmatter name.
-  // (No persistent playbook id in state — name is the user-visible label.)
+  // Match the currently-loaded AOP to a registry entry by frontmatter name.
+  // (No persistent AOP id in state - name is the user-visible label.)
   const current = PLAYBOOKS.find((p) => p.label === state.playbook.frontmatter.name) ?? PLAYBOOKS[0]!;
 
   useEffect(() => {
@@ -572,13 +572,13 @@ function PlaybookSwitcher({ state }: { state: ReturnType<typeof useCanvasState> 
         className={`${styles.playbookSwitchBtn} ${open ? styles.playbookSwitchBtnOpen : ''}`}
         onClick={() => setOpen((o) => !o)}
         type="button"
-        title="Switch playbook"
+        title="Switch AOP"
         aria-haspopup="menu"
         aria-expanded={open}
       ><RiArrowDownSLine /></button>
       {open && (
         <div ref={menuRef} className={styles.playbookSwitchMenu} role="menu">
-          <div className={styles.playbookSwitchLabel}>Playbooks</div>
+          <div className={styles.playbookSwitchLabel}>AOPs</div>
           {PLAYBOOKS.map((p) => {
             const active = p.id === current.id;
             return (
@@ -619,13 +619,13 @@ function Topbar({ state, onOpenOverflow, overflowOpen, onOpenActivate, activateO
     <header className={styles.topbar}>
       <Link href="/" className={styles.brand}>P</Link>
       <div className={styles.crumb}>
-        <Link href="/component/canvas">Playbooks</Link>
+        <Link href="/component/canvas">AOPs</Link>
         <span className={styles.csep}>/</span>
         <span
           className={styles.crumbName}
           contentEditable={!inTest && !inCleanWipe}
           suppressContentEditableWarning
-          data-placeholder="Untitled playbook"
+          data-placeholder="Untitled AOP"
           onKeyDown={(e) => {
             if (e.key === 'Enter') { e.preventDefault(); (e.currentTarget as HTMLElement).blur(); }
             if (e.key === 'Escape') { (e.currentTarget as HTMLElement).blur(); }
@@ -851,7 +851,7 @@ function FrontmatterCard({
         className={styles.fmTitle}
         contentEditable={!readOnly}
         suppressContentEditableWarning
-        data-placeholder="Untitled playbook"
+        data-placeholder="Untitled AOP"
         onKeyDown={(e) => {
           if (e.key === 'Enter') { e.preventDefault(); (e.currentTarget as HTMLElement).blur(); }
         }}
@@ -994,7 +994,7 @@ function TracePanel({
           {state.trace.length} {state.trace.length === 1 ? 'step' : 'steps'}
           {state.testOutcome === 'pass' && <span className={styles.traceOutcomeOk}> · passed</span>}
           {state.testOutcome === 'fail' && <span className={styles.traceOutcomeErr}> · failed</span>}
-          {state.testOutcome === 'cancelled' && <span className={styles.traceOutcomeCancelled}> · cancelled</span>}
+          {state.testOutcome === 'cancelled' && <span className={styles.traceOutcomeCancelled}> · canceled</span>}
         </span>
       </header>
       <div className={styles.traceList}>
@@ -1028,9 +1028,9 @@ function TracePanel({
                     <span className={styles.traceRowIco}>{Icon ? <Icon /> : null}</span>
                     <span className={styles.traceRowVerb}>
                       {action?.brand && <span className={styles.traceRowBrand}>{action.brand} · </span>}
-                      {action?.verb ?? '—'}
+                      {action?.verb ?? '-'}
                     </span>
-                    <span className={styles.traceRowDur}>{entry.durationMs ? `${entry.durationMs}ms` : '—'}</span>
+                    <span className={styles.traceRowDur}>{entry.durationMs ? `${entry.durationMs}ms` : '-'}</span>
                     <span className={`${styles.traceRowStatus} ${
                       entry.status === 'ok'      ? styles.traceStatusOk :
                       entry.status === 'error'   ? styles.traceStatusErr :
@@ -1043,11 +1043,11 @@ function TracePanel({
                     <div className={styles.traceRowDetail}>
                       <div className={styles.traceDetailBlock}>
                         <div className={styles.traceDetailLabel}>Input</div>
-                        <pre className={styles.traceDetailPre}>{formatPretty(entry.input) || '—'}</pre>
+                        <pre className={styles.traceDetailPre}>{formatPretty(entry.input) || '-'}</pre>
                       </div>
                       <div className={styles.traceDetailBlock}>
                         <div className={styles.traceDetailLabel}>Output</div>
-                        <pre className={styles.traceDetailPre}>{formatPretty(entry.output) || '—'}</pre>
+                        <pre className={styles.traceDetailPre}>{formatPretty(entry.output) || '-'}</pre>
                       </div>
                       {entry.errorMessage && (
                         <div className={styles.traceDetailBlock}>
@@ -1067,7 +1067,7 @@ function TracePanel({
             <div className={styles.traceVarsRow}><code className={styles.traceVarsKey}>from.email</code><span className={styles.traceVarsVal}>rhys@walkjapan.com</span></div>
             <div className={styles.traceVarsRow}><code className={styles.traceVarsKey}>from.name</code><span className={styles.traceVarsVal}>Rhys Coleman</span></div>
             <div className={styles.traceVarsRow}><code className={styles.traceVarsKey}>ai_extract.output.tour</code><span className={styles.traceVarsVal}>Nakasendo</span></div>
-            <div className={styles.traceVarsRow}><code className={styles.traceVarsKey}>ai_extract.output.dates</code><span className={styles.traceVarsVal}>Apr 4–8</span></div>
+            <div className={styles.traceVarsRow}><code className={styles.traceVarsKey}>ai_extract.output.dates</code><span className={styles.traceVarsVal}>Apr 4-8</span></div>
             <div className={styles.traceVarsRow}><code className={styles.traceVarsKey}>ai_extract.output.group</code><span className={styles.traceVarsVal}>2</span></div>
             <div className={styles.traceVarsRow}><code className={styles.traceVarsKey}>availability</code><span className={styles.traceVarsVal}>yes</span></div>
           </div>
@@ -1461,7 +1461,7 @@ function TestBanner({ state }: { state: ReturnType<typeof useCanvasState> }) {
       <div className={styles.testBanner} data-mode={passed ? 'done-ok' : state.testOutcome === 'cancelled' ? 'done-cancelled' : 'done-err'}>
         <span className={styles.testBannerLabel}>
           {passed ? <><span className={styles.pillDotOk} /> Test passed</> :
-           state.testOutcome === 'cancelled' ? 'Test cancelled' :
+           state.testOutcome === 'cancelled' ? 'Test canceled' :
            <><span className={styles.pillDotErr} /> Test failed</>}
         </span>
         <span className={styles.testBannerSub}>{state.trace.length} steps recorded</span>
@@ -1477,7 +1477,7 @@ function TestBanner({ state }: { state: ReturnType<typeof useCanvasState> }) {
 function ValidationStrip({ state }: { state: ReturnType<typeof useCanvasState> }) {
   const issues: { label: string; targetSel: string }[] = [];
   if (!state.playbook.frontmatter.name.trim()) {
-    issues.push({ label: 'Playbook name is required', targetSel: 'h1[contenteditable]' });
+    issues.push({ label: 'AOP name is required', targetSel: 'h1[contenteditable]' });
   }
   if (!state.playbook.frontmatter.triggerFragments.length) {
     issues.push({ label: 'WHEN trigger must include at least one filter', targetSel: '[class*="fmTrigger"]' });
@@ -1612,7 +1612,7 @@ export default function CanvasPage() {
   };
 
   const handleReset = () => {
-    if (window.confirm('Reset playbook to Walk Japan seed? This will discard all changes.')) {
+    if (window.confirm('Reset AOP to Walk Japan seed? This will discard all changes.')) {
       window.location.reload();
     }
   };
@@ -1759,7 +1759,7 @@ export default function CanvasPage() {
                     >
                       <StepRow
                         step={step}
-                        num={stepNumbers[i] ?? '—'}
+                        num={stepNumbers[i] ?? '-'}
                         statuses={statuses}
                         onChipClick={(id) => state.setConfigChipId(id)}
                         selectedChipId={state.configChipId}
@@ -1828,7 +1828,7 @@ export default function CanvasPage() {
           onClose={state.closeSlash}
           onPick={(actionId) => {
             const s = state.slash!;
-            // Condition is a STEP kind, not an inline chip — insert a condition step after the current step
+            // Condition is a STEP kind, not an inline chip - insert a condition step after the current step
             if (actionId === 'condition') {
               state.insertConditionStep(s.stepId);
             } else {

@@ -137,13 +137,13 @@ export default function NodeComponentPage() {
       <header className={styles.docbar}>
         <div className={styles.brand}>P</div>
         <div className={styles.crumb}>
-          <Link href="/">Playbooks</Link>
+          <Link href="/">AOPs</Link>
           <span className={styles.csep}>/</span>
           <Link href="/">Components</Link>
           <span className={styles.csep}>/</span>
           <span className={styles.name}>Node</span>
         </div>
-        <span className={styles.meta}>Extraction · v2 · 2026-05-23</span>
+        <span className={styles.meta}>Extraction · v2 · 05/23/2026</span>
         <span className={styles.tbDivider} />
         <span className={styles.meta}>OpenAI Agent Builder × Intercom Fin</span>
         <span className={styles.spacer} />
@@ -158,8 +158,8 @@ export default function NodeComponentPage() {
           <h1 className={styles.h1}>Floating islands on a textured canvas</h1>
           <p className={styles.lede}>
             Each Node is a card with elevation, sitting on a dot-grid canvas.
-            Click the mode toggle to switch between Edit / Test / Run — Test animates the dots live;
-            Run dims the canvas to greyscale and lifts the active card with a glow.
+            Click the mode toggle to switch between Edit / Test / Run - Test animates the dots live;
+            Run dims the canvas to grayscale and lifts the active card with a glow.
             Click any chip → contextual Inspector slides in from the right. Click off → it slides out.
           </p>
           <div className={styles.heroMeta}>
@@ -175,7 +175,7 @@ export default function NodeComponentPage() {
           <span className={styles.seclabel}><span className={styles.secnum}>01</span> Living canvas</span>
           <h2 className={styles.h2}>One canvas, three modes, real interactions</h2>
           <p className={styles.sub}>
-            The Walk Japan playbook as Nodes on a textured canvas. Switch modes with the pill toggle.
+            The Walk Japan AOP as Nodes on a textured canvas. Switch modes with the pill toggle.
             Hover any card → toolbar fades in. Click a chip → Inspector slides in. Click a status dot → trace popover.
           </p>
 
@@ -288,7 +288,7 @@ export default function NodeComponentPage() {
                 {inspectorChip === 'extract' && 'AI Extract · configure'}
                 {inspectorChip === 'sheets' && 'Sheets · Get rows'}
                 {inspectorChip === 'tag' && 'Tag · configure'}
-                {!inspectorChip && '—'}
+                {!inspectorChip && '-'}
               </div>
 
               {inspectorChip === 'extract' && (
@@ -349,12 +349,12 @@ export default function NodeComponentPage() {
 
           <div className={styles.canvasSurface} onClick={(e) => e.stopPropagation()}>
             {([
-              ['idle', '01', 'idle — never run'],
-              ['queued', '02', 'queued — scheduled, waiting'],
-              ['running', '03', 'running — currently executing (pulse 1.4s)'],
-              ['ok', '04', 'ok — last run succeeded'],
-              ['error', '05', 'error — last run failed'],
-              ['skipped', '06', 'skipped — a branch chose another path (hollow ring)'],
+              ['idle', '01', 'idle - never run'],
+              ['queued', '02', 'queued - scheduled, waiting'],
+              ['running', '03', 'running - currently executing (pulse 1.4s)'],
+              ['ok', '04', 'ok - last run succeeded'],
+              ['error', '05', 'error - last run failed'],
+              ['skipped', '06', 'skipped - a branch chose another path (hollow ring)'],
             ] as const).map(([s, n, label]) => (
               <NodeCard
                 key={s}
@@ -369,7 +369,7 @@ export default function NodeComponentPage() {
                     <div className={styles.row}><span className="k">Status</span><span className="v">{s}</span></div>
                     <div className={styles.row}><span className="k">Last run</span><span className="v">{s === 'idle' ? 'never' : '2h ago'}</span></div>
                     <div className={styles.row}><span className="k">Duration</span><span className="v">{s === 'error' ? 'timeout' : '1.4s'}</span></div>
-                    <div className={styles.row}><span className="k">Output</span><span className="v">{s === 'error' || s === 'idle' ? '—' : `{ rows: 1 }`}</span></div>
+                    <div className={styles.row}><span className="k">Output</span><span className="v">{s === 'error' || s === 'idle' ? '-' : `{ rows: 1 }`}</span></div>
                   </span>
                 )}
               </NodeCard>
@@ -384,31 +384,31 @@ export default function NodeComponentPage() {
 
           <div className={styles.canvasSurface} onClick={(e) => e.stopPropagation()}>
             <NodeCard status="ok" num="01">
-              <em style={{ color: 'var(--muted)', fontStyle: 'normal' }}>default — </em>
+              <em style={{ color: 'var(--muted)', fontStyle: 'normal' }}>default - </em>
               <Chip verb="Run action" /> hover toolbar hidden.
             </NodeCard>
             <NodeCard status="ok" num="02" forceHover>
-              <em style={{ color: 'var(--muted)', fontStyle: 'normal' }}>hover (pinned) — </em>
+              <em style={{ color: 'var(--muted)', fontStyle: 'normal' }}>hover (pinned) - </em>
               <Chip verb="Run action" /> shadow lifts, toolbar fades in.
             </NodeCard>
             <NodeCard status="ok" num="03" editing>
-              <em style={{ color: 'var(--muted)', fontStyle: 'normal' }}>editing — </em>
+              <em style={{ color: 'var(--muted)', fontStyle: 'normal' }}>editing - </em>
               body has focus, left edge marker. <Chip verb="Inline edit" />
             </NodeCard>
             <NodeCard status="ok" num="04" selected>
-              <em style={{ color: 'var(--muted)', fontStyle: 'normal' }}>selected — </em>
+              <em style={{ color: 'var(--muted)', fontStyle: 'normal' }}>selected - </em>
               chip configured. <Chip verb="Tag" meta="tour.name" selected />
             </NodeCard>
             <NodeCard status="ok" num="05" dragging>
-              <em style={{ color: 'var(--muted)', fontStyle: 'normal' }}>dragging — </em>
+              <em style={{ color: 'var(--muted)', fontStyle: 'normal' }}>dragging - </em>
               lifted, rotated 0.3°, deep shadow. <Chip verb="Reorder me" />
             </NodeCard>
             <NodeCard status="idle" num="06" disabled>
-              <em style={{ color: 'var(--muted)', fontStyle: 'normal' }}>disabled — </em>
+              <em style={{ color: 'var(--muted)', fontStyle: 'normal' }}>disabled - </em>
               <Chip verb="Inactive" /> opacity .55.
             </NodeCard>
             <NodeCard status="error" num="07" error>
-              <em style={{ color: 'var(--muted)', fontStyle: 'normal' }}>error — </em>
+              <em style={{ color: 'var(--muted)', fontStyle: 'normal' }}>error - </em>
               soft red bg + border tint. <Chip verb="Failed run" meta="timeout" />
             </NodeCard>
           </div>

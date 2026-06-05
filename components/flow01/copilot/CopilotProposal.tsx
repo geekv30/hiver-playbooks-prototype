@@ -19,7 +19,7 @@ interface Props {
 
 /**
  * CopilotProposal - the reviewable apply card. The Copilot proposes a concrete,
- * generic change to the playbook; the user reviews the summary and chooses. The
+ * generic change to the AOP; the user reviews the summary and chooses. The
  * document NEVER changes until Apply is pressed (consent-gated). Once resolved it
  * settles to a compact confirmation (Applied + Undo, or Dismissed) - never a dead
  * card. One renderer for every Copilot proposal.
@@ -31,7 +31,7 @@ export default function CopilotProposal({ title, summary, state, onApply, onDism
         <span className={styles.checkRing} aria-hidden>
           <RiCheckLine />
         </span>
-        <span className={styles.settledText}>Applied to your playbook</span>
+        <span className={styles.settledText}>Applied to your AOP</span>
         <button type="button" className={styles.undo} onClick={onUndo}>
           <RiArrowGoBackLine aria-hidden />
           Undo

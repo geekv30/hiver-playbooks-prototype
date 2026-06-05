@@ -87,7 +87,7 @@ export default function DesignLanguage2Editor() {
   const [triggerOpen, setTriggerOpen] = useState(true);
   const [tab, setTab] = useState<RailTab>('test');
   const tabs: Array<{ id: RailTab; label: string }> = [
-    { id: 'playbook', label: 'Playbook' },
+    { id: 'playbook', label: 'AOP' },
     { id: 'config',   label: 'Config' },
     { id: 'test',     label: 'Test' },
     { id: 'history',  label: 'History' },
@@ -125,9 +125,9 @@ export default function DesignLanguage2Editor() {
         <div className={styles.brand}>H</div>
         <button className={styles.back} title="Back"><RiArrowLeftLine /></button>
         <div className={styles.crumb}>
-          <Link href="/">Playbooks</Link>
+          <Link href="/">AOPs</Link>
           <span className={styles.csep}>/</span>
-          <span className={styles.pname} contentEditable suppressContentEditableWarning>tour-enquiry</span>
+          <span className={styles.pname} contentEditable suppressContentEditableWarning>tour-inquiry</span>
         </div>
         <span className={styles.save}>Saved 12s ago</span>
         <span className={styles.dividerV} />
@@ -145,7 +145,7 @@ export default function DesignLanguage2Editor() {
 
       {/* ===== Left nav ===== */}
       <nav className={styles.nav}>
-        <button className={`${styles.navItem} ${styles.navItemActive}`} title="Playbooks"><RiBookOpenLine /></button>
+        <button className={`${styles.navItem} ${styles.navItemActive}`} title="AOPs"><RiBookOpenLine /></button>
         <button className={styles.navItem} title="Inbox"><RiInboxLine /></button>
         <button className={styles.navItem} title="History"><RiHistoryLine /></button>
         <button className={styles.navItem} title="Search"><RiSearchLine /></button>
@@ -186,10 +186,10 @@ export default function DesignLanguage2Editor() {
           {/* Frontmatter */}
           <div className={styles.fm}>
             <h1 className={styles.fmTitle} contentEditable suppressContentEditableWarning>
-              Tour enquiry — Walk Japan
+              Tour inquiry - Walk Japan
             </h1>
             <div className={styles.fmSummary} contentEditable suppressContentEditableWarning>
-              When a tour-enquiry email lands, answer with availability + matching itineraries,
+              When a tour-inquiry email lands, answer with availability + matching itineraries,
               draft a follow-up if needed, and log the lead in Airtable.
             </div>
           </div>
@@ -252,7 +252,7 @@ export default function DesignLanguage2Editor() {
           </StepRow>
 
           <StepRow status="idle" num="06">
-            <Chip icon={<RiAddLine />} brand="Airtable" verb="Add row" meta="enquiries" /> with the extracted details so leadgen can follow up.
+            <Chip icon={<RiAddLine />} brand="Airtable" verb="Add row" meta="inquiries" /> with the extracted details so leadgen can follow up.
           </StepRow>
 
           <StepRow status="idle" num="07">
@@ -403,25 +403,25 @@ export default function DesignLanguage2Editor() {
               <div className={styles.traceRow}>
                 <span className={`${styles.traceBadge} ${styles.traceBadgeOk}`} />
                 <span className={styles.traceN}>2h</span>
-                <span className={styles.traceL}>sara@cohort.co — Kumano Kodo</span>
+                <span className={styles.traceL}>sara@cohort.co - Kumano Kodo</span>
                 <span className={styles.traceD}>2.3s</span>
               </div>
               <div className={styles.traceRow}>
                 <span className={`${styles.traceBadge} ${styles.traceBadgeOk}`} />
                 <span className={styles.traceN}>4h</span>
-                <span className={styles.traceL}>ken@traveler.jp — Nakasendo trail</span>
+                <span className={styles.traceL}>ken@traveler.jp - Nakasendo trail</span>
                 <span className={styles.traceD}>1.9s</span>
               </div>
               <div className={styles.traceRow}>
                 <span className={`${styles.traceBadge} ${styles.traceBadgeErr}`} />
                 <span className={styles.traceN}>5h</span>
-                <span className={styles.traceL}>joe@adventure.io — HubSpot timeout</span>
+                <span className={styles.traceL}>joe@adventure.io - HubSpot timeout</span>
                 <span className={styles.traceD}>err</span>
               </div>
               <div className={styles.traceRow}>
                 <span className={`${styles.traceBadge} ${styles.traceBadgeOk}`} />
                 <span className={styles.traceN}>6h</span>
-                <span className={styles.traceL}>maya@birds.com — group of 8</span>
+                <span className={styles.traceL}>maya@birds.com - group of 8</span>
                 <span className={styles.traceD}>2.1s</span>
               </div>
             </>

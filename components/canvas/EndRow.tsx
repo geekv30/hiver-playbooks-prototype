@@ -6,7 +6,7 @@ interface Props {
   label?: string;
 }
 
-export default function EndRow({ onClick, label = '+ end of playbook · add step' }: Props) {
+export default function EndRow({ onClick, label = '+ end of AOP · add step' }: Props) {
   return (
     <div className={styles.endCta} onClick={onClick} role="button" tabIndex={0}>
       {label}

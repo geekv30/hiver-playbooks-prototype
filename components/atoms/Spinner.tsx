@@ -6,7 +6,7 @@ interface Props {
   size?: number;
 }
 
-// Spinner — Figma 211:19472. Remix loader, rotating.
+// Spinner - Figma 211:19472. Remix loader, rotating.
 export default function Spinner({ size = 16 }: Props) {
   return (
     <RiLoader4Line

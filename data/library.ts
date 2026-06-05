@@ -54,11 +54,11 @@ export const ACTIONS: ActionDef[] = [
   // Wait & come back (3)
   { id: 'wait_for_reply',          name: 'Wait for customer reply',   desc: 'Resume when the customer responds',            bucket: 'wait',     iconKey: 'wait' },
   { id: 'wait',                    name: 'Wait',                      desc: 'Pause for a fixed duration',                   meta: '1 business hour',      bucket: 'wait',     iconKey: 'wait' },
-  { id: 'wait_until',              name: 'Wait until',                desc: 'Pause until a specific time',                  meta: 'Monday 9am',           bucket: 'wait',     iconKey: 'wait' },
+  { id: 'wait_until',              name: 'Wait until',                desc: 'Pause until a specific time',                  meta: 'Monday 9 AM',          bucket: 'wait',     iconKey: 'wait' },
 
   // Control flow & end (2)
   { id: 'condition',               name: 'Condition',                 desc: 'Branch on a plain-English expression',         meta: 'if / else if / else',  bucket: 'flow',     iconKey: 'condition' },
-  { id: 'end',                     name: 'End playbook',              desc: 'Stop here, no further steps run',              bucket: 'flow',     iconKey: 'end' },
+  { id: 'end',                     name: 'End AOP',              desc: 'Stop here, no further steps run',              bucket: 'flow',     iconKey: 'end' },
 ];
 
 export function actionsByBucket(bucket: ActionDef['bucket']): ActionDef[] {

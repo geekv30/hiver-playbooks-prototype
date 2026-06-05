@@ -2,7 +2,7 @@
 
 import { useLayoutEffect, useRef } from 'react';
 
-// Editable playbook title - a content-sized span so the dotted underline hugs the
+// Editable AOP title - a content-sized span so the dotted underline hugs the
 // text exactly (an <input> sized by char-count overshoots a proportional font).
 // Uncontrolled DOM text (seeded/reconciled imperatively) so the caret never jumps.
 // One renderer; the caller supplies the className for its context (top bar / canvas

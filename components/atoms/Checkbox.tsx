@@ -16,7 +16,7 @@ interface Props {
   presentational?: boolean;
 }
 
-// Checkbox — Figma 211:21186. unchecked / checked / indeterminate / disabled.
+// Checkbox - Figma 211:21186. unchecked / checked / indeterminate / disabled.
 export default function Checkbox({
   checked,
   indeterminate,

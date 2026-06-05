@@ -9,7 +9,7 @@ import { STARTERS, buildStarterDoc, buildScaffoldDoc } from './coldStart';
 import styles from './ColdStartModal.module.css';
 
 interface Props {
-  /** Called with the generated playbook + the user's query when they finish a
+  /** Called with the generated AOP + the user's query when they finish a
    *  draft. The query carries into the Copilot thread, which runs the "working"
    *  animation and posts an acknowledgement (the handoff happens there now). */
   onGenerate: (doc: EditorDoc, query: string) => void;
@@ -30,13 +30,13 @@ function formatBytes(n: number): string {
 }
 
 /**
- * ColdStartModal - the "draft your playbook with AI" entry shown when a user
- * lands on an empty playbook canvas. Three paths converge on one generate:
+ * ColdStartModal - the "draft your AOP with AI" entry shown when a user
+ * lands on an empty AOP canvas. Three paths converge on one generate:
  *   1. describe in plain English (the hero input, with the Hiver-AI focus ring),
  *   2. tap a generic starter example (prefills the input),
  *   3. upload an SOP to convert (the input card is also a drop target).
  * On Generate the query hands off to the Copilot panel (which runs the working
- * animation + drafts the playbook); Skip / dismiss lands on a blank canvas.
+ * animation + drafts the AOP); Skip / dismiss lands on a blank canvas.
  *
  * Net-new surface (no Figma answer key); built from the existing atoms + the
  * ChatBar gradient idiom, grounded in 03-research/AI_DRAFT_COLDSTART_PATTERN.md.
@@ -290,7 +290,7 @@ export default function ColdStartModal({ onGenerate, onDismiss }: Props) {
               </div>
 
               <div className={styles.dropHint} aria-hidden={!dragOver}>
-                Drop your SOP to convert it to a playbook
+                Drop your SOP to convert it to an AOP
               </div>
             </div>
 
@@ -332,7 +332,7 @@ export default function ColdStartModal({ onGenerate, onDismiss }: Props) {
 
           {file && (
             <p className={styles.privacy}>
-              Your SOP is read by AI to draft the playbook. Avoid uploading sensitive customer data.
+              Your SOP is read by AI to draft the AOP. Avoid uploading sensitive customer data.
             </p>
           )}
         </div>

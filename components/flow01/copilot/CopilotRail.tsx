@@ -17,9 +17,9 @@ interface Props {
  * The /canvas tool-switcher (Figma 520:17882 = Copilot active, 536:34810 = Eval
  * active). A vertical 2-tab segmented control - Copilot (purple sparkle) over
  * Evaluate (Gray-1 play) - on a Gray-6a track. The ACTIVE tab lifts as a white
- * slot (Shadows/sm); the icons keep their own colour, so the active read comes
- * from the slot, not an icon recolour. It floats, pinned to the canvas-card top,
- * so an idle workspace reserves no rail column and the editor sits centred.
+ * slot (Shadows/sm); the icons keep their own color, so the active read comes
+ * from the slot, not an icon recolor. It floats, pinned to the canvas-card top,
+ * so an idle workspace reserves no rail column and the editor sits centered.
  */
 export default function CopilotRail({
   copilotOpen,

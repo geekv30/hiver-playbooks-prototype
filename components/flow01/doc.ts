@@ -13,17 +13,17 @@ export interface DocStep {
 }
 
 // --- Deployment + guardrails state -----------------------------------------
-// A playbook's behavior config (guardrails) and its go-live state. Both live on
+// An AOP's behavior config (guardrails) and its go-live state. Both live on
 // the doc so they undo/redo with the rest of the document. "Enable" flips status
 // to 'active'; "Pause" flips it to 'paused'. `mailboxes` = the shared mailboxes
-// the playbook is live on.
+// the AOP is live on.
 export type Tone = 'professional' | 'friendly' | 'concise';
 export type DeployStatus = 'draft' | 'active' | 'paused';
-// How the playbook is triggered. Lives on the doc (with the "when should this run"
+// How the AOP is triggered. Lives on the doc (with the "when should this run"
 // frontmatter); surfaced as a quiet control there and confirmed at enable.
 export type TriggerMode = 'automatic' | 'manual';
 // What the AI is allowed to do with replies. A GLOBAL guardrail (applies to every
-// reply in the playbook), not a per-chip setting. The highest-stakes choice.
+// reply in the AOP), not a per-chip setting. The highest-stakes choice.
 export type ReplyAuthority = 'draft' | 'send';
 
 export interface Guardrails {
@@ -108,9 +108,9 @@ function exChip(id: string, actionId: string, meta?: string): Fragment {
   return { kind: 'chip', chip: { id, actionId, status: 'ok', config: meta ? { meta } : {} } };
 }
 
-// A complete, named, ready-to-simulate example playbook (the API-error triage
+// A complete, named, ready-to-simulate example AOP (the API-error triage
 // case that the Simulate scenarios are built around). Seeds /canvas so a
-// stakeholder lands on a real playbook to fiddle with - not a blank editor.
+// stakeholder lands on a real AOP to fiddle with - not a blank editor.
 // Fixed ids keep it hydration-stable. Conditions stay inline (the editor does
 // not nest IF/ELSE yet); the matched-branch detail lives in the simulate trace.
 export function exampleDoc(): EditorDoc {
@@ -155,7 +155,7 @@ export function exampleDoc(): EditorDoc {
       },
       {
         id: 'ex-s5',
-        body: normalizeLine([txt('Then categorise the error and draft the right reply:')]),
+        body: normalizeLine([txt('Then categorize the error and draft the right reply:')]),
       },
       // The condition block replaces the old flat "Condition" chip + draft step:
       // each arm drafts the reply that fits the error class.
@@ -222,7 +222,7 @@ export function makeChip(actionId: string, meta?: string): Fragment {
 
 // The sentinel actionId for the "@ action" placeholder chip - the dashed pill
 // inserted the moment '@' is typed and held (configured in realtime) until the
-// user finalises the action (Figma 647:41076). It is never a finalised chip.
+// user finalizes the action (Figma 647:41076). It is never a finalized chip.
 export const PENDING_ACTION = '__pending__';
 
 export function makePendingChip(): Fragment {

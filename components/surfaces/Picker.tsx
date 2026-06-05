@@ -19,7 +19,7 @@ interface Props {
   anchor: { top: number; left: number } | null;
   onSelect: (id: string) => void;
   onClose: () => void;
-  /** Optional ref list override (used by tests / playbook-specific scopes). */
+  /** Optional ref list override (used by tests / AOP-specific scopes). */
   refs?: Ref[];
 }
 

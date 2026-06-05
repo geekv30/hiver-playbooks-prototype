@@ -150,7 +150,7 @@ export const RECENT_EMAILS: SimEmail[] = [
     preview:
       'Love the product, but the bright theme is hard on the eyes at night. Is a dark mode on the roadmap?',
     draft:
-      "Hi Emma, thanks for the kind words and the suggestion. A dark mode is on our roadmap - I've added your vote to the request so the team can prioritise it, and I'll let you know when it ships.",
+      "Hi Emma, thanks for the kind words and the suggestion. A dark mode is on our roadmap - I've added your vote to the request so the team can prioritize it, and I'll let you know when it ships.",
   },
   {
     id: 're5',
@@ -213,7 +213,7 @@ export const RECENT_EMAILS: SimEmail[] = [
     preview:
       "I'd like to cancel my subscription and check whether this month's charge can be refunded.",
     draft:
-      "Hi Mia, sorry to see you go. I've cancelled your subscription so it won't renew, and since you're within the refund window I've refunded this month's charge - it should appear in 5-7 business days.",
+      "Hi Mia, sorry to see you go. I've canceled your subscription so it won't renew, and since you're within the refund window I've refunded this month's charge - it should appear in 5-7 business days.",
   },
   {
     id: 're12',
@@ -247,12 +247,12 @@ export function recentForMailbox(mailboxId: string, count = 10): SimEmail[] {
 export const SIM_COPY = {
   noBranchHead: 'No matching branch',
   noBranchBody:
-    'This email did not match any branch in the playbook. Add an ELSE branch to handle cases like it.',
+    'This email did not match any branch in the AOP. Add an ELSE branch to handle cases like it.',
   noBranchTrace: 'no matching branch for this email',
   stepError: 'Request failed, no response',
   failedHead: 'Run failed',
   failedBody:
-    'A step in the playbook failed, so the run stopped before drafting a reply. Check the trace below for where it broke.',
+    'A step in the AOP failed, so the run stopped before drafting a reply. Check the trace below for where it broke.',
 } as const;
 
 // One label helper for both the topic card and the topic header (DRY).
