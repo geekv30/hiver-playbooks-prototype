@@ -16,17 +16,12 @@
 .relative {
   position: relative;
 }
-/* the tag + its picker. The popover anchors to the tag itself so it tracks the
-   real row height and survives the condition field wrapping (no magic offset). */
+/* the tag + its picker. The picker is fixed-positioned at the tag's rect (see
+   BranchTypePicker + useAnchoredPosition), so it escapes this scroll container's
+   overflow and never clips at the doc border - no absolute anchor wrapper needed. */
 .tagWrap {
   position: relative;
   display: inline-flex;
-}
-.pickerAnchor {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  z-index: 30;
 }
 
 

@@ -10,6 +10,7 @@ import {
 import Chip from '@/components/atoms/Chip';
 import type { Branch, BranchType, DocStep } from '../doc';
 import BranchTypePicker from './BranchTypePicker';
+import { type Anchor } from '../useAnchoredPosition';
 import styles from './ConditionBlock.module.css';
 
 const TYPE_LABEL: Record<BranchType, string> = {
@@ -52,14 +53,27 @@ export default function ConditionBlock({
   renderExpr,
   renderBody,
 }: Props) {
-  // Which tag's picker is open: a branch id, the literal 'prompt', or null.
+  // Which tag's picker is open: a branch id, the literal 'prompt', or null - plus
+  // the clicked tag's viewport rect, so the picker is fixed-positioned at the tag
+  // (it escapes the doc's scroll overflow and never clips at the border).
   const [pickerFor, setPickerFor] = useState<string | null>(null);
+  const [pickerAnchor, setPickerAnchor] = useState<Anchor | null>(null);
   const hasElse = branches.some((b) => b.type === 'else');
+
+  const openPicker = (key: string, el: HTMLElement) => {
+    const r = el.getBoundingClientRect();
+    setPickerAnchor({ left: r.left, top: r.top, bottom: r.bottom });
+    setPickerFor(key);
+  };
+  const closePicker = () => {
+    setPickerFor(null);
+    setPickerAnchor(null);
+  };
 
   const pick = (type: 'elseif' | 'else') => {
     if (pickerFor === 'prompt') onAddBranch?.(type);
     else if (pickerFor) onChangeBranchType?.(pickerFor, type);
-    setPickerFor(null);
+    closePicker();
   };
 
   // Clicking the field's padding (not directly on the text) should still focus the
@@ -89,14 +103,13 @@ export default function ConditionBlock({
   );
 
   const picker = (key: string) => {
-    if (pickerFor !== key) return null;
+    if (pickerFor !== key || !pickerAnchor) return null;
     // ELSE is only offered when it can't drop trailing arms: the new-branch
     // prompt, or a re-pick on the last decided arm.
     const allowElse = key === 'prompt' || branches[branches.length - 1]?.id === key;
+    // Fixed-positioned at the tag (anchor), so no relative wrapper is needed.
     return (
-      <div className={styles.pickerAnchor}>
-        <BranchTypePicker allowElse={allowElse} onPick={pick} onClose={() => setPickerFor(null)} />
-      </div>
+      <BranchTypePicker allowElse={allowElse} anchor={pickerAnchor} onPick={pick} onClose={closePicker} />
     );
   };
 
@@ -114,7 +127,7 @@ export default function ConditionBlock({
                 <Chip
                   mode="condition"
                   label={TYPE_LABEL[b.type]}
-                  onConditionClick={isIf ? undefined : () => setPickerFor(b.id)}
+                  onConditionClick={isIf ? undefined : (el) => openPicker(b.id, el)}
                 />
                 {picker(b.id)}
               </span>
@@ -164,7 +177,7 @@ export default function ConditionBlock({
                 mode="condition"
                 label="ELSE-IF / ELSE"
                 subtle
-                onConditionClick={() => setPickerFor('prompt')}
+                onConditionClick={(el) => openPicker('prompt', el)}
               />
               {picker('prompt')}
             </span>

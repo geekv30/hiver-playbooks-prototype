@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboa
 import { motion, useReducedMotion } from 'motion/react';
 import { RiCornerDownLeftLine, RiArrowUpLine, RiArrowDownLine } from 'react-icons/ri';
 import { BranchIcon } from '@/components/icons/ui/Branch';
+import { useAnchoredPosition, type Anchor } from '../useAnchoredPosition';
 import styles from './BranchTypePicker.module.css';
 
 interface Props {
@@ -11,6 +12,9 @@ interface Props {
   onClose: () => void;
   /** Hide ELSE when choosing it would drop trailing arms (a non-last arm). */
   allowElse?: boolean;
+  /** The tag's viewport rect. When set, the picker is fixed-positioned at the tag
+   *  (flips/clamps into view) so it never clips at the doc's scroll border. */
+  anchor?: Anchor;
 }
 
 const ALL: { type: 'elseif' | 'else'; label: string }[] = [
@@ -25,11 +29,26 @@ const ALL: { type: 'elseif' | 'else'; label: string }[] = [
  * silently destroy authored branches). Springs in (interruptible, reduced-motion
  * aware) to match the trace's reveals.
  */
-export default function BranchTypePicker({ onPick, onClose, allowElse = true }: Props) {
+export default function BranchTypePicker({ onPick, onClose, allowElse = true, anchor }: Props) {
   const options = useMemo(() => (allowElse ? ALL : ALL.filter((o) => o.type !== 'else')), [allowElse]);
   const [active, setActive] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
+
+  // When anchored, position fixed at the tag (flip/clamp) so the picker escapes
+  // the doc's scroll overflow and never clips at its border. Unanchored (the
+  // isolation showcase) keeps the parent's relative positioning.
+  const safeAnchor = anchor ?? { left: 0, top: 0, bottom: 0 };
+  const measured = useAnchoredPosition(safeAnchor, ref);
+  const fixedPos = anchor
+    ? measured ?? (() => {
+        const z =
+          typeof window !== 'undefined'
+            ? parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--app-scale')) || 1
+            : 1;
+        return { left: anchor.left / z, top: (anchor.bottom + 4) / z };
+      })()
+    : null;
 
   useEffect(() => {
     ref.current?.focus();
@@ -69,7 +88,11 @@ export default function BranchTypePicker({ onPick, onClose, allowElse = true }: 
       initial={reduce ? false : { opacity: 0, y: -4, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ type: 'spring', stiffness: 520, damping: 38 }}
-      style={{ transformOrigin: 'top left' }}
+      style={
+        fixedPos
+          ? { transformOrigin: 'top left', position: 'fixed', left: fixedPos.left, top: fixedPos.top, zIndex: 60 }
+          : { transformOrigin: 'top left' }
+      }
     >
       <div className={styles.groupLabel}>Conditions</div>
       {options.map((o, i) => (
