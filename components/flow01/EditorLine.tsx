@@ -12,6 +12,7 @@ import type { Fragment } from '@/types/playbook';
 import { findAction } from '@/data/library';
 import Chip from '@/components/atoms/Chip';
 import { txt, PENDING_ACTION } from './doc';
+import { isConfigurableChip } from './chipConfig';
 import styles from './EditorLine.module.css';
 
 // A real zero-width space kept in EMPTY text runs so they always own a text line
@@ -48,6 +49,10 @@ interface Props {
   /** When true, '/' is typed literally (no Actions palette) - e.g. a condition
    *  expression is an NL predicate, not a place to invoke actions. '@' still works. */
   noActions?: boolean;
+  /** Click a configurable chip to reconfigure it in place (passes the chip id +
+   *  its element so the parent can anchor the popover). Only configurable chips
+   *  get the handler (see isConfigurableChip). */
+  onChipConfig?: (chipId: string, el: HTMLElement) => void;
   /** When set (and token changes), the line focuses itself. */
   autoFocus?: { token: number; atStart: boolean } | null;
   /** Fired when the caret enters this line (focus bubbles from the text spans). */
@@ -112,6 +117,7 @@ export default function EditorLine({
   onBackspaceEmpty,
   onRequestPalette,
   noActions,
+  onChipConfig,
   autoFocus,
   onFocus,
   ariaLabel,
@@ -280,9 +286,10 @@ export default function EditorLine({
             />
           );
         }
-        // chip / ref token - atomic. Delete via Backspace; a polished mouse
-        // delete will live in the (future) click-to-configure popover. A token
-        // that sits at the visual line edge (only an empty text run beside it)
+        // chip / ref token - atomic. A configurable chip is clickable: it opens
+        // the in-place reconfigure popover (which also hosts a mouse delete);
+        // Backspace still deletes any token. A token that sits at the visual line
+        // edge (only an empty text run beside it)
         // drops its edge margin so the content's left edge lines up with prose-
         // first lines (no 4px skew - Figma puts both at x=0).
         const head = fragments[0];
@@ -299,7 +306,11 @@ export default function EditorLine({
               f.chip.actionId === PENDING_ACTION ? (
                 <Chip mode="placeholder" chip={f.chip} />
               ) : (
-                <Chip chip={f.chip} metaText={chipMeta(f.chip)} />
+                <Chip
+                  chip={f.chip}
+                  metaText={chipMeta(f.chip)}
+                  onClick={isConfigurableChip(f.chip.actionId) ? onChipConfig : undefined}
+                />
               )
             ) : f.kind === 'ref' ? (
               <Chip mode="ref" label={f.refPath} />

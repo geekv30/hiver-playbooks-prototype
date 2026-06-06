@@ -1,0 +1,149 @@
+/* ChipConfigPopover - reconfigure a placed chip in place (QoL #8). A light,
+   minimal value-picker: one white card, a quiet title, value rows. Deliberately
+   NOT the command-palette chrome (no search, no footer hints, no nested frames) -
+   the "click the cell to edit it" model. Fixed-positioned at the chip. */
+
+.pop {
+  position: fixed;
+  z-index: 60;
+  width: 224px;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  background: var(--card);
+  border: 1px solid var(--hairline-soft);
+  border-radius: var(--r-md);
+  box-shadow:
+    0 8px 12px -4px rgba(0, 0, 0, 0.05),
+    0 4px 6px -2px rgba(0, 0, 0, 0.1); /* Shadows/lg */
+  outline: none;
+}
+
+.title {
+  padding: 6px 8px 5px;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  max-height: 264px;
+  overflow-y: auto;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 8px;
+  border: 0;
+  background: transparent;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  transition: background var(--t-fast);
+}
+.rowActive {
+  background: var(--surface-soft);
+}
+
+.rowText {
+  flex: 1 0 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.rowLabel {
+  font-family: var(--font);
+  font-weight: 500;
+  font-size: var(--fs-small);
+  line-height: 18px;
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rowSub {
+  font-family: var(--font);
+  font-weight: 400;
+  font-size: 11px;
+  line-height: 14px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* pick-one / reply: the selected value carries an accent check on the right. */
+.rowCheck {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--accent);
+}
+/* pick-many: the checkbox slot (the Checkbox atom renders inside). */
+.rowBox {
+  flex: none;
+  display: grid;
+  place-items: center;
+}
+
+/* input kind (KB search): a single text field + a quiet Enter hint. */
+.inputWrap {
+  padding: 2px 4px 4px;
+}
+.input {
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-sm);
+  background: var(--card);
+  color: var(--ink-soft);
+  font-family: var(--font);
+  font-size: var(--fs-small);
+  line-height: var(--lh-small);
+  letter-spacing: var(--ls-small);
+}
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+.inputHint {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 4px 2px;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--muted);
+}
+.cap {
+  display: inline-grid;
+  place-items: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  background: var(--info-subtle);
+  border: 1px solid var(--hairline-soft);
+  border-radius: 4px;
+  color: var(--ink-soft);
+  font-family: var(--mono);
+  font-size: 10px;
+}
+.cap svg {
+  width: 11px;
+  height: 11px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row {
+    transition: none;
+  }
+}

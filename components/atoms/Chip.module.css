@@ -30,17 +30,31 @@
   font-family: var(--font);
   line-height: var(--lh-small);
   color: var(--ink-soft);
-  cursor: pointer;
-  transition: background var(--t-fast), border-color var(--t-fast);
+  /* A chip is inert by default; only a clickable one (a configurable value, or a
+     condition tag) shows the pointer + hover - so the affordance is honest. */
+  cursor: default;
+  transition: background var(--t-fast), border-color var(--t-fast), box-shadow var(--t-fast);
   user-select: none;
   white-space: nowrap;
   max-width: max-content;
   vertical-align: -2px;
 }
 
-.chip:hover {
+/* Clickable chips: a configurable action chip (click to reconfigure - QoL #8) or
+   a condition tag (.condButton). Same neutral hover the chip has always shown. */
+.chip.clickable,
+.condButton {
+  cursor: pointer;
+}
+.chip.clickable:hover,
+.condButton:hover {
   background: var(--surface-soft);
   border-color: var(--hairline-strong);
+}
+.chip.clickable:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
 }
 
 /* Placeholder variant ("@ action") - a uniform DASHED hairline (not the beveled

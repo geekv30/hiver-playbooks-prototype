@@ -1,4 +1,5 @@
 'use client';
+import { type MouseEvent as ReactMouseEvent, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import type { Chip as ChipModel } from '@/types/playbook';
 import { findAction } from '@/data/library';
 import { CONNECTOR_META } from '@/data/connectors';
@@ -15,7 +16,10 @@ interface Props {
   chip?: ChipModel;
   /** Override for chip meta text (action mode). Falls back to chip.config.meta then ActionDef.meta. */
   metaText?: string;
-  onClick?: (chipId: string) => void;
+  /** Action mode: click the chip to reconfigure it (passes the chip id + the
+   *  element, so the caller can anchor a popover to it). Only set for chips that
+   *  carry a pickable value - that is what makes a chip look/behave clickable. */
+  onClick?: (chipId: string, el: HTMLElement) => void;
   /** 'action' (default) renders from chip.actionId. 'ref' = @-reference pill. 'condition' = flow branch label. */
   mode?: ChipMode;
   /** ref mode: the reference value (mono). condition mode: the branch label (IF / ELSE-IF / ELSE). */
@@ -26,8 +30,9 @@ interface Props {
   plain?: boolean;
   /** Condition mode only: muted label for the not-yet-decided ELSE-IF / ELSE prompt. */
   subtle?: boolean;
-  /** Condition mode only: makes the tag a button (the ELSE-IF / ELSE prompt opens a picker). */
-  onConditionClick?: () => void;
+  /** Condition mode only: makes the tag a button (the ELSE-IF / ELSE prompt opens a
+   *  picker). Passes the tag's element so the caller can anchor the picker to it. */
+  onConditionClick?: (el: HTMLElement) => void;
 }
 
 // The action-tag. One pill chrome, several variants (Figma component 241:16557):
@@ -78,7 +83,7 @@ export default function Chip({ chip, metaText, onClick, mode = 'action', label, 
       <button
         type="button"
         className={condCls}
-        onClick={onConditionClick}
+        onClick={(e) => onConditionClick(e.currentTarget)}
         aria-haspopup="listbox"
         aria-label={`${label ?? 'Branch'} - choose branch type`}
       >
@@ -95,8 +100,23 @@ export default function Chip({ chip, metaText, onClick, mode = 'action', label, 
   if (!action) return null;
 
   const draft = chip.status === 'draft';
-  const cls = [styles.chip, draft ? styles.isDraft : '', plain ? styles.plain : ''].filter(Boolean).join(' ');
-  const handleClick = onClick ? () => onClick(chip.id) : undefined;
+  const cls = [styles.chip, draft ? styles.isDraft : '', plain ? styles.plain : '', onClick ? styles.clickable : '']
+    .filter(Boolean)
+    .join(' ');
+  const handleClick = onClick
+    ? (e: ReactMouseEvent<HTMLSpanElement>) => onClick(chip.id, e.currentTarget)
+    : undefined;
+  // role=button + tabIndex make the chip keyboard-reachable; Enter/Space open the
+  // config popover (stopPropagation so the contentEditable line doesn't also act).
+  const handleKeyDown = onClick
+    ? (e: ReactKeyboardEvent<HTMLSpanElement>) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+          onClick(chip.id, e.currentTarget);
+        }
+      }
+    : undefined;
 
   const ConnectorIcon = action.connectorSlug ? CONNECTOR_ICON[action.connectorSlug] : null;
   const VerbIcon = !action.connectorSlug ? ACTION_ICON[action.iconKey] : null;
@@ -120,8 +140,11 @@ export default function Chip({ chip, metaText, onClick, mode = 'action', label, 
     <span
       className={cls}
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
+      aria-haspopup={onClick ? 'dialog' : undefined}
+      aria-label={onClick ? `${verbText}${meta ? `, ${meta}` : ''} - reconfigure` : undefined}
       data-chip-id={chip.id}
       contentEditable={false}
       suppressContentEditableWarning

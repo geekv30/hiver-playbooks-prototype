@@ -17,6 +17,8 @@ import ChatBar from './ChatBar';
 import CoachmarkTriggers from './CoachmarkTriggers';
 import EditorLine, { PaletteRequest } from './EditorLine';
 import CommandPalette from './CommandPalette';
+import ChipConfigPopover from './ChipConfigPopover';
+import { chipConfigSpec, type ChipConfigResult } from './chipConfig';
 import ConditionBlock from './condition/ConditionBlock';
 import ColdStartModal from './ColdStartModal';
 import ActionHint from './ActionHint';
@@ -210,6 +212,13 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
     null,
   );
   const [focusReq, setFocusReq] = useState<FocusReq | null>(null);
+  // Click-to-reconfigure (QoL #8): the placed chip whose config popover is open.
+  // Holds the line target + chip id + the chip's viewport rect to anchor against.
+  const [chipConfig, setChipConfig] = useState<{
+    target: LineTarget;
+    chipId: string;
+    anchor: { left: number; top: number; bottom: number };
+  } | null>(null);
   // The step whose caret is active. The "@ for actions" pill anchors to this line
   // and stays put while the user types; we only update it when a step gains focus
   // (we do NOT reset it from the trigger / condition lines), so the pill stays
@@ -950,6 +959,46 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
     setPalette(null);
   };
 
+  // --- Click-to-reconfigure a placed chip (QoL #8) ---------------------------
+  // Open the in-place config popover anchored to the clicked chip. Only chips with
+  // a pickable value are clickable (EditorLine gates the handler), so a spec is
+  // always present; we still guard. The row menu auto-closes on the same mousedown.
+  const openChipConfig = (target: LineTarget) => (chipId: string, el: HTMLElement) => {
+    const frag = lineFrags(target).find((f) => f.kind === 'chip' && f.chip.id === chipId);
+    const chip = frag && frag.kind === 'chip' ? frag.chip : null;
+    if (!chip || !chipConfigSpec(chip.actionId)) return;
+    setMenuStepId(null);
+    const r = el.getBoundingClientRect();
+    setChipConfig({ target, chipId, anchor: { left: r.left, top: r.top, bottom: r.bottom } });
+  };
+  // Apply the popover's result to the chip, as one undo entry. Reply swaps the
+  // action id (its mode lives there, so drop any meta); every other kind sets the
+  // chip's meta. A no-op selection commits nothing (no spurious undo entry).
+  const commitChipConfig = (result: ChipConfigResult) => {
+    if (!chipConfig) return;
+    const { target, chipId } = chipConfig;
+    let changed = false;
+    const out = lineFrags(target).map((f) => {
+      if (f.kind !== 'chip' || f.chip.id !== chipId) return f;
+      if (result.kind === 'reply') {
+        if (f.chip.actionId === result.actionId) return f;
+        changed = true;
+        const config = { ...f.chip.config };
+        delete config.meta;
+        return { kind: 'chip' as const, chip: { ...f.chip, actionId: result.actionId, config } };
+      }
+      const cur = typeof f.chip.config.meta === 'string' ? f.chip.config.meta : undefined;
+      if (cur === result.meta) return f;
+      changed = true;
+      return {
+        kind: 'chip' as const,
+        chip: { ...f.chip, config: { ...f.chip.config, meta: result.meta } },
+      };
+    });
+    if (changed) api.setLine(target, out);
+    setChipConfig(null);
+  };
+
   // The floating Simulate panel (non-companion routes; the toolbar toggle).
   const toggleSimulate = () => setSimOpen((o) => !o);
 
@@ -1004,6 +1053,7 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
                         onChange={handleChange({ kind: 'trigger' })}
                         onEnter={handleEnter({ kind: 'trigger' })}
                         onRequestPalette={openPalette({ kind: 'trigger' })}
+                        onChipConfig={openChipConfig({ kind: 'trigger' })}
                         autoFocus={focusFor('trigger')}
                         ariaLabel="When should this AOP run"
                       />
@@ -1193,6 +1243,7 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
                                       }
                                       // if/else-if with a single body line: keep it (the arm needs one).
                                     }}
+                                    onChipConfig={openChipConfig(bt)}
                                     autoFocus={focusFor(lineKey(bt))}
                                     ariaLabel={`${b.type} action ${li + 1}`}
                                   />
@@ -1234,6 +1285,7 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
                             onEnter={handleEnter(t)}
                             onBackspaceEmpty={handleBackspaceEmpty(t)}
                             onRequestPalette={openPalette(t)}
+                            onChipConfig={openChipConfig(t)}
                             autoFocus={focusFor(`step:${step.id}`)}
                             onFocus={() => setActiveStepId(step.id)}
                             ariaLabel={`Step ${i + 1}`}
@@ -1317,6 +1369,25 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
           noCondition={palette.target.kind === 'cond' && palette.target.part === 'body'}
         />
       )}
+
+      {chipConfig &&
+        (() => {
+          const frag = lineFrags(chipConfig.target).find(
+            (f) => f.kind === 'chip' && f.chip.id === chipConfig.chipId,
+          );
+          const chip = frag && frag.kind === 'chip' ? frag.chip : null;
+          const spec = chip ? chipConfigSpec(chip.actionId) : null;
+          if (!chip || !spec) return null;
+          return (
+            <ChipConfigPopover
+              anchor={chipConfig.anchor}
+              spec={spec}
+              chip={chip}
+              onCommit={commitChipConfig}
+              onClose={() => setChipConfig(null)}
+            />
+          );
+        })()}
 
       {hint && (
         <div className={styles.toast} role="status">
