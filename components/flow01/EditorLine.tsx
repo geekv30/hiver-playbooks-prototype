@@ -12,6 +12,7 @@ import type { Fragment } from '@/types/playbook';
 import { findAction } from '@/data/library';
 import Chip from '@/components/atoms/Chip';
 import { txt, PENDING_ACTION } from './doc';
+import { actionBehavior } from './paletteCatalog';
 import styles from './EditorLine.module.css';
 
 // A real zero-width space kept in EMPTY text runs so they always own a text line
@@ -48,6 +49,9 @@ interface Props {
   /** When true, '/' is typed literally (no Actions palette) - e.g. a condition
    *  expression is an NL predicate, not a place to invoke actions. '@' still works. */
   noActions?: boolean;
+  /** Click a configured action chip to reopen the command palette on its value
+   *  page and reconfigure it in place. Only wired for chips that have such a page. */
+  onChipConfig?: (chipId: string, el: HTMLElement) => void;
   /** When set (and token changes), the line focuses itself. */
   autoFocus?: { token: number; atStart: boolean } | null;
   /** Fired when the caret enters this line (focus bubbles from the text spans). */
@@ -112,6 +116,7 @@ export default function EditorLine({
   onBackspaceEmpty,
   onRequestPalette,
   noActions,
+  onChipConfig,
   autoFocus,
   onFocus,
   ariaLabel,
@@ -299,7 +304,13 @@ export default function EditorLine({
               f.chip.actionId === PENDING_ACTION ? (
                 <Chip mode="placeholder" chip={f.chip} />
               ) : (
-                <Chip chip={f.chip} metaText={chipMeta(f.chip)} />
+                <Chip
+                  chip={f.chip}
+                  metaText={chipMeta(f.chip)}
+                  onClick={
+                    actionBehavior(f.chip.actionId).mode !== 'insert' ? onChipConfig : undefined
+                  }
+                />
               )
             ) : f.kind === 'ref' ? (
               <Chip mode="ref" label={f.refPath} />

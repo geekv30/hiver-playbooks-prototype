@@ -57,6 +57,13 @@ interface Props {
   /** Hide the "Condition" action - used inside a branch body, where nesting another
    *  condition is disallowed (the block stays one level deep). */
   noCondition?: boolean;
+  /** Open already drilled into this action's value page - used to reconfigure a
+   *  placed chip by reopening the palette on its page (e.g. the tag list). */
+  initialAction?: string;
+  /** Pre-checked option ids on a pick-many page (the chip's current values). */
+  initialPicked?: string[];
+  /** Pre-fill the search/input field (e.g. a chip's current KB-search query). */
+  initialQuery?: string;
 }
 
 interface Row {
@@ -101,14 +108,22 @@ export default function CommandPalette({
   initialScope,
   presentation,
   noCondition,
+  initialAction,
+  initialPicked,
+  initialQuery,
 }: Props) {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(initialQuery ?? '');
   // '@' opens straight on the References picker; '/' (default) opens the root
-  // Actions+Connectors view. Back/cross-links keep the two worlds reachable.
+  // Actions+Connectors view. `initialAction` opens straight on an action's value
+  // page (reconfiguring a placed chip). Back/cross-links keep the worlds reachable.
   const [drill, setDrill] = useState<Drill | null>(
-    initialScope === 'references' ? { type: 'action', id: REFERENCE_ID } : null,
+    initialAction
+      ? { type: 'action', id: initialAction }
+      : initialScope === 'references'
+        ? { type: 'action', id: REFERENCE_ID }
+        : null,
   );
-  const [picked, setPicked] = useState<Set<string>>(new Set()); // pick-many state
+  const [picked, setPicked] = useState<Set<string>>(new Set(initialPicked ?? [])); // pick-many state
   const [active, setActive] = useState(0);
   // Drill navigation direction, for the page slide. null on first open (no slide).
   const [dir, setDir] = useState<'fwd' | 'back' | null>(null);
