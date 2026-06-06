@@ -25,7 +25,7 @@ import SimulatePanel from '@/components/simulate/SimulatePanel';
 import { type CopilotMessage, type CopilotProposalData } from './copilot/CopilotPanel';
 import SidePanel, { type SideTab } from './copilot/SidePanel';
 import type { Verdict } from '@/components/atoms/ThumbsRating';
-import { REFERENCE_ID } from './paletteCatalog';
+import { REFERENCE_ID, actionBehavior } from './paletteCatalog';
 import { useEditorDoc } from './useEditorDoc';
 import {
   LineTarget,
@@ -47,6 +47,9 @@ import styles from './EditorCanvas.module.css';
 interface PaletteState {
   target: LineTarget;
   req: PaletteRequest;
+  // When set, the palette is EDITING this placed chip (reopened on its value page),
+  // so a pick commits back to it instead of inserting a new chip.
+  edit?: { chipId: string; initialAction: string; initialPicked?: string[]; initialQuery?: string };
 }
 
 interface FocusReq {
@@ -887,9 +890,80 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
     setPalette(null);
   };
 
+  // --- Click a placed action tag to reconfigure it -> reopen the SAME command
+  // palette on that action's value page (current value(s) pre-selected); the pick
+  // commits back to this chip. No new UI - the palette is reused exactly as-is.
+  const editCommit = (chipId: string, actionId: string, meta?: string) => {
+    if (!palette) return;
+    const { target } = palette;
+    // 'Condition' is a block, not a chip - ignore if the user drilled back and picked it.
+    if (actionId === 'condition') {
+      setPalette(null);
+      return;
+    }
+    let changed = false;
+    const out = lineFrags(target).map((f) => {
+      if (f.kind !== 'chip' || f.chip.id !== chipId) return f;
+      // A re-picked reference becomes a @ref token; a different action becomes that
+      // action chip; the SAME action just updates its value (preserving the id).
+      if (actionId === REFERENCE_ID) {
+        changed = true;
+        return makeRef(meta ?? '');
+      }
+      if (actionId !== f.chip.actionId) {
+        changed = true;
+        return makeChip(actionId, meta);
+      }
+      const cur = typeof f.chip.config.meta === 'string' ? f.chip.config.meta : undefined;
+      if (meta === undefined || meta === cur) return f; // no real change -> no commit
+      changed = true;
+      return { kind: 'chip' as const, chip: { ...f.chip, config: { ...f.chip.config, meta } } };
+    });
+    if (changed) api.setLine(target, normalizeLine(out));
+    setPalette(null);
+    requestFocus(lineKey(target), false);
+  };
+
+  // Open the palette already drilled into the clicked chip's value page, with its
+  // current value(s) pre-selected. Only actions with a palette value page are
+  // editable this way (EditorLine gates the click); mode 'insert' actions are not.
+  const openChipEdit = (target: LineTarget) => (chipId: string, el: HTMLElement) => {
+    const frag = lineFrags(target).find((f) => f.kind === 'chip' && f.chip.id === chipId);
+    const chip = frag && frag.kind === 'chip' ? frag.chip : null;
+    if (!chip) return;
+    const behavior = actionBehavior(chip.actionId);
+    if (behavior.mode === 'insert') return;
+    setMenuStepId(null);
+    const meta = typeof chip.config.meta === 'string' ? chip.config.meta : '';
+    let initialPicked: string[] | undefined;
+    let initialQuery: string | undefined;
+    if (behavior.mode === 'pick-many') {
+      const labels = meta.split(', ').map((s) => s.trim()).filter(Boolean);
+      initialPicked = behavior.options.filter((o) => labels.includes(o.label)).map((o) => o.id);
+    } else if (behavior.mode === 'input') {
+      initialQuery = meta.replace(/^"([\s\S]*)"$/, '$1'); // open on the raw query
+    }
+    const r = el.getBoundingClientRect();
+    setPalette({
+      target,
+      req: {
+        scope: 'actions',
+        fragIndex: 0,
+        caretOffset: 0,
+        rect: { left: r.left, top: r.top, bottom: r.bottom },
+      },
+      edit: { chipId, initialAction: chip.actionId, initialPicked, initialQuery },
+    });
+  };
+
   const insertChip = (actionId: string, meta?: string) => {
     if (!palette) return;
     const { target } = palette;
+    // Editing a placed chip: commit the pick back to it (not a new insert).
+    if (palette.edit) {
+      editCommit(palette.edit.chipId, actionId, meta);
+      return;
+    }
     const pid = pendingChip?.chipId ?? null;
     // "Condition" is a block, not an inline chip. Drop the pending "@ action"
     // placeholder first, then decide from the CLEANED line (not the snapshot that
@@ -1004,6 +1078,7 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
                         onChange={handleChange({ kind: 'trigger' })}
                         onEnter={handleEnter({ kind: 'trigger' })}
                         onRequestPalette={openPalette({ kind: 'trigger' })}
+                        onChipConfig={openChipEdit({ kind: 'trigger' })}
                         autoFocus={focusFor('trigger')}
                         ariaLabel="When should this AOP run"
                       />
@@ -1172,6 +1247,7 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
                                       );
                                     }}
                                     onRequestPalette={openPalette(bt)}
+                                    onChipConfig={openChipEdit(bt)}
                                     onBackspaceEmpty={() => {
                                       // Multi-line arm: backspace removes this empty line.
                                       if (b.lines.length > 1) {
@@ -1234,6 +1310,7 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
                             onEnter={handleEnter(t)}
                             onBackspaceEmpty={handleBackspaceEmpty(t)}
                             onRequestPalette={openPalette(t)}
+                            onChipConfig={openChipEdit(t)}
                             autoFocus={focusFor(`step:${step.id}`)}
                             onFocus={() => setActiveStepId(step.id)}
                             ariaLabel={`Step ${i + 1}`}
@@ -1310,6 +1387,9 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
         <CommandPalette
           anchor={palette.req.rect}
           initialScope={palette.req.scope}
+          initialAction={palette.edit?.initialAction}
+          initialPicked={palette.edit?.initialPicked}
+          initialQuery={palette.edit?.initialQuery}
           onSelect={insertChip}
           onPreview={previewChip}
           onClose={closePalette}

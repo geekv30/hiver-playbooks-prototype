@@ -1,4 +1,5 @@
 'use client';
+import { type MouseEvent as ReactMouseEvent, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import type { Chip as ChipModel } from '@/types/playbook';
 import { findAction } from '@/data/library';
 import { CONNECTOR_META } from '@/data/connectors';
@@ -15,7 +16,9 @@ interface Props {
   chip?: ChipModel;
   /** Override for chip meta text (action mode). Falls back to chip.config.meta then ActionDef.meta. */
   metaText?: string;
-  onClick?: (chipId: string) => void;
+  /** Action mode: click the chip to reconfigure it - passes the chip id + the
+   *  element so the caller can anchor the reopened palette to it. */
+  onClick?: (chipId: string, el: HTMLElement) => void;
   /** 'action' (default) renders from chip.actionId. 'ref' = @-reference pill. 'condition' = flow branch label. */
   mode?: ChipMode;
   /** ref mode: the reference value (mono). condition mode: the branch label (IF / ELSE-IF / ELSE). */
@@ -96,7 +99,20 @@ export default function Chip({ chip, metaText, onClick, mode = 'action', label, 
 
   const draft = chip.status === 'draft';
   const cls = [styles.chip, draft ? styles.isDraft : '', plain ? styles.plain : ''].filter(Boolean).join(' ');
-  const handleClick = onClick ? () => onClick(chip.id) : undefined;
+  const handleClick = onClick
+    ? (e: ReactMouseEvent<HTMLSpanElement>) => onClick(chip.id, e.currentTarget)
+    : undefined;
+  // Keyboard-activate the clickable chip (Enter/Space); stopPropagation so the
+  // contentEditable line doesn't also handle the key.
+  const handleKeyDown = onClick
+    ? (e: ReactKeyboardEvent<HTMLSpanElement>) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+          onClick(chip.id, e.currentTarget);
+        }
+      }
+    : undefined;
 
   const ConnectorIcon = action.connectorSlug ? CONNECTOR_ICON[action.connectorSlug] : null;
   const VerbIcon = !action.connectorSlug ? ACTION_ICON[action.iconKey] : null;
@@ -120,8 +136,11 @@ export default function Chip({ chip, metaText, onClick, mode = 'action', label, 
     <span
       className={cls}
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
+      aria-haspopup={onClick ? 'dialog' : undefined}
+      aria-label={onClick ? `${verbText}${meta ? `, ${meta}` : ''} - reconfigure` : undefined}
       data-chip-id={chip.id}
       contentEditable={false}
       suppressContentEditableWarning
