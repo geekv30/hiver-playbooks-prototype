@@ -104,10 +104,11 @@
   display: none; /* WebKit */
 }
 
-/* Document content (no card chrome - that lives on .area now). 44px top inset =
-   Figma 647:40011 pt-44 (the heading sits right at this line). */
+/* Document content (no card chrome - that lives on .area now). The ~105px content
+   rail is locked by the 68px number gutter, so top/bottom are 64px to bring the
+   vertical frame closer to the horizontal one (was a top-jammed 44). */
 .doc {
-  padding: 44px 40px 40px;
+  padding: 64px 40px 64px;
 }
 
 /* Sections carry no top padding (the .doc inset owns the 44px to the heading); the
