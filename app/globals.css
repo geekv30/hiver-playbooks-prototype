@@ -29,33 +29,78 @@
     #e4b2a2,
     #31e3de
   );
-  animation: aiGlowFlow 8s linear infinite;
+  --ai-glow-dur: 3.6s; /* play-then-settle: like Google AI Mode, the glow plays once on
+                          appear, gently flows, then fades out to the neutral input. */
 }
+/* Both pseudos sit on the border-box (inset:-1px) so the ring lands exactly ON the
+   host's 1px border (no second, offset ring) and the halo stays concentric. They
+   start hidden, play the one-shot intro, then settle to opacity 0 (the neutral
+   border remains). */
+.ai-input-glow::before,
 .ai-input-glow::after {
   content: '';
   position: absolute;
-  inset: 0;
-  z-index: -1;
+  inset: -1px;
   border-radius: inherit;
   pointer-events: none;
+  opacity: 0;
   background: var(--ai-glow-grad);
+}
+/* Crisp 1px gradient ring on the border. */
+.ai-input-glow::before {
+  padding: 1px;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  animation: aiGlowRing var(--ai-glow-dur) var(--ease-snap) forwards;
+}
+/* Soft outer halo, blurred. */
+.ai-input-glow::after {
+  z-index: -1;
   filter: blur(12px);
-  opacity: 0.4;
-  transition: opacity var(--d-hover) var(--ease-snap);
-  animation: aiGlowFlow 8s linear infinite;
+  animation: aiGlowHalo var(--ai-glow-dur) var(--ease-snap) forwards;
 }
-.ai-input-glow:focus-within::after {
-  opacity: 0.55;
-}
-@keyframes aiGlowFlow {
-  to {
+@keyframes aiGlowRing {
+  0% {
+    --copilot-angle: 0deg;
+    opacity: 0;
+  }
+  14% {
+    opacity: 1;
+  }
+  55% {
+    opacity: 1;
+  }
+  100% {
     --copilot-angle: 360deg;
+    opacity: 0;
+  }
+}
+@keyframes aiGlowHalo {
+  0% {
+    --copilot-angle: 0deg;
+    opacity: 0;
+  }
+  14% {
+    opacity: 0.5;
+  }
+  55% {
+    opacity: 0.5;
+  }
+  100% {
+    --copilot-angle: 360deg;
+    opacity: 0;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ai-input-glow,
+  .ai-input-glow::before,
   .ai-input-glow::after {
-    animation: none;
+    animation: none; /* stays opacity:0 - no glow flourish, just the neutral border */
   }
 }
 

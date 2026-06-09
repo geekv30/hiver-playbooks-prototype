@@ -657,18 +657,8 @@
   border-color: var(--hairline-strong);
   box-shadow: 0 2px 10px rgba(52, 60, 69, 0.07);
 }
-/* AI glow: the flowing 1px gradient border is painted via background-clip (it IS
-   the border, perfectly concentric - no second offset ring). The soft halo + the
-   flow come from the shared `.ai-input-glow` (globals.css). The grey neutral border
-   + grey focus drop-shadow are dropped here so they do not double up under the glow. */
-.composer:global(.ai-input-glow),
-.composer:global(.ai-input-glow):focus-within {
-  border-color: transparent;
-  background:
-    linear-gradient(var(--card), var(--card)) padding-box,
-    var(--ai-glow-grad) border-box;
-  box-shadow: 0 1px 2px rgba(52, 60, 69, 0.04);
-}
+/* The AI glow (a one-shot gradient ring + soft halo that plays then fades to this
+   neutral border) is the shared `.ai-input-glow` treatment from globals.css. */
 .input {
   width: 100%;
   border: none;
