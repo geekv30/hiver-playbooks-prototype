@@ -350,8 +350,12 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
   // Copilot message, opens Copilot, and runs a short "working" animation; when it
   // finishes the drafted AOP loads on the left and Copilot posts an ack, so
   // any follow-up continues in the Copilot thread. Skip lands on a blank canvas.
+  const reduceMotion = () =>
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const handleColdStartGenerate = useCallback((genDoc: EditorDoc, query: string) => {
-    setColdPhase('docked');
+    // Prime the dock behind the morph first (messages, pending doc, working
+    // animation), then enter 'morphing' so the FLIP bridge lands on a ready dock.
     setPanelTab('copilot');
     setCopilotMessages([
       { role: 'user', text: query },
@@ -359,9 +363,10 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
     ]);
     pendingDoc.current = genDoc;
     setThinkIdx(0);
+    setColdPhase(reduceMotion() ? 'docked' : 'morphing');
   }, []);
   const handleColdStartDismiss = useCallback(() => {
-    setColdPhase('docked');
+    setColdPhase(reduceMotion() ? 'docked' : 'morphing');
     requestFocus('trigger', false);
   }, [requestFocus]);
   // Capture the modal's surface rect as it leaves, so the morph can fly from it.
