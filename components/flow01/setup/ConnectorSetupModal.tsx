@@ -9,7 +9,8 @@ import {
   type CSSProperties,
   type MouseEvent as ReactMouseEvent,
 } from 'react';
-import { RiCloseLine, RiArrowLeftRightLine, RiInformationLine, RiHashtag } from 'react-icons/ri';
+import { RiCloseLine, RiInformationLine, RiHashtag } from 'react-icons/ri';
+import { LuRefreshCcw } from 'react-icons/lu';
 import { HiverBrandIcon } from '@/components/icons/ui';
 import { CONNECTOR_ICON } from '@/components/icons/connectors';
 import { CONNECTOR_META } from '@/data/connectors';
@@ -168,7 +169,7 @@ export default function ConnectorSetupModal({ connector, onConnected, onClose }:
                   <HiverBrandIcon />
                 </span>
                 <span className={styles.swapIco}>
-                  <RiArrowLeftRightLine />
+                  <LuRefreshCcw />
                 </span>
                 <span className={styles.brandIco}>
                   <Brand />

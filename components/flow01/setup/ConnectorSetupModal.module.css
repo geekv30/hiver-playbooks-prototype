@@ -235,12 +235,11 @@
 .swapIco svg {
   width: 18px;
   height: 18px;
-  /* A gentle left-right shuttle suggesting an active exchange between the two. */
-  animation: swapNudge 1.6s var(--ease-snap) infinite;
+  /* refresh-ccw spinning counter-clockwise: an active "syncing/connecting" feel. */
+  animation: refreshSpin 1.4s linear infinite;
 }
-@keyframes swapNudge {
-  0%, 100% { transform: translateX(-2px); }
-  50% { transform: translateX(2px); }
+@keyframes refreshSpin {
+  to { transform: rotate(-360deg); }
 }
 .authConnect {
   margin: 0 0 20px;
