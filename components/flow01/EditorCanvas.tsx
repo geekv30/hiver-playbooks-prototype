@@ -250,7 +250,12 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
   const [enableMailboxes, setEnableMailboxes] = useState<string[]>([]);
   // The cold-start "draft with AI" modal shows on a fresh, empty canvas (no
   // initialDoc); the pre-seeded /api-example demo skips it.
-  const [coldStartOpen, setColdStartOpen] = useState(!initialDoc);
+  // 'hero'    = modal open, dock hidden
+  // 'morphing' = reserved for a future animated transition (task 2+)
+  // 'docked'  = modal gone, dock visible
+  type ColdStartPhase = 'hero' | 'morphing' | 'docked';
+  const [coldPhase, setColdPhase] = useState<ColdStartPhase>(initialDoc ? 'docked' : 'hero');
+  const coldStartOpen = coldPhase === 'hero'; // keep existing reads working unchanged
   // Copilot conversation (owned here so the cold-start query can seed it). thinkIdx
   // drives the working animation (-1 = idle); pendingDoc holds the drafted doc
   // until the animation finishes, then it loads onto the canvas.
@@ -335,7 +340,7 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
   // finishes the drafted AOP loads on the left and Copilot posts an ack, so
   // any follow-up continues in the Copilot thread. Skip lands on a blank canvas.
   const handleColdStartGenerate = useCallback((genDoc: EditorDoc, query: string) => {
-    setColdStartOpen(false);
+    setColdPhase('docked');
     setPanelTab('copilot');
     setCopilotMessages([
       { role: 'user', text: query },
@@ -345,7 +350,7 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
     setThinkIdx(0);
   }, []);
   const handleColdStartDismiss = useCallback(() => {
-    setColdStartOpen(false);
+    setColdPhase('docked');
     requestFocus('trigger', false);
   }, [requestFocus]);
 
@@ -1349,29 +1354,31 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
             to the canvas window. Non-companion routes (/api-example) keep the
             toolbar-toggled floating Simulate panel. */}
         {companions ? (
-          <SidePanel
-            tab={panelTab}
-            onTab={setPanelTab}
-            copilot={{
-              messages: copilotMessages,
-              onSend: sendCopilot,
-              onRegenerate: regenerateCopilot,
-              onClear: clearCopilot,
-              introReady: !coldStartOpen,
-              onStop: stopCopilot,
-              busy: thinkIdx >= 0 || copilotMessages.some((m) => m.thinking || m.streaming),
-              onAttach: () => showHint('Attachments are coming soon.'),
-              onApplyProposal: applyProposal,
-              onDismissProposal: dismissProposal,
-              onUndoProposal: undoProposal,
-              onVerdict: setCopilotVerdict,
-            }}
-            sim={{
-              hasScenarios: lineHasContent(doc.trigger),
-              hasTrigger: lineHasContent(doc.trigger),
-              onAddTrigger: () => requestFocus('trigger', false),
-            }}
-          />
+          coldPhase !== 'hero' && (
+            <SidePanel
+              tab={panelTab}
+              onTab={setPanelTab}
+              copilot={{
+                messages: copilotMessages,
+                onSend: sendCopilot,
+                onRegenerate: regenerateCopilot,
+                onClear: clearCopilot,
+                introReady: coldPhase === 'docked',
+                onStop: stopCopilot,
+                busy: thinkIdx >= 0 || copilotMessages.some((m) => m.thinking || m.streaming),
+                onAttach: () => showHint('Attachments are coming soon.'),
+                onApplyProposal: applyProposal,
+                onDismissProposal: dismissProposal,
+                onUndoProposal: undoProposal,
+                onVerdict: setCopilotVerdict,
+              }}
+              sim={{
+                hasScenarios: lineHasContent(doc.trigger),
+                hasTrigger: lineHasContent(doc.trigger),
+                onAddTrigger: () => requestFocus('trigger', false),
+              }}
+            />
+          )
         ) : (
           <SimulatePanel
             open={simOpen}
