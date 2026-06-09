@@ -8,9 +8,10 @@ import {
   KeyboardEvent as ReactKeyboardEvent,
   MouseEvent as ReactMouseEvent,
 } from 'react';
-import type { Fragment } from '@/types/playbook';
+import type { Fragment, ConnectorSlug } from '@/types/playbook';
 import { findAction } from '@/data/library';
 import Chip from '@/components/atoms/Chip';
+import { useUnauthedConnectors } from './connectorAuth';
 import { txt, PENDING_ACTION } from './doc';
 import { actionBehavior } from './paletteCatalog';
 import styles from './EditorLine.module.css';
@@ -124,6 +125,8 @@ export default function EditorLine({
   const rootRef = useRef<HTMLDivElement>(null);
   const spanRefs = useRef<Map<number, HTMLSpanElement>>(new Map());
   const sig = structureSig(fragments);
+  // Connectors awaiting setup: their action-tags render the "setup needed" state.
+  const unauthedConnectors = useUnauthedConnectors();
 
   const isEmpty =
     fragments.length === 0 ||
@@ -307,6 +310,7 @@ export default function EditorLine({
                 <Chip
                   chip={f.chip}
                   metaText={chipMeta(f.chip)}
+                  setupNeeded={chipNeedsSetup(f.chip.actionId, unauthedConnectors)}
                   onClick={
                     actionBehavior(f.chip.actionId).mode !== 'insert' ? onChipConfig : undefined
                   }
@@ -333,4 +337,11 @@ function chipMeta(chip: { actionId: string; config: Record<string, unknown> }): 
   const m = chip.config?.meta;
   if (typeof m === 'string') return m;
   return findAction(chip.actionId)?.meta;
+}
+
+// A connector action-tag shows the "setup needed" state while its connector is
+// still in the unauthenticated set.
+function chipNeedsSetup(actionId: string, unauthed: ReadonlySet<ConnectorSlug>): boolean {
+  const slug = findAction(actionId)?.connectorSlug;
+  return !!slug && unauthed.has(slug);
 }

@@ -8,7 +8,8 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import { RiDraggable, RiMore2Fill } from 'react-icons/ri';
-import type { Fragment } from '@/types/playbook';
+import type { Fragment, ConnectorSlug } from '@/types/playbook';
+import { UnauthedConnectorsContext } from './connectorAuth';
 import GutterMarker from '@/components/atoms/GutterMarker';
 import RowMenu from './RowMenu';
 import GmailBar from './GmailBar';
@@ -192,6 +193,10 @@ interface Props {
    *  the two mutually-exclusive right-hand panels (docked workspace). /canvas sets
    *  this; /api-example (the bare worked example) does not. */
   companions?: boolean;
+  /** Start every connector unauthenticated, so adding one inserts a "setup needed"
+   *  tag and clicking it runs the connection flow (the /canvas-connection-not-setup-yet
+   *  route). Omit (default) to treat all connectors as already connected. */
+  connectorsStartUnauthed?: boolean;
 }
 
 // Cold-start presentation of the one Copilot surface:
@@ -199,7 +204,9 @@ interface Props {
 //   'docked' = the modal is gone (faded out), the dock is the visible Copilot
 type ColdStartPhase = 'hero' | 'docked';
 
-export default function EditorCanvas({ initialDoc, companions }: Props) {
+const ALL_CONNECTOR_SLUGS: ConnectorSlug[] = ['shopify', 'hubspot', 'slack', 'salesforce', 'clickup'];
+
+export default function EditorCanvas({ initialDoc, companions, connectorsStartUnauthed }: Props) {
   const api = useEditorDoc(initialDoc);
   const { doc, undo, redo } = api;
   // Always-current doc (for handlers that need the freshest doc, e.g. snapshotting
@@ -257,6 +264,11 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
   // initialDoc); the pre-seeded /api-example demo skips it. See ColdStartPhase above.
   const [coldPhase, setColdPhase] = useState<ColdStartPhase>(initialDoc ? 'docked' : 'hero');
   const coldStartOpen = coldPhase === 'hero'; // single remaining read: the ColdStartModal gate below
+  // Connectors not yet authenticated: their action-tags render "setup needed" and
+  // clicking runs the connection flow; once connected the slug leaves this set.
+  const [unauthedConnectors, setUnauthedConnectors] = useState<Set<ConnectorSlug>>(
+    () => new Set(connectorsStartUnauthed ? ALL_CONNECTOR_SLUGS : []),
+  );
   // Copilot conversation (owned here so the cold-start query can seed it). thinkIdx
   // drives the working animation (-1 = idle); pendingDoc holds the drafted doc
   // until the animation finishes, then it loads onto the canvas.
@@ -1048,6 +1060,7 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
       : (stepIds[stepIds.length - 1] ?? null);
 
   return (
+    <UnauthedConnectorsContext.Provider value={unauthedConnectors}>
     <div className={styles.canvas}>
       <GmailBar />
       <Toolbar
@@ -1449,5 +1462,6 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
         />
       )}
     </div>
+    </UnauthedConnectorsContext.Provider>
   );
 }
