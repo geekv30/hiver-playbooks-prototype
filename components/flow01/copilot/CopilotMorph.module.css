@@ -1,0 +1,131 @@
+/* CopilotMorph - the FLIP bridge that carries the cold-start modal into the
+   docked Copilot panel. Transform + opacity only; calm decelerate, no overshoot.
+
+   Local timing (not global tokens): the travel is a large move + a non-uniform
+   scale, so it needs to be longer than --d-enter to read as calm rather than a
+   snap. --ease-snap is a pure decelerate curve (no bounce) - exactly the calm
+   landing we want; we reuse it and only lengthen the duration locally. */
+.surface {
+  --morph-travel: 420ms;
+
+  position: fixed;
+  z-index: 60; /* above the (already-gone) scrim, below toasts (which sit higher) */
+  background: var(--card);
+  border: 1px solid var(--hairline-soft);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow:
+    0 1px 2px rgba(52, 60, 69, 0.04),
+    0 4px 14px rgba(52, 60, 69, 0.05);
+  transition: transform var(--morph-travel) var(--ease-snap);
+  will-change: transform;
+}
+
+/* Both layers stack on the same coordinates and cross-fade on the same beat as
+   the travel (skeleton-reveal idiom). They are pure visual stand-ins. */
+.heroLayer,
+.dockLayer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+.heroLayer {
+  opacity: 1;
+  /* The hero holds briefly, then fades over the first third of the travel so the
+     wide modal shape eases out instead of snapping - then the move resolves on
+     the dock shape for the calm landing. */
+  transition: opacity var(--d-crossfade, 140ms) var(--ease-snap) 30ms;
+}
+.dockLayer {
+  opacity: 0;
+  /* Dock fades in just behind the hero, fully arriving by ~mid-travel so the
+     last half of the move is a clean dock surface settling into place. */
+  transition: opacity var(--d-crossfade, 140ms) var(--ease-snap) 110ms;
+}
+.surface[data-landing] .heroLayer {
+  opacity: 0;
+}
+.surface[data-landing] .dockLayer {
+  opacity: 1;
+}
+
+/* Shared cheap shapes - hairline-toned bars and dots, no real text. */
+.bar {
+  height: 9px;
+  border-radius: var(--r-pill, 999px);
+  background: var(--hairline);
+}
+.dot {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  border-radius: 5px;
+  background: var(--accent-bg, var(--surface-soft));
+}
+
+/* Hero (modal) layer: title row up top, a faint divider feel, then the big
+   describe-box hugging the bottom. */
+.heroHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--hairline);
+}
+.heroFill {
+  flex: 1;
+  min-height: 0;
+}
+.input {
+  flex: none;
+  display: flex;
+  align-items: flex-start;
+  margin: 0 24px 24px;
+  padding: 14px;
+  min-height: 96px;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  background: var(--card);
+}
+
+/* Dock (panel) layer: the two-tab header, then the composer hugging the bottom -
+   the composer sits at the same relative slot as the hero input above. */
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 12px 14px 0;
+}
+.tab {
+  flex: 1;
+  height: 24px;
+  border-radius: 7px;
+  background: var(--surface-soft);
+}
+.tab[data-active] {
+  background: var(--surface-card);
+}
+.dockFill {
+  flex: 1;
+  min-height: 0;
+}
+.composer {
+  flex: none;
+  display: flex;
+  align-items: flex-start;
+  margin: 0 14px 14px;
+  padding: 12px 14px;
+  min-height: 56px;
+  border: 1px solid var(--hairline);
+  border-radius: 16px;
+  background: var(--card);
+  box-shadow: 0 1px 2px rgba(52, 60, 69, 0.04);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .surface,
+  .heroLayer,
+  .dockLayer {
+    transition: none;
+  }
+}

@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
@@ -24,6 +25,7 @@ import EnableModal from './enable/EnableModal';
 import SimulatePanel from '@/components/simulate/SimulatePanel';
 import { type CopilotMessage, type CopilotProposalData } from './copilot/CopilotPanel';
 import SidePanel, { type SideTab } from './copilot/SidePanel';
+import CopilotMorph from './copilot/CopilotMorph';
 import type { Verdict } from '@/components/atoms/ThumbsRating';
 import { REFERENCE_ID, actionBehavior } from './paletteCatalog';
 import { useEditorDoc } from './useEditorDoc';
@@ -362,10 +364,25 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
     setColdPhase('docked');
     requestFocus('trigger', false);
   }, [requestFocus]);
-  // Capture the modal's surface rect as it leaves, so a later task can morph it into the dock.
+  // Capture the modal's surface rect as it leaves, so the morph can fly from it.
   const handleBeforeExit = useCallback((r: DOMRect) => {
     morphSrcRect.current = r;
   }, []);
+
+  // On entering 'morphing': measure the (now hidden but laid-out) dock surface as
+  // the FLIP target and pair it with the captured modal source. The dock <aside>
+  // is the firstElementChild because .dockSlot is display:contents. If either
+  // rect is missing/zero, skip the morph cleanly straight to 'docked'.
+  useLayoutEffect(() => {
+    if (coldPhase !== 'morphing') return;
+    const to = dockRef.current?.firstElementChild?.getBoundingClientRect();
+    const from = morphSrcRect.current;
+    if (from && to && to.width > 0 && to.height > 0) {
+      setMorphRects({ from, to });
+    } else {
+      setColdPhase('docked');
+    }
+  }, [coldPhase]);
 
   // Drive the cold-start working steps on the seeded assistant message, then load
   // the drafted doc + resolve that message to the acknowledgement.
@@ -1368,7 +1385,12 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
             toolbar-toggled floating Simulate panel. */}
         {companions ? (
           coldPhase !== 'hero' && (
-            <div ref={dockRef} data-morphing={coldPhase === 'morphing' || undefined} className={styles.dockSlot}>
+            <div
+              ref={dockRef}
+              data-morphing={coldPhase === 'morphing' || undefined}
+              inert={coldPhase === 'morphing' || undefined}
+              className={styles.dockSlot}
+            >
               <SidePanel
                 tab={panelTab}
                 onTab={setPanelTab}
@@ -1443,6 +1465,17 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
           beforeExit={handleBeforeExit}
           onGenerate={handleColdStartGenerate}
           onDismiss={handleColdStartDismiss}
+        />
+      )}
+
+      {coldPhase === 'morphing' && morphRects && (
+        <CopilotMorph
+          from={morphRects.from}
+          to={morphRects.to}
+          onDone={() => {
+            setColdPhase('docked');
+            setMorphRects(null);
+          }}
         />
       )}
 
