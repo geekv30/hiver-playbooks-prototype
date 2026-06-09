@@ -125,7 +125,7 @@ export default function DesignLanguage2Editor() {
         <div className={styles.brand}>H</div>
         <button className={styles.back} title="Back"><RiArrowLeftLine /></button>
         <div className={styles.crumb}>
-          <Link href="/">AOPs</Link>
+          <Link href="/atoms">AOPs</Link>
           <span className={styles.csep}>/</span>
           <span className={styles.pname} contentEditable suppressContentEditableWarning>tour-inquiry</span>
         </div>
@@ -432,7 +432,7 @@ export default function DesignLanguage2Editor() {
       {/* Preview banner */}
       <div className={styles.previewBanner}>
         <span className={styles.bdot} />
-        Design Language v2 preview · <Link href="/">back to /</Link> · <Link href="/design-language-1">v1</Link>
+        Design Language v2 preview · <Link href="/atoms">back to /</Link> · <Link href="/design-language-1">v1</Link>
       </div>
     </div>
   );

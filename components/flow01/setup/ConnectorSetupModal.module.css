@@ -1,0 +1,457 @@
+/* ConnectorSetupModal - the connector connection flow (Figma 844:20826 / 848:20685 /
+   848:30953). Three phases share one dialog shell; motion + tokens match the other
+   modals (EnableModal / ColdStartModal). */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(52, 60, 69, 0.32);
+  animation: scrimIn var(--d-enter) var(--ease-snap) both;
+}
+.scrim[data-closing] {
+  animation: scrimOut var(--d-exit) var(--ease-snap) both;
+}
+@keyframes scrimIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes scrimOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.dialog {
+  position: relative;
+  width: 100%;
+  /* Fixed width across all phases; only the height animates (no drastic jump). */
+  max-width: 540px;
+  background: var(--card);
+  border-radius: 16px;
+  box-shadow:
+    0 1px 2px rgba(52, 60, 69, 0.06),
+    0 18px 48px rgba(52, 60, 69, 0.18);
+  overflow: hidden;
+  animation: dialogIn var(--d-enter) var(--ease-snap) both;
+  /* Card-resize: the JS sets an explicit height per phase; this animates it. */
+  transition: height var(--d-indicator, 260ms) var(--ease-snap);
+}
+.scrim[data-closing] .dialog {
+  animation: dialogOut var(--d-exit) var(--ease-snap) both;
+}
+/* The measured content column (header / body / footer). */
+.content {
+  display: flex;
+  flex-direction: column;
+}
+@keyframes dialogIn {
+  from { opacity: 0; transform: scale(0.965) translateY(6px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes dialogOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.975); }
+}
+
+/* Shared brand mark (connector icon at true brand color). */
+.brandIco {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+}
+.brandIco svg {
+  width: 30px;
+  height: 30px;
+}
+
+/* ---- footer (shared) ---- */
+.footer {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 16px 24px;
+}
+.cancel {
+  padding: 8px 12px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: var(--font);
+  font-size: var(--fs-body);
+  font-weight: 500;
+  letter-spacing: var(--ls-body);
+  cursor: pointer;
+  transition: color var(--d-hover) var(--ease-snap), background var(--d-hover) var(--ease-snap);
+}
+.cancel:hover {
+  color: var(--ink);
+  background: var(--surface-soft);
+}
+.close {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color var(--d-hover) var(--ease-snap), background var(--d-hover) var(--ease-snap);
+}
+.close svg { width: 18px; height: 18px; }
+.close:hover { color: var(--ink-soft); background: var(--surface-soft); }
+
+/* ============================ INTRO ============================ */
+.introHead {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 24px 14px;
+}
+.introHeadText { min-width: 0; }
+.brandName {
+  margin: 0;
+  font-size: var(--fs-h5); /* 16px */
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: var(--ls-h5);
+  color: var(--ink);
+}
+.tagline {
+  margin: 2px 0 0;
+  font-size: var(--fs-small); /* 13px */
+  line-height: 1.4;
+  letter-spacing: var(--ls-body);
+  color: var(--muted);
+}
+.introBody {
+  flex: 1;
+  min-height: 0;
+  padding: 0 24px 4px;
+}
+.blurb {
+  margin: 0 0 20px;
+  font-size: var(--fs-body); /* 14px */
+  line-height: 1.5;
+  letter-spacing: var(--ls-body);
+  color: var(--ink-soft);
+}
+.toolsHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.toolsLabel {
+  font-size: var(--fs-caption); /* 12px */
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.toolsCount {
+  font-size: var(--fs-small);
+  letter-spacing: var(--ls-body);
+  color: var(--muted-soft);
+}
+.toolGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.toolCard {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px;
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  background: var(--card);
+}
+.toolTitle {
+  font-size: var(--fs-small); /* 13px */
+  font-weight: 600;
+  letter-spacing: var(--ls-body);
+  color: var(--ink);
+}
+.toolDesc {
+  font-size: var(--fs-caption); /* 12px */
+  line-height: 1.45;
+  letter-spacing: var(--ls-body);
+  color: var(--muted);
+}
+
+/* ============================ AUTH ============================ */
+.authHead {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 16px 24px;
+  border-bottom: 1px solid var(--hairline);
+}
+.authTitle {
+  margin: 0;
+  font-size: var(--fs-h5);
+  font-weight: 600;
+  letter-spacing: var(--ls-h5);
+  color: var(--ink);
+}
+.authBody {
+  padding: 24px;
+}
+.logoPair {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+/* Hiver + connector marks balanced to the same visual footprint (Figma 848:21239:
+   the Hiver hexagon and the connector mark read as equal-weight siblings). */
+.hiverIco {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+}
+.hiverIco img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  display: block;
+}
+.connectorIco {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+}
+/* The connector mark is line-art with more inner padding than the solid Hiver
+   hexagon, so it is sized a touch larger to read as an equal-weight sibling
+   (matches Figma, where the connector mark is ~1.15x the Hiver hexagon). */
+.connectorIco svg {
+  width: 38px;
+  height: 38px;
+}
+.swapIco {
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+}
+.swapIco svg {
+  width: 20px;
+  height: 20px;
+  /* refresh-ccw spinning counter-clockwise: an active "syncing/connecting" feel. */
+  animation: refreshSpin 1.4s linear infinite;
+}
+@keyframes refreshSpin {
+  to { transform: rotate(-360deg); }
+}
+.authConnect {
+  margin: 0 0 20px;
+  text-align: center;
+  font-size: var(--fs-h5);
+  font-weight: 600;
+  letter-spacing: var(--ls-h5);
+  color: var(--ink);
+}
+.fieldLabel {
+  display: block;
+  margin-bottom: 7px;
+  font-size: var(--fs-small);
+  font-weight: 500;
+  letter-spacing: var(--ls-body);
+  color: var(--ink-soft);
+}
+.tokenField {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  background: var(--card);
+  transition: border-color var(--d-hover) var(--ease-snap), box-shadow var(--d-hover) var(--ease-snap);
+}
+.tokenField:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+.tokenHash {
+  display: grid;
+  place-items: center;
+  color: var(--muted-soft);
+}
+.tokenHash svg { width: 15px; height: 15px; }
+.tokenInput {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-mono, var(--font));
+  font-size: var(--fs-small);
+  letter-spacing: var(--ls-body);
+  color: var(--ink);
+}
+.tokenInput::placeholder { color: var(--muted-soft); }
+.tokenLink {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: var(--fs-small);
+  letter-spacing: var(--ls-body);
+  color: var(--accent);
+  text-decoration: none;
+}
+.tokenLink:hover { text-decoration: underline; }
+.infoBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--accent-bg);
+  font-size: var(--fs-small);
+  line-height: 1.45;
+  letter-spacing: var(--ls-body);
+  color: var(--ink-soft);
+}
+.infoIco {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  color: var(--accent);
+}
+
+/* ============================ SUCCESS ============================ */
+/* The success moment reuses the AOP go-live choreography (EnableModal): a check
+   that draws in, then the title / sub / guarantees rise in with a stagger. */
+.success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 36px 28px 8px;
+}
+.checkSvg {
+  width: 52px;
+  height: 52px;
+  margin-bottom: 14px;
+}
+.checkCircle {
+  fill: none;
+  stroke: var(--state-ok, #1a8a52);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 151;
+  stroke-dashoffset: 151;
+  animation: checkRing 520ms var(--ease-snap) forwards;
+}
+.checkMark {
+  fill: none;
+  stroke: var(--state-ok, #1a8a52);
+  stroke-width: 3.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 34;
+  stroke-dashoffset: 34;
+  animation: checkDraw 300ms var(--ease-snap) 420ms forwards;
+}
+@keyframes checkRing { to { stroke-dashoffset: 0; } }
+@keyframes checkDraw { to { stroke-dashoffset: 0; } }
+.successTitle {
+  margin: 0;
+  font-size: var(--fs-h4); /* 18px */
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: var(--ls-h4);
+  color: var(--ink);
+  animation: riseIn var(--d-enter) var(--ease-snap) 300ms both;
+}
+.successSub {
+  margin: 5px 0 0;
+  font-size: var(--fs-small);
+  line-height: 1.5;
+  letter-spacing: var(--ls-body);
+  color: var(--muted);
+  animation: riseIn var(--d-enter) var(--ease-snap) 380ms both;
+}
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+/* Guarantees: three roomy columns (no per-column icon - the drawn check above is
+   the success signal), each rising in with a stagger. */
+.checksRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px;
+  width: 100%;
+  margin-top: 22px;
+  padding: 18px 4px;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+}
+.checkCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 0 12px;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(6px);
+  animation: riseIn var(--d-enter) var(--ease-snap) forwards;
+  animation-delay: calc(520ms + var(--i) * 70ms);
+}
+.checkColTitle {
+  font-size: var(--fs-small);
+  font-weight: 600;
+  letter-spacing: var(--ls-body);
+  color: var(--ink);
+}
+.checkColSub {
+  font-size: var(--fs-caption);
+  line-height: 1.4;
+  letter-spacing: var(--ls-body);
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scrim,
+  .scrim[data-closing],
+  .dialog,
+  .scrim[data-closing] .dialog,
+  .swapIco svg,
+  .successTitle,
+  .successSub,
+  .checkCol {
+    animation: none;
+  }
+  .dialog { transition: none; }
+  .checkCircle,
+  .checkMark {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  .successTitle,
+  .successSub,
+  .checkCol {
+    opacity: 1;
+    transform: none;
+  }
+}

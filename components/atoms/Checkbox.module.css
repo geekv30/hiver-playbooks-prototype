@@ -19,6 +19,13 @@
   height: 11px;
 }
 
+/* Subtle variant - a lighter empty-box border (Gray 5, not Gray 4) so a column of
+   unchecked boxes recedes (e.g. the command-palette pickers). Checked boxes are
+   unaffected (.checked overrides the border below). */
+.subtle {
+  border-color: var(--hairline);
+}
+
 .unchecked:hover {
   border-color: var(--hairline-strong);
 }

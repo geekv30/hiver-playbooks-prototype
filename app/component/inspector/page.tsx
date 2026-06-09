@@ -575,7 +575,7 @@ export default function InspectorPage() {
       <header className={styles.docbar}>
         <div className={styles.brand}>P</div>
         <div className={styles.crumb}>
-          <Link href="/">AOPs</Link>
+          <Link href="/atoms">AOPs</Link>
           <span className={styles.csep}>/</span>
           <Link href="/component/node">Components</Link>
           <span className={styles.csep}>/</span>

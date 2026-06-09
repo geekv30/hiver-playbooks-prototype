@@ -64,6 +64,13 @@ interface Props {
   initialPicked?: string[];
   /** Pre-fill the search/input field (e.g. a chip's current KB-search query). */
   initialQuery?: string;
+  /** Open directly on a connector's actions as a MULTI-select (the post-connect
+   *  "select action" picker). The picked verbs commit back to the carrier chip as
+   *  its value. `initialPicked` pre-checks the chip's current actions. */
+  connectorPick?: { slug: ConnectorSlug; carrierId: string; loading?: boolean };
+  /** Connectors not yet authenticated: picking one inserts a "setup needed" tag
+   *  (and the connection flow runs) instead of drilling into its actions. */
+  unauthedConnectors?: ReadonlySet<ConnectorSlug>;
 }
 
 interface Row {
@@ -111,19 +118,38 @@ export default function CommandPalette({
   initialAction,
   initialPicked,
   initialQuery,
+  connectorPick,
+  unauthedConnectors,
 }: Props) {
+  // A connector that still needs setup inserts the "setup needed" tag (a chip on
+  // one of its verbs, which renders setup-needed) rather than drilling into actions.
+  const insertConnector = (slug: ConnectorSlug) => {
+    const verbs = connectorVerbs(slug);
+    if (verbs.length) onSelect(verbs[0]!.id);
+  };
   const [query, setQuery] = useState(initialQuery ?? '');
   // '@' opens straight on the References picker; '/' (default) opens the root
   // Actions+Connectors view. `initialAction` opens straight on an action's value
-  // page (reconfiguring a placed chip). Back/cross-links keep the worlds reachable.
+  // page (reconfiguring a placed chip). `connectorPick` opens straight on a
+  // connector's actions as a multi-select. Back/cross-links keep the worlds reachable.
   const [drill, setDrill] = useState<Drill | null>(
-    initialAction
-      ? { type: 'action', id: initialAction }
-      : initialScope === 'references'
-        ? { type: 'action', id: REFERENCE_ID }
-        : null,
+    connectorPick
+      ? { type: 'connector', slug: connectorPick.slug }
+      : initialAction
+        ? { type: 'action', id: initialAction }
+        : initialScope === 'references'
+          ? { type: 'action', id: REFERENCE_ID }
+          : null,
   );
   const [picked, setPicked] = useState<Set<string>>(new Set(initialPicked ?? [])); // pick-many state
+  // After a fresh connect, briefly "load" the connector's actions before showing them.
+  const [toolsLoading, setToolsLoading] = useState(connectorPick?.loading === true);
+  useEffect(() => {
+    if (!connectorPick?.loading) return;
+    const t = window.setTimeout(() => setToolsLoading(false), 850);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [active, setActive] = useState(0);
   // Drill navigation direction, for the page slide. null on first open (no slide).
   const [dir, setDir] = useState<'fwd' | 'back' | null>(null);
@@ -142,6 +168,16 @@ export default function CommandPalette({
     const labels = behavior.options.filter((o) => picked.has(o.id)).map((o) => o.label);
     if (!labels.length) return;
     onSelect(drill.id, labels.join(', '));
+  };
+
+  // Commit the connector multi-select back to the carrier tag (empty = stays
+  // "select action"). Closing the page finalizes the selection (like pick-many).
+  const confirmConnector = () => {
+    if (!connectorPick || drill?.type !== 'connector') return;
+    const labels = connectorVerbs(drill.slug)
+      .filter((v) => picked.has(v.id))
+      .map((v) => v.label);
+    onSelect(connectorPick.carrierId, labels.join(', '));
   };
 
   // Insert a single picked value (pick-one). Reference inserts a @ref instead.
@@ -185,23 +221,36 @@ export default function CommandPalette({
       return [{ key: 'opts', label: behavior.title, rows }];
     }
 
-    // --- Connector page (single-select verbs) --------------------------------
+    // --- Connector page --------------------------------------------------------
+    // Single-select (insert one verb chip) by default; MULTI-select when opened as
+    // the post-connect "select action" picker (connectorPick) - the checked verbs
+    // commit back to the carrier tag as its value.
     if (drill?.type === 'connector') {
-      const verbs = connectorVerbs(drill.slug).filter((v) =>
+      const slug = drill.slug;
+      const multi = !!connectorPick;
+      const verbs = connectorVerbs(slug).filter((v) =>
         q ? v.label.toLowerCase().includes(q) : true,
       );
       const rows: Row[] = verbs.map((v) => ({
         key: v.id,
         label: v.label,
-        Icon: CONNECTOR_ICON[drill.slug],
+        Icon: CONNECTOR_ICON[slug],
         brand: true,
         drill: false,
-        selectable: false,
-        selected: false,
+        selectable: multi,
+        selected: multi && picked.has(v.id),
         desc: findAction(v.id)?.desc,
-        activate: () => onSelect(v.id),
+        activate: multi
+          ? () =>
+              setPicked((prev) => {
+                const next = new Set(prev);
+                if (next.has(v.id)) next.delete(v.id);
+                else next.add(v.id);
+                return next;
+              })
+          : () => onSelect(v.id),
       }));
-      return [{ key: 'verbs', label: `${connectorName(drill.slug)} actions`, rows }];
+      return [{ key: 'verbs', label: `${connectorName(slug)} actions`, rows }];
     }
 
     // --- Flat search across everything ---------------------------------------
@@ -265,26 +314,34 @@ export default function CommandPalette({
         activate: drills ? () => openAction(a.id) : () => onSelect(a.id),
       };
     });
-    const brandRows: Row[] = PALETTE_CONNECTORS.map((slug) => ({
-      key: `brand-${slug}`,
-      label: connectorName(slug),
-      Icon: CONNECTOR_ICON[slug],
-      brand: true,
-      drill: true,
-      selectable: false,
-      selected: false,
-      desc: `Run a ${connectorName(slug)} action.`,
-      activate: () => {
-        setDir('fwd');
-        setDrill({ type: 'connector', slug });
-      },
-    }));
+    const brandRows: Row[] = PALETTE_CONNECTORS.map((slug) => {
+      const needsSetup = unauthedConnectors?.has(slug) === true;
+      return {
+        key: `brand-${slug}`,
+        label: connectorName(slug),
+        Icon: CONNECTOR_ICON[slug],
+        brand: true,
+        // Not connected yet: pick = insert the "setup needed" tag (no actions to drill).
+        drill: !needsSetup,
+        selectable: false,
+        selected: false,
+        desc: needsSetup
+          ? `Connect ${connectorName(slug)} to use it.`
+          : `Run a ${connectorName(slug)} action.`,
+        activate: needsSetup
+          ? () => insertConnector(slug)
+          : () => {
+              setDir('fwd');
+              setDrill({ type: 'connector', slug });
+            },
+      };
+    });
     return [
       { key: 'actions', label: 'Actions', rows: actionRows },
       { key: 'connectors', label: 'Connectors', rows: brandRows },
     ];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, drill, behavior, picked, onSelect, noCondition]);
+  }, [query, drill, behavior, picked, onSelect, noCondition, connectorPick, unauthedConnectors]);
 
   function openAction(id: string) {
     setDir('fwd');
@@ -336,7 +393,9 @@ export default function CommandPalette({
   // Closing a pick-many page commits the checked values (there is no confirm
   // button - per the Figma, esc/outside-click "close" finalizes the selection).
   const closePalette = () => {
-    if (drill?.type === 'action' && behavior?.mode === 'pick-many' && picked.size > 0) {
+    if (connectorPick && drill?.type === 'connector') {
+      confirmConnector(); // commits the picked actions back to the tag
+    } else if (drill?.type === 'action' && behavior?.mode === 'pick-many' && picked.size > 0) {
       confirmMany(); // inserts → parent unmounts the palette
     } else {
       onClose();
@@ -557,7 +616,17 @@ export default function CommandPalette({
             </button>
           )}
 
-          {isInputPage && behavior?.mode === 'input' && (
+          {connectorPick && toolsLoading && (
+            <div className={styles.loadingList} aria-label="Loading actions">
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className={styles.skeletonRow}>
+                  <span className={styles.skeletonBar} style={{ width: `${64 - i * 8}%` }} />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!toolsLoading && isInputPage && behavior?.mode === 'input' && (
             <div className={styles.inputPage}>
               <div className={styles.inputHint}>
                 {query.trim() ? (
@@ -575,11 +644,12 @@ export default function CommandPalette({
             </div>
           )}
 
-          {!isInputPage && flatRows.length === 0 && (
+          {!toolsLoading && !isInputPage && flatRows.length === 0 && (
             <div className={styles.empty}>No matches for “{query.trim()}”.</div>
           )}
 
-          {!isInputPage &&
+          {!toolsLoading &&
+            !isInputPage &&
             groups.map((g) => (
               <div key={g.key} className={styles.group}>
                 {!drill && <div className={styles.groupLabel}>{g.label}</div>}
@@ -626,7 +696,7 @@ export default function CommandPalette({
                         )}
                         {row.selectable && (
                           <span className={styles.rowBox}>
-                            <Checkbox presentational size={16} checked={row.selected} />
+                            <Checkbox presentational subtle size={16} checked={row.selected} />
                           </span>
                         )}
                       </button>

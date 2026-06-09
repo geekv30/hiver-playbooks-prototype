@@ -113,7 +113,7 @@ export default function PreviewPage() {
       <header className={styles.docbar}>
         <div className={styles.brand}>P</div>
         <div className={styles.crumb}>
-          <Link href="/">AOPs · tour-inquiry</Link>
+          <Link href="/atoms">AOPs · tour-inquiry</Link>
           <span className={styles.csep}>›</span>
           <span className={styles.name}>Design Preview</span>
         </div>
@@ -122,7 +122,7 @@ export default function PreviewPage() {
         <span className={styles.meta}>Linear · Attio · Fin</span>
         <span className={styles.spacer} />
         <span className={styles.pill}>Pass 1 · v1</span>
-        <Link className={styles.btn} href="/">Back to editor</Link>
+        <Link className={styles.btn} href="/atoms">Back to editor</Link>
       </header>
 
       <div className={styles.wrap}>
@@ -131,7 +131,7 @@ export default function PreviewPage() {
         <p className={styles.lede}>
           Wipe-test surface for the new design language, built from real React components in this app.
           Updates automatically as components are refined. Approve here before each Pass 2 component change merges.
-          For the assembled workspace shape, go back to <Link href="/" style={{ color: 'inherit' }}>/</Link>.
+          For the assembled workspace shape, go back to <Link href="/atoms" style={{ color: 'inherit' }}>/</Link>.
         </p>
 
         <nav className={styles.toc}>
@@ -467,7 +467,7 @@ export default function PreviewPage() {
 
         <footer className={styles.footer}>
           <ul>
-            <li><a href="/">/ - assembled workspace</a></li>
+            <li><a href="/atoms">/ - assembled workspace</a></li>
             <li><a href="https://github.com/geekv30/hiver-playbooks-prototype" target="_blank" rel="noreferrer">Repo</a></li>
             <li><a href="/design-language-1">/design-language-1 - this page</a></li>
           </ul>

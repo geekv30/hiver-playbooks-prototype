@@ -78,7 +78,7 @@ export const STARTERS: StarterSpec[] = [
     title: 'Bug report triage',
     trigger: 'When a customer emails reporting a bug or something not working.',
     steps: [
-      { action: 'ai_extract', meta: 'summary', after: ' the steps to reproduce, the affected account, and the severity.' },
+      { text: 'Pull out the steps to reproduce, the affected account, and the severity.' },
       { before: 'Tag the ticket ', action: 'tag', meta: 'bug, needs-triage', after: '.' },
       { before: 'Assign it to the ', action: 'assign', meta: 'Engineering queue', after: '.' },
       { action: 'draft_reply', after: ' to confirm we are looking into it.' },
@@ -93,7 +93,7 @@ export const STARTERS: StarterSpec[] = [
     title: 'Billing questions',
     trigger: 'When a customer asks about an invoice, a charge, or a refund.',
     steps: [
-      { action: 'ai_extract', meta: 'summary', after: ' the invoice number, the amount, and what they are asking.' },
+      { text: 'Pull out the invoice number, the amount, and what they are asking.' },
       { before: 'Look up the customer in ', action: 'hubspot_get_contact', after: '.' },
       { before: 'Search the ', action: 'kb_search', meta: 'Billing', after: ' for the relevant policy.' },
     ],
@@ -114,7 +114,7 @@ export const STARTERS: StarterSpec[] = [
     title: 'Feature requests',
     trigger: 'When a customer suggests a new feature or an improvement.',
     steps: [
-      { action: 'ai_extract', meta: 'summary', after: ' the requested feature and the use case behind it.' },
+      { text: 'Pull out the requested feature and the use case behind it.' },
       { before: 'Tag it ', action: 'tag', meta: 'feature-request', after: '.' },
       { before: 'Log it to the ', action: 'clickup_create_task', after: '.' },
       { action: 'draft_reply', after: ' thanking them and setting expectations on next steps.' },
@@ -129,7 +129,7 @@ export const STARTERS: StarterSpec[] = [
     title: 'Knowledge base replies',
     trigger: 'When a common how-to question comes in.',
     steps: [
-      { action: 'ai_extract', meta: 'summary', after: ' the question and the product area.' },
+      { text: 'Pull out the question and the product area.' },
       { before: 'Search the ', action: 'kb_search', meta: 'Help center', after: ' for a matching article.' },
       { action: 'draft_reply', after: ' from the matching article, in a tone that matches the customer.' },
       { before: 'Then ', action: 'approval', after: ' so a teammate reviews it before it sends.' },
@@ -200,7 +200,7 @@ export function buildScaffoldDoc(opts: { text?: string; fileName?: string }): Ed
     opts.text && opts.text.trim() ? firstSentence(opts.text) : 'When a matching email arrives.';
   const title = opts.fileName ? titleFromFileName(opts.fileName) : 'Untitled AOP';
   const steps: Step[] = [
-    { id: newId('cs-step'), body: normalizeLine([makeChip('ai_extract', 'summary'), txt(' the key details from the email.')]) },
+    { id: newId('cs-step'), body: normalizeLine([txt('Pull out the key details from the email.')]) },
     { id: newId('cs-step'), body: normalizeLine([txt('Search the '), makeChip('kb_search', 'Help center'), txt(' for relevant context.')]) },
     { id: newId('cs-step'), body: normalizeLine([makeChip('draft_reply'), txt(' for the agent to review and send.')]) },
   ];

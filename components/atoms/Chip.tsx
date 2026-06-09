@@ -131,6 +131,9 @@ export default function Chip({ chip, metaText, onClick, mode = 'action', label, 
 
   const configMeta = typeof chip.config.meta === 'string' ? chip.config.meta : null;
   const meta = metaText ?? configMeta ?? action.meta ?? null;
+  // A connected connector tag: the brand + the picked actions as its value, or a
+  // "select action" prompt until the user picks (the action verb is suppressed).
+  const connectorPick = chip.config.connectorPick === true;
 
   return (
     <span
@@ -162,6 +165,11 @@ export default function Chip({ chip, metaText, onClick, mode = 'action', label, 
           <span className={styles.chipSetupDot} aria-hidden="true" />
           <span className={styles.chipSetup}>setup needed</span>
         </>
+      ) : connectorPick ? (
+        // Connected: show the picked actions, or a "select action" prompt.
+        <span className={meta ? styles.chipMeta : styles.chipSelectAction}>
+          {meta || 'select action'}
+        </span>
       ) : (
         <>
           {/* A standalone verb is the de-emphasized lead (chipVerb); a connector

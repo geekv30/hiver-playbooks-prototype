@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { RiCloseLine, RiAddLine, RiArrowUpLine } from 'react-icons/ri';
+import { RiCloseLine, RiAddLine, RiArrowUpLine, RiUpload2Line } from 'react-icons/ri';
 import Button from '@/components/atoms/Button';
 import { SparkleIcon, ExtractIcon } from '@/components/icons/ui';
 import type { EditorDoc } from './doc';
@@ -60,10 +60,10 @@ export default function ColdStartModal({ onGenerate, onDismiss }: Props) {
   const [closing, setClosing] = useState(false);
   const requestClose = useCallback(() => {
     if (closing) return; // a second Esc / scrim click can't queue a second dismiss
-    if (
+    const reduce =
       typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    ) {
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) {
       onDismiss();
       return;
     }
@@ -228,7 +228,7 @@ export default function ColdStartModal({ onGenerate, onDismiss }: Props) {
             }}
             onDrop={onDrop}
           >
-            <div className={styles.field}>
+            <div className={`${styles.field} ai-input-glow`}>
               <textarea
                 ref={taRef}
                 className={styles.textarea}
@@ -270,10 +270,10 @@ export default function ColdStartModal({ onGenerate, onDismiss }: Props) {
                   ) : (
                     <button
                       type="button"
-                      className={styles.upload}
+                      className={styles.uploadBtn}
                       onClick={() => fileRef.current?.click()}
                     >
-                      <ExtractIcon className={styles.uploadIco} aria-hidden />
+                      <RiUpload2Line className={styles.uploadIco} aria-hidden />
                       Upload existing SOP
                     </button>
                   )}

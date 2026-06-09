@@ -8,7 +8,10 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import { RiDraggable, RiMore2Fill } from 'react-icons/ri';
-import type { Fragment } from '@/types/playbook';
+import type { Fragment, ConnectorSlug } from '@/types/playbook';
+import { findAction } from '@/data/library';
+import { UnauthedConnectorsContext } from './connectorAuth';
+import ConnectorSetupModal from './setup/ConnectorSetupModal';
 import GutterMarker from '@/components/atoms/GutterMarker';
 import RowMenu from './RowMenu';
 import GmailBar from './GmailBar';
@@ -25,7 +28,7 @@ import SimulatePanel from '@/components/simulate/SimulatePanel';
 import { type CopilotMessage, type CopilotProposalData } from './copilot/CopilotPanel';
 import SidePanel, { type SideTab } from './copilot/SidePanel';
 import type { Verdict } from '@/components/atoms/ThumbsRating';
-import { REFERENCE_ID, actionBehavior } from './paletteCatalog';
+import { REFERENCE_ID, actionBehavior, connectorVerbs } from './paletteCatalog';
 import { useEditorDoc } from './useEditorDoc';
 import {
   LineTarget,
@@ -50,6 +53,8 @@ interface PaletteState {
   // When set, the palette is EDITING this placed chip (reopened on its value page),
   // so a pick commits back to it instead of inserting a new chip.
   edit?: { chipId: string; initialAction: string; initialPicked?: string[]; initialQuery?: string };
+  // When set, the palette opens as the connector multi-select "select action" picker.
+  connectorPick?: { slug: ConnectorSlug; carrierId: string; loading?: boolean };
 }
 
 interface FocusReq {
@@ -192,9 +197,20 @@ interface Props {
    *  the two mutually-exclusive right-hand panels (docked workspace). /canvas sets
    *  this; /api-example (the bare worked example) does not. */
   companions?: boolean;
+  /** Start every connector unauthenticated, so adding one inserts a "setup needed"
+   *  tag and clicking it runs the connection flow (the /connector-setup route).
+   *  Omit (default) to treat all connectors as already connected. */
+  connectorsStartUnauthed?: boolean;
 }
 
-export default function EditorCanvas({ initialDoc, companions }: Props) {
+// Cold-start presentation of the one Copilot surface:
+//   'hero'   = the "draft with AI" modal is open, the dock is not rendered behind it
+//   'docked' = the modal is gone (faded out), the dock is the visible Copilot
+type ColdStartPhase = 'hero' | 'docked';
+
+const ALL_CONNECTOR_SLUGS: ConnectorSlug[] = ['shopify', 'hubspot', 'slack', 'salesforce', 'clickup'];
+
+export default function EditorCanvas({ initialDoc, companions, connectorsStartUnauthed }: Props) {
   const api = useEditorDoc(initialDoc);
   const { doc, undo, redo } = api;
   // Always-current doc (for handlers that need the freshest doc, e.g. snapshotting
@@ -249,8 +265,18 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
   const [enableName, setEnableName] = useState('');
   const [enableMailboxes, setEnableMailboxes] = useState<string[]>([]);
   // The cold-start "draft with AI" modal shows on a fresh, empty canvas (no
-  // initialDoc); the pre-seeded /api-example demo skips it.
-  const [coldStartOpen, setColdStartOpen] = useState(!initialDoc);
+  // initialDoc); the pre-seeded /api-example demo skips it. See ColdStartPhase above.
+  const [coldPhase, setColdPhase] = useState<ColdStartPhase>(initialDoc ? 'docked' : 'hero');
+  const coldStartOpen = coldPhase === 'hero'; // single remaining read: the ColdStartModal gate below
+  // Connectors not yet authenticated: their action-tags render "setup needed" and
+  // clicking runs the connection flow; once connected the slug leaves this set.
+  const [unauthedConnectors, setUnauthedConnectors] = useState<Set<ConnectorSlug>>(
+    () => new Set(connectorsStartUnauthed ? ALL_CONNECTOR_SLUGS : []),
+  );
+  // The connector connection flow modal, opened by clicking a "setup needed" tag.
+  const [setupModal, setSetupModal] = useState<
+    { connector: ConnectorSlug; target: LineTarget; chipId: string } | null
+  >(null);
   // Copilot conversation (owned here so the cold-start query can seed it). thinkIdx
   // drives the working animation (-1 = idle); pendingDoc holds the drafted doc
   // until the animation finishes, then it loads onto the canvas.
@@ -335,7 +361,8 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
   // finishes the drafted AOP loads on the left and Copilot posts an ack, so
   // any follow-up continues in the Copilot thread. Skip lands on a blank canvas.
   const handleColdStartGenerate = useCallback((genDoc: EditorDoc, query: string) => {
-    setColdStartOpen(false);
+    // Seed the dock (messages, pending doc, working animation), then dock it. The
+    // modal has already faded itself out; the dock fades in as the Copilot.
     setPanelTab('copilot');
     setCopilotMessages([
       { role: 'user', text: query },
@@ -343,9 +370,10 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
     ]);
     pendingDoc.current = genDoc;
     setThinkIdx(0);
+    setColdPhase('docked');
   }, []);
   const handleColdStartDismiss = useCallback(() => {
-    setColdStartOpen(false);
+    setColdPhase('docked');
     requestFocus('trigger', false);
   }, [requestFocus]);
 
@@ -924,6 +952,38 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
     requestFocus(lineKey(target), false);
   };
 
+  // Open the connector "select action" picker for a connected connector tag: the
+  // palette drilled into the connector's actions as a multi-select, with the tag's
+  // current actions pre-checked. The pick commits back to the tag as its value.
+  const openConnectorPicker = (
+    target: LineTarget,
+    chipId: string,
+    slug: ConnectorSlug,
+    carrierId: string,
+    el?: HTMLElement,
+    loading?: boolean,
+  ) => {
+    const node = el ?? (document.querySelector(`[data-chip-id="${chipId}"]`) as HTMLElement | null);
+    const r = node?.getBoundingClientRect();
+    const rect = r ? { left: r.left, top: r.top, bottom: r.bottom } : { left: 0, top: 0, bottom: 0 };
+    const frag = lineFrags(target).find((f) => f.kind === 'chip' && f.chip.id === chipId);
+    const meta =
+      frag && frag.kind === 'chip' && typeof frag.chip.config.meta === 'string'
+        ? frag.chip.config.meta
+        : '';
+    const labels = meta.split(', ').map((s) => s.trim()).filter(Boolean);
+    const initialPicked = connectorVerbs(slug)
+      .filter((v) => labels.includes(v.label))
+      .map((v) => v.id);
+    setMenuStepId(null);
+    setPalette({
+      target,
+      req: { scope: 'actions', fragIndex: 0, caretOffset: 0, rect },
+      edit: { chipId, initialAction: carrierId, initialPicked },
+      connectorPick: { slug, carrierId, loading },
+    });
+  };
+
   // Open the palette already drilled into the clicked chip's value page, with its
   // current value(s) pre-selected. Only actions with a palette value page are
   // editable this way (EditorLine gates the click); mode 'insert' actions are not.
@@ -931,6 +991,18 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
     const frag = lineFrags(target).find((f) => f.kind === 'chip' && f.chip.id === chipId);
     const chip = frag && frag.kind === 'chip' ? frag.chip : null;
     if (!chip) return;
+    const slug = findAction(chip.actionId)?.connectorSlug;
+    // An unauthenticated connector tag opens the connection flow, not the reconfigure palette.
+    if (slug && unauthedConnectors.has(slug)) {
+      setMenuStepId(null);
+      setSetupModal({ connector: slug, target, chipId });
+      return;
+    }
+    // A connected connector tag opens the multi-select "select action" picker.
+    if (slug && chip.config.connectorPick === true) {
+      openConnectorPicker(target, chipId, slug, chip.actionId, el);
+      return;
+    }
     const behavior = actionBehavior(chip.actionId);
     if (behavior.mode === 'insert') return;
     setMenuStepId(null);
@@ -1040,6 +1112,7 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
       : (stepIds[stepIds.length - 1] ?? null);
 
   return (
+    <UnauthedConnectorsContext.Provider value={unauthedConnectors}>
     <div className={styles.canvas}>
       <GmailBar />
       <Toolbar
@@ -1077,8 +1150,9 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
                         placeholder={TRIGGER_PLACEHOLDER}
                         onChange={handleChange({ kind: 'trigger' })}
                         onEnter={handleEnter({ kind: 'trigger' })}
-                        onRequestPalette={openPalette({ kind: 'trigger' })}
-                        onChipConfig={openChipEdit({ kind: 'trigger' })}
+                        // The trigger is always handwritten NL - no actions/references,
+                        // no command palette. '@' and '/' type literally (noActions).
+                        noActions
                         autoFocus={focusFor('trigger')}
                         ariaLabel="When should this AOP run"
                       />
@@ -1087,17 +1161,10 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
                 </div>
               </section>
 
-              <div className={styles.divider} />
-
-              {/* Describe Procedure */}
-              <section className={styles.block}>
-                <div className={styles.row}>
-                  <span className={styles.gutter} aria-hidden />
-                  <div className={styles.content}>
-                    <h2 className={styles.label}>What should it do :</h2>
-                  </div>
-                </div>
-
+              {/* Describe Procedure - the steps list. No section heading or divider
+                 here (Figma 647:40010 goes straight from the trigger to row 1); the
+                 gap to row 1 is owned by .stepsBlock's top padding. */}
+              <section className={`${styles.block} ${styles.stepsBlock}`}>
                 <ol
                   className={styles.steps}
                   ref={stepsListRef}
@@ -1349,29 +1416,33 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
             to the canvas window. Non-companion routes (/api-example) keep the
             toolbar-toggled floating Simulate panel. */}
         {companions ? (
-          <SidePanel
-            tab={panelTab}
-            onTab={setPanelTab}
-            copilot={{
-              messages: copilotMessages,
-              onSend: sendCopilot,
-              onRegenerate: regenerateCopilot,
-              onClear: clearCopilot,
-              introReady: !coldStartOpen,
-              onStop: stopCopilot,
-              busy: thinkIdx >= 0 || copilotMessages.some((m) => m.thinking || m.streaming),
-              onAttach: () => showHint('Attachments are coming soon.'),
-              onApplyProposal: applyProposal,
-              onDismissProposal: dismissProposal,
-              onUndoProposal: undoProposal,
-              onVerdict: setCopilotVerdict,
-            }}
-            sim={{
-              hasScenarios: lineHasContent(doc.trigger),
-              hasTrigger: lineHasContent(doc.trigger),
-              onAddTrigger: () => requestFocus('trigger', false),
-            }}
-          />
+          // The dock is not rendered while the cold-start modal is open; once the
+          // modal fades out (coldPhase -> 'docked') it mounts and fades itself in.
+          coldPhase === 'docked' && (
+            <SidePanel
+              tab={panelTab}
+              onTab={setPanelTab}
+              copilot={{
+                messages: copilotMessages,
+                onSend: sendCopilot,
+                onRegenerate: regenerateCopilot,
+                onClear: clearCopilot,
+                introReady: true,
+                onStop: stopCopilot,
+                busy: thinkIdx >= 0 || copilotMessages.some((m) => m.thinking || m.streaming),
+                onAttach: () => showHint('Attachments are coming soon.'),
+                onApplyProposal: applyProposal,
+                onDismissProposal: dismissProposal,
+                onUndoProposal: undoProposal,
+                onVerdict: setCopilotVerdict,
+              }}
+              sim={{
+                hasScenarios: lineHasContent(doc.trigger),
+                hasTrigger: lineHasContent(doc.trigger),
+                onAddTrigger: () => requestFocus('trigger', false),
+              }}
+            />
+          )
         ) : (
           <SimulatePanel
             open={simOpen}
@@ -1390,6 +1461,8 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
           initialAction={palette.edit?.initialAction}
           initialPicked={palette.edit?.initialPicked}
           initialQuery={palette.edit?.initialQuery}
+          connectorPick={palette.connectorPick}
+          unauthedConnectors={unauthedConnectors}
           onSelect={insertChip}
           onPreview={previewChip}
           onClose={closePalette}
@@ -1417,7 +1490,10 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
       )}
 
       {coldStartOpen && (
-        <ColdStartModal onGenerate={handleColdStartGenerate} onDismiss={handleColdStartDismiss} />
+        <ColdStartModal
+          onGenerate={handleColdStartGenerate}
+          onDismiss={handleColdStartDismiss}
+        />
       )}
 
       {enableMode && (
@@ -1433,6 +1509,42 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
           onConfirm={confirmEnable}
         />
       )}
+
+      {setupModal && (
+        <ConnectorSetupModal
+          connector={setupModal.connector}
+          onConnected={() => {
+            const { connector: slug, target, chipId } = setupModal;
+            // 1) Mark the connector authenticated (tag stops showing "setup needed").
+            setUnauthedConnectors((prev) => {
+              const next = new Set(prev);
+              next.delete(slug);
+              return next;
+            });
+            // 2) Flip the tag to the "select action" state (connectorPick, no value yet).
+            const frag = lineFrags(target).find((f) => f.kind === 'chip' && f.chip.id === chipId);
+            const carrierId = frag && frag.kind === 'chip' ? frag.chip.actionId : '';
+            api.setLine(
+              target,
+              normalizeLine(
+                lineFrags(target).map((f) =>
+                  f.kind === 'chip' && f.chip.id === chipId
+                    ? { kind: 'chip' as const, chip: { ...f.chip, config: { connectorPick: true } } }
+                    : f,
+                ),
+              ),
+            );
+            setSetupModal(null);
+            // 3) Open the connector action picker on the tag (after the modal unmounts),
+            //    with a brief loading state before its actions appear.
+            requestAnimationFrame(() =>
+              openConnectorPicker(target, chipId, slug, carrierId, undefined, true),
+            );
+          }}
+          onClose={() => setSetupModal(null)}
+        />
+      )}
     </div>
+    </UnauthedConnectorsContext.Provider>
   );
 }

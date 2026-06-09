@@ -141,7 +141,7 @@
 }
 
 /* Hero input -------------------------------------------------------------- */
-/* Drop target wrapper; the brand-gradient border lives on .field::before below. */
+/* Drop target wrapper; the AI glow ring + halo come from the shared `.ai-input-glow`. */
 .shell {
   border-radius: var(--r-md);
   padding: 0;
@@ -166,42 +166,8 @@
   border: 1px solid var(--hairline); /* neutral settled border */
   border-radius: 12px;
 }
-/* The Copilot brand gradient revolves around the border ONCE on open, then fades
-   to the neutral border - the same one-shot sweep as the Copilot composer
-   (@property --copilot-angle lives in globals.css so the conic angle interpolates
-   instead of jumping). */
-.field::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: conic-gradient(from var(--copilot-angle), #31e3de, #662bf5, #e4b2a2, #31e3de);
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  opacity: 0;
-  pointer-events: none;
-  animation: csBorderSweep 1100ms var(--ease-snap) 240ms 1 forwards;
-}
-@keyframes csBorderSweep {
-  0% {
-    --copilot-angle: 0deg;
-    opacity: 1;
-  }
-  78% {
-    opacity: 1;
-  }
-  100% {
-    --copilot-angle: 360deg;
-    opacity: 0;
-  }
-}
+/* The AI glow (a one-shot gradient ring + soft halo that plays then fades to this
+   neutral border) is the shared `.ai-input-glow` treatment from globals.css. */
 
 .textarea {
   width: 100%;
@@ -289,32 +255,41 @@
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-.upload {
+/* Upload SOP - same fill/border treatment as the + (.addBtn): white card, soft
+   hairline, pill. NO grey fill. Icon + label centered. */
+.uploadBtn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 5px 7px;
+  height: 32px;
+  padding: 0 12px;
   margin: 0;
-  border: none;
-  border-radius: var(--r-sm);
-  background: transparent;
+  border: 1px solid var(--hairline-soft);
+  border-radius: var(--r-pill);
+  background: var(--card);
+  color: var(--body);
   font-family: var(--font);
-  font-size: var(--fs-small);
+  font-size: var(--fs-small); /* 13px - matches the + button system */
   font-weight: 500;
   letter-spacing: var(--ls-small);
-  color: var(--muted);
   cursor: pointer;
   transition:
     color var(--d-hover) var(--ease-snap),
+    border-color var(--d-hover) var(--ease-snap),
     background var(--d-hover) var(--ease-snap);
 }
-.upload:hover {
+.uploadBtn:hover {
+  border-color: var(--hairline-strong);
   color: var(--ink-soft);
-  background: var(--surface-soft);
+}
+.uploadBtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 .uploadIco {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   flex: none;
 }
 .uploadHint {
@@ -436,10 +411,10 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 11px;
+  padding: 7px 12px;
   margin: 0;
   border: 1px solid var(--hairline);
-  border-radius: var(--r-md);
+  border-radius: var(--r-pill); /* fully rounded pills */
   background: var(--card);
   font-family: var(--font);
   font-size: var(--fs-small); /* 13px */
@@ -595,14 +570,12 @@
 @media (prefers-reduced-motion: reduce) {
   .scrim,
   .dialog,
-  .progressBar,
-  .field::before {
+  .progressBar {
     animation: none;
   }
   .shell,
   .field,
   .bubble,
-  .upload,
   .close,
   .dropHint {
     transition: none;
