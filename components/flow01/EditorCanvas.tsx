@@ -202,6 +202,14 @@ interface Props {
 //   'docked'   = the modal is gone, the dock is the visible Copilot
 type ColdStartPhase = 'hero' | 'morphing' | 'docked';
 
+// Honored on every cold-start exit: reduced-motion users skip the morph entirely.
+function reduceMotion(): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+}
+
 export default function EditorCanvas({ initialDoc, companions }: Props) {
   const api = useEditorDoc(initialDoc);
   const { doc, undo, redo } = api;
@@ -350,9 +358,6 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
   // Copilot message, opens Copilot, and runs a short "working" animation; when it
   // finishes the drafted AOP loads on the left and Copilot posts an ack, so
   // any follow-up continues in the Copilot thread. Skip lands on a blank canvas.
-  const reduceMotion = () =>
-    typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const handleColdStartGenerate = useCallback((genDoc: EditorDoc, query: string) => {
     // Prime the dock behind the morph first (messages, pending doc, working
     // animation), then enter 'morphing' so the FLIP bridge lands on a ready dock.
@@ -372,6 +377,11 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
   // Capture the modal's surface rect as it leaves, so the morph can fly from it.
   const handleBeforeExit = useCallback((r: DOMRect) => {
     morphSrcRect.current = r;
+  }, []);
+  // Stable so the morph's effect never re-runs (and restarts) mid-flight.
+  const handleMorphDone = useCallback(() => {
+    setColdPhase('docked');
+    setMorphRects(null);
   }, []);
 
   // On entering 'morphing': measure the (now hidden but laid-out) dock surface as
@@ -1477,10 +1487,7 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
         <CopilotMorph
           from={morphRects.from}
           to={morphRects.to}
-          onDone={() => {
-            setColdPhase('docked');
-            setMorphRects(null);
-          }}
+          onDone={handleMorphDone}
         />
       )}
 

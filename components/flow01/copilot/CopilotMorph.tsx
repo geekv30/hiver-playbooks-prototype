@@ -36,6 +36,7 @@ export default function CopilotMorph({ from, to, onDone }: Props) {
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
+    done.current = false; // reset per run so a re-run can still complete (defensive)
 
     // FLIP invert: the element is already laid out at `to`; pre-place it at `from`.
     const dx = from.left - to.left;
@@ -97,7 +98,7 @@ export default function CopilotMorph({ from, to, onDone }: Props) {
       ref={ref}
       className={styles.surface}
       style={{ left: to.left, top: to.top, width: to.width, height: to.height }}
-      aria-hidden
+      aria-hidden="true"
     >
       {/* Hero layer: the modal's title bar + the big describe-box, hugging the
           surface bottom so the input lines up with the dock composer below. */}
