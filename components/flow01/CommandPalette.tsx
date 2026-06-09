@@ -64,6 +64,10 @@ interface Props {
   initialPicked?: string[];
   /** Pre-fill the search/input field (e.g. a chip's current KB-search query). */
   initialQuery?: string;
+  /** Open directly on a connector's actions as a MULTI-select (the post-connect
+   *  "select action" picker). The picked verbs commit back to the carrier chip as
+   *  its value. `initialPicked` pre-checks the chip's current actions. */
+  connectorPick?: { slug: ConnectorSlug; carrierId: string };
 }
 
 interface Row {
@@ -111,17 +115,21 @@ export default function CommandPalette({
   initialAction,
   initialPicked,
   initialQuery,
+  connectorPick,
 }: Props) {
   const [query, setQuery] = useState(initialQuery ?? '');
   // '@' opens straight on the References picker; '/' (default) opens the root
   // Actions+Connectors view. `initialAction` opens straight on an action's value
-  // page (reconfiguring a placed chip). Back/cross-links keep the worlds reachable.
+  // page (reconfiguring a placed chip). `connectorPick` opens straight on a
+  // connector's actions as a multi-select. Back/cross-links keep the worlds reachable.
   const [drill, setDrill] = useState<Drill | null>(
-    initialAction
-      ? { type: 'action', id: initialAction }
-      : initialScope === 'references'
-        ? { type: 'action', id: REFERENCE_ID }
-        : null,
+    connectorPick
+      ? { type: 'connector', slug: connectorPick.slug }
+      : initialAction
+        ? { type: 'action', id: initialAction }
+        : initialScope === 'references'
+          ? { type: 'action', id: REFERENCE_ID }
+          : null,
   );
   const [picked, setPicked] = useState<Set<string>>(new Set(initialPicked ?? [])); // pick-many state
   const [active, setActive] = useState(0);
@@ -142,6 +150,16 @@ export default function CommandPalette({
     const labels = behavior.options.filter((o) => picked.has(o.id)).map((o) => o.label);
     if (!labels.length) return;
     onSelect(drill.id, labels.join(', '));
+  };
+
+  // Commit the connector multi-select back to the carrier tag (empty = stays
+  // "select action"). Closing the page finalizes the selection (like pick-many).
+  const confirmConnector = () => {
+    if (!connectorPick || drill?.type !== 'connector') return;
+    const labels = connectorVerbs(drill.slug)
+      .filter((v) => picked.has(v.id))
+      .map((v) => v.label);
+    onSelect(connectorPick.carrierId, labels.join(', '));
   };
 
   // Insert a single picked value (pick-one). Reference inserts a @ref instead.
@@ -185,23 +203,36 @@ export default function CommandPalette({
       return [{ key: 'opts', label: behavior.title, rows }];
     }
 
-    // --- Connector page (single-select verbs) --------------------------------
+    // --- Connector page --------------------------------------------------------
+    // Single-select (insert one verb chip) by default; MULTI-select when opened as
+    // the post-connect "select action" picker (connectorPick) - the checked verbs
+    // commit back to the carrier tag as its value.
     if (drill?.type === 'connector') {
-      const verbs = connectorVerbs(drill.slug).filter((v) =>
+      const slug = drill.slug;
+      const multi = !!connectorPick;
+      const verbs = connectorVerbs(slug).filter((v) =>
         q ? v.label.toLowerCase().includes(q) : true,
       );
       const rows: Row[] = verbs.map((v) => ({
         key: v.id,
         label: v.label,
-        Icon: CONNECTOR_ICON[drill.slug],
+        Icon: CONNECTOR_ICON[slug],
         brand: true,
         drill: false,
-        selectable: false,
-        selected: false,
+        selectable: multi,
+        selected: multi && picked.has(v.id),
         desc: findAction(v.id)?.desc,
-        activate: () => onSelect(v.id),
+        activate: multi
+          ? () =>
+              setPicked((prev) => {
+                const next = new Set(prev);
+                if (next.has(v.id)) next.delete(v.id);
+                else next.add(v.id);
+                return next;
+              })
+          : () => onSelect(v.id),
       }));
-      return [{ key: 'verbs', label: `${connectorName(drill.slug)} actions`, rows }];
+      return [{ key: 'verbs', label: `${connectorName(slug)} actions`, rows }];
     }
 
     // --- Flat search across everything ---------------------------------------
@@ -284,7 +315,7 @@ export default function CommandPalette({
       { key: 'connectors', label: 'Connectors', rows: brandRows },
     ];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, drill, behavior, picked, onSelect, noCondition]);
+  }, [query, drill, behavior, picked, onSelect, noCondition, connectorPick]);
 
   function openAction(id: string) {
     setDir('fwd');
@@ -336,7 +367,9 @@ export default function CommandPalette({
   // Closing a pick-many page commits the checked values (there is no confirm
   // button - per the Figma, esc/outside-click "close" finalizes the selection).
   const closePalette = () => {
-    if (drill?.type === 'action' && behavior?.mode === 'pick-many' && picked.size > 0) {
+    if (connectorPick && drill?.type === 'connector') {
+      confirmConnector(); // commits the picked actions back to the tag
+    } else if (drill?.type === 'action' && behavior?.mode === 'pick-many' && picked.size > 0) {
       confirmMany(); // inserts → parent unmounts the palette
     } else {
       onClose();

@@ -162,6 +162,13 @@
   height: 13px;
 }
 
+/* Connected connector tag awaiting an action pick: a muted "select action" prompt. */
+.chipSelectAction {
+  font-size: var(--fs-small);
+  font-weight: 400;
+  color: var(--muted);
+}
+
 /* Connector setup-required state (Figma Status/Primary red #CD3746) */
 .chipSetup {
   font-size: var(--fs-small);   /* mono dropped - Inter inherited from .chip - Figma 410:51338 */

@@ -28,7 +28,7 @@ import SimulatePanel from '@/components/simulate/SimulatePanel';
 import { type CopilotMessage, type CopilotProposalData } from './copilot/CopilotPanel';
 import SidePanel, { type SideTab } from './copilot/SidePanel';
 import type { Verdict } from '@/components/atoms/ThumbsRating';
-import { REFERENCE_ID, actionBehavior } from './paletteCatalog';
+import { REFERENCE_ID, actionBehavior, connectorVerbs } from './paletteCatalog';
 import { useEditorDoc } from './useEditorDoc';
 import {
   LineTarget,
@@ -53,6 +53,8 @@ interface PaletteState {
   // When set, the palette is EDITING this placed chip (reopened on its value page),
   // so a pick commits back to it instead of inserting a new chip.
   edit?: { chipId: string; initialAction: string; initialPicked?: string[]; initialQuery?: string };
+  // When set, the palette opens as the connector multi-select "select action" picker.
+  connectorPick?: { slug: ConnectorSlug; carrierId: string };
 }
 
 interface FocusReq {
@@ -950,6 +952,37 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
     requestFocus(lineKey(target), false);
   };
 
+  // Open the connector "select action" picker for a connected connector tag: the
+  // palette drilled into the connector's actions as a multi-select, with the tag's
+  // current actions pre-checked. The pick commits back to the tag as its value.
+  const openConnectorPicker = (
+    target: LineTarget,
+    chipId: string,
+    slug: ConnectorSlug,
+    carrierId: string,
+    el?: HTMLElement,
+  ) => {
+    const node = el ?? (document.querySelector(`[data-chip-id="${chipId}"]`) as HTMLElement | null);
+    const r = node?.getBoundingClientRect();
+    const rect = r ? { left: r.left, top: r.top, bottom: r.bottom } : { left: 0, top: 0, bottom: 0 };
+    const frag = lineFrags(target).find((f) => f.kind === 'chip' && f.chip.id === chipId);
+    const meta =
+      frag && frag.kind === 'chip' && typeof frag.chip.config.meta === 'string'
+        ? frag.chip.config.meta
+        : '';
+    const labels = meta.split(', ').map((s) => s.trim()).filter(Boolean);
+    const initialPicked = connectorVerbs(slug)
+      .filter((v) => labels.includes(v.label))
+      .map((v) => v.id);
+    setMenuStepId(null);
+    setPalette({
+      target,
+      req: { scope: 'actions', fragIndex: 0, caretOffset: 0, rect },
+      edit: { chipId, initialAction: carrierId, initialPicked },
+      connectorPick: { slug, carrierId },
+    });
+  };
+
   // Open the palette already drilled into the clicked chip's value page, with its
   // current value(s) pre-selected. Only actions with a palette value page are
   // editable this way (EditorLine gates the click); mode 'insert' actions are not.
@@ -957,11 +990,16 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
     const frag = lineFrags(target).find((f) => f.kind === 'chip' && f.chip.id === chipId);
     const chip = frag && frag.kind === 'chip' ? frag.chip : null;
     if (!chip) return;
-    // An unauthenticated connector tag opens the connection flow, not the reconfigure palette.
     const slug = findAction(chip.actionId)?.connectorSlug;
+    // An unauthenticated connector tag opens the connection flow, not the reconfigure palette.
     if (slug && unauthedConnectors.has(slug)) {
       setMenuStepId(null);
       setSetupModal({ connector: slug, target, chipId });
+      return;
+    }
+    // A connected connector tag opens the multi-select "select action" picker.
+    if (slug && chip.config.connectorPick === true) {
+      openConnectorPicker(target, chipId, slug, chip.actionId, el);
       return;
     }
     const behavior = actionBehavior(chip.actionId);
@@ -1428,6 +1466,7 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
           initialAction={palette.edit?.initialAction}
           initialPicked={palette.edit?.initialPicked}
           initialQuery={palette.edit?.initialQuery}
+          connectorPick={palette.connectorPick}
           onSelect={insertChip}
           onPreview={previewChip}
           onClose={closePalette}
@@ -1479,15 +1518,29 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
         <ConnectorSetupModal
           connector={setupModal.connector}
           onConnected={() => {
-            const slug = setupModal.connector;
-            // Connected: drop it from the unauthenticated set so the tag stops showing
-            // "setup needed". (Task 17 moves it to "select action" + opens the picker.)
+            const { connector: slug, target, chipId } = setupModal;
+            // 1) Mark the connector authenticated (tag stops showing "setup needed").
             setUnauthedConnectors((prev) => {
               const next = new Set(prev);
               next.delete(slug);
               return next;
             });
+            // 2) Flip the tag to the "select action" state (connectorPick, no value yet).
+            const frag = lineFrags(target).find((f) => f.kind === 'chip' && f.chip.id === chipId);
+            const carrierId = frag && frag.kind === 'chip' ? frag.chip.actionId : '';
+            api.setLine(
+              target,
+              normalizeLine(
+                lineFrags(target).map((f) =>
+                  f.kind === 'chip' && f.chip.id === chipId
+                    ? { kind: 'chip' as const, chip: { ...f.chip, config: { connectorPick: true } } }
+                    : f,
+                ),
+              ),
+            );
             setSetupModal(null);
+            // 3) Open the connector action picker on the tag (after the modal unmounts).
+            requestAnimationFrame(() => openConnectorPicker(target, chipId, slug, carrierId));
           }}
           onClose={() => setSetupModal(null)}
         />
