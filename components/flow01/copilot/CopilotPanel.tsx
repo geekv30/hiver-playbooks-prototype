@@ -468,35 +468,37 @@ export default function CopilotPanel({
             </>
           ) : (
             <div className={styles.empty}>
-              <div className={styles.hero}>
-                <span className={styles.heroMark}>
-                  <CopilotSparkle size={30} />
-                </span>
-                <h2 className={styles.heroTitle}>What should this AOP do?</h2>
-                <p className={styles.heroSub}>
-                  Ask Copilot to build or change it - add steps, conditions, and connector actions.
-                </p>
-              </div>
-              <ul className={styles.starters}>
-                {STARTERS.map((s, i) => (
-                  <li
-                    key={s.label}
-                    className={styles.starterReveal}
-                    style={{ '--i': i } as CSSProperties}
-                  >
-                    <button
-                      type="button"
-                      className={styles.starter}
-                      onClick={() => prefill(s.prompt)}
+              <div className={styles.emptyMain}>
+                <div className={styles.hero}>
+                  <span className={styles.heroMark}>
+                    <CopilotSparkle size={30} />
+                  </span>
+                  <h2 className={styles.heroTitle}>What should this AOP do?</h2>
+                  <p className={styles.heroSub}>
+                    Ask Copilot to build or change it - add steps, conditions, and connector actions.
+                  </p>
+                </div>
+                <ul className={styles.starters}>
+                  {STARTERS.map((s, i) => (
+                    <li
+                      key={s.label}
+                      className={styles.starterReveal}
+                      style={{ '--i': i } as CSSProperties}
                     >
-                      <span className={styles.starterIco}>
-                        <s.icon />
-                      </span>
-                      {s.label}
-                    </button>
-                  </li>
-                ))}
-              </ul>
+                      <button
+                        type="button"
+                        className={styles.starter}
+                        onClick={() => prefill(s.prompt)}
+                      >
+                        <span className={styles.starterIco}>
+                          <s.icon />
+                        </span>
+                        {s.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
               {composer}
             </div>
           )}

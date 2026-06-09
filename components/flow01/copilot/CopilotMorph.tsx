@@ -30,6 +30,7 @@ interface Props {
  */
 export default function CopilotMorph({ from, to, onDone }: Props) {
   const ref = useRef<HTMLDivElement>(null);
+  const dockRef = useRef<HTMLDivElement>(null);
   const done = useRef(false);
 
   useLayoutEffect(() => {
@@ -43,6 +44,15 @@ export default function CopilotMorph({ from, to, onDone }: Props) {
     const sy = from.height / to.height;
     el.style.transformOrigin = 'top left';
     el.style.transform = `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`;
+    // Counter-scale the dock (landing) layer by the inverse, on the same beat, so
+    // the incoming Copilot content keeps true proportions instead of stretching
+    // with the container - net scale stays ~1 the whole way. The hero layer is
+    // left to scale + fade (its distortion is masked because it is gone fast).
+    const dock = dockRef.current;
+    if (dock) {
+      dock.style.transformOrigin = 'top left';
+      dock.style.transform = `scale(${1 / sx}, ${1 / sy})`;
+    }
     void el.getBoundingClientRect(); // force the inverted first frame to paint
 
     const finish = () => {
@@ -63,6 +73,7 @@ export default function CopilotMorph({ from, to, onDone }: Props) {
     const id = requestAnimationFrame(() => {
       el.dataset.landing = 'true'; // cross-fade hero -> dock layers
       el.style.transform = 'translate(0px, 0px) scale(1, 1)'; // release to identity
+      if (dock) dock.style.transform = 'scale(1, 1)'; // release the counter-scale in sync
     });
 
     // The transform is the longest property; complete on its transitionend.
@@ -101,8 +112,9 @@ export default function CopilotMorph({ from, to, onDone }: Props) {
         </div>
       </div>
 
-      {/* Dock layer: the two-tab header + the composer at the bottom. */}
-      <div className={styles.dockLayer}>
+      {/* Dock layer: the two-tab header + the composer at the bottom. Counter-scaled
+          (see effect) so the landing Copilot content never stretches. */}
+      <div className={styles.dockLayer} ref={dockRef}>
         <div className={styles.tabs}>
           <span className={styles.tab} data-active />
           <span className={styles.tab} />

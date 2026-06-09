@@ -131,18 +131,27 @@
   overflow: hidden;
 }
 
-/* ---- EMPTY STATE: header centered in the space at the top, then the starter
-        pills sitting directly on top of the composer pinned at the bottom
-        (header / pills / input). ---- */
+/* ---- EMPTY STATE: the greeting + starter pills sit centered in the space above
+        the composer, which stays pinned at the bottom. No dead void at the top,
+        no gap below the input (ChatGPT/Linear idiom). ---- */
 .empty {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end; /* Rovo: the group hugs the bottom; the empty space is at the top */
   gap: 12px;
   padding-bottom: 2px;
   animation: emptyIn var(--d-enter) var(--ease-snap) both;
+}
+/* Greeting + starters, vertically centered in the flexible region above the
+   composer (which follows as a flex:none child pinned to the bottom). */
+.emptyMain {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
 }
 @keyframes emptyIn {
   from {
