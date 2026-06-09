@@ -617,7 +617,7 @@ function Topbar({ state, onOpenOverflow, overflowOpen, onOpenActivate, activateO
 
   return (
     <header className={styles.topbar}>
-      <Link href="/" className={styles.brand}>P</Link>
+      <Link href="/atoms" className={styles.brand}>P</Link>
       <div className={styles.crumb}>
         <Link href="/component/canvas">AOPs</Link>
         <span className={styles.csep}>/</span>

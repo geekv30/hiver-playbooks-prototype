@@ -120,17 +120,15 @@ export function exampleDoc(): EditorDoc {
     triggerMode: 'automatic',
     mailboxes: [],
     guardrails: defaultGuardrails(),
+    // Handwritten NL trigger (no references/chips - the trigger box is plain text).
     trigger: normalizeLine([
-      txt('When an email arrives at '),
-      makeRef('engg.hiver@grexit.com'),
-      txt(' reporting an error or API status issue.'),
+      txt('When an email arrives at engg.hiver@grexit.com reporting an error or API status issue.'),
     ]),
     steps: [
       {
         id: 'ex-s1',
         body: normalizeLine([
-          exChip('ex-c1', 'ai_extract', 'summary'),
-          txt(' the error and pull the code, HTTP status, endpoint, timestamps, and SDK version.'),
+          txt('Summarize the error and pull the code, HTTP status, endpoint, timestamps, and SDK version.'),
         ]),
       },
       {

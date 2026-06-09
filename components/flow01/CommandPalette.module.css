@@ -224,9 +224,12 @@
 }
 
 /* Text-only rows (picker values: tags, assignees, statuses, fields) — no icon
-   gutter; label sits at the row's text inset, matching the Figma tag page. */
+   gutter; label sits at the row's text inset, matching the Figma tag page
+   (745:20582): label 14px from the left, trailing checkbox 14px from the right
+   (symmetric, not the base row's 7px right). */
 .rowPlain {
   padding-left: 14px;
+  padding-right: 14px;
 }
 
 /* Right-aligned selection checkbox (pick-many). The row owns the toggle, so the

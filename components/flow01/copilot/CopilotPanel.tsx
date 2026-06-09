@@ -276,7 +276,7 @@ export default function CopilotPanel({
   // and the conversation) so the input element is byte-identical across states.
   // The shared `.ai-input-glow` (globals.css) gives it the same flowing glow as
   // the cold-start describe box; it lights up once the panel is ready (introReady).
-  const composer = (
+  const field = (
     <div className={`${styles.composer}${introReady ? ' ai-input-glow' : ''}`}>
       <textarea
         ref={inputRef}
@@ -309,6 +309,16 @@ export default function CopilotPanel({
           {busy ? <RiStopFill /> : <RiArrowUpLine />}
         </button>
       </div>
+    </div>
+  );
+
+  // The composer field + the "Uses AI, please verify results" disclaimer travel
+  // together (Figma 868:26924) so the note follows the field in both the empty and
+  // the conversation states - rendered once, never duplicated.
+  const composer = (
+    <div className={styles.composerWrap}>
+      {field}
+      <p className={styles.aiNote}>Uses AI, please verify results</p>
     </div>
   );
 

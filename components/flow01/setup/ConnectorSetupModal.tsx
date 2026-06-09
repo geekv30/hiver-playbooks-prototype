@@ -143,7 +143,7 @@ export default function ConnectorSetupModal({ connector, onConnected, onClose }:
                 Cancel
               </button>
               <Button variant="accent" onClick={() => setPhase('auth')}>
-                Install now
+                Connect
               </Button>
             </footer>
           </>
@@ -214,7 +214,7 @@ export default function ConnectorSetupModal({ connector, onConnected, onClose }:
                 Cancel
               </button>
               <Button variant="accent" disabled={!token.trim()} onClick={() => setPhase('success')}>
-                Install now
+                Connect
               </Button>
             </footer>
           </>

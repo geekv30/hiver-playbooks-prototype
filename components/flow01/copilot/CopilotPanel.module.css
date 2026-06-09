@@ -634,6 +634,25 @@
   }
 }
 
+/* ---- composer group: the field + the "Uses AI, please verify results" note
+        stacked (Figma 868:26924, 10px gap). Pinned to the panel bottom as one
+        flex:none unit so the note always rides under the field. ---- */
+.composerWrap {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+/* AI disclaimer under the composer (Figma 868:26920): caption, muted, centered. */
+.aiNote {
+  margin: 0;
+  text-align: center;
+  font-size: var(--fs-caption); /* 12px */
+  line-height: 14px;
+  letter-spacing: 0.12px;
+  color: var(--muted);
+}
+
 /* ---- composer: a clean two-row card. Row 1 = the textarea; Row 2 = a control
         bar (attach far-left, send bottom-right). 1px hairline + faint shadow,
         NO gradient. The send button is the ONE filled/colored element and makes
@@ -644,9 +663,10 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 10px 12px 10px;
+  /* Figma 647:40145: pt-14 pb-13 px-16, radius 12. */
+  padding: 14px 16px 13px;
   border: 1px solid var(--hairline);
-  border-radius: 16px;
+  border-radius: 12px;
   background: var(--card);
   box-shadow: 0 1px 2px rgba(52, 60, 69, 0.04);
   transition:
@@ -670,7 +690,10 @@
   line-height: 20px;
   letter-spacing: var(--ls-body);
   color: var(--ink);
-  min-height: 24px; /* one line; grows to max then scrolls internally */
+  /* Reserve a 2-line input area so the composer is exactly 115px tall (Figma
+     647:40145). Border-box: 2px border + pt14 + 46 input + gap8 + 32 buttons +
+     pb13 = 115. Grows to max then scrolls. */
+  min-height: 46px;
   max-height: 140px;
   padding: 2px 4px 0;
 }
@@ -682,34 +705,39 @@
   align-items: center;
   justify-content: space-between;
 }
+/* Attach "+" - the Figma Secondary Button (647:40153): 32px white pill, hairline
+   border, 16px glyph. */
 .add {
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   padding: 0;
-  border: none;
+  border: 1px solid var(--hairline-soft);
   border-radius: var(--r-pill);
-  background: transparent;
+  background: var(--card);
   color: var(--muted);
   cursor: pointer;
   transition:
     background var(--d-hover) var(--ease-snap),
+    border-color var(--d-hover) var(--ease-snap),
     color var(--d-hover) var(--ease-snap);
 }
 .add svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
 }
 .add:hover {
   background: var(--surface-soft);
+  border-color: var(--hairline);
   color: var(--ink-soft);
 }
 .send {
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
+  /* Figma Primary Button (647:40154): 32px, gray #eceff6 inert -> accent on ready. */
+  width: 32px;
+  height: 32px;
   padding: 0;
   border: none;
   border-radius: var(--r-pill);

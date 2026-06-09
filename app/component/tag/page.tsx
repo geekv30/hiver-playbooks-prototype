@@ -302,7 +302,7 @@ export default function TagComponentPage() {
       <header className={styles.docbar}>
         <div className={styles.brand}>P</div>
         <div className={styles.crumb}>
-          <Link href="/">AOPs</Link>
+          <Link href="/atoms">AOPs</Link>
           <span className={styles.csep}>/</span>
           <Link href="/component/node">Components</Link>
           <span className={styles.csep}>/</span>
@@ -314,7 +314,7 @@ export default function TagComponentPage() {
         <span className={styles.spacer} />
         <Link className={styles.linkbtn} href="/component/node">Node</Link>
         <Link className={styles.linkbtn} href="/design-language-2">v2 editor</Link>
-        <Link className={styles.linkbtn} href="/">Back to editor</Link>
+        <Link className={styles.linkbtn} href="/atoms">Back to editor</Link>
       </header>
 
       <div className={styles.wrap}>
@@ -538,7 +538,7 @@ export default function TagComponentPage() {
         <footer className={styles.footer}>
           <Link href="/component/node">/component/node</Link>
           <Link href="/design-language-2">/design-language-2</Link>
-          <Link href="/">/ assembled editor</Link>
+          <Link href="/atoms">/ assembled editor</Link>
           <a href="https://github.com/geekv30/hiver-playbooks-prototype" target="_blank" rel="noreferrer">repo</a>
         </footer>
       </div>

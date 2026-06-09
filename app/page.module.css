@@ -1,107 +1,219 @@
-/* Component review surface. Each component is shown in isolation, in its
-   variants and states, for review before assembly into Canvas 360. */
+/* Prototype hub - the landing page that routes to the three AOP prototypes.
+   Cool-neutral, Linear/Attio restraint; one card renderer; calm spring hover. */
 
 .page {
-  min-height: 100vh;
-  background: var(--canvas);
-  color: var(--ink);
-  padding: 48px 56px 120px;
-  font-family: var(--font);
+  min-height: calc(100vh / var(--app-scale));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 72px 32px;
+  /* a faint top-light so the hub reads as a surface, not a flat fill */
+  background: radial-gradient(125% 80% at 50% 0%, #ffffff 0%, var(--canvas-soft) 62%);
 }
 
+.inner {
+  width: 100%;
+  max-width: 1040px;
+  display: flex;
+  flex-direction: column;
+  gap: 44px;
+}
+
+/* ---- header ---- */
 .head {
-  max-width: 1100px;
-  margin: 0 0 44px;
-}
-.head h1 {
-  font-size: var(--fs-h2);
-  line-height: var(--lh-h2);
-  letter-spacing: var(--ls-h2);
-  font-weight: 600;
-  margin: 0 0 8px;
-}
-.head p {
-  font-size: var(--fs-small);
-  line-height: var(--lh-small);
-  color: var(--muted);
-  margin: 0;
-}
-.head a { color: var(--ink); text-decoration: underline; text-underline-offset: 2px; }
-
-.section {
-  max-width: 1100px;
-  margin-bottom: 52px;
-}
-.sectionHead {
   display: flex;
-  align-items: baseline;
-  gap: 12px;
-  padding-bottom: 14px;
-  margin-bottom: 26px;
-  border-bottom: 1px solid var(--hairline);
-}
-.sectionHead h2 {
-  font-size: var(--fs-h4);
-  line-height: var(--lh-h4);
-  letter-spacing: var(--ls-h4);
-  font-weight: 600;
-  margin: 0;
-}
-.sectionHead .status {
-  font-size: var(--fs-micro);
-  font-family: var(--mono);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--state-ok);
-}
-
-.group { margin-bottom: 30px; }
-.groupLabel {
-  font-size: var(--fs-micro);
-  font-weight: 500;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin: 0 0 16px;
-}
-.row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 18px 32px;
+  flex-direction: column;
   align-items: flex-start;
+  gap: 14px;
+  max-width: 660px;
+}
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font);
+  font-size: var(--fs-caption); /* 12 */
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.mark {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+.title {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 46px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+.sub {
+  margin: 0;
+  font-family: var(--font);
+  font-size: var(--fs-h5); /* 16 */
+  line-height: 1.55;
+  letter-spacing: var(--ls-body);
+  color: var(--muted);
+}
+
+/* ---- prototype grid ---- */
+.grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
 }
 .cell {
   display: flex;
-  flex-direction: column;
-  gap: 9px;
 }
-.cellBody {
+.card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 22px 22px 20px;
+  border: 1px solid var(--hairline-soft);
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: 0 1px 2px rgba(52, 60, 69, 0.04);
+  text-decoration: none;
+  transition:
+    transform var(--d-enter) var(--ease-snap),
+    box-shadow var(--d-enter) var(--ease-snap),
+    border-color var(--d-enter) var(--ease-snap);
+}
+.card:hover {
+  transform: translateY(-3px);
+  border-color: var(--hairline);
+  box-shadow:
+    0 1px 2px rgba(52, 60, 69, 0.04),
+    0 14px 30px -10px rgba(52, 60, 69, 0.18);
+}
+.card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.cardTop {
   display: flex;
   align-items: center;
-  min-height: 30px;
+  justify-content: space-between;
+  margin-bottom: 2px;
 }
-.cellLabel {
-  font-size: var(--fs-caption);
-  font-family: var(--mono);
+.cardIco {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--surface-soft);
+  color: var(--ink-soft);
+  transition:
+    background var(--d-enter) var(--ease-snap),
+    color var(--d-enter) var(--ease-snap);
+}
+.cardIco svg {
+  width: 20px;
+  height: 20px;
+}
+.card:hover .cardIco {
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+.cardTag {
+  font-family: var(--font);
+  font-size: var(--fs-micro); /* 11 */
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   color: var(--muted-soft);
-  letter-spacing: 0;
+}
+.cardName {
+  font-family: var(--font);
+  font-size: var(--fs-h4); /* 18 */
+  font-weight: 600;
+  letter-spacing: var(--ls-h4);
+  color: var(--ink);
+}
+.cardDesc {
+  flex: 1;
+  font-family: var(--font);
+  font-size: var(--fs-small); /* 13 */
+  line-height: 1.55;
+  letter-spacing: var(--ls-body);
+  color: var(--muted);
+}
+.cardCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  font-family: var(--font);
+  font-size: var(--fs-small);
+  font-weight: 500;
+  letter-spacing: var(--ls-small);
+  color: var(--accent);
+}
+.cardCta svg {
+  width: 15px;
+  height: 15px;
+  transition: transform var(--d-hover) var(--ease-snap);
+}
+.card:hover .cardCta svg {
+  transform: translateX(3px);
 }
 
-/* Chat input bar preview (flow-01 atoms) */
-.chatPreview {
+/* ---- footer ---- */
+.foot {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 460px;
-  height: 46px;
-  padding: 0 8px 0 20px;
-  background: var(--card);
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-pill);
 }
-.chatPlaceholder {
-  flex: 1;
-  font-size: var(--fs-body);
+.footLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font);
+  font-size: var(--fs-small);
+  letter-spacing: var(--ls-small);
   color: var(--muted);
-  letter-spacing: var(--ls-body);
+  text-decoration: none;
+  transition: color var(--d-hover) var(--ease-snap);
+}
+.footLink svg {
+  width: 14px;
+  height: 14px;
+  transition: transform var(--d-hover) var(--ease-snap);
+}
+.footLink:hover {
+  color: var(--ink-soft);
+}
+.footLink:hover svg {
+  transform: translateX(3px);
+}
+
+@media (max-width: 880px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .cardIco,
+  .cardCta svg,
+  .footLink svg {
+    transition: none;
+  }
+  .card:hover {
+    transform: none;
+  }
+  .card:hover .cardCta svg,
+  .footLink:hover svg {
+    transform: none;
+  }
 }

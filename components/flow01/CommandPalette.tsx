@@ -696,7 +696,7 @@ export default function CommandPalette({
                         )}
                         {row.selectable && (
                           <span className={styles.rowBox}>
-                            <Checkbox presentational size={16} checked={row.selected} />
+                            <Checkbox presentational subtle size={16} checked={row.selected} />
                           </span>
                         )}
                       </button>

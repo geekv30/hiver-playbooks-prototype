@@ -1150,8 +1150,9 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
                         placeholder={TRIGGER_PLACEHOLDER}
                         onChange={handleChange({ kind: 'trigger' })}
                         onEnter={handleEnter({ kind: 'trigger' })}
-                        onRequestPalette={openPalette({ kind: 'trigger' })}
-                        onChipConfig={openChipEdit({ kind: 'trigger' })}
+                        // The trigger is always handwritten NL - no actions/references,
+                        // no command palette. '@' and '/' type literally (noActions).
+                        noActions
                         autoFocus={focusFor('trigger')}
                         ariaLabel="When should this AOP run"
                       />
@@ -1160,17 +1161,10 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
                 </div>
               </section>
 
-              <div className={styles.divider} />
-
-              {/* Describe Procedure */}
-              <section className={styles.block}>
-                <div className={styles.row}>
-                  <span className={styles.gutter} aria-hidden />
-                  <div className={styles.content}>
-                    <h2 className={styles.label}>What should it do :</h2>
-                  </div>
-                </div>
-
+              {/* Describe Procedure - the steps list. No section heading or divider
+                 here (Figma 647:40010 goes straight from the trigger to row 1); the
+                 gap to row 1 is owned by .stepsBlock's top padding. */}
+              <section className={`${styles.block} ${styles.stepsBlock}`}>
                 <ol
                   className={styles.steps}
                   ref={stepsListRef}

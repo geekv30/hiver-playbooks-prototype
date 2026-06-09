@@ -104,13 +104,23 @@
   display: none; /* WebKit */
 }
 
-/* Document content (no card chrome - that lives on .area now). */
+/* Document content (no card chrome - that lives on .area now). 44px top inset =
+   Figma 647:40011 pt-44 (the heading sits right at this line). */
 .doc {
-  padding: 32px 40px 40px;
+  padding: 44px 40px 40px;
 }
 
+/* Sections carry no top padding (the .doc inset owns the 44px to the heading); the
+   bottom 4px is rhythm + part of the trigger->steps gap (with .stepsBlock = 36). */
 .block {
-  padding: 4px 0;
+  padding: 0 0 4px;
+}
+
+/* The steps section sits straight under the trigger (no heading/divider between).
+   Its top padding restores the trigger-field -> row-1 gap (Figma 647:40011 pb-36):
+   4px (trigger block pad-bottom) + 32px = 36px. */
+.stepsBlock {
+  padding-top: 32px;
 }
 
 .row {
@@ -125,13 +135,20 @@
 .gutter {
   position: relative;
   display: flex;
-  justify-content: center;
+  /* Number/dot sits at the left of the 40px gutter (3px in), landing the marker
+     ~68px from the card edge (Figma 647:40049 px-68) while the content rail stays
+     at ~104px (Figma px-104). */
+  justify-content: flex-start;
+  padding-left: 3px;
   user-select: none;
 }
-/* Center the step number on the content's 26px line (was 19px line-height +
-   3px pad, which left it sitting ~0.5px high vs the prose / chips). */
+/* Center the step number on the content line. The mono digit baselines ~0.56px
+   HIGHER than the Inter prose in the same 26px line box (measured: number ink
+   center 22.2 vs prose 22.76), so a tuned nudge lands the digit's optical centre
+   exactly on the prose/drag centreline - all three share one midline. */
 .gutter > span {
   line-height: 26px;
+  transform: translateY(0.56px);
 }
 
 .content {
@@ -166,14 +183,6 @@
 }
 .triggerField:focus-within {
   border-color: var(--hairline-strong);
-}
-
-.divider {
-  height: 1px;
-  background: var(--hairline-soft);
-  /* Inset 40px L/R so the rule aligns with the content rail (matching the
-     symmetric row content), not the full doc width. */
-  margin: 24px 40px;
 }
 
 .steps {
@@ -265,7 +274,9 @@
   position: absolute;
   left: -28px;
   top: 50%;
-  transform: translateY(-50%);
+  /* -0.22px lands the dots' centre on the prose centreline (22.76), not the row's
+     geometric centre (22.98) - so the drag, number and prose all share one midline. */
+  transform: translateY(calc(-50% - 0.22px));
   display: grid;
   place-items: center;
   width: 22px;

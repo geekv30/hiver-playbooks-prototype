@@ -137,9 +137,9 @@ export default function NodeComponentPage() {
       <header className={styles.docbar}>
         <div className={styles.brand}>P</div>
         <div className={styles.crumb}>
-          <Link href="/">AOPs</Link>
+          <Link href="/atoms">AOPs</Link>
           <span className={styles.csep}>/</span>
-          <Link href="/">Components</Link>
+          <Link href="/atoms">Components</Link>
           <span className={styles.csep}>/</span>
           <span className={styles.name}>Node</span>
         </div>
@@ -149,7 +149,7 @@ export default function NodeComponentPage() {
         <span className={styles.spacer} />
         <Link className={styles.linkbtn} href="/design-language-1">v1</Link>
         <Link className={styles.linkbtn} href="/design-language-2">v2 editor</Link>
-        <Link className={styles.linkbtn} href="/">Back to editor</Link>
+        <Link className={styles.linkbtn} href="/atoms">Back to editor</Link>
       </header>
 
       <div className={styles.wrap}>
@@ -467,7 +467,7 @@ export default function NodeComponentPage() {
         </section>
 
         <footer className={styles.footer}>
-          <Link href="/">/ assembled editor</Link>
+          <Link href="/atoms">/ assembled editor</Link>
           <Link href="/design-language-1">/design-language-1</Link>
           <Link href="/design-language-2">/design-language-2</Link>
           <a href="https://github.com/geekv30/hiver-playbooks-prototype" target="_blank" rel="noreferrer">repo</a>
