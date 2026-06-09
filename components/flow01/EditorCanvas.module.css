@@ -371,3 +371,11 @@
     transition: none;
   }
 }
+
+/* Morph scaffold: the wrapper div that holds the SidePanel for the 'morphing' and
+   'docked' phases. display:contents collapses the wrapper box so the flex/grid
+   layout of .stage sees the <aside> directly (unchanged geometry vs. pre-task).
+   When data-morphing is set the panel is still in-layout (measurable) but invisible;
+   the morph layer paints instead (task 3). */
+.dockSlot { display: contents; }
+.dockSlot[data-morphing] { visibility: hidden; }

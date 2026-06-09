@@ -258,6 +258,13 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
   // initialDoc); the pre-seeded /api-example demo skips it. See ColdStartPhase above.
   const [coldPhase, setColdPhase] = useState<ColdStartPhase>(initialDoc ? 'docked' : 'hero');
   const coldStartOpen = coldPhase === 'hero'; // single remaining read: the ColdStartModal gate below
+  // Morph scaffolding: capture the modal surface rect at exit (morphSrcRect) and
+  // wrap the dock in dockRef so its target rect is measurable during 'morphing'.
+  // morphRects holds the from/to pair once both rects are known (task 3 uses it).
+  const morphSrcRect = useRef<DOMRect | null>(null);
+  const dockRef = useRef<HTMLDivElement | null>(null);
+  // morphRects + setMorphRects used in task 3 to drive the FLIP morph layer
+  const [morphRects, setMorphRects] = useState<{ from: DOMRect; to: DOMRect } | null>(null);
   // Copilot conversation (owned here so the cold-start query can seed it). thinkIdx
   // drives the working animation (-1 = idle); pendingDoc holds the drafted doc
   // until the animation finishes, then it loads onto the canvas.
@@ -1357,29 +1364,31 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
             toolbar-toggled floating Simulate panel. */}
         {companions ? (
           coldPhase !== 'hero' && (
-            <SidePanel
-              tab={panelTab}
-              onTab={setPanelTab}
-              copilot={{
-                messages: copilotMessages,
-                onSend: sendCopilot,
-                onRegenerate: regenerateCopilot,
-                onClear: clearCopilot,
-                introReady: coldPhase === 'docked', // false during 'morphing' so the intro waits for the dock to settle
-                onStop: stopCopilot,
-                busy: thinkIdx >= 0 || copilotMessages.some((m) => m.thinking || m.streaming),
-                onAttach: () => showHint('Attachments are coming soon.'),
-                onApplyProposal: applyProposal,
-                onDismissProposal: dismissProposal,
-                onUndoProposal: undoProposal,
-                onVerdict: setCopilotVerdict,
-              }}
-              sim={{
-                hasScenarios: lineHasContent(doc.trigger),
-                hasTrigger: lineHasContent(doc.trigger),
-                onAddTrigger: () => requestFocus('trigger', false),
-              }}
-            />
+            <div ref={dockRef} data-morphing={coldPhase === 'morphing' || undefined} className={styles.dockSlot}>
+              <SidePanel
+                tab={panelTab}
+                onTab={setPanelTab}
+                copilot={{
+                  messages: copilotMessages,
+                  onSend: sendCopilot,
+                  onRegenerate: regenerateCopilot,
+                  onClear: clearCopilot,
+                  introReady: coldPhase === 'docked', // false during 'morphing' so the intro waits for the dock to settle
+                  onStop: stopCopilot,
+                  busy: thinkIdx >= 0 || copilotMessages.some((m) => m.thinking || m.streaming),
+                  onAttach: () => showHint('Attachments are coming soon.'),
+                  onApplyProposal: applyProposal,
+                  onDismissProposal: dismissProposal,
+                  onUndoProposal: undoProposal,
+                  onVerdict: setCopilotVerdict,
+                }}
+                sim={{
+                  hasScenarios: lineHasContent(doc.trigger),
+                  hasTrigger: lineHasContent(doc.trigger),
+                  onAddTrigger: () => requestFocus('trigger', false),
+                }}
+              />
+            </div>
           )
         ) : (
           <SimulatePanel
@@ -1426,7 +1435,11 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
       )}
 
       {coldStartOpen && (
-        <ColdStartModal onGenerate={handleColdStartGenerate} onDismiss={handleColdStartDismiss} />
+        <ColdStartModal
+          beforeExit={(r) => { morphSrcRect.current = r; }}
+          onGenerate={handleColdStartGenerate}
+          onDismiss={handleColdStartDismiss}
+        />
       )}
 
       {enableMode && (
