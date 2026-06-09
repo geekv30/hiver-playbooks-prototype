@@ -362,6 +362,10 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
     setColdPhase('docked');
     requestFocus('trigger', false);
   }, [requestFocus]);
+  // Capture the modal's surface rect as it leaves, so a later task can morph it into the dock.
+  const handleBeforeExit = useCallback((r: DOMRect) => {
+    morphSrcRect.current = r;
+  }, []);
 
   // Drive the cold-start working steps on the seeded assistant message, then load
   // the drafted doc + resolve that message to the acknowledgement.
@@ -1436,7 +1440,7 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
 
       {coldStartOpen && (
         <ColdStartModal
-          beforeExit={(r) => { morphSrcRect.current = r; }}
+          beforeExit={handleBeforeExit}
           onGenerate={handleColdStartGenerate}
           onDismiss={handleColdStartDismiss}
         />

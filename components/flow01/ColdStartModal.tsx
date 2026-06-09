@@ -71,7 +71,11 @@ export default function ColdStartModal({ onGenerate, onDismiss, beforeExit }: Pr
       typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (dialogRef.current) beforeExit?.(dialogRef.current.getBoundingClientRect());
-    if (reduce || beforeExit) { onDismiss(); return; } // host handles motion (or none)
+    if (reduce || beforeExit) {
+      setClosing(true); // arm the re-entrancy guard even on the fast path, so a racing Esc/scrim can't double-fire onDismiss
+      onDismiss();
+      return;
+    }
     setClosing(true);
     window.setTimeout(onDismiss, 150); // > --d-crossfade (140ms), the longest exit
   }, [onDismiss, closing, beforeExit]);
