@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { RiCloseLine, RiAddLine, RiArrowUpLine } from 'react-icons/ri';
+import { RiCloseLine, RiAddLine, RiArrowUpLine, RiUpload2Line } from 'react-icons/ri';
 import Button from '@/components/atoms/Button';
 import { SparkleIcon, ExtractIcon } from '@/components/icons/ui';
 import type { EditorDoc } from './doc';
@@ -268,14 +268,14 @@ export default function ColdStartModal({ onGenerate, onDismiss }: Props) {
                       </button>
                     </span>
                   ) : (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      iconLeft={<ExtractIcon className={styles.uploadIco} aria-hidden />}
+                    <button
+                      type="button"
+                      className={styles.uploadBtn}
                       onClick={() => fileRef.current?.click()}
                     >
+                      <RiUpload2Line className={styles.uploadIco} aria-hidden />
                       Upload existing SOP
-                    </Button>
+                    </button>
                   )}
                 </div>
                 <button

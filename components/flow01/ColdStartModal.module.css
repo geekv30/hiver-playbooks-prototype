@@ -166,8 +166,16 @@
   border: 1px solid var(--hairline); /* neutral settled border */
   border-radius: 12px;
 }
-/* The AI-input glow (gradient ring + soft halo) is the shared `.ai-input-glow`
-   treatment from globals.css, applied to this field. */
+/* AI glow: the flowing 1px gradient border is painted via background-clip (it IS
+   the border, so it stays perfectly concentric with the radius - no second offset
+   ring). The soft halo + the flow animation come from the shared `.ai-input-glow`
+   (globals.css), which also defines --ai-glow-grad. */
+.field:global(.ai-input-glow) {
+  border-color: transparent;
+  background:
+    linear-gradient(var(--card), var(--card)) padding-box,
+    var(--ai-glow-grad) border-box;
+}
 
 .textarea {
   width: 100%;
@@ -255,9 +263,41 @@
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+/* Upload SOP - same fill/border treatment as the + (.addBtn): white card, soft
+   hairline, pill. NO grey fill. Icon + label centered. */
+.uploadBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  margin: 0;
+  border: 1px solid var(--hairline-soft);
+  border-radius: var(--r-pill);
+  background: var(--card);
+  color: var(--body);
+  font-family: var(--font);
+  font-size: var(--fs-small); /* 13px - matches the + button system */
+  font-weight: 500;
+  letter-spacing: var(--ls-small);
+  cursor: pointer;
+  transition:
+    color var(--d-hover) var(--ease-snap),
+    border-color var(--d-hover) var(--ease-snap),
+    background var(--d-hover) var(--ease-snap);
+}
+.uploadBtn:hover {
+  border-color: var(--hairline-strong);
+  color: var(--ink-soft);
+}
+.uploadBtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 .uploadIco {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   flex: none;
 }
 .uploadHint {

@@ -9,18 +9,19 @@
 
 /* ===== Shared "AI input" glow =====
    One treatment, reused on every AI-native input (the cold-start describe box and
-   the Copilot composer) so they read as the same surface. A soft multi-color halo
-   behind the field + a 1px gradient ring on the border, both slowly flowing -
-   echoing the Google "AI Mode" glow. The host element must be position:relative
-   with rounded corners; it owns ::before (ring) and ::after (halo). */
-.ai-input-glow::before,
-.ai-input-glow::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background: conic-gradient(
+   the Copilot composer) so they read as the same surface - a soft multi-color halo
+   + a flowing 1px gradient border, echoing the Google "AI Mode" glow.
+
+   Split of responsibility (so corners stay clean at any radius):
+   - The 1px BORDER is painted by each host via the background-clip technique
+     (`.field` / `.composer` in their modules) so it IS the border - perfectly
+     concentric, never a second offset ring. It reads --ai-glow-grad below.
+   - The HALO is this ::after, inset:0 (concentric to the host radius) and blurred,
+     sitting behind the card's opaque fill so only the soft bleed shows.
+   - The flow is driven by animating --copilot-angle (a registered @property), once
+     on the host (drives the border gradient) and once on ::after (drives the halo). */
+.ai-input-glow {
+  --ai-glow-grad: conic-gradient(
     from var(--copilot-angle),
     #31e3de,
     #662bf5,
@@ -30,31 +31,18 @@
   );
   animation: aiGlowFlow 8s linear infinite;
 }
-/* Crisp 1px gradient ring on the border (masked to the edge). */
-.ai-input-glow::before {
-  padding: 1px;
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  opacity: 0.7;
-  transition: opacity var(--d-hover) var(--ease-snap);
-}
-/* Soft outer halo, blurred and sitting behind the card's opaque fill so only the
-   bleed shows. */
 .ai-input-glow::after {
-  inset: -3px;
+  content: '';
+  position: absolute;
+  inset: 0;
   z-index: -1;
-  filter: blur(10px);
-  opacity: 0.38;
+  border-radius: inherit;
+  pointer-events: none;
+  background: var(--ai-glow-grad);
+  filter: blur(12px);
+  opacity: 0.4;
   transition: opacity var(--d-hover) var(--ease-snap);
-}
-.ai-input-glow:focus-within::before {
-  opacity: 1;
+  animation: aiGlowFlow 8s linear infinite;
 }
 .ai-input-glow:focus-within::after {
   opacity: 0.55;
@@ -65,7 +53,7 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ai-input-glow::before,
+  .ai-input-glow,
   .ai-input-glow::after {
     animation: none;
   }
