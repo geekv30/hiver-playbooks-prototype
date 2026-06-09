@@ -198,8 +198,8 @@ interface Props {
    *  this; /api-example (the bare worked example) does not. */
   companions?: boolean;
   /** Start every connector unauthenticated, so adding one inserts a "setup needed"
-   *  tag and clicking it runs the connection flow (the /canvas-connection-not-setup-yet
-   *  route). Omit (default) to treat all connectors as already connected. */
+   *  tag and clicking it runs the connection flow (the /connector-setup route).
+   *  Omit (default) to treat all connectors as already connected. */
   connectorsStartUnauthed?: boolean;
 }
 
