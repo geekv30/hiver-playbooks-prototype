@@ -53,7 +53,7 @@
   /* aligns with the builder-canvas card top, matching CopilotPanel (--panel-top
      overrides the 24px default when a canvas toolbar pushes the card down). */
   margin: var(--panel-top, 24px) 16px 16px;
-  border-radius: 12px;
+  border-radius: 14px;
   background: var(--card);
   overflow: hidden;
   box-shadow:

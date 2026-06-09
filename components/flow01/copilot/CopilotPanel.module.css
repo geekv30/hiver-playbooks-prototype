@@ -34,7 +34,7 @@
   /* No border (Figma floats on a drop-shadow only; a full border's left edge
      reads as a stray divider against the editor). Radius 12 per Figma 518:16711;
      the elevation is a tasteful float for the on-canvas docking context. */
-  border-radius: 12px;
+  border-radius: 14px; /* match the docked window / canvas */
   overflow: hidden;
   box-shadow:
     0 1px 2px rgba(52, 60, 69, 0.05),
@@ -131,9 +131,8 @@
   overflow: hidden;
 }
 
-/* ---- EMPTY STATE: the greeting + starter pills sit centered in the space above
-        the composer, which stays pinned at the bottom. No dead void at the top,
-        no gap below the input (ChatGPT/Linear idiom). ---- */
+/* ---- EMPTY STATE: the greeting sits centered in the space above; the starter
+        items + composer are pinned at the bottom (ChatGPT/Linear idiom). ---- */
 .empty {
   flex: 1;
   min-height: 0;
@@ -143,8 +142,8 @@
   padding-bottom: 2px;
   animation: emptyIn var(--d-enter) var(--ease-snap) both;
 }
-/* Greeting + starters, vertically centered in the flexible region above the
-   composer (which follows as a flex:none child pinned to the bottom). */
+/* Greeting, vertically centered in the flexible region above the bottom-pinned
+   starter items + composer. */
 .emptyMain {
   flex: 1;
   min-height: 0;
@@ -184,14 +183,6 @@
   line-height: 1.3;
   letter-spacing: var(--ls-h4);
   color: var(--ink);
-}
-.heroSub {
-  margin: 0;
-  max-width: 290px;
-  font-size: var(--fs-small); /* 13px */
-  line-height: 1.5;
-  letter-spacing: var(--ls-body);
-  color: var(--muted);
 }
 
 /* Starter suggestions: a left-aligned vertical list (the Rovo pattern) - each row
