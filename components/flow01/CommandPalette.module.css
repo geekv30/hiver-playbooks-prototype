@@ -293,6 +293,36 @@
   color: var(--muted);
 }
 
+/* Loading shimmer: shown briefly while a freshly-connected connector's actions load. */
+.loadingList {
+  padding: 4px 2px;
+}
+.skeletonRow {
+  display: flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 10px;
+}
+.skeletonBar {
+  height: 9px;
+  border-radius: var(--r-pill, 999px);
+  background: linear-gradient(
+    90deg,
+    var(--surface-soft) 25%,
+    var(--hairline) 37%,
+    var(--surface-soft) 63%
+  );
+  background-size: 400% 100%;
+  animation: paletteShimmer 1.2s ease-in-out infinite;
+}
+@keyframes paletteShimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: 0 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeletonBar { animation: none; }
+}
+
 /* Footer hints */
 .footer {
   display: flex;

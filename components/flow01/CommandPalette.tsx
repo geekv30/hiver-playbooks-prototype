@@ -67,7 +67,7 @@ interface Props {
   /** Open directly on a connector's actions as a MULTI-select (the post-connect
    *  "select action" picker). The picked verbs commit back to the carrier chip as
    *  its value. `initialPicked` pre-checks the chip's current actions. */
-  connectorPick?: { slug: ConnectorSlug; carrierId: string };
+  connectorPick?: { slug: ConnectorSlug; carrierId: string; loading?: boolean };
   /** Connectors not yet authenticated: picking one inserts a "setup needed" tag
    *  (and the connection flow runs) instead of drilling into its actions. */
   unauthedConnectors?: ReadonlySet<ConnectorSlug>;
@@ -142,6 +142,14 @@ export default function CommandPalette({
           : null,
   );
   const [picked, setPicked] = useState<Set<string>>(new Set(initialPicked ?? [])); // pick-many state
+  // After a fresh connect, briefly "load" the connector's actions before showing them.
+  const [toolsLoading, setToolsLoading] = useState(connectorPick?.loading === true);
+  useEffect(() => {
+    if (!connectorPick?.loading) return;
+    const t = window.setTimeout(() => setToolsLoading(false), 850);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [active, setActive] = useState(0);
   // Drill navigation direction, for the page slide. null on first open (no slide).
   const [dir, setDir] = useState<'fwd' | 'back' | null>(null);
@@ -608,7 +616,17 @@ export default function CommandPalette({
             </button>
           )}
 
-          {isInputPage && behavior?.mode === 'input' && (
+          {connectorPick && toolsLoading && (
+            <div className={styles.loadingList} aria-label="Loading actions">
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className={styles.skeletonRow}>
+                  <span className={styles.skeletonBar} style={{ width: `${64 - i * 8}%` }} />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!toolsLoading && isInputPage && behavior?.mode === 'input' && (
             <div className={styles.inputPage}>
               <div className={styles.inputHint}>
                 {query.trim() ? (
@@ -626,11 +644,12 @@ export default function CommandPalette({
             </div>
           )}
 
-          {!isInputPage && flatRows.length === 0 && (
+          {!toolsLoading && !isInputPage && flatRows.length === 0 && (
             <div className={styles.empty}>No matches for “{query.trim()}”.</div>
           )}
 
-          {!isInputPage &&
+          {!toolsLoading &&
+            !isInputPage &&
             groups.map((g) => (
               <div key={g.key} className={styles.group}>
                 {!drill && <div className={styles.groupLabel}>{g.label}</div>}

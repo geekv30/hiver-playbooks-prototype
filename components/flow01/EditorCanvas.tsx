@@ -54,7 +54,7 @@ interface PaletteState {
   // so a pick commits back to it instead of inserting a new chip.
   edit?: { chipId: string; initialAction: string; initialPicked?: string[]; initialQuery?: string };
   // When set, the palette opens as the connector multi-select "select action" picker.
-  connectorPick?: { slug: ConnectorSlug; carrierId: string };
+  connectorPick?: { slug: ConnectorSlug; carrierId: string; loading?: boolean };
 }
 
 interface FocusReq {
@@ -961,6 +961,7 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
     slug: ConnectorSlug,
     carrierId: string,
     el?: HTMLElement,
+    loading?: boolean,
   ) => {
     const node = el ?? (document.querySelector(`[data-chip-id="${chipId}"]`) as HTMLElement | null);
     const r = node?.getBoundingClientRect();
@@ -979,7 +980,7 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
       target,
       req: { scope: 'actions', fragIndex: 0, caretOffset: 0, rect },
       edit: { chipId, initialAction: carrierId, initialPicked },
-      connectorPick: { slug, carrierId },
+      connectorPick: { slug, carrierId, loading },
     });
   };
 
@@ -1540,8 +1541,11 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
               ),
             );
             setSetupModal(null);
-            // 3) Open the connector action picker on the tag (after the modal unmounts).
-            requestAnimationFrame(() => openConnectorPicker(target, chipId, slug, carrierId));
+            // 3) Open the connector action picker on the tag (after the modal unmounts),
+            //    with a brief loading state before its actions appear.
+            requestAnimationFrame(() =>
+              openConnectorPicker(target, chipId, slug, carrierId, undefined, true),
+            );
           }}
           onClose={() => setSetupModal(null)}
         />

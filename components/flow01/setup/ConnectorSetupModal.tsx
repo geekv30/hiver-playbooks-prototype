@@ -11,7 +11,6 @@ import {
 } from 'react';
 import { RiCloseLine, RiInformationLine, RiHashtag } from 'react-icons/ri';
 import { LuRefreshCcw } from 'react-icons/lu';
-import { HiverBrandIcon } from '@/components/icons/ui';
 import { CONNECTOR_ICON } from '@/components/icons/connectors';
 import { CONNECTOR_META } from '@/data/connectors';
 import { connectorTools } from '../paletteCatalog';
@@ -166,16 +165,17 @@ export default function ConnectorSetupModal({ connector, onConnected, onClose }:
             <div className={styles.authBody}>
               <div className={styles.logoPair} aria-hidden>
                 <span className={styles.hiverIco}>
-                  <HiverBrandIcon />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/hiver-mark.png" alt="Hiver" />
                 </span>
                 <span className={styles.swapIco}>
                   <LuRefreshCcw />
                 </span>
-                <span className={styles.brandIco}>
+                <span className={styles.connectorIco}>
                   <Brand />
                 </span>
               </div>
-              <h3 className={styles.authConnect}>Connect your {meta.name}</h3>
+              <h3 className={styles.authConnect}>Connect your {meta.name} account</h3>
               <label className={styles.fieldLabel} htmlFor="connector-token">
                 {meta.name} token
               </label>

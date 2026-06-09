@@ -217,24 +217,41 @@
   gap: 14px;
   margin-bottom: 14px;
 }
-.hiverIco,
-.logoPair .brandIco {
-  width: 36px;
-  height: 36px;
-}
+/* Hiver + connector marks balanced to the same visual footprint (Figma 848:21239:
+   the Hiver hexagon and the connector mark read as equal-weight siblings). */
 .hiverIco {
   display: grid;
   place-items: center;
+  width: 34px;
+  height: 34px;
 }
-.hiverIco svg { width: 32px; height: 32px; }
+.hiverIco img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  display: block;
+}
+.connectorIco {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+}
+/* The connector mark is line-art with more inner padding than the solid Hiver
+   hexagon, so it is sized a touch larger to read as an equal-weight sibling
+   (matches Figma, where the connector mark is ~1.15x the Hiver hexagon). */
+.connectorIco svg {
+  width: 38px;
+  height: 38px;
+}
 .swapIco {
   display: grid;
   place-items: center;
   color: var(--accent);
 }
 .swapIco svg {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   /* refresh-ccw spinning counter-clockwise: an active "syncing/connecting" feel. */
   animation: refreshSpin 1.4s linear infinite;
 }
