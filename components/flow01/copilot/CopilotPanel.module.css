@@ -657,46 +657,8 @@
   border-color: var(--hairline-strong);
   box-shadow: 0 2px 10px rgba(52, 60, 69, 0.07);
 }
-/* Brand-gradient stroke that revolves around the border ONCE on focus, then fades
-   to reveal the neutral focused border. The conic gradient is masked to a 1px ring
-   (the Copilot brand colors); @property --copilot-angle (globals.css) lets the
-   angle interpolate so it sweeps rather than jumps. */
-.composer::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: conic-gradient(from var(--copilot-angle), #31e3de, #662bf5, #e4b2a2, #31e3de);
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  opacity: 0;
-  pointer-events: none;
-}
-/* One-shot: the sweep runs once when the composer is first revealed (data-intro
-   set after the cold-start modal closes), NOT on every focus. */
-.composer[data-intro]::before {
-  animation: copilotBorderSweep 1100ms var(--ease-snap) 1 forwards;
-}
-@keyframes copilotBorderSweep {
-  0% {
-    --copilot-angle: 0deg;
-    opacity: 1;
-  }
-  78% {
-    opacity: 1;
-  }
-  100% {
-    --copilot-angle: 360deg;
-    opacity: 0;
-  }
-}
+/* The flowing gradient ring + soft halo come from the shared `.ai-input-glow`
+   treatment (globals.css), the same one on the cold-start describe box. */
 .input {
   width: 100%;
   border: none;
@@ -821,9 +783,6 @@
     color: var(--muted);
   }
   .caret {
-    animation: none;
-  }
-  .composer::before {
     animation: none;
   }
   .thoughtBody,

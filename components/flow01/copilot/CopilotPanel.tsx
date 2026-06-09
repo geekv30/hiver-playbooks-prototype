@@ -89,8 +89,8 @@ interface Props {
   /** Clear the conversation and start fresh (the "New chat" affordance). */
   onClear?: () => void;
   /** True once the composer is actually visible to the user (e.g. the cold-start
-   *  modal has closed). Gates the ONE-SHOT brand-gradient border intro so it runs
-   *  when the field is on screen, not hidden behind the modal. Defaults to true. */
+   *  modal has closed). Gates the shared AI-input glow so it only lights up when
+   *  the field is on screen, not hidden behind the modal. Defaults to true. */
   introReady?: boolean;
   /** Interrupt an in-flight reply or the cold-start build. */
   onStop: () => void;
@@ -230,9 +230,6 @@ export default function CopilotPanel({
   const [value, setValue] = useState('');
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const convoRef = useRef<HTMLDivElement>(null);
-  // One-shot brand-gradient border intro (see introReady).
-  const [intro, setIntro] = useState(false);
-  const introDone = useRef(false);
 
   const hasConvo = messages.length > 0;
   const lastAssistantIdx = messages.map((m) => m.role).lastIndexOf('assistant');
@@ -254,16 +251,6 @@ export default function CopilotPanel({
     el.style.height = 'auto';
     el.style.height = `${Math.min(el.scrollHeight, 140)}px`;
   }, [value]);
-
-  // Run the brand-gradient border sweep ONCE, when the composer first becomes
-  // visible (introReady) - not on every focus, and not while hidden behind the
-  // cold-start modal. A short delay lets the modal-close + panel reveal settle.
-  useEffect(() => {
-    if (!open || !introReady || introDone.current) return;
-    introDone.current = true;
-    const t = window.setTimeout(() => setIntro(true), 340);
-    return () => window.clearTimeout(t);
-  }, [open, introReady]);
 
   // Clicking a starter chip prefills the composer (editable) and focuses it with
   // the caret at the end - the ChatGPT pattern: a suggestion seeds the prompt,
@@ -287,8 +274,10 @@ export default function CopilotPanel({
 
   // The composer is rendered ONCE and placed in two spots (the empty hero group
   // and the conversation) so the input element is byte-identical across states.
+  // The shared `.ai-input-glow` (globals.css) gives it the same flowing glow as
+  // the cold-start describe box; it lights up once the panel is ready (introReady).
   const composer = (
-    <div className={styles.composer} data-intro={intro || undefined}>
+    <div className={`${styles.composer}${introReady ? ' ai-input-glow' : ''}`}>
       <textarea
         ref={inputRef}
         className={styles.input}

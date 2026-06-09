@@ -7,6 +7,70 @@
   inherits: false;
 }
 
+/* ===== Shared "AI input" glow =====
+   One treatment, reused on every AI-native input (the cold-start describe box and
+   the Copilot composer) so they read as the same surface. A soft multi-color halo
+   behind the field + a 1px gradient ring on the border, both slowly flowing -
+   echoing the Google "AI Mode" glow. The host element must be position:relative
+   with rounded corners; it owns ::before (ring) and ::after (halo). */
+.ai-input-glow::before,
+.ai-input-glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: conic-gradient(
+    from var(--copilot-angle),
+    #31e3de,
+    #662bf5,
+    #c45cc6,
+    #e4b2a2,
+    #31e3de
+  );
+  animation: aiGlowFlow 8s linear infinite;
+}
+/* Crisp 1px gradient ring on the border (masked to the edge). */
+.ai-input-glow::before {
+  padding: 1px;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0.7;
+  transition: opacity var(--d-hover) var(--ease-snap);
+}
+/* Soft outer halo, blurred and sitting behind the card's opaque fill so only the
+   bleed shows. */
+.ai-input-glow::after {
+  inset: -3px;
+  z-index: -1;
+  filter: blur(10px);
+  opacity: 0.38;
+  transition: opacity var(--d-hover) var(--ease-snap);
+}
+.ai-input-glow:focus-within::before {
+  opacity: 1;
+}
+.ai-input-glow:focus-within::after {
+  opacity: 0.55;
+}
+@keyframes aiGlowFlow {
+  to {
+    --copilot-angle: 360deg;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ai-input-glow::before,
+  .ai-input-glow::after {
+    animation: none;
+  }
+}
+
 :root {
   /* ===== Surface (Figma "ai-playbook-ai" Neutrals - node 227:2148) ===== */
   --canvas: #fbfbfc;

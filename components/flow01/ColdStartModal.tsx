@@ -228,7 +228,7 @@ export default function ColdStartModal({ onGenerate, onDismiss }: Props) {
             }}
             onDrop={onDrop}
           >
-            <div className={styles.field}>
+            <div className={`${styles.field} ai-input-glow`}>
               <textarea
                 ref={taRef}
                 className={styles.textarea}
@@ -268,14 +268,14 @@ export default function ColdStartModal({ onGenerate, onDismiss }: Props) {
                       </button>
                     </span>
                   ) : (
-                    <button
-                      type="button"
-                      className={styles.upload}
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      iconLeft={<ExtractIcon className={styles.uploadIco} aria-hidden />}
                       onClick={() => fileRef.current?.click()}
                     >
-                      <ExtractIcon className={styles.uploadIco} aria-hidden />
                       Upload existing SOP
-                    </button>
+                    </Button>
                   )}
                 </div>
                 <button
