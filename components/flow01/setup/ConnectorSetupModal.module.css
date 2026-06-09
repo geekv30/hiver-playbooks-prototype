@@ -1,0 +1,379 @@
+/* ConnectorSetupModal - the connector connection flow (Figma 844:20826 / 848:20685 /
+   848:30953). Three phases share one dialog shell; motion + tokens match the other
+   modals (EnableModal / ColdStartModal). */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(52, 60, 69, 0.32);
+  animation: scrimIn var(--d-enter) var(--ease-snap) both;
+}
+.scrim[data-closing] {
+  animation: scrimOut var(--d-exit) var(--ease-snap) both;
+}
+@keyframes scrimIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes scrimOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.dialog {
+  width: 100%;
+  max-width: 540px;
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border-radius: 16px;
+  box-shadow:
+    0 1px 2px rgba(52, 60, 69, 0.06),
+    0 18px 48px rgba(52, 60, 69, 0.18);
+  overflow: hidden;
+  animation: dialogIn var(--d-enter) var(--ease-snap) both;
+  /* Calm resize as the phases change height/width. */
+  transition:
+    max-width var(--d-indicator, 260ms) var(--ease-snap),
+    height var(--d-indicator, 260ms) var(--ease-snap);
+}
+.scrim[data-closing] .dialog {
+  animation: dialogOut var(--d-exit) var(--ease-snap) both;
+}
+.dialog[data-phase='success'] {
+  max-width: 480px;
+}
+@keyframes dialogIn {
+  from { opacity: 0; transform: scale(0.965) translateY(6px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes dialogOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.975); }
+}
+
+/* Shared brand mark (connector icon at true brand color). */
+.brandIco {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+}
+.brandIco svg {
+  width: 30px;
+  height: 30px;
+}
+
+/* ---- footer (shared) ---- */
+.footer {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 16px 24px;
+}
+.cancel {
+  padding: 8px 12px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: var(--font);
+  font-size: var(--fs-body);
+  font-weight: 500;
+  letter-spacing: var(--ls-body);
+  cursor: pointer;
+  transition: color var(--d-hover) var(--ease-snap), background var(--d-hover) var(--ease-snap);
+}
+.cancel:hover {
+  color: var(--ink);
+  background: var(--surface-soft);
+}
+.close {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color var(--d-hover) var(--ease-snap), background var(--d-hover) var(--ease-snap);
+}
+.close svg { width: 18px; height: 18px; }
+.close:hover { color: var(--ink-soft); background: var(--surface-soft); }
+
+/* ============================ INTRO ============================ */
+.introHead {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 24px 14px;
+}
+.introHeadText { min-width: 0; }
+.brandName {
+  margin: 0;
+  font-size: var(--fs-h5); /* 16px */
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: var(--ls-h5);
+  color: var(--ink);
+}
+.tagline {
+  margin: 2px 0 0;
+  font-size: var(--fs-small); /* 13px */
+  line-height: 1.4;
+  letter-spacing: var(--ls-body);
+  color: var(--muted);
+}
+.introBody {
+  flex: 1;
+  min-height: 0;
+  padding: 0 24px 4px;
+}
+.blurb {
+  margin: 0 0 20px;
+  font-size: var(--fs-body); /* 14px */
+  line-height: 1.5;
+  letter-spacing: var(--ls-body);
+  color: var(--ink-soft);
+}
+.toolsHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.toolsLabel {
+  font-size: var(--fs-caption); /* 12px */
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.toolsCount {
+  font-size: var(--fs-small);
+  letter-spacing: var(--ls-body);
+  color: var(--muted-soft);
+}
+.toolGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.toolCard {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px;
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  background: var(--card);
+}
+.toolTitle {
+  font-size: var(--fs-small); /* 13px */
+  font-weight: 600;
+  letter-spacing: var(--ls-body);
+  color: var(--ink);
+}
+.toolDesc {
+  font-size: var(--fs-caption); /* 12px */
+  line-height: 1.45;
+  letter-spacing: var(--ls-body);
+  color: var(--muted);
+}
+
+/* ============================ AUTH ============================ */
+.authHead {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 16px 24px;
+  border-bottom: 1px solid var(--hairline);
+}
+.authTitle {
+  margin: 0;
+  font-size: var(--fs-h5);
+  font-weight: 600;
+  letter-spacing: var(--ls-h5);
+  color: var(--ink);
+}
+.authBody {
+  padding: 24px;
+}
+.logoPair {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.hiverIco,
+.logoPair .brandIco {
+  width: 36px;
+  height: 36px;
+}
+.hiverIco {
+  display: grid;
+  place-items: center;
+}
+.hiverIco svg { width: 32px; height: 32px; }
+.swapIco {
+  display: grid;
+  place-items: center;
+  color: var(--muted-soft);
+}
+.swapIco svg { width: 18px; height: 18px; }
+.authConnect {
+  margin: 0 0 20px;
+  text-align: center;
+  font-size: var(--fs-h5);
+  font-weight: 600;
+  letter-spacing: var(--ls-h5);
+  color: var(--ink);
+}
+.fieldLabel {
+  display: block;
+  margin-bottom: 7px;
+  font-size: var(--fs-small);
+  font-weight: 500;
+  letter-spacing: var(--ls-body);
+  color: var(--ink-soft);
+}
+.tokenField {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  background: var(--card);
+  transition: border-color var(--d-hover) var(--ease-snap), box-shadow var(--d-hover) var(--ease-snap);
+}
+.tokenField:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+.tokenHash {
+  display: grid;
+  place-items: center;
+  color: var(--muted-soft);
+}
+.tokenHash svg { width: 15px; height: 15px; }
+.tokenInput {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-mono, var(--font));
+  font-size: var(--fs-small);
+  letter-spacing: var(--ls-body);
+  color: var(--ink);
+}
+.tokenInput::placeholder { color: var(--muted-soft); }
+.tokenLink {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: var(--fs-small);
+  letter-spacing: var(--ls-body);
+  color: var(--accent);
+  text-decoration: none;
+}
+.tokenLink:hover { text-decoration: underline; }
+.infoBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--accent-bg);
+  font-size: var(--fs-small);
+  line-height: 1.45;
+  letter-spacing: var(--ls-body);
+  color: var(--ink-soft);
+}
+.infoIco {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  color: var(--accent);
+}
+
+/* ============================ SUCCESS ============================ */
+.successHead {
+  flex: none;
+  padding: 22px 24px 14px;
+}
+.successTitle {
+  margin: 0;
+  font-size: var(--fs-h5);
+  font-weight: 600;
+  letter-spacing: var(--ls-h5);
+  color: var(--ink);
+}
+.successSub {
+  margin: 4px 0 0;
+  font-size: var(--fs-small);
+  line-height: 1.45;
+  letter-spacing: var(--ls-body);
+  color: var(--muted);
+}
+.successBody {
+  padding: 0 24px 4px;
+}
+.checksRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  padding: 18px 8px;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+}
+.checkCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  text-align: center;
+}
+.checkIco {
+  width: 20px;
+  height: 20px;
+  color: var(--state-ok, #1a8a52);
+}
+.checkTitle {
+  font-size: var(--fs-small);
+  font-weight: 600;
+  letter-spacing: var(--ls-body);
+  color: var(--ink);
+}
+.checkSub {
+  font-size: var(--fs-caption);
+  line-height: 1.4;
+  letter-spacing: var(--ls-body);
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scrim,
+  .scrim[data-closing],
+  .dialog,
+  .scrim[data-closing] .dialog {
+    animation: none;
+  }
+  .dialog { transition: none; }
+}

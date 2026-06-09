@@ -57,6 +57,16 @@ export function connectorVerbs(slug: ConnectorSlug): { id: string; label: string
   });
 }
 
+// A connector's tools for the setup modal's "what the AI agent can show" grid:
+// the verb label + its one-line description, derived from the catalog (so the
+// list stays in sync with the connector's real actions - no duplicated copy).
+export function connectorTools(slug: ConnectorSlug): { label: string; desc: string }[] {
+  return ACTIONS.filter((a) => a.connectorSlug === slug).map((a) => {
+    const dot = a.name.indexOf(' · ');
+    return { label: dot > -1 ? a.name.slice(dot + 3) : a.name, desc: a.desc };
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Second-page value pickers.
 //

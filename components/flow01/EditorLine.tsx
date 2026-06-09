@@ -312,7 +312,12 @@ export default function EditorLine({
                   metaText={chipMeta(f.chip)}
                   setupNeeded={chipNeedsSetup(f.chip.actionId, unauthedConnectors)}
                   onClick={
-                    actionBehavior(f.chip.actionId).mode !== 'insert' ? onChipConfig : undefined
+                    // Setup-needed connector tags are always clickable (open the setup
+                    // flow); other chips are clickable only if they have a value page.
+                    chipNeedsSetup(f.chip.actionId, unauthedConnectors) ||
+                    actionBehavior(f.chip.actionId).mode !== 'insert'
+                      ? onChipConfig
+                      : undefined
                   }
                 />
               )

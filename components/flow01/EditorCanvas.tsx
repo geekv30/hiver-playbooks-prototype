@@ -9,7 +9,9 @@ import {
 } from 'react';
 import { RiDraggable, RiMore2Fill } from 'react-icons/ri';
 import type { Fragment, ConnectorSlug } from '@/types/playbook';
+import { findAction } from '@/data/library';
 import { UnauthedConnectorsContext } from './connectorAuth';
+import ConnectorSetupModal from './setup/ConnectorSetupModal';
 import GutterMarker from '@/components/atoms/GutterMarker';
 import RowMenu from './RowMenu';
 import GmailBar from './GmailBar';
@@ -269,6 +271,10 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
   const [unauthedConnectors, setUnauthedConnectors] = useState<Set<ConnectorSlug>>(
     () => new Set(connectorsStartUnauthed ? ALL_CONNECTOR_SLUGS : []),
   );
+  // The connector connection flow modal, opened by clicking a "setup needed" tag.
+  const [setupModal, setSetupModal] = useState<
+    { connector: ConnectorSlug; target: LineTarget; chipId: string } | null
+  >(null);
   // Copilot conversation (owned here so the cold-start query can seed it). thinkIdx
   // drives the working animation (-1 = idle); pendingDoc holds the drafted doc
   // until the animation finishes, then it loads onto the canvas.
@@ -951,6 +957,13 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
     const frag = lineFrags(target).find((f) => f.kind === 'chip' && f.chip.id === chipId);
     const chip = frag && frag.kind === 'chip' ? frag.chip : null;
     if (!chip) return;
+    // An unauthenticated connector tag opens the connection flow, not the reconfigure palette.
+    const slug = findAction(chip.actionId)?.connectorSlug;
+    if (slug && unauthedConnectors.has(slug)) {
+      setMenuStepId(null);
+      setSetupModal({ connector: slug, target, chipId });
+      return;
+    }
     const behavior = actionBehavior(chip.actionId);
     if (behavior.mode === 'insert') return;
     setMenuStepId(null);
@@ -1459,6 +1472,24 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
           preEnabled={docUsesTags(doc) ? PRE_ENABLED_MAILBOXES : []}
           onClose={() => setEnableMode(null)}
           onConfirm={confirmEnable}
+        />
+      )}
+
+      {setupModal && (
+        <ConnectorSetupModal
+          connector={setupModal.connector}
+          onConnected={() => {
+            const slug = setupModal.connector;
+            // Connected: drop it from the unauthenticated set so the tag stops showing
+            // "setup needed". (Task 17 moves it to "select action" + opens the picker.)
+            setUnauthedConnectors((prev) => {
+              const next = new Set(prev);
+              next.delete(slug);
+              return next;
+            });
+            setSetupModal(null);
+          }}
+          onClose={() => setSetupModal(null)}
         />
       )}
     </div>
