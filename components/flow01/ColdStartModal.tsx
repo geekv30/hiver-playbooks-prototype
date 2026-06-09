@@ -15,11 +15,6 @@ interface Props {
   onGenerate: (doc: EditorDoc, query: string) => void;
   /** Skip / close (X / Esc / scrim / "start from scratch") - lands on a blank canvas. */
   onDismiss: () => void;
-  /** Reports the dialog surface rect at the moment an exit begins, so the host
-   *  can morph it into the dock. Called before onGenerate/onDismiss. When this
-   *  prop is provided the modal delegates all motion to the host and skips its
-   *  own dialogOut travel. */
-  beforeExit?: (rect: DOMRect) => void;
 }
 
 const PLACEHOLDER =
@@ -46,7 +41,7 @@ function formatBytes(n: number): string {
  * Net-new surface (no Figma answer key); built from the existing atoms + the
  * ChatBar gradient idiom, grounded in 03-research/AI_DRAFT_COLDSTART_PATTERN.md.
  */
-export default function ColdStartModal({ onGenerate, onDismiss, beforeExit }: Props) {
+export default function ColdStartModal({ onGenerate, onDismiss }: Props) {
   const [text, setText] = useState('');
   const [activeStarter, setActiveStarter] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -62,23 +57,19 @@ export default function ColdStartModal({ onGenerate, onDismiss, beforeExit }: Pr
 
   // Graceful close: run the exit animation, then unmount. Reduced-motion skips
   // straight to dismiss (closing stays false, so the [data-closing] exit never runs).
-  // When beforeExit is provided the host owns the motion, so we skip the dialogOut
-  // travel and call onDismiss directly (same as reduced-motion path).
   const [closing, setClosing] = useState(false);
   const requestClose = useCallback(() => {
     if (closing) return; // a second Esc / scrim click can't queue a second dismiss
     const reduce =
       typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (dialogRef.current) beforeExit?.(dialogRef.current.getBoundingClientRect());
-    if (reduce || beforeExit) {
-      setClosing(true); // arm the re-entrancy guard even on the fast path, so a racing Esc/scrim can't double-fire onDismiss
+    if (reduce) {
       onDismiss();
       return;
     }
     setClosing(true);
     window.setTimeout(onDismiss, 150); // > --d-crossfade (140ms), the longest exit
-  }, [onDismiss, closing, beforeExit]);
+  }, [onDismiss, closing]);
 
   const canGenerate = text.trim().length > 0 || file != null;
 
@@ -186,7 +177,6 @@ export default function ColdStartModal({ onGenerate, onDismiss, beforeExit }: Pr
       doc = buildScaffoldDoc({ text: text.trim() });
       query = text.trim();
     }
-    if (dialogRef.current) beforeExit?.(dialogRef.current.getBoundingClientRect());
     onGenerate(doc, query);
   };
 

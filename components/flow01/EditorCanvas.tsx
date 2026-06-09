@@ -3,7 +3,6 @@
 import {
   useCallback,
   useEffect,
-  useLayoutEffect,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
@@ -25,7 +24,6 @@ import EnableModal from './enable/EnableModal';
 import SimulatePanel from '@/components/simulate/SimulatePanel';
 import { type CopilotMessage, type CopilotProposalData } from './copilot/CopilotPanel';
 import SidePanel, { type SideTab } from './copilot/SidePanel';
-import CopilotMorph from './copilot/CopilotMorph';
 import type { Verdict } from '@/components/atoms/ThumbsRating';
 import { REFERENCE_ID, actionBehavior } from './paletteCatalog';
 import { useEditorDoc } from './useEditorDoc';
@@ -196,19 +194,10 @@ interface Props {
   companions?: boolean;
 }
 
-// Cold-start presentation phase for the one Copilot surface:
-//   'hero'     = the "draft with AI" modal is open, the dock is not rendered
-//   'morphing' = the modal is animating into the dock (task 3); dock mounted but hidden
-//   'docked'   = the modal is gone, the dock is the visible Copilot
-type ColdStartPhase = 'hero' | 'morphing' | 'docked';
-
-// Honored on every cold-start exit: reduced-motion users skip the morph entirely.
-function reduceMotion(): boolean {
-  return (
-    typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  );
-}
+// Cold-start presentation of the one Copilot surface:
+//   'hero'   = the "draft with AI" modal is open, the dock is not rendered behind it
+//   'docked' = the modal is gone (faded out), the dock is the visible Copilot
+type ColdStartPhase = 'hero' | 'docked';
 
 export default function EditorCanvas({ initialDoc, companions }: Props) {
   const api = useEditorDoc(initialDoc);
@@ -268,13 +257,6 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
   // initialDoc); the pre-seeded /api-example demo skips it. See ColdStartPhase above.
   const [coldPhase, setColdPhase] = useState<ColdStartPhase>(initialDoc ? 'docked' : 'hero');
   const coldStartOpen = coldPhase === 'hero'; // single remaining read: the ColdStartModal gate below
-  // Morph scaffolding: capture the modal surface rect at exit (morphSrcRect) and
-  // wrap the dock in dockRef so its target rect is measurable during 'morphing'.
-  // morphRects holds the from/to pair once both rects are known (task 3 uses it).
-  const morphSrcRect = useRef<DOMRect | null>(null);
-  const dockRef = useRef<HTMLDivElement | null>(null);
-  // morphRects + setMorphRects used in task 3 to drive the FLIP morph layer
-  const [morphRects, setMorphRects] = useState<{ from: DOMRect; to: DOMRect } | null>(null);
   // Copilot conversation (owned here so the cold-start query can seed it). thinkIdx
   // drives the working animation (-1 = idle); pendingDoc holds the drafted doc
   // until the animation finishes, then it loads onto the canvas.
@@ -359,8 +341,8 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
   // finishes the drafted AOP loads on the left and Copilot posts an ack, so
   // any follow-up continues in the Copilot thread. Skip lands on a blank canvas.
   const handleColdStartGenerate = useCallback((genDoc: EditorDoc, query: string) => {
-    // Prime the dock behind the morph first (messages, pending doc, working
-    // animation), then enter 'morphing' so the FLIP bridge lands on a ready dock.
+    // Seed the dock (messages, pending doc, working animation), then dock it. The
+    // modal has already faded itself out; the dock fades in as the Copilot.
     setPanelTab('copilot');
     setCopilotMessages([
       { role: 'user', text: query },
@@ -368,36 +350,12 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
     ]);
     pendingDoc.current = genDoc;
     setThinkIdx(0);
-    setColdPhase(reduceMotion() ? 'docked' : 'morphing');
+    setColdPhase('docked');
   }, []);
   const handleColdStartDismiss = useCallback(() => {
-    setColdPhase(reduceMotion() ? 'docked' : 'morphing');
+    setColdPhase('docked');
     requestFocus('trigger', false);
   }, [requestFocus]);
-  // Capture the modal's surface rect as it leaves, so the morph can fly from it.
-  const handleBeforeExit = useCallback((r: DOMRect) => {
-    morphSrcRect.current = r;
-  }, []);
-  // Stable so the morph's effect never re-runs (and restarts) mid-flight.
-  const handleMorphDone = useCallback(() => {
-    setColdPhase('docked');
-    setMorphRects(null);
-  }, []);
-
-  // On entering 'morphing': measure the (now hidden but laid-out) dock surface as
-  // the FLIP target and pair it with the captured modal source. The dock <aside>
-  // is the firstElementChild because .dockSlot is display:contents. If either
-  // rect is missing/zero, skip the morph cleanly straight to 'docked'.
-  useLayoutEffect(() => {
-    if (coldPhase !== 'morphing') return;
-    const to = dockRef.current?.firstElementChild?.getBoundingClientRect();
-    const from = morphSrcRect.current;
-    if (from && to && to.width > 0 && to.height > 0) {
-      setMorphRects({ from, to });
-    } else {
-      setColdPhase('docked');
-    }
-  }, [coldPhase]);
 
   // Drive the cold-start working steps on the seeded assistant message, then load
   // the drafted doc + resolve that message to the acknowledgement.
@@ -1399,37 +1357,32 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
             to the canvas window. Non-companion routes (/api-example) keep the
             toolbar-toggled floating Simulate panel. */}
         {companions ? (
-          coldPhase !== 'hero' && (
-            <div
-              ref={dockRef}
-              data-morphing={coldPhase === 'morphing' || undefined}
-              inert={coldPhase === 'morphing' || undefined}
-              className={styles.dockSlot}
-            >
-              <SidePanel
-                tab={panelTab}
-                onTab={setPanelTab}
-                copilot={{
-                  messages: copilotMessages,
-                  onSend: sendCopilot,
-                  onRegenerate: regenerateCopilot,
-                  onClear: clearCopilot,
-                  introReady: coldPhase === 'docked', // false during 'morphing' so the intro waits for the dock to settle
-                  onStop: stopCopilot,
-                  busy: thinkIdx >= 0 || copilotMessages.some((m) => m.thinking || m.streaming),
-                  onAttach: () => showHint('Attachments are coming soon.'),
-                  onApplyProposal: applyProposal,
-                  onDismissProposal: dismissProposal,
-                  onUndoProposal: undoProposal,
-                  onVerdict: setCopilotVerdict,
-                }}
-                sim={{
-                  hasScenarios: lineHasContent(doc.trigger),
-                  hasTrigger: lineHasContent(doc.trigger),
-                  onAddTrigger: () => requestFocus('trigger', false),
-                }}
-              />
-            </div>
+          // The dock is not rendered while the cold-start modal is open; once the
+          // modal fades out (coldPhase -> 'docked') it mounts and fades itself in.
+          coldPhase === 'docked' && (
+            <SidePanel
+              tab={panelTab}
+              onTab={setPanelTab}
+              copilot={{
+                messages: copilotMessages,
+                onSend: sendCopilot,
+                onRegenerate: regenerateCopilot,
+                onClear: clearCopilot,
+                introReady: true,
+                onStop: stopCopilot,
+                busy: thinkIdx >= 0 || copilotMessages.some((m) => m.thinking || m.streaming),
+                onAttach: () => showHint('Attachments are coming soon.'),
+                onApplyProposal: applyProposal,
+                onDismissProposal: dismissProposal,
+                onUndoProposal: undoProposal,
+                onVerdict: setCopilotVerdict,
+              }}
+              sim={{
+                hasScenarios: lineHasContent(doc.trigger),
+                hasTrigger: lineHasContent(doc.trigger),
+                onAddTrigger: () => requestFocus('trigger', false),
+              }}
+            />
           )
         ) : (
           <SimulatePanel
@@ -1477,17 +1430,8 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
 
       {coldStartOpen && (
         <ColdStartModal
-          beforeExit={handleBeforeExit}
           onGenerate={handleColdStartGenerate}
           onDismiss={handleColdStartDismiss}
-        />
-      )}
-
-      {coldPhase === 'morphing' && morphRects && (
-        <CopilotMorph
-          from={morphRects.from}
-          to={morphRects.to}
-          onDone={handleMorphDone}
         />
       )}
 
