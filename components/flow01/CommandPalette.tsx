@@ -68,6 +68,9 @@ interface Props {
    *  "select action" picker). The picked verbs commit back to the carrier chip as
    *  its value. `initialPicked` pre-checks the chip's current actions. */
   connectorPick?: { slug: ConnectorSlug; carrierId: string };
+  /** Connectors not yet authenticated: picking one inserts a "setup needed" tag
+   *  (and the connection flow runs) instead of drilling into its actions. */
+  unauthedConnectors?: ReadonlySet<ConnectorSlug>;
 }
 
 interface Row {
@@ -116,7 +119,14 @@ export default function CommandPalette({
   initialPicked,
   initialQuery,
   connectorPick,
+  unauthedConnectors,
 }: Props) {
+  // A connector that still needs setup inserts the "setup needed" tag (a chip on
+  // one of its verbs, which renders setup-needed) rather than drilling into actions.
+  const insertConnector = (slug: ConnectorSlug) => {
+    const verbs = connectorVerbs(slug);
+    if (verbs.length) onSelect(verbs[0]!.id);
+  };
   const [query, setQuery] = useState(initialQuery ?? '');
   // '@' opens straight on the References picker; '/' (default) opens the root
   // Actions+Connectors view. `initialAction` opens straight on an action's value
@@ -296,26 +306,34 @@ export default function CommandPalette({
         activate: drills ? () => openAction(a.id) : () => onSelect(a.id),
       };
     });
-    const brandRows: Row[] = PALETTE_CONNECTORS.map((slug) => ({
-      key: `brand-${slug}`,
-      label: connectorName(slug),
-      Icon: CONNECTOR_ICON[slug],
-      brand: true,
-      drill: true,
-      selectable: false,
-      selected: false,
-      desc: `Run a ${connectorName(slug)} action.`,
-      activate: () => {
-        setDir('fwd');
-        setDrill({ type: 'connector', slug });
-      },
-    }));
+    const brandRows: Row[] = PALETTE_CONNECTORS.map((slug) => {
+      const needsSetup = unauthedConnectors?.has(slug) === true;
+      return {
+        key: `brand-${slug}`,
+        label: connectorName(slug),
+        Icon: CONNECTOR_ICON[slug],
+        brand: true,
+        // Not connected yet: pick = insert the "setup needed" tag (no actions to drill).
+        drill: !needsSetup,
+        selectable: false,
+        selected: false,
+        desc: needsSetup
+          ? `Connect ${connectorName(slug)} to use it.`
+          : `Run a ${connectorName(slug)} action.`,
+        activate: needsSetup
+          ? () => insertConnector(slug)
+          : () => {
+              setDir('fwd');
+              setDrill({ type: 'connector', slug });
+            },
+      };
+    });
     return [
       { key: 'actions', label: 'Actions', rows: actionRows },
       { key: 'connectors', label: 'Connectors', rows: brandRows },
     ];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, drill, behavior, picked, onSelect, noCondition, connectorPick]);
+  }, [query, drill, behavior, picked, onSelect, noCondition, connectorPick, unauthedConnectors]);
 
   function openAction(id: string) {
     setDir('fwd');

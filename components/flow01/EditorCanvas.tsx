@@ -1467,6 +1467,7 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
           initialPicked={palette.edit?.initialPicked}
           initialQuery={palette.edit?.initialQuery}
           connectorPick={palette.connectorPick}
+          unauthedConnectors={unauthedConnectors}
           onSelect={insertChip}
           onPreview={previewChip}
           onClose={closePalette}
