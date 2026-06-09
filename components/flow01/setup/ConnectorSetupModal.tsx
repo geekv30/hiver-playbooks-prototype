@@ -1,13 +1,15 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import {
-  RiCloseLine,
-  RiArrowLeftRightLine,
-  RiInformationLine,
-  RiCheckboxCircleFill,
-  RiHashtag,
-} from 'react-icons/ri';
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type MouseEvent as ReactMouseEvent,
+} from 'react';
+import { RiCloseLine, RiArrowLeftRightLine, RiInformationLine, RiHashtag } from 'react-icons/ri';
 import { HiverBrandIcon } from '@/components/icons/ui';
 import { CONNECTOR_ICON } from '@/components/icons/connectors';
 import { CONNECTOR_META } from '@/data/connectors';
@@ -43,6 +45,16 @@ export default function ConnectorSetupModal({ connector, onConnected, onClose }:
   const [token, setToken] = useState('');
   const [closing, setClosing] = useState(false);
   const downTargetRef = useRef<EventTarget | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // Card-resize: keep the width fixed and animate the height to the new phase's
+  // content (so the modal grows/shrinks smoothly instead of jumping).
+  useLayoutEffect(() => {
+    const d = dialogRef.current;
+    const c = contentRef.current;
+    if (d && c) d.style.height = `${c.offsetHeight}px`;
+  }, [phase]);
 
   const requestClose = useCallback(() => {
     if (closing) return;
@@ -91,6 +103,7 @@ export default function ConnectorSetupModal({ connector, onConnected, onClose }:
       onMouseUp={onScrimUp}
     >
       <div
+        ref={dialogRef}
         className={styles.dialog}
         data-phase={phase}
         role="dialog"
@@ -98,6 +111,7 @@ export default function ConnectorSetupModal({ connector, onConnected, onClose }:
         aria-label={`Connect ${meta.name}`}
         onMouseDown={(e) => e.stopPropagation()}
       >
+      <div ref={contentRef} className={styles.content}>
         {phase === 'intro' && (
           <>
             <header className={styles.introHead}>
@@ -207,28 +221,29 @@ export default function ConnectorSetupModal({ connector, onConnected, onClose }:
 
         {phase === 'success' && (
           <>
-            <header className={styles.successHead}>
+            <div className={styles.success}>
+              {/* The connection success moment: the same drawing check + staggered
+                  reveal as the AOP go-live (EnableModal). */}
+              <svg className={styles.checkSvg} viewBox="0 0 52 52" aria-hidden>
+                <circle className={styles.checkCircle} cx="26" cy="26" r="24" />
+                <path className={styles.checkMark} d="M15 27 l7.5 7.5 L37 19" />
+              </svg>
               <h2 className={styles.successTitle}>You&apos;re Connected!</h2>
               <p className={styles.successSub}>
                 Hiver is now authorized to read from {meta.fakeAuthedLabel}.
               </p>
-            </header>
-            <div className={styles.successBody}>
               <div className={styles.checksRow}>
-                <div className={styles.checkCol}>
-                  <RiCheckboxCircleFill className={styles.checkIco} aria-hidden />
-                  <span className={styles.checkTitle}>{tools.length} tools enabled</span>
-                  <span className={styles.checkSub}>{toolSummary}</span>
+                <div className={styles.checkCol} style={{ '--i': 0 } as CSSProperties}>
+                  <span className={styles.checkColTitle}>{tools.length} tools enabled</span>
+                  <span className={styles.checkColSub}>{toolSummary}</span>
                 </div>
-                <div className={styles.checkCol}>
-                  <RiCheckboxCircleFill className={styles.checkIco} aria-hidden />
-                  <span className={styles.checkTitle}>Read-only</span>
-                  <span className={styles.checkSub}>Hiver can&apos;t edit your data</span>
+                <div className={styles.checkCol} style={{ '--i': 1 } as CSSProperties}>
+                  <span className={styles.checkColTitle}>Read-only</span>
+                  <span className={styles.checkColSub}>Hiver can&apos;t edit your data</span>
                 </div>
-                <div className={styles.checkCol}>
-                  <RiCheckboxCircleFill className={styles.checkIco} aria-hidden />
-                  <span className={styles.checkTitle}>Secured</span>
-                  <span className={styles.checkSub}>Access token encrypted</span>
+                <div className={styles.checkCol} style={{ '--i': 2 } as CSSProperties}>
+                  <span className={styles.checkColTitle}>Secured</span>
+                  <span className={styles.checkColSub}>Token encrypted</span>
                 </div>
               </div>
             </div>
@@ -242,6 +257,7 @@ export default function ConnectorSetupModal({ connector, onConnected, onClose }:
             </footer>
           </>
         )}
+      </div>
       </div>
     </div>
   );

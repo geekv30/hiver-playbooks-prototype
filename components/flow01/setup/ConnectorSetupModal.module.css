@@ -25,10 +25,10 @@
 }
 
 .dialog {
+  position: relative;
   width: 100%;
+  /* Fixed width across all phases; only the height animates (no drastic jump). */
   max-width: 540px;
-  display: flex;
-  flex-direction: column;
   background: var(--card);
   border-radius: 16px;
   box-shadow:
@@ -36,16 +36,16 @@
     0 18px 48px rgba(52, 60, 69, 0.18);
   overflow: hidden;
   animation: dialogIn var(--d-enter) var(--ease-snap) both;
-  /* Calm resize as the phases change height/width. */
-  transition:
-    max-width var(--d-indicator, 260ms) var(--ease-snap),
-    height var(--d-indicator, 260ms) var(--ease-snap);
+  /* Card-resize: the JS sets an explicit height per phase; this animates it. */
+  transition: height var(--d-indicator, 260ms) var(--ease-snap);
 }
 .scrim[data-closing] .dialog {
   animation: dialogOut var(--d-exit) var(--ease-snap) both;
 }
-.dialog[data-phase='success'] {
-  max-width: 480px;
+/* The measured content column (header / body / footer). */
+.content {
+  display: flex;
+  flex-direction: column;
 }
 @keyframes dialogIn {
   from { opacity: 0; transform: scale(0.965) translateY(6px); }
@@ -230,9 +230,18 @@
 .swapIco {
   display: grid;
   place-items: center;
-  color: var(--muted-soft);
+  color: var(--accent);
 }
-.swapIco svg { width: 18px; height: 18px; }
+.swapIco svg {
+  width: 18px;
+  height: 18px;
+  /* A gentle left-right shuttle suggesting an active exchange between the two. */
+  animation: swapNudge 1.6s var(--ease-snap) infinite;
+}
+@keyframes swapNudge {
+  0%, 100% { transform: translateX(-2px); }
+  50% { transform: translateX(2px); }
+}
 .authConnect {
   margin: 0 0 20px;
   text-align: center;
@@ -313,32 +322,71 @@
 }
 
 /* ============================ SUCCESS ============================ */
-.successHead {
-  flex: none;
-  padding: 22px 24px 14px;
+/* The success moment reuses the AOP go-live choreography (EnableModal): a check
+   that draws in, then the title / sub / guarantees rise in with a stagger. */
+.success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 36px 28px 8px;
 }
+.checkSvg {
+  width: 52px;
+  height: 52px;
+  margin-bottom: 14px;
+}
+.checkCircle {
+  fill: none;
+  stroke: var(--state-ok, #1a8a52);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 151;
+  stroke-dashoffset: 151;
+  animation: checkRing 520ms var(--ease-snap) forwards;
+}
+.checkMark {
+  fill: none;
+  stroke: var(--state-ok, #1a8a52);
+  stroke-width: 3.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 34;
+  stroke-dashoffset: 34;
+  animation: checkDraw 300ms var(--ease-snap) 420ms forwards;
+}
+@keyframes checkRing { to { stroke-dashoffset: 0; } }
+@keyframes checkDraw { to { stroke-dashoffset: 0; } }
 .successTitle {
   margin: 0;
-  font-size: var(--fs-h5);
+  font-size: var(--fs-h4); /* 18px */
   font-weight: 600;
-  letter-spacing: var(--ls-h5);
+  line-height: 1.3;
+  letter-spacing: var(--ls-h4);
   color: var(--ink);
+  animation: riseIn var(--d-enter) var(--ease-snap) 300ms both;
 }
 .successSub {
-  margin: 4px 0 0;
+  margin: 5px 0 0;
   font-size: var(--fs-small);
-  line-height: 1.45;
+  line-height: 1.5;
   letter-spacing: var(--ls-body);
   color: var(--muted);
+  animation: riseIn var(--d-enter) var(--ease-snap) 380ms both;
 }
-.successBody {
-  padding: 0 24px 4px;
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
+/* Guarantees: three roomy columns (no per-column icon - the drawn check above is
+   the success signal), each rising in with a stagger. */
 .checksRow {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
-  padding: 18px 8px;
+  gap: 4px;
+  width: 100%;
+  margin-top: 22px;
+  padding: 18px 4px;
   border: 1px solid var(--hairline);
   border-radius: 12px;
 }
@@ -346,22 +394,21 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 0 8px;
+  gap: 4px;
+  padding: 0 12px;
   text-align: center;
+  opacity: 0;
+  transform: translateY(6px);
+  animation: riseIn var(--d-enter) var(--ease-snap) forwards;
+  animation-delay: calc(520ms + var(--i) * 70ms);
 }
-.checkIco {
-  width: 20px;
-  height: 20px;
-  color: var(--state-ok, #1a8a52);
-}
-.checkTitle {
+.checkColTitle {
   font-size: var(--fs-small);
   font-weight: 600;
   letter-spacing: var(--ls-body);
   color: var(--ink);
 }
-.checkSub {
+.checkColSub {
   font-size: var(--fs-caption);
   line-height: 1.4;
   letter-spacing: var(--ls-body);
@@ -372,8 +419,23 @@
   .scrim,
   .scrim[data-closing],
   .dialog,
-  .scrim[data-closing] .dialog {
+  .scrim[data-closing] .dialog,
+  .swapIco svg,
+  .successTitle,
+  .successSub,
+  .checkCol {
     animation: none;
   }
   .dialog { transition: none; }
+  .checkCircle,
+  .checkMark {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  .successTitle,
+  .successSub,
+  .checkCol {
+    opacity: 1;
+    transform: none;
+  }
 }
