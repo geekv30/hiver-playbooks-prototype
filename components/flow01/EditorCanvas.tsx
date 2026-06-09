@@ -194,6 +194,12 @@ interface Props {
   companions?: boolean;
 }
 
+// Cold-start presentation phase for the one Copilot surface:
+//   'hero'     = the "draft with AI" modal is open, the dock is not rendered
+//   'morphing' = the modal is animating into the dock (task 3); dock mounted but hidden
+//   'docked'   = the modal is gone, the dock is the visible Copilot
+type ColdStartPhase = 'hero' | 'morphing' | 'docked';
+
 export default function EditorCanvas({ initialDoc, companions }: Props) {
   const api = useEditorDoc(initialDoc);
   const { doc, undo, redo } = api;
@@ -249,13 +255,9 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
   const [enableName, setEnableName] = useState('');
   const [enableMailboxes, setEnableMailboxes] = useState<string[]>([]);
   // The cold-start "draft with AI" modal shows on a fresh, empty canvas (no
-  // initialDoc); the pre-seeded /api-example demo skips it.
-  // 'hero'    = modal open, dock hidden
-  // 'morphing' = reserved for a future animated transition (task 2+)
-  // 'docked'  = modal gone, dock visible
-  type ColdStartPhase = 'hero' | 'morphing' | 'docked';
+  // initialDoc); the pre-seeded /api-example demo skips it. See ColdStartPhase above.
   const [coldPhase, setColdPhase] = useState<ColdStartPhase>(initialDoc ? 'docked' : 'hero');
-  const coldStartOpen = coldPhase === 'hero'; // keep existing reads working unchanged
+  const coldStartOpen = coldPhase === 'hero'; // single remaining read: the ColdStartModal gate below
   // Copilot conversation (owned here so the cold-start query can seed it). thinkIdx
   // drives the working animation (-1 = idle); pendingDoc holds the drafted doc
   // until the animation finishes, then it loads onto the canvas.
@@ -1363,7 +1365,7 @@ export default function EditorCanvas({ initialDoc, companions }: Props) {
                 onSend: sendCopilot,
                 onRegenerate: regenerateCopilot,
                 onClear: clearCopilot,
-                introReady: coldPhase === 'docked',
+                introReady: coldPhase === 'docked', // false during 'morphing' so the intro waits for the dock to settle
                 onStop: stopCopilot,
                 busy: thinkIdx >= 0 || copilotMessages.some((m) => m.thinking || m.streaming),
                 onAttach: () => showHint('Attachments are coming soon.'),
