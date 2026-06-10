@@ -17,7 +17,6 @@ import RowMenu from './RowMenu';
 import GmailBar from './GmailBar';
 import Toolbar from './Toolbar';
 import ChatBar from './ChatBar';
-import CoachmarkTriggers from './CoachmarkTriggers';
 import EditorLine, { PaletteRequest } from './EditorLine';
 import CommandPalette from './CommandPalette';
 import ConditionBlock from './condition/ConditionBlock';
@@ -1136,8 +1135,6 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
         <div className={styles.area}>
           <div className={styles.docScroll}>
             <div className={styles.doc}>
-              <CoachmarkTriggers />
-
               {/* Frontmatter / Trigger */}
               <section className={styles.block}>
                 <div className={styles.row}>
