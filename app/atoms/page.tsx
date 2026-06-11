@@ -29,7 +29,6 @@ import ThumbsRating, { type Verdict } from '@/components/atoms/ThumbsRating';
 
 // Editor (flow-01)
 import ActionHint from '@/components/flow01/ActionHint';
-import ChatBar from '@/components/flow01/ChatBar';
 import GmailBar from '@/components/flow01/GmailBar';
 import Toolbar from '@/components/flow01/Toolbar';
 import TitleField from '@/components/flow01/TitleField';
@@ -43,6 +42,13 @@ import ConditionBlock from '@/components/flow01/condition/ConditionBlock';
 import CopilotSparkle from '@/components/flow01/copilot/CopilotSparkle';
 import PanelTabs, { type SideTab } from '@/components/flow01/copilot/PanelTabs';
 import CopilotProposal from '@/components/flow01/copilot/CopilotProposal';
+import CopilotPanel from '@/components/flow01/copilot/CopilotPanel';
+import SidePanel from '@/components/flow01/copilot/SidePanel';
+
+// Modals - the signature entry / connect / go-live screens of the journeys
+import ColdStartModal from '@/components/flow01/ColdStartModal';
+import ConnectorSetupModal from '@/components/flow01/setup/ConnectorSetupModal';
+import EnableModal from '@/components/flow01/enable/EnableModal';
 
 // Evaluate (simulate)
 import StatusPill from '@/components/simulate/StatusPill';
@@ -175,19 +181,41 @@ function TitleFieldDemo({ initial }: { initial: string }) {
 
 function ToolbarDemo({ title, status, canEnable }: { title: string; status: 'draft' | 'active' | 'paused'; canEnable?: boolean }) {
   const [t, setT] = useState(title);
+  // The journeys mount the editor with companions, so the toolbar hides Simulate
+  // (the docked SidePanel owns it). Match that here.
   return (
     <Toolbar
       title={t}
       onTitleChange={setT}
       status={status}
       canEnable={canEnable}
-      onSimulate={() => {}}
+      hideSimulate
       onEnable={() => {}}
       onPause={() => {}}
       onResume={() => {}}
       onSettings={() => {}}
       onBack={() => {}}
     />
+  );
+}
+
+function EnableModalDemo() {
+  const [name, setName] = useState('API error triage');
+  const [selected, setSelected] = useState<string[]>(['support', 'sales']);
+  return (
+    <div className={styles.modalStage} style={{ height: 560 }}>
+      <EnableModal
+        open
+        mode="commit"
+        name={name}
+        onNameChange={setName}
+        selected={selected}
+        onSelectedChange={setSelected}
+        preEnabled={['support', 'sales']}
+        onClose={() => {}}
+        onConfirm={() => {}}
+      />
+    </div>
   );
 }
 
@@ -211,9 +239,10 @@ const NOOP = () => {};
 
 const NAV: { id: string; label: string; count: number }[] = [
   { id: 'atoms', label: 'Atoms', count: 8 },
-  { id: 'editor', label: 'Editor', count: 10 },
-  { id: 'copilot', label: 'Copilot', count: 3 },
+  { id: 'editor', label: 'Editor', count: 9 },
+  { id: 'copilot', label: 'Copilot', count: 5 },
   { id: 'evaluate', label: 'Evaluate', count: 14 },
+  { id: 'modals', label: 'Modals', count: 3 },
   { id: 'icons', label: 'Icons', count: 2 },
 ];
 const NAV_IDS = NAV.map((n) => n.id);
@@ -290,15 +319,16 @@ export default function ComponentLibrary() {
         <header className={styles.head}>
           <h1>Component library</h1>
           <p>
-            The atoms and reusable components used across the three journeys -{' '}
+            Every component you see across the three journeys -{' '}
             <a href="/canvas">/canvas</a>, <a href="/api-example">/api-example</a>, and{' '}
-            <a href="/connector-setup">/connector-setup</a>. Building blocks only; full screens,
-            panels, and modals are seen live in the journeys.
+            <a href="/connector-setup">/connector-setup</a> - rendered from the real code: the
+            cold-start modal with its AI-glow input, the Copilot window, the editor, the run
+            trace, and the connect / go-live modals.
           </p>
           <div className={styles.headMeta}>
             <span>{total} components</span>
             <span>{NAV.length} groups</span>
-            <span>building blocks</span>
+            <span>3 journeys</span>
           </div>
         </header>
 
@@ -414,9 +444,9 @@ export default function ComponentLibrary() {
         <section id="editor" className={styles.category}>
           <div className={styles.categoryHead}>
             <h2>Editor</h2>
-            <span className={styles.categoryCount}>10</span>
+            <span className={styles.categoryCount}>9</span>
           </div>
-          <p className={styles.categoryNote}>The flow-01 authoring building blocks - chrome, the token line, the insert palette, and conditions.</p>
+          <p className={styles.categoryNote}>The flow-01 authoring surface - chrome, the token line, the insert palette, and conditions.</p>
           <div className={styles.categoryRule} />
 
           <Block name="TitleField" imp="flow01/TitleField" desc="The editable AOP title - a content-sized contentEditable with a 'name me' dotted underline while unnamed.">
@@ -426,7 +456,8 @@ export default function ComponentLibrary() {
             </Row>
           </Block>
 
-          <Block name="Toolbar" imp="flow01/Toolbar" desc="The editor toolbar - back + editable title + status pill, Simulate toggle, settings gear, and one state-driven primary control.">
+          <Block name="Toolbar" imp="flow01/Toolbar" desc="The editor toolbar as the journeys show it - back + editable title + status pill, the settings gear, and one state-driven control (Enable / Pause / Resume). Simulate is hidden (the docked panel owns it).">
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 980 }}>
               <ToolbarDemo title="Untitled AOP" status="draft" />
               <ToolbarDemo title="Refund triage" status="draft" canEnable={false} />
@@ -438,12 +469,6 @@ export default function ComponentLibrary() {
           <Block name="GmailBar" imp="flow01/GmailBar" desc="The host Gmail top-bar chrome (menu + logo) that wraps the AOP editor.">
             <Row>
               <Spec label="default"><div style={{ width: 520 }}><GmailBar /></div></Spec>
-            </Row>
-          </Block>
-
-          <Block name="ChatBar" imp="flow01/ChatBar" desc="The 'Ask a question…' composer with a send -> 'Thinking…' -> idle loop (visual only).">
-            <Row>
-              <Spec label="resting"><div style={{ width: 460 }}><ChatBar /></div></Spec>
             </Row>
           </Block>
 
@@ -528,10 +553,40 @@ export default function ComponentLibrary() {
         <section id="copilot" className={styles.category}>
           <div className={styles.categoryHead}>
             <h2>Copilot</h2>
-            <span className={styles.categoryCount}>3</span>
+            <span className={styles.categoryCount}>5</span>
           </div>
-          <p className={styles.categoryNote}>The reusable pieces of the Copilot panel - the tab switcher, the apply card, and the brand mark.</p>
+          <p className={styles.categoryNote}>The Copilot window from /canvas and /api-example - the docked panel, the chat with its AI-glow composer, the tab switcher, the apply card, and the brand mark.</p>
           <div className={styles.categoryRule} />
+
+          <Block name="SidePanel" imp="flow01/copilot/SidePanel" desc="The docked Copilot window - the Copilot | Evaluation header over two cross-fading panes (the right-hand panel in /canvas and /api-example).">
+            <Row>
+              <Spec label="copilot tab">
+                <div className={`${styles.panelFrame} ${styles.panelFrameWide}`}>
+                  <SidePanel tab="copilot" onTab={() => {}} copilot={{ messages: [], onSend: () => {}, onStop: () => {}, onApplyProposal: () => {}, onDismissProposal: () => {}, onUndoProposal: () => {}, onVerdict: () => {} }} sim={{ hasTrigger: true }} />
+                </div>
+              </Spec>
+              <Spec label="evaluation tab">
+                <div className={`${styles.panelFrame} ${styles.panelFrameWide}`}>
+                  <SidePanel tab="simulate" onTab={() => {}} copilot={{ messages: [], onSend: () => {}, onStop: () => {}, onApplyProposal: () => {}, onDismissProposal: () => {}, onUndoProposal: () => {}, onVerdict: () => {} }} sim={{ hasTrigger: true }} />
+                </div>
+              </Spec>
+            </Row>
+          </Block>
+
+          <Block name="CopilotPanel" imp="flow01/copilot/CopilotPanel" desc="The Copilot chat - the empty-state hero + starters with the AI-glow composer, and a populated conversation with reviewable apply cards.">
+            <Row>
+              <Spec label="empty hero">
+                <div className={styles.panelFrame}>
+                  <CopilotPanel docked open messages={[]} onClose={() => {}} onSend={() => {}} onStop={() => {}} onApplyProposal={() => {}} onDismissProposal={() => {}} onUndoProposal={() => {}} onVerdict={() => {}} />
+                </div>
+              </Spec>
+              <Spec label="conversation">
+                <div className={styles.panelFrame}>
+                  <CopilotPanel docked open messages={[{ role: 'user', text: 'Add a step that checks the order status' }, { role: 'assistant', text: 'Added a step that looks up the order status before drafting the reply.' }]} onClose={() => {}} onSend={() => {}} onRegenerate={() => {}} onClear={() => {}} onStop={() => {}} onApplyProposal={() => {}} onDismissProposal={() => {}} onUndoProposal={() => {}} onVerdict={() => {}} />
+                </div>
+              </Spec>
+            </Row>
+          </Block>
 
           <Block name="PanelTabs" imp="flow01/copilot/PanelTabs" desc="The side-panel Copilot | Evaluation switcher with a sliding active underline.">
             <Row>
@@ -693,6 +748,32 @@ export default function ComponentLibrary() {
                   <TopicCard key={label} topic={{ id: `g${i}`, label, status: 'idle', runCount: 0, emails: [] }} />
                 ))}
               />
+            </div>
+          </Block>
+        </section>
+
+        {/* ============================ MODALS ============================ */}
+        <section id="modals" className={styles.category}>
+          <div className={styles.categoryHead}>
+            <h2>Modals</h2>
+            <span className={styles.categoryCount}>3</span>
+          </div>
+          <p className={styles.categoryNote}>The full-screen moment of each journey, rendered from the real code (contained here; live they take over the viewport).</p>
+          <div className={styles.categoryRule} />
+
+          <Block name="ColdStartModal" imp="flow01/ColdStartModal" desc="The /canvas entry - 'Draft your AOP with AI': the describe input with its AI glow, generic starters, and an SOP upload drop target.">
+            <div className={styles.modalStage} style={{ height: 560 }}>
+              <ColdStartModal onGenerate={() => {}} onDismiss={() => {}} />
+            </div>
+          </Block>
+
+          <Block name="EnableModal" imp="flow01/enable/EnableModal" desc="The /api-example go-live - name the AOP and pick the shared mailboxes (tag-owning ones pre-selected), then the success moment.">
+            <EnableModalDemo />
+          </Block>
+
+          <Block name="ConnectorSetupModal" imp="flow01/setup/ConnectorSetupModal" desc="The /connector-setup connect flow - intro tools, paste a token, You're connected. Resizes between phases.">
+            <div className={styles.modalStage} style={{ height: 620 }}>
+              <ConnectorSetupModal connector="shopify" onConnected={() => {}} onClose={() => {}} />
             </div>
           </Block>
         </section>

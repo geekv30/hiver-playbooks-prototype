@@ -2,6 +2,18 @@
    grouped into categories with a sticky nav. Components render the actual
    imports - never re-implementations. The live editor is at /canvas. */
 
+/* Contains a full-viewport modal (position:fixed; inset:0) inside the gallery:
+   a transformed ancestor becomes the containing block for its fixed scrim, so
+   the modal sizes to this box instead of the whole page. */
+.modalStage {
+  position: relative;
+  transform: translateZ(0);
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  background: var(--canvas-soft);
+}
+
 .shell {
   display: flex;
   align-items: flex-start;
