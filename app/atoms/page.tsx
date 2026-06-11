@@ -441,7 +441,7 @@ const NAV: { id: string; label: string; count: number }[] = [
   { id: 'canvas', label: 'Canvas blocks', count: 18 },
   { id: 'simulate', label: 'Simulate', count: 17 },
   { id: 'screens', label: 'Composed screens', count: 8 },
-  { id: 'icons', label: 'Icons', count: 4 },
+  { id: 'icons', label: 'Icons', count: 5 },
 ];
 
 function useScrollSpy(ids: string[]) {
@@ -1350,9 +1350,9 @@ export default function ComponentLibrary() {
         <section id="icons" className={styles.category}>
           <div className={styles.categoryHead}>
             <h2>Icons</h2>
-            <span className={styles.categoryCount}>4</span>
+            <span className={styles.categoryCount}>5</span>
           </div>
-          <p className={styles.categoryNote}>The icon sets - UI / verb / nav glyphs, field-type badges, full-color connector marks, and the Copilot sparkle.</p>
+          <p className={styles.categoryNote}>The icon sets - UI / verb / nav glyphs, field-type badges, full-color connector marks, the Copilot sparkle, and the host Gmail mark.</p>
           <div className={styles.categoryRule} />
 
           <Block name="UI icons" imp="icons/ui" desc="UI, verb, and nav glyphs (mostly Remix re-exports; HiverBrandIcon + ExtractIcon are custom SVGs).">
