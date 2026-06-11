@@ -14,6 +14,15 @@
   background: var(--canvas-soft);
 }
 
+/* Hold the AI input glow lit so the spec shows it plainly. In product it plays
+   once on appear then fades to the neutral border (and is off under reduced
+   motion); here we freeze the ring + halo on so it is always visible. */
+.glowLit :global(.ai-input-glow) { --copilot-angle: 130deg; }
+.glowLit :global(.ai-input-glow)::before,
+.glowLit :global(.ai-input-glow)::after { animation: none; }
+.glowLit :global(.ai-input-glow)::before { opacity: 1; }
+.glowLit :global(.ai-input-glow)::after { opacity: 0.5; }
+
 .shell {
   display: flex;
   align-items: flex-start;

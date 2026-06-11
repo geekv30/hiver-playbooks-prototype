@@ -6,7 +6,7 @@
    CopilotPanel, SidePanel, SimulatePanel, CustomEval, RecentEmails) are excluded -
    those are seen live in the journeys. Each specimen renders the real component. */
 
-import { useEffect, useState, type ReactNode, type ComponentType, type SVGProps } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type ComponentType, type SVGProps, type CSSProperties } from 'react';
 import {
   RiPlayLine,
   RiArrowDownSLine,
@@ -203,7 +203,7 @@ function EnableModalDemo() {
   const [name, setName] = useState('API error triage');
   const [selected, setSelected] = useState<string[]>(['support', 'sales']);
   return (
-    <div className={styles.modalStage} style={{ height: 560 }}>
+    <div className={styles.modalStage} style={{ height: 900 }}>
       <EnableModal
         open
         mode="commit"
@@ -215,6 +215,52 @@ function EnableModalDemo() {
         onClose={() => {}}
         onConfirm={() => {}}
       />
+    </div>
+  );
+}
+
+const glowFieldStyle: CSSProperties = {
+  position: 'relative',
+  width: 420,
+  borderRadius: 12,
+  border: '1px solid var(--hairline)',
+  background: 'var(--card, #fff)',
+  padding: '14px 16px',
+  minHeight: 80,
+};
+
+// The glow held lit, so it's always visible (in product it plays once then fades).
+function GlowLit() {
+  return (
+    <div className={styles.glowLit}>
+      <div className="ai-input-glow" style={glowFieldStyle}>
+        <span style={{ color: 'var(--muted)', fontSize: 'var(--fs-body)' }}>Describe what you want your AOP to do…</span>
+      </div>
+    </div>
+  );
+}
+
+// The real one-shot animation. It ends at opacity 0, so we re-trigger it (remount
+// via key) when it scrolls into view, plus a Replay button.
+function GlowAnimated() {
+  const [playId, setPlayId] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      (entries) => { if (entries.some((e) => e.isIntersecting)) setPlayId((p) => p + 1); },
+      { threshold: 0.55 },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return (
+    <div ref={ref} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div key={playId} className="ai-input-glow" style={glowFieldStyle}>
+        <span style={{ color: 'var(--muted)', fontSize: 'var(--fs-body)' }}>Describe what you want your AOP to do…</span>
+      </div>
+      <span><Button variant="secondary" onClick={() => setPlayId((p) => p + 1)}>Replay</Button></span>
     </div>
   );
 }
@@ -242,7 +288,7 @@ const NAV: { id: string; label: string; count: number }[] = [
   { id: 'editor', label: 'Editor', count: 9 },
   { id: 'copilot', label: 'Copilot', count: 5 },
   { id: 'evaluate', label: 'Evaluate', count: 14 },
-  { id: 'modals', label: 'Modals', count: 3 },
+  { id: 'modals', label: 'Modals', count: 4 },
   { id: 'icons', label: 'Icons', count: 2 },
 ];
 const NAV_IDS = NAV.map((n) => n.id);
@@ -756,13 +802,20 @@ export default function ComponentLibrary() {
         <section id="modals" className={styles.category}>
           <div className={styles.categoryHead}>
             <h2>Modals</h2>
-            <span className={styles.categoryCount}>3</span>
+            <span className={styles.categoryCount}>4</span>
           </div>
-          <p className={styles.categoryNote}>The full-screen moment of each journey, rendered from the real code (contained here; live they take over the viewport).</p>
+          <p className={styles.categoryNote}>The AI-glow input and the full-screen moment of each journey, rendered from the real code (contained here; live they take over the viewport).</p>
           <div className={styles.categoryRule} />
 
+          <Block name="AI input glow" imp="globals.css · .ai-input-glow" desc="The shared Hiver-AI glow on the describe input and the Copilot composer - a conic ring + soft halo. In product it plays once on appear then fades to the neutral border (and is off under reduced motion); here it's held lit so you can see it, with the real play-then-fade alongside.">
+            <Row>
+              <Spec label="lit (the glow)"><GlowLit /></Spec>
+              <Spec label="play-then-fade (tap Replay)"><GlowAnimated /></Spec>
+            </Row>
+          </Block>
+
           <Block name="ColdStartModal" imp="flow01/ColdStartModal" desc="The /canvas entry - 'Draft your AOP with AI': the describe input with its AI glow, generic starters, and an SOP upload drop target.">
-            <div className={styles.modalStage} style={{ height: 560 }}>
+            <div className={styles.modalStage} style={{ height: 540 }}>
               <ColdStartModal onGenerate={() => {}} onDismiss={() => {}} />
             </div>
           </Block>
@@ -772,7 +825,7 @@ export default function ComponentLibrary() {
           </Block>
 
           <Block name="ConnectorSetupModal" imp="flow01/setup/ConnectorSetupModal" desc="The /connector-setup connect flow - intro tools, paste a token, You're connected. Resizes between phases.">
-            <div className={styles.modalStage} style={{ height: 620 }}>
+            <div className={styles.modalStage} style={{ height: 440 }}>
               <ConnectorSetupModal connector="shopify" onConnected={() => {}} onClose={() => {}} />
             </div>
           </Block>
