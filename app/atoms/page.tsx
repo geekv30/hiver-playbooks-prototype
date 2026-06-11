@@ -1,9 +1,10 @@
 'use client';
 
-/* Component library - scoped to ONLY the components used by the three live
-   journeys: /canvas, /api-example, /connector-setup. The set is the import
-   closure of those three routes; nothing from the old LHS canvas or unused
-   surfaces. Each specimen renders the real imported component. */
+/* Component library - the ATOMS and reusable COMPONENTS used across the three
+   journeys (/canvas, /api-example, /connector-setup). Building blocks only:
+   full screens, panels, modals, and multi-step flows (EditorCanvas, the modals,
+   CopilotPanel, SidePanel, SimulatePanel, CustomEval, RecentEmails) are excluded -
+   those are seen live in the journeys. Each specimen renders the real component. */
 
 import { useEffect, useState, type ReactNode, type ComponentType, type SVGProps } from 'react';
 import {
@@ -42,8 +43,6 @@ import ConditionBlock from '@/components/flow01/condition/ConditionBlock';
 import CopilotSparkle from '@/components/flow01/copilot/CopilotSparkle';
 import PanelTabs, { type SideTab } from '@/components/flow01/copilot/PanelTabs';
 import CopilotProposal from '@/components/flow01/copilot/CopilotProposal';
-import CopilotPanel from '@/components/flow01/copilot/CopilotPanel';
-import SidePanel from '@/components/flow01/copilot/SidePanel';
 
 // Evaluate (simulate)
 import StatusPill from '@/components/simulate/StatusPill';
@@ -60,8 +59,6 @@ import EvalMenu from '@/components/simulate/EvalMenu';
 import EvalBackHeader from '@/components/simulate/EvalBackHeader';
 import SimEmptyState from '@/components/simulate/SimEmptyState';
 import ScenariosEmpty from '@/components/simulate/ScenariosEmpty';
-import CustomEval from '@/components/simulate/CustomEval';
-import RecentEmails from '@/components/simulate/RecentEmails';
 import { SIM_TRACE } from '@/components/simulate/traceFixture';
 
 // Icons
@@ -215,9 +212,8 @@ const NOOP = () => {};
 const NAV: { id: string; label: string; count: number }[] = [
   { id: 'atoms', label: 'Atoms', count: 8 },
   { id: 'editor', label: 'Editor', count: 10 },
-  { id: 'copilot', label: 'Copilot', count: 5 },
-  { id: 'evaluate', label: 'Evaluate', count: 17 },
-  { id: 'screens', label: 'Journeys', count: 3 },
+  { id: 'copilot', label: 'Copilot', count: 3 },
+  { id: 'evaluate', label: 'Evaluate', count: 14 },
   { id: 'icons', label: 'Icons', count: 2 },
 ];
 const NAV_IDS = NAV.map((n) => n.id);
@@ -243,27 +239,6 @@ function useScrollSpy(ids: string[]) {
   return active;
 }
 
-const JOURNEYS = [
-  {
-    route: '/canvas',
-    name: 'Cold-start builder',
-    desc: 'EditorCanvas on an empty doc with the Copilot + Evaluate companions, opened behind the ColdStartModal.',
-    parts: 'EditorCanvas · ColdStartModal · CommandPalette · SidePanel',
-  },
-  {
-    route: '/api-example',
-    name: 'Worked example',
-    desc: 'EditorCanvas seeded with the API-error-triage AOP, the docked Copilot/Evaluate SidePanel, and the EnableModal go-live flow.',
-    parts: 'EditorCanvas · SidePanel · CopilotPanel · SimulatePanel · EnableModal',
-  },
-  {
-    route: '/connector-setup',
-    name: 'Connector setup',
-    desc: 'EditorCanvas with connectors unauthenticated, running the ConnectorSetupModal connect flow from a setup-needed tag.',
-    parts: 'EditorCanvas · ConnectorSetupModal · CommandPalette',
-  },
-];
-
 // ----------------------------------------------------------------------------
 // Page
 // ----------------------------------------------------------------------------
@@ -272,10 +247,9 @@ export default function ComponentLibrary() {
   const active = useScrollSpy(NAV_IDS);
   const total = NAV.reduce((s, n) => s + n.count, 0);
 
-  // Several always-mounted specimens (CommandPalette, BranchTypePicker, CopilotPanel,
-  // CustomEval, RecentEmails) focus an input on mount - some via a deferred callback -
-  // which would yank this long page down on load. During the brief load window we make
-  // every focus() non-scrolling, so the viewer stays at the top. Restored after 1.5s.
+  // CommandPalette and BranchTypePicker focus an input on mount, which would yank
+  // this long page down on load. During the brief load window we make every focus()
+  // non-scrolling, so the viewer stays at the top. Restored after 1.5s.
   useEffect(() => {
     window.scrollTo(0, 0);
     const proto = HTMLElement.prototype;
@@ -316,14 +290,15 @@ export default function ComponentLibrary() {
         <header className={styles.head}>
           <h1>Component library</h1>
           <p>
-            Every component used across the three journeys - <a href="/canvas">/canvas</a>,{' '}
-            <a href="/api-example">/api-example</a>, and <a href="/connector-setup">/connector-setup</a>. Each
-            specimen renders the real component, scoped to exactly the import closure of those routes.
+            The atoms and reusable components used across the three journeys -{' '}
+            <a href="/canvas">/canvas</a>, <a href="/api-example">/api-example</a>, and{' '}
+            <a href="/connector-setup">/connector-setup</a>. Building blocks only; full screens,
+            panels, and modals are seen live in the journeys.
           </p>
           <div className={styles.headMeta}>
             <span>{total} components</span>
             <span>{NAV.length} groups</span>
-            <span>3 journeys</span>
+            <span>building blocks</span>
           </div>
         </header>
 
@@ -441,7 +416,7 @@ export default function ComponentLibrary() {
             <h2>Editor</h2>
             <span className={styles.categoryCount}>10</span>
           </div>
-          <p className={styles.categoryNote}>The flow-01 authoring surface - chrome, the token line, the insert palette, and conditions.</p>
+          <p className={styles.categoryNote}>The flow-01 authoring building blocks - chrome, the token line, the insert palette, and conditions.</p>
           <div className={styles.categoryRule} />
 
           <Block name="TitleField" imp="flow01/TitleField" desc="The editable AOP title - a content-sized contentEditable with a 'name me' dotted underline while unnamed.">
@@ -553,45 +528,15 @@ export default function ComponentLibrary() {
         <section id="copilot" className={styles.category}>
           <div className={styles.categoryHead}>
             <h2>Copilot</h2>
-            <span className={styles.categoryCount}>5</span>
+            <span className={styles.categoryCount}>3</span>
           </div>
-          <p className={styles.categoryNote}>The docked side panel and its chat pieces.</p>
+          <p className={styles.categoryNote}>The reusable pieces of the Copilot panel - the tab switcher, the apply card, and the brand mark.</p>
           <div className={styles.categoryRule} />
-
-          <Block name="SidePanel" imp="flow01/copilot/SidePanel" desc="The docked side panel - the Copilot | Evaluation header over two cross-fading panes.">
-            <Row>
-              <Spec label="copilot tab">
-                <div className={`${styles.panelFrame} ${styles.panelFrameWide}`}>
-                  <SidePanel tab="copilot" onTab={() => {}} copilot={{ messages: [], onSend: () => {}, onStop: () => {}, onApplyProposal: () => {}, onDismissProposal: () => {}, onUndoProposal: () => {}, onVerdict: () => {} }} sim={{ hasTrigger: true }} />
-                </div>
-              </Spec>
-              <Spec label="evaluation tab">
-                <div className={`${styles.panelFrame} ${styles.panelFrameWide}`}>
-                  <SidePanel tab="simulate" onTab={() => {}} copilot={{ messages: [], onSend: () => {}, onStop: () => {}, onApplyProposal: () => {}, onDismissProposal: () => {}, onUndoProposal: () => {}, onVerdict: () => {} }} sim={{ hasTrigger: true }} />
-                </div>
-              </Spec>
-            </Row>
-          </Block>
 
           <Block name="PanelTabs" imp="flow01/copilot/PanelTabs" desc="The side-panel Copilot | Evaluation switcher with a sliding active underline.">
             <Row>
               <Spec label="copilot active"><PanelTabsDemo initial="copilot" /></Spec>
               <Spec label="evaluation active"><PanelTabsDemo initial="simulate" /></Spec>
-            </Row>
-          </Block>
-
-          <Block name="CopilotPanel" imp="flow01/copilot/CopilotPanel" desc="The Copilot chat - empty-state hero + starters, streaming replies, reviewable apply cards, and a Stop-while-busy composer.">
-            <Row>
-              <Spec label="empty hero">
-                <div className={styles.panelFrame}>
-                  <CopilotPanel docked open messages={[]} onClose={() => {}} onSend={() => {}} onStop={() => {}} onApplyProposal={() => {}} onDismissProposal={() => {}} onUndoProposal={() => {}} onVerdict={() => {}} />
-                </div>
-              </Spec>
-              <Spec label="conversation">
-                <div className={styles.panelFrame}>
-                  <CopilotPanel docked open messages={[{ role: 'user', text: 'Add a step that checks the order status' }, { role: 'assistant', text: 'Added a step that looks up the order status before drafting the reply.' }]} onClose={() => {}} onSend={() => {}} onRegenerate={() => {}} onClear={() => {}} onStop={() => {}} onApplyProposal={() => {}} onDismissProposal={() => {}} onUndoProposal={() => {}} onVerdict={() => {}} />
-                </div>
-              </Spec>
             </Row>
           </Block>
 
@@ -628,9 +573,9 @@ export default function ComponentLibrary() {
         <section id="evaluate" className={styles.category}>
           <div className={styles.categoryHead}>
             <h2>Evaluate</h2>
-            <span className={styles.categoryCount}>17</span>
+            <span className={styles.categoryCount}>14</span>
           </div>
-          <p className={styles.categoryNote}>The test-run surface - status pills, scenario cards, the run trace, and the eval entry flows.</p>
+          <p className={styles.categoryNote}>The test-run building blocks - status pills, scenario cards, the run trace, and the eval entry pieces.</p>
           <div className={styles.categoryRule} />
 
           <Block name="StatusPill" imp="simulate/StatusPill" desc="Run-state pill on an email result card - animated dots for running, a colored dot + outcome label otherwise.">
@@ -750,53 +695,6 @@ export default function ComponentLibrary() {
               />
             </div>
           </Block>
-
-          <Block name="CustomEval" imp="simulate/CustomEval" desc="The custom-email eval flow - compose a body, Send, and the result streams a run trace.">
-            <div className={`${styles.frame} ${styles.col360}`} style={{ height: 460, display: 'flex', flexDirection: 'column' }}>
-              <CustomEval />
-            </div>
-          </Block>
-
-          <Block name="RecentEmails" imp="simulate/RecentEmails" desc="The recent-conversations flow - pick a mailbox, multi-select recent emails, Evaluate the checked ones.">
-            <div className={`${styles.frame} ${styles.col360}`} style={{ height: 460, display: 'flex', flexDirection: 'column' }}>
-              <RecentEmails onExit={() => {}} />
-            </div>
-          </Block>
-
-          <Block name="SimulatePanel" imp="simulate/SimulatePanel" desc="The floating Evaluate panel - the three eval flows over the run engine. Fixed-position; open it live on the worked example.">
-            <div className={styles.linkRow}>
-              <a className={styles.linkCard} href="/api-example">
-                <span className={styles.linkCardTop}>
-                  <span className={styles.linkCardName}>SimulatePanel (floating)</span>
-                  <span className={styles.linkCardRoute}>/api-example</span>
-                </span>
-                <p className={styles.linkCardDesc}>Toggle Evaluate on the worked example to see the floating panel - the docked form is shown above in SidePanel.</p>
-              </a>
-            </div>
-          </Block>
-        </section>
-
-        {/* ============================ JOURNEYS ============================ */}
-        <section id="screens" className={styles.category}>
-          <div className={styles.categoryHead}>
-            <h2>Journeys</h2>
-            <span className={styles.categoryCount}>3</span>
-          </div>
-          <p className={styles.categoryNote}>The three full-screen assemblies these components compose. EditorCanvas powers all three; the modals (ColdStart / Enable / ConnectorSetup) overlay them. Open them live.</p>
-          <div className={styles.categoryRule} />
-
-          <div className={styles.linkRow}>
-            {JOURNEYS.map((j) => (
-              <a key={j.route} className={styles.linkCard} href={j.route}>
-                <span className={styles.linkCardTop}>
-                  <span className={styles.linkCardName}>{j.name}</span>
-                  <span className={styles.linkCardRoute}>{j.route}</span>
-                </span>
-                <p className={styles.linkCardDesc}>{j.desc}</p>
-                <code className={styles.linkCardImport}>{j.parts}</code>
-              </a>
-            ))}
-          </div>
         </section>
 
         {/* ============================ ICONS ============================ */}
