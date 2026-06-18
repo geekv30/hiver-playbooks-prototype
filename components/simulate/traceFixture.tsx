@@ -49,7 +49,7 @@ export const SIM_TRACE: TraceStepDef[] = [
     actionId: 'kb_search',
     meta: 'Engg-docs',
     ms: 450,
-    output: 'returned: 200 ok',
+    output: 'returned: 200 OK',
   },
   {
     id: 's5',

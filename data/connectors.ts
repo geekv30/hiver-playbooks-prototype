@@ -25,7 +25,7 @@ export const CONNECTOR_META: Record<ConnectorSlug, ConnectorMeta> = {
   hubspot: {
     slug: 'hubspot', name: 'HubSpot',
     accountLabelPlaceholder: 'your-team.hubspot.com', fakeAuthedLabel: 'your-team.hubspot.com',
-    tagline: "Bring customer's HubSpot data into Hiver.",
+    tagline: 'Bring contact and company data into Hiver.',
     blurb: 'Connect HubSpot to sync customer, company, and ticket data with Hiver. Use it to speed up support and personalize customer interactions.',
     tokenPlaceholder: 'hub123$0321',
   },

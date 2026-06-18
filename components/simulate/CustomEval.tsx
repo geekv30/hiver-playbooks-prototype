@@ -87,7 +87,7 @@ export default function CustomEval() {
                 send();
               }
             }}
-            placeholder="compose a custom email body"
+            placeholder="Compose a custom email body"
             aria-label="Custom email body"
           />
           <div className={styles.row}>

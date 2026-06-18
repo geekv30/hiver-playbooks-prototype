@@ -19,7 +19,7 @@ export const REFERENCE_ID = 'reference';
 // Curated "Actions" group - the five the Figma shows first (verbatim), then the
 // rest of the vocabulary in plain labels.
 export const PALETTE_ACTIONS: PaletteAction[] = [
-  { id: 'wait', label: 'wait' },
+  { id: 'wait', label: 'Wait' },
   { id: 'tag', label: 'Add a tag' },
   { id: REFERENCE_ID, label: 'Reference' },
   { id: 'kb_search', label: 'Search Knowledge Hub' },

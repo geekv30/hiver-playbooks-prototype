@@ -1140,7 +1140,7 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
                 <div className={styles.row}>
                   <span className={styles.gutter} aria-hidden />
                   <div className={styles.content}>
-                    <h2 className={styles.label}>When should this run :</h2>
+                    <h2 className={styles.label}>When should this run:</h2>
                     <div className={styles.triggerField}>
                       <EditorLine
                         fragments={doc.trigger}

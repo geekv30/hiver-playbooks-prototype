@@ -292,7 +292,7 @@ export default function ChipRedesignPage() {
                   <span className={styles.dotOk} />
                   <span className={styles.contextNum}>02</span>
                   <span className={styles.contextBody}>
-                    {v.render({ brand: 'HubSpot', verb: 'Find contact', meta: 'by from_email', bucket: 'read', icon: SiHubspot })} so we can personalise the reply.
+                    {v.render({ brand: 'HubSpot', verb: 'Find contact', meta: 'by from_email', bucket: 'read', icon: SiHubspot })} so we can personalize the reply.
                   </span>
                 </div>
                 <div className={styles.contextRow}>

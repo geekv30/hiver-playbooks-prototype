@@ -36,7 +36,7 @@ export const ACTIONS: ActionDef[] = [
   { id: 'draft_reply',             name: 'Reply',                     desc: 'Save a draft for the agent to send',           meta: 'draft',                bucket: 'ticket',   iconKey: 'reply' },
   { id: 'send_reply',              name: 'Reply',                     desc: 'Send a reply immediately',                     meta: 'send',                 bucket: 'ticket',   iconKey: 'reply' },
   { id: 'assign',                  name: 'Assign',                    desc: 'Reassign to a user or queue',                  bucket: 'ticket',   iconKey: 'tag' },
-  { id: 'change_status',           name: 'Change status',             desc: 'Open / Pending / Closed / custom',             bucket: 'ticket',   iconKey: 'tag' },
+  { id: 'change_status',           name: 'Change status',             desc: 'Open / Pending / Closed / Custom',             bucket: 'ticket',   iconKey: 'tag' },
   { id: 'set_field',               name: 'Set custom field',          desc: 'Update a custom field value',                  bucket: 'ticket',   iconKey: 'tag' },
 
   // Touch the outside world (7)
@@ -46,7 +46,7 @@ export const ACTIONS: ActionDef[] = [
   { id: 'hubspot_update_contact',  name: 'HubSpot · Update contact',    desc: 'Update contact properties',                    bucket: 'external', connectorSlug: 'hubspot',    iconKey: 'hubspot' },
   { id: 'clickup_create_task',     name: 'ClickUp · Create task',       desc: 'Add a task to a list',                         bucket: 'external', connectorSlug: 'clickup',    iconKey: 'clickup' },
   { id: 'slack_send_message',      name: 'Slack · Send message',        desc: 'Post to a channel or DM',                      bucket: 'external', connectorSlug: 'slack',      iconKey: 'slack' },
-  { id: 'http',                    name: 'Generic HTTP',              desc: 'Custom endpoint, advanced users',              meta: 'advanced',             bucket: 'external', iconKey: 'http' },
+  { id: 'http',                    name: 'Generic HTTP',              desc: 'Call a custom HTTP endpoint',              meta: 'advanced',             bucket: 'external', iconKey: 'http' },
 
   // Loop in a human (1)
   { id: 'approval',                name: 'Approval',                  desc: 'Pause for human sign-off',                     meta: 'rich block',           bucket: 'human',    iconKey: 'approval' },
@@ -58,7 +58,7 @@ export const ACTIONS: ActionDef[] = [
 
   // Control flow & end (2)
   { id: 'condition',               name: 'Condition',                 desc: 'Branch on a plain-English expression',         meta: 'if / else if / else',  bucket: 'flow',     iconKey: 'condition' },
-  { id: 'end',                     name: 'End AOP',              desc: 'Stop here, no further steps run',              bucket: 'flow',     iconKey: 'end' },
+  { id: 'end',                     name: 'End AOP',              desc: 'Stop here; no further steps run',              bucket: 'flow',     iconKey: 'end' },
 ];
 
 export function actionsByBucket(bucket: ActionDef['bucket']): ActionDef[] {

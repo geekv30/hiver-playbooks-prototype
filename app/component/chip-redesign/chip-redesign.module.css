@@ -238,7 +238,7 @@
   font-weight: 600;
   color: var(--state-ok);
 }
-.notesList[data-tone="con"] li::before { content: '–'; color: var(--state-error); }
+.notesList[data-tone="con"] li::before { content: '-'; color: var(--state-error); }
 
 /* ===== Recommended block ===== */
 .recoBlock {
