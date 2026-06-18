@@ -34,6 +34,9 @@ import {
   actionBehavior,
   PickerOption,
 } from './paletteCatalog';
+import KnowledgeHubMenu from './KnowledgeHubMenu';
+import { SearchIcon } from '@/components/icons/ui/Search';
+import type { SourceTypeId } from '@/data/knowledgeSources';
 import styles from './CommandPalette.module.css';
 
 type IconCmp = ComponentType<SVGProps<SVGSVGElement>>;
@@ -142,6 +145,7 @@ export default function CommandPalette({
           : null,
   );
   const [picked, setPicked] = useState<Set<string>>(new Set(initialPicked ?? [])); // pick-many state
+  const [hubType, setHubType] = useState<SourceTypeId | 'all'>('all'); // Knowledge Hub: type shown in the right column
   // After a fresh connect, briefly "load" the connector's actions before showing them.
   const [toolsLoading, setToolsLoading] = useState(connectorPick?.loading === true);
   useEffect(() => {
@@ -161,6 +165,20 @@ export default function CommandPalette({
   const behavior = drill?.type === 'action' ? actionBehavior(drill.id) : null;
   const isInputPage = behavior?.mode === 'input';
   const isPickMany = behavior?.mode === 'pick-many';
+  // The Search action opens the Knowledge Hub as a two-column menu (types | sources),
+  // not the flat pick-many list - though it stays a pick-many under the hood (its
+  // picked sources commit + reconfigure exactly like any picker).
+  const isSearchHub = drill?.type === 'action' && drill.id === 'kb_search';
+
+  // Toggle one source in the Knowledge Hub menu (the menu owns its own rendering,
+  // so it toggles the shared pick-many state directly).
+  const togglePicked = (id: string) =>
+    setPicked((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   // Commit a pick-many page: insert one chip whose meta lists the picked labels.
   const confirmMany = () => {
@@ -194,6 +212,7 @@ export default function CommandPalette({
 
     // --- Action page (pick-one / pick-many / input) --------------------------
     if (drill?.type === 'action' && behavior && behavior.mode !== 'insert') {
+      if (drill.id === 'kb_search') return []; // rendered as the Knowledge Hub menu, not flat rows
       if (behavior.mode === 'input') return []; // rendered separately, not as rows
       const opts = behavior.options.filter((o) =>
         q ? (o.label + ' ' + (o.sub ?? '')).toLowerCase().includes(q) : true,
@@ -347,6 +366,7 @@ export default function CommandPalette({
     setDir('fwd');
     setQuery('');
     setPicked(new Set());
+    if (id === 'kb_search') setHubType('all');
     setDrill({ type: 'action', id });
   }
 
@@ -397,6 +417,8 @@ export default function CommandPalette({
       confirmConnector(); // commits the picked actions back to the tag
     } else if (drill?.type === 'action' && behavior?.mode === 'pick-many' && picked.size > 0) {
       confirmMany(); // inserts → parent unmounts the palette
+    } else if (isSearchHub) {
+      onSelect('kb_search', 'All sources'); // Search defaults to all sources when none are picked
     } else {
       onClose();
     }
@@ -444,7 +466,7 @@ export default function CommandPalette({
   // Position the popover. Anchor is visual-viewport coords; this popover is fixed
   // inside the zoomed .app-scale, so CSS left/top live in layout px (= visual / zoom).
   // SSR-safe: only touches window/document on the client and when fixed.
-  const width = 324;
+  const width = isSearchHub ? 560 : 324;
   let left = 0;
   let top = 0;
   if (!presentation && typeof window !== 'undefined') {
@@ -599,7 +621,25 @@ export default function CommandPalette({
         />
       </div>
 
-      {/* Results card */}
+      {/* Results card - or, for Search, the Knowledge Hub two-column menu (types | sources) */}
+      {isSearchHub ? (
+        <div className={styles.hubCard}>
+          <button type="button" className={styles.pageHead} onClick={goBack}>
+            <RiArrowLeftSLine className={styles.pageHeadBack} aria-hidden />
+            <span className={styles.pageHeadIco}>
+              <SearchIcon />
+            </span>
+            <span className={styles.pageHeadTitle}>{pageTitle}</span>
+          </button>
+          <KnowledgeHubMenu
+            picked={picked}
+            onToggle={togglePicked}
+            query={query}
+            hubType={hubType}
+            setHubType={setHubType}
+          />
+        </div>
+      ) : (
       <div className={styles.card} ref={listRef}>
         <div className={styles.page} data-dir={dir ?? undefined} key={pageKey}>
           {drill && (
@@ -707,10 +747,23 @@ export default function CommandPalette({
             ))}
         </div>
       </div>
+      )}
 
       {/* Footer hints */}
       <div className={styles.footer}>
-        {isInputPage ? (
+        {isSearchHub ? (
+          <>
+            <span className={styles.hubSummary}>
+              {picked.size === 0
+                ? 'Searching all sources'
+                : `Searching ${picked.size} ${picked.size === 1 ? 'source' : 'sources'}`}
+            </span>
+            <span className={styles.hint}>
+              <kbd className={`${styles.cap} ${styles.capWide}`}>esc</kbd>
+              save &amp; close
+            </span>
+          </>
+        ) : isInputPage ? (
           <>
             <span className={styles.hint}>
               <kbd className={styles.cap}>

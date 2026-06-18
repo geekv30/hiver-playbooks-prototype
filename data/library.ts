@@ -25,7 +25,7 @@ export const ACTIONS: ActionDef[] = [
   { id: 'hubspot_get_ticket',      name: 'HubSpot · Get ticket',        desc: 'Look up a support ticket',                     bucket: 'read',     connectorSlug: 'hubspot',    iconKey: 'hubspot' },
   { id: 'salesforce_get_account',  name: 'Salesforce · Get account',    desc: 'Look up an account by name',                   bucket: 'read',     connectorSlug: 'salesforce', iconKey: 'salesforce' },
   { id: 'clickup_get_task',        name: 'ClickUp · Get task',          desc: 'Look up a task by ID',                         bucket: 'read',     connectorSlug: 'clickup',    iconKey: 'clickup' },
-  { id: 'kb_search',               name: 'Search knowledge',          desc: 'Find articles in the KB',                      meta: 'Help center',          bucket: 'read',     iconKey: 'search' },
+  { id: 'kb_search',               name: 'Search Knowledge Hub',      desc: 'Search across your Knowledge Hub sources',     bucket: 'read',     iconKey: 'search' },
   { id: 'summarize',               name: 'Summarize',                 desc: 'One-paragraph summary of the thread',          meta: 'this conversation',    bucket: 'read',     iconKey: 'note' },
 
   // Touch the ticket (7)
