@@ -95,7 +95,7 @@ export const STARTERS: StarterSpec[] = [
     steps: [
       { text: 'Pull out the invoice number, the amount, and what they are asking.' },
       { before: 'Look up the customer in ', action: 'hubspot_get_contact', after: '.' },
-      { before: 'Search the ', action: 'kb_search', meta: 'Billing', after: ' for the relevant policy.' },
+      { action: 'kb_search', meta: 'Billing', after: ' for the relevant policy.' },
     ],
     condition: {
       intro: 'Then draft the right reply:',
@@ -130,7 +130,7 @@ export const STARTERS: StarterSpec[] = [
     trigger: 'When a common how-to question comes in.',
     steps: [
       { text: 'Pull out the question and the product area.' },
-      { before: 'Search the ', action: 'kb_search', meta: 'Help center', after: ' for a matching article.' },
+      { action: 'kb_search', meta: 'Help center', after: ' for a matching article.' },
       { action: 'draft_reply', after: ' from the matching article, in a tone that matches the customer.' },
       { before: 'Then ', action: 'approval', after: ' so a teammate reviews it before it sends.' },
     ],
@@ -201,7 +201,7 @@ export function buildScaffoldDoc(opts: { text?: string; fileName?: string }): Ed
   const title = opts.fileName ? titleFromFileName(opts.fileName) : 'Untitled AOP';
   const steps: Step[] = [
     { id: newId('cs-step'), body: normalizeLine([txt('Pull out the key details from the email.')]) },
-    { id: newId('cs-step'), body: normalizeLine([txt('Search the '), makeChip('kb_search', 'Help center'), txt(' for relevant context.')]) },
+    { id: newId('cs-step'), body: normalizeLine([makeChip('kb_search', 'Help center'), txt(' for relevant context.')]) },
     { id: newId('cs-step'), body: normalizeLine([makeChip('draft_reply'), txt(' for the agent to review and send.')]) },
   ];
   return {

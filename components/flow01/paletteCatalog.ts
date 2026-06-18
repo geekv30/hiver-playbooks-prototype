@@ -2,6 +2,7 @@ import type { ConnectorSlug } from '@/types/playbook';
 import { ACTIONS } from '@/data/library';
 import { CONNECTOR_META } from '@/data/connectors';
 import { DEFAULT_REFS } from '@/data/refs';
+import { KB_SOURCES } from '@/data/knowledgeSources';
 
 // The command-palette catalog (Figma 283:28427). Two root groups: Actions +
 // Connectors. Connectors drill into their verbs; parameterized actions drill
@@ -21,7 +22,7 @@ export const PALETTE_ACTIONS: PaletteAction[] = [
   { id: 'wait', label: 'wait' },
   { id: 'tag', label: 'Add a tag' },
   { id: REFERENCE_ID, label: 'Reference' },
-  { id: 'kb_search', label: 'Search' },
+  { id: 'kb_search', label: 'Search Knowledge Hub' },
   { id: 'condition', label: 'Condition' },
   { id: 'ai_extract', label: 'AI Extract' },
   { id: 'summarize', label: 'Summarize' },
@@ -83,6 +84,8 @@ export interface PickerOption {
   label: string;
   /** secondary line (an assignee's role, a field's type). */
   sub?: string;
+  /** grouping key (e.g. a knowledge-source TYPE), for pickers that section their rows. */
+  group?: string;
 }
 
 export type ActionBehavior =
@@ -132,6 +135,17 @@ export const SEED_FIELDS: PickerOption[] = [
   { id: 'due-date', label: 'Due date', sub: 'Date' },
 ];
 
+// Knowledge Hub sources as picker options. Built from the single KB_SOURCES seed
+// (data/knowledgeSources) so the picker, the commit value, and the reconfigure
+// round-trip all share one source of truth. `group` carries the source TYPE so
+// the picker can section + icon its rows.
+export const SEED_KB_SOURCES: PickerOption[] = KB_SOURCES.map((s) => ({
+  id: s.id,
+  label: s.name,
+  sub: s.sub,
+  group: s.type,
+}));
+
 export const WAIT_PRESETS: PickerOption[] = [
   { id: '30m', label: '30 minutes' },
   { id: '1h', label: '1 hour' },
@@ -155,7 +169,7 @@ export const ACTION_BEHAVIOR: Record<string, ActionBehavior> = {
   change_status: { mode: 'pick-one', title: 'Set status', placeholder: 'Search statuses...', options: SEED_STATUSES },
   set_field: { mode: 'pick-one', title: 'Set a custom field', placeholder: 'Search fields...', options: SEED_FIELDS },
   wait: { mode: 'pick-one', title: 'Wait for', placeholder: 'Search durations...', options: WAIT_PRESETS },
-  kb_search: { mode: 'input', title: 'Search the knowledge base', placeholder: 'What should it look for?', quote: true },
+  kb_search: { mode: 'pick-many', title: 'Search the Knowledge Hub', placeholder: 'Search sources...', options: SEED_KB_SOURCES, verb: 'Search' },
   [REFERENCE_ID]: { mode: 'pick-one', title: 'Insert a reference', placeholder: 'Search fields & step outputs...', options: REFERENCE_OPTIONS },
 };
 

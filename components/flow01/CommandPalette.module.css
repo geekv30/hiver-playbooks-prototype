@@ -393,3 +393,107 @@
   width: 20px;
   height: 20px;
 }
+
+/* --- Knowledge Hub menu (Search action) ----------------------------------- */
+/* A white card like .card, but holding a back header + a two-column menu: the
+   source TYPES on the left, the sources for the chosen type on the right. */
+.hubCard {
+  flex: 1 1 auto;
+  min-height: 0;
+  background: #fff;
+  border-radius: 7px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.01), 0 1px 1.5px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+.hubColumns {
+  display: flex;
+  height: 322px;
+  border-top: 1px solid var(--hairline-soft);
+}
+.hubNav {
+  flex: none;
+  width: 162px;
+  padding: 6px;
+  border-right: 1px solid var(--hairline-soft);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.hubNavRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font);
+}
+.hubNavRow:hover {
+  background: var(--surface-soft);
+}
+.hubNavRowOn {
+  background: var(--surface-soft);
+}
+.hubNavName {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hubNavRowOn .hubNavName {
+  color: var(--ink);
+}
+.hubNavCount {
+  flex: none;
+  font-size: 11px;
+  color: var(--muted-soft);
+  font-variant-numeric: tabular-nums;
+}
+.hubBody {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 4px 4px 8px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+/* Hub source rows reuse .row but are mouse-driven (no JS active state), so they
+   need their own hover. Scoped to .hubBody so palette rows are untouched. */
+.hubBody .row:hover {
+  background: var(--surface-soft);
+}
+.hubGroup {
+  padding-top: 2px;
+}
+.hubGroupHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 10px 3px;
+}
+.hubGroupName {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.hubGroupCount {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--muted-soft);
+  font-variant-numeric: tabular-nums;
+}
+.hubSummary {
+  margin-right: auto;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}

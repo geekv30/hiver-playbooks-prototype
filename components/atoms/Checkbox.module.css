@@ -12,6 +12,11 @@
   padding: 0;
   color: #fff;
   cursor: pointer;
+  /* Hard square: never let a flex/grid parent (e.g. a tall two-line picker row)
+     stretch the box. flex:none + a locked aspect ratio keep it 1:1 at any height. */
+  flex: none;
+  box-sizing: border-box;
+  aspect-ratio: 1 / 1;
   transition: background var(--d-hover) var(--ease-snap), border-color var(--d-hover) var(--ease-snap);
 }
 .box svg {

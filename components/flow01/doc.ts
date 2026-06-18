@@ -146,7 +146,6 @@ export function exampleDoc(): EditorDoc {
       {
         id: 'ex-s4',
         body: normalizeLine([
-          txt('Search the developer KB '),
           exChip('ex-c4', 'kb_search', 'Engg-docs'),
           txt(' for the error code and a known fix.'),
         ]),
