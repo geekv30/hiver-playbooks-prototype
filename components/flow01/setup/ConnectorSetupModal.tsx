@@ -229,7 +229,7 @@ export default function ConnectorSetupModal({ connector, onConnected, onClose }:
                 <circle className={styles.checkCircle} cx="26" cy="26" r="24" />
                 <path className={styles.checkMark} d="M15 27 l7.5 7.5 L37 19" />
               </svg>
-              <h2 className={styles.successTitle}>You&apos;re Connected!</h2>
+              <h2 className={styles.successTitle}>You&apos;re connected!</h2>
               <p className={styles.successSub}>
                 Hiver is now authorized to read from {meta.fakeAuthedLabel}.
               </p>

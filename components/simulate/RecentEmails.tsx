@@ -81,7 +81,7 @@ export default function RecentEmails({ onExit }: Props) {
             options={mailboxOptions}
             value={mailbox}
             onChange={setMailbox}
-            placeholder="Select SM"
+            placeholder="Select a shared mailbox"
             ariaLabel="Select a shared mailbox"
           />
         </div>

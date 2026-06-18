@@ -824,7 +824,7 @@ export default function ComponentLibrary() {
             <EnableModalDemo />
           </Block>
 
-          <Block name="ConnectorSetupModal" imp="flow01/setup/ConnectorSetupModal" desc="The /connector-setup connect flow - intro tools, paste a token, You're connected. Resizes between phases.">
+          <Block name="ConnectorSetupModal" imp="flow01/setup/ConnectorSetupModal" desc="The /connector-setup connect flow - intro tools, paste a token, then you're connected. Resizes between phases.">
             <div className={styles.modalStage} style={{ height: 440 }}>
               <ConnectorSetupModal connector="shopify" onConnected={() => {}} onClose={() => {}} />
             </div>
