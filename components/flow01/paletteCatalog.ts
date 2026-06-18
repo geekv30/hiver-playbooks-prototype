@@ -169,7 +169,7 @@ export const ACTION_BEHAVIOR: Record<string, ActionBehavior> = {
   change_status: { mode: 'pick-one', title: 'Set status', placeholder: 'Search statuses...', options: SEED_STATUSES },
   set_field: { mode: 'pick-one', title: 'Set a custom field', placeholder: 'Search fields...', options: SEED_FIELDS },
   wait: { mode: 'pick-one', title: 'Wait for', placeholder: 'Search durations...', options: WAIT_PRESETS },
-  kb_search: { mode: 'pick-many', title: 'Search the Knowledge Hub', placeholder: 'Search sources...', options: SEED_KB_SOURCES, verb: 'Search' },
+  kb_search: { mode: 'pick-many', title: 'Knowledge Hub', placeholder: 'Search sources...', options: SEED_KB_SOURCES, verb: 'Search' },
   [REFERENCE_ID]: { mode: 'pick-one', title: 'Insert a reference', placeholder: 'Search fields & step outputs...', options: REFERENCE_OPTIONS },
 };
 

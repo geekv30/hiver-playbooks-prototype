@@ -35,7 +35,6 @@ import {
   PickerOption,
 } from './paletteCatalog';
 import KnowledgeHubMenu from './KnowledgeHubMenu';
-import { SearchIcon } from '@/components/icons/ui/Search';
 import type { SourceTypeId } from '@/data/knowledgeSources';
 import styles from './CommandPalette.module.css';
 
@@ -626,9 +625,11 @@ export default function CommandPalette({
         <div className={styles.hubCard}>
           <button type="button" className={styles.pageHead} onClick={goBack}>
             <RiArrowLeftSLine className={styles.pageHeadBack} aria-hidden />
-            <span className={styles.pageHeadIco}>
-              <SearchIcon />
-            </span>
+            {PageIcon && (
+              <span className={styles.pageHeadIco}>
+                <PageIcon />
+              </span>
+            )}
             <span className={styles.pageHeadTitle}>{pageTitle}</span>
           </button>
           <KnowledgeHubMenu
