@@ -30,6 +30,10 @@ export interface Chip {
   status: ChipStatus;
   config: ChipConfig;
   outputRefId?: string;
+  /** Per-action approval gate: at runtime the AOP pauses on this action until a
+   *  human approves it. A lightweight complement to the standalone Approval
+   *  action - any action can be gated. Shown at rest as a purple tint on the chip. */
+  requiresApproval?: boolean;
 }
 
 export type Fragment =

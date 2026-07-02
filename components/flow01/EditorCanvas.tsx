@@ -228,12 +228,6 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
     null,
   );
   const [focusReq, setFocusReq] = useState<FocusReq | null>(null);
-  // The step whose caret is active. The "@ for actions" pill anchors to this line
-  // and stays put while the user types; we only update it when a step gains focus
-  // (we do NOT reset it from the trigger / condition lines), so the pill stays
-  // "fixed" until the caret enters another step. null = no step focused yet
-  // (initial load) -> the pill rests under the last step.
-  const [activeStepId, setActiveStepId] = useState<string | null>(null);
   // Step reorder (drag the row handle) + the row 3-dot menu (Figma 647:40811).
   // `drag` = the step being dragged; `dropIdx` = the gap it would drop into (0..N);
   // `menuStepId` = the step whose kebab menu is open. The row chrome (handle +
@@ -1098,17 +1092,15 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
   // The floating Simulate panel (non-companion routes; the toolbar toggle).
   const toggleSimulate = () => setSimOpen((o) => !o);
 
-  // Which single step shows the "@ for actions" pill. It anchors to the step line
-  // the caret is in and STAYS there as the user types (it does not vanish when the
-  // line gains content); it moves only when the caret enters a different step line.
-  // When no step has been focused (initial load) or the caret is elsewhere (the
-  // trigger / a condition line), it rests under the last step - the natural place
-  // to add the next action. Never more than one.
-  const stepIds = doc.steps.filter((s) => !isCondition(s)).map((s) => s.id);
-  const bubbleStepId =
-    activeStepId && stepIds.includes(activeStepId)
-      ? activeStepId
-      : (stepIds[stepIds.length - 1] ?? null);
+  // Which single step shows the "@ for actions" pill: the LAST plain step, and
+  // only while it is still EMPTY (a fresh line). Pre-written lines never carry it
+  // (the placeholder teaches '@' on any other empty line). Anchoring only to the
+  // last step means the floating pill (.hintFloat - absolute, zero layout space)
+  // has nothing below it but the doc's bottom padding, so it can never overlap a
+  // following step and never shifts anything.
+  const plainSteps = doc.steps.filter((s) => !isCondition(s));
+  const lastStep = plainSteps[plainSteps.length - 1];
+  const bubbleStepId = lastStep && !stepHasContent(lastStep) ? lastStep.id : null;
 
   return (
     <UnauthedConnectorsContext.Provider value={unauthedConnectors}>
@@ -1346,13 +1338,11 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
                     }
 
                     const t: LineTarget = { kind: 'step', id: step.id };
-                    // Returns [stepRow, hintRow?] - React flattens arrays from map.
-                    // The "@ for actions" pill (Figma 647:40172) follows ONLY the active
-                    // line (bubbleStepId) - never every empty line. It's its OWN in-flow
-                    // row beneath the step (not inside it) so it reserves its space: the
-                    // step number stays aligned to the placeholder and the pill never
-                    // overlaps a following step. The hint row pads left by the gutter
-                    // width to sit on the content rail (under the placeholder).
+                    // The "@ for actions" pill (Figma 647:40172) shows only under the
+                    // last, still-empty step (bubbleStepId). It lives INSIDE the row li
+                    // but FLOATS below it (.hintFloat: absolute, out of flow), so it
+                    // takes no layout space - and being last-only, nothing is below it
+                    // to overlap.
                     return [
                       dropBefore,
                       <li
@@ -1376,18 +1366,17 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
                             onRequestPalette={openPalette(t)}
                             onChipConfig={openChipEdit(t)}
                             autoFocus={focusFor(`step:${step.id}`)}
-                            onFocus={() => setActiveStepId(step.id)}
                             ariaLabel={`Step ${i + 1}`}
                           />
                         </div>
                         {renderRowMenu(step.id, i)}
+                        {step.id === bubbleStepId && !drag && (
+                          <ActionHint
+                            className={styles.hintFloat}
+                            onClick={(e) => openActionsFromPlus(t, e.currentTarget)}
+                          />
+                        )}
                       </li>,
-                      // The "@ for actions" hint is hidden while a drag is in progress.
-                      step.id === bubbleStepId && !drag ? (
-                        <li key={`${step.id}-hint`} className={styles.hintRow}>
-                          <ActionHint onClick={(e) => openActionsFromPlus(t, e.currentTarget)} />
-                        </li>
-                      ) : null,
                     ];
                   })}
                   {drag && dropIdx === doc.steps.length && (

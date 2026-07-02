@@ -11,6 +11,7 @@ import {
 import type { Fragment, ConnectorSlug } from '@/types/playbook';
 import { findAction } from '@/data/library';
 import Chip from '@/components/atoms/Chip';
+import { ShieldUserIcon } from '@/components/icons/ui';
 import { useUnauthedConnectors } from './connectorAuth';
 import { txt, PENDING_ACTION } from './doc';
 import { actionBehavior } from './paletteCatalog';
@@ -258,6 +259,25 @@ export default function EditorLine({
     [fragments, isEmpty, onChange, onEnter, onBackspaceEmpty, onRequestPalette, noActions, readDom],
   );
 
+  // Chip controls reuse the existing onChange path (same as Backspace-delete):
+  // remove the chip (by id, from the trailing x ON the chip), or toggle its
+  // per-action approval gate (the separate shield control).
+  const removeChipById = useCallback(
+    (chipId: string) => onChange(fragments.filter((fr) => !(fr.kind === 'chip' && fr.chip.id === chipId))),
+    [fragments, onChange],
+  );
+  const toggleApproval = useCallback(
+    (index: number) =>
+      onChange(
+        fragments.map((fr, idx) =>
+          idx === index && fr.kind === 'chip'
+            ? { ...fr, chip: { ...fr.chip, requiresApproval: !fr.chip.requiresApproval } }
+            : fr,
+        ),
+      ),
+    [fragments, onChange],
+  );
+
   return (
     <div
       ref={rootRef}
@@ -298,11 +318,26 @@ export default function EditorLine({
         const isLead = i === 1 && head?.kind === 'text' && head.text === '';
         const isTrail =
           i === fragments.length - 2 && tail?.kind === 'text' && tail.text === '';
-        const tokenCls = [styles.token, isLead ? styles.tokenLead : '', isTrail ? styles.tokenTrail : '']
+        // A real, configured action chip carries the hover controls (approval + remove).
+        const isActionChip = f.kind === 'chip' && f.chip.actionId !== PENDING_ACTION;
+        const tokenCls = [
+          styles.token,
+          isLead ? styles.tokenLead : '',
+          isTrail ? styles.tokenTrail : '',
+          isActionChip ? styles.chipToken : '',
+        ]
           .filter(Boolean)
           .join(' ');
         return (
-          <span key={`${sig}:${i}`} className={tokenCls} contentEditable={false}>
+          <span
+            key={`${sig}:${i}`}
+            className={tokenCls}
+            contentEditable={false}
+            // Hover zone for the chip's controls: while the cursor is anywhere in
+            // it (chip OR the floating approval button) the chip's remove-x stays
+            // expanded, so the button never shifts mid-travel (Chip.module.css).
+            data-chip-zone={isActionChip || undefined}
+          >
             {f.kind === 'chip' ? (
               f.chip.actionId === PENDING_ACTION ? (
                 <Chip mode="placeholder" chip={f.chip} />
@@ -319,12 +354,31 @@ export default function EditorLine({
                       ? onChipConfig
                       : undefined
                   }
+                  onRemove={removeChipById}
                 />
               )
             ) : f.kind === 'ref' ? (
               <Chip mode="ref" label={f.refPath} />
             ) : (
               <code className={styles.code}>{f.code}</code>
+            )}
+            {isActionChip && f.kind === 'chip' && (
+              <span className={styles.chipControls} contentEditable={false}>
+                <button
+                  type="button"
+                  className={`${styles.chipApprove} ${f.chip.requiresApproval ? styles.chipApproveOn : ''}`}
+                  aria-pressed={f.chip.requiresApproval === true}
+                  aria-label={f.chip.requiresApproval ? 'Approval required - turn off' : 'Require approval before this runs'}
+                  data-tip={f.chip.requiresApproval ? 'Needs a teammate to approve before it runs' : 'Require a teammate to approve before this runs'}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleApproval(i);
+                  }}
+                >
+                  <ShieldUserIcon />
+                </button>
+              </span>
             )}
           </span>
         );
