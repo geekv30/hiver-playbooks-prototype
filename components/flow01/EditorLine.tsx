@@ -203,8 +203,11 @@ export default function EditorLine({
       const fragIndex = Number(targetSpan.dataset.frag ?? -1);
 
       // '@' opens the actions palette ('/' kept as an alias) - but only at a token
-      // boundary (line-start or after whitespace), so literal emails, URLs, dates
-      // and "and/or" stay literal text. References are reachable inside the palette.
+      // boundary, so literal emails, URLs and "and/or" stay literal text: mid-word
+      // (the char before the caret is a letter/digit, e.g. "…hiver@" while typing
+      // an address) the key types literally. Line start, whitespace AND
+      // punctuation all count as boundaries - a pre-written sentence ends in '.',
+      // and '@' at its end must still open the palette (Varun's 2026-07-02 bug).
       if (e.key === '@' || e.key === '/') {
         // Condition expressions are NL predicates - take the key literally.
         if (noActions) return;
@@ -212,7 +215,7 @@ export default function EditorLine({
         const raw = targetSpan.textContent ?? '';
         const offset = Math.max(0, caretOffsetIn(targetSpan) - leadingZws(raw));
         const text = stripZws(raw);
-        const atBoundary = offset === 0 || /\s/.test(text.charAt(offset - 1));
+        const atBoundary = offset === 0 || !/[A-Za-z0-9_]/.test(text.charAt(offset - 1));
         if (!atBoundary) return; // type the character literally
         e.preventDefault();
         const rect = (rootRef.current ?? targetSpan).getBoundingClientRect();
