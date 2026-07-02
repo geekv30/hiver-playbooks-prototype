@@ -1447,7 +1447,6 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
                 hasTrigger: lineHasContent(doc.trigger),
                 onAddTrigger: () => requestFocus('trigger', false),
                 onRunRecorded,
-                evalSummary: evalAgg,
               }}
             />
           )
@@ -1459,7 +1458,6 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
             hasTrigger={lineHasContent(doc.trigger)}
             onAddTrigger={() => requestFocus('trigger', false)}
             onRunRecorded={onRunRecorded}
-            evalSummary={evalAgg}
           />
         )}
       </div>
@@ -1527,7 +1525,6 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
         <EnableModal
           open
           mode={enableMode}
-          evalStatus={evalAgg}
           name={enableName}
           onNameChange={setEnableName}
           selected={enableMailboxes}

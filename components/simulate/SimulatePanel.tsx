@@ -13,8 +13,6 @@ import EmailList from './EmailList';
 import TestAllBar, { type TestAllMode } from './TestAllBar';
 import { useSimRun } from './useSimRun';
 import type { Verdict } from './RunOutcome';
-import EvalSummary from './EvalSummary';
-import type { EvalAggregate } from './useEvalState';
 import styles from './SimulatePanel.module.css';
 
 interface Props {
@@ -40,8 +38,6 @@ interface Props {
   /** Report a completed run's per-email statuses up to the canvas (the eval
    *  aggregate that makes Enable evaluation-aware). */
   onRunRecorded?: (statuses: SimStatusKind[]) => void;
-  /** The canvas-owned aggregate - renders the n-of-m summary strip on the menu. */
-  evalSummary?: EvalAggregate;
 }
 
 interface TopicResult {
@@ -77,7 +73,6 @@ export default function SimulatePanel({
   docked,
   onSubview,
   onRunRecorded,
-  evalSummary,
 }: Props) {
   const [view, setView] = useState<EvalView>('menu');
   const [openTopicId, setOpenTopicId] = useState<string | null>(null);
@@ -158,12 +153,7 @@ export default function SimulatePanel({
         )}
 
         <div className={styles.viewWrap} data-dir={dir ?? undefined} key={slideKey}>
-          {view === 'menu' && (
-            <>
-              {evalSummary && <EvalSummary agg={evalSummary} />}
-              <EvalMenu onOpen={openFlow} />
-            </>
-          )}
+          {view === 'menu' && <EvalMenu onOpen={openFlow} />}
 
           {view === 'recent' && <RecentEmails onExit={toMenu} onRunRecorded={onRunRecorded} />}
 
