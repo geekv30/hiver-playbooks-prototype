@@ -3,36 +3,8 @@
    Motion adapts transitions.dev (modal open/close, success-check, texts-reveal,
    card-resize) to our tokens. */
 
-.scrim {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  background: rgba(52, 60, 69, 0.32);
-  animation: scrimIn var(--d-enter) var(--ease-snap) both;
-}
-.scrim[data-closing] {
-  animation: scrimOut var(--d-exit) var(--ease-snap) both;
-}
-@keyframes scrimIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-@keyframes scrimOut {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-
+/* Chrome (scrim / card / motion / close mechanics) lives on the shared
+   ModalShell; this class only sizes and lays out THIS dialog. */
 .dialog {
   width: 100%;
   max-width: 560px;
@@ -43,43 +15,13 @@
   max-height: 860px;
   display: flex;
   flex-direction: column;
-  background: var(--card);
-  border-radius: 16px;
-  box-shadow:
-    0 1px 2px rgba(52, 60, 69, 0.06),
-    0 18px 48px rgba(52, 60, 69, 0.18);
   overflow: hidden;
-  /* a calm scale-up in, softer scale-down out (transitions.dev modal). */
-  animation: dialogIn var(--d-enter) var(--ease-snap) both;
   /* smoothly resize between the form and the success state. */
   transition: max-width var(--d-indicator) var(--ease-snap);
-}
-.scrim[data-closing] .dialog {
-  animation: dialogOut var(--d-exit) var(--ease-snap) both;
 }
 .dialog[data-phase='success'] {
   max-width: 440px;
   height: auto;
-}
-@keyframes dialogIn {
-  from {
-    opacity: 0;
-    transform: scale(0.965) translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-@keyframes dialogOut {
-  from {
-    opacity: 1;
-    transform: scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: scale(0.975);
-  }
 }
 
 /* ---- header ---- */
@@ -464,10 +406,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .scrim,
-  .scrim[data-closing],
-  .dialog,
-  .scrim[data-closing] .dialog,
   .banner,
   .successTitle,
   .successSub,

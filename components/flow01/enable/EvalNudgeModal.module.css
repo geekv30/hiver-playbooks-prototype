@@ -1,0 +1,123 @@
+/* EvalNudgeModal content - the chrome (scrim, card, motion, close mechanics)
+   lives on the shared ModalShell. Anatomy matches the app's modal register:
+   full-width illustration band, LEFT-aligned title + body, right-aligned
+   footer actions (like EnableModal / ConnectorSetup). */
+
+.dialog {
+  width: 100%;
+  max-width: 440px;
+  padding: 24px 24px 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The illustration band: a quiet canvas-tint panel the preview sits on. */
+.illuBand {
+  display: grid;
+  place-items: center;
+  padding: 14px 0 8px;
+  margin: 0 0 16px;
+  background: var(--canvas);
+  border: 1px solid var(--hairline-soft);
+  border-radius: 10px;
+}
+
+.close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    background var(--d-hover) var(--ease-snap),
+    color var(--d-hover) var(--ease-snap);
+}
+.close:hover {
+  background: var(--surface-soft);
+  color: var(--ink-soft);
+}
+.close svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* The miniature evaluation preview. Trace rows + verdict stagger in calmly
+   (opacity + tiny rise only); reduced-motion shows everything settled. */
+.illu {
+  width: 240px;
+  height: 132px;
+}
+.illuRow {
+  animation: rowIn 0.32s var(--ease-snap) both;
+  animation-delay: calc(0.12s + var(--i) * 0.14s);
+}
+.illuVerdict {
+  animation: rowIn 0.32s var(--ease-snap) both;
+  animation-delay: 0.6s;
+}
+@keyframes rowIn {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.title {
+  margin: 0 0 6px;
+  font-size: var(--fs-h5);
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.011em;
+}
+
+.body {
+  margin: 0 0 20px;
+  font-size: var(--fs-body);
+  line-height: 1.55;
+  color: var(--body);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+
+.ghost {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: var(--fs-body);
+  font-weight: 500;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    background var(--d-hover) var(--ease-snap),
+    color var(--d-hover) var(--ease-snap);
+}
+.ghost:hover {
+  background: var(--surface-soft);
+  color: var(--ink-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .illuRow,
+  .illuVerdict {
+    animation: none;
+  }
+}

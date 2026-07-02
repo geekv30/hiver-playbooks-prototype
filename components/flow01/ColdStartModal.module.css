@@ -3,73 +3,28 @@
    One saturated AI moment only: the gradient input focus ring. Everything else
    is the cool-neutral Linear/Attio register - hairlines + one subtle hover tint. */
 
-.scrim {
-  position: fixed;
-  inset: 0;
-  z-index: 95;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  background: rgba(52, 60, 69, 0.32); /* --ink at 32% */
+/* Chrome (scrim / card / motion / close mechanics) lives on the shared
+   ModalShell. This modal keeps its deliberate differences via the shell's
+   --modal-* vars: it sits ABOVE everything (z 95), blurs the canvas behind,
+   and wears the softer r-lg + hairline card. */
+.scrimCold {
+  --modal-z: 95;
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
-  animation: scrimIn var(--d-crossfade) var(--ease-snap);
-}
-@keyframes scrimIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
 }
 
 .dialog {
-  position: relative;
+  --modal-radius: var(--r-lg);
+  --modal-shadow:
+    0 1px 2px rgba(52, 60, 69, 0.08),
+    0 12px 40px rgba(52, 60, 69, 0.14);
   display: flex;
   flex-direction: column;
   width: 644px;
   max-width: calc(100vw - 48px);
   min-height: 408px;
   padding: 0;
-  background: var(--card);
   border: 1px solid var(--hairline);
-  border-radius: var(--r-lg);
-  box-shadow:
-    0 1px 2px rgba(52, 60, 69, 0.08),
-    0 12px 40px rgba(52, 60, 69, 0.14);
-  animation: dialogIn var(--d-enter) var(--ease-snap);
-}
-@keyframes dialogIn {
-  from {
-    opacity: 0;
-    transform: translateY(6px) scale(0.985);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* Graceful close - the exit mirrors the entry so dismiss is no longer a hard
-   cut. JS sets data-closing on the scrim, then unmounts after this finishes. */
-.scrim[data-closing] {
-  animation: scrimOut var(--d-crossfade) var(--ease-snap) forwards;
-}
-.scrim[data-closing] .dialog {
-  animation: dialogOut var(--d-exit) var(--ease-snap) forwards;
-}
-@keyframes scrimOut {
-  to {
-    opacity: 0;
-  }
-}
-@keyframes dialogOut {
-  to {
-    opacity: 0;
-    transform: translateY(4px) scale(0.99);
-  }
 }
 
 /* Close - top-right, quiet ghost. */
@@ -568,8 +523,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .scrim,
-  .dialog,
   .progressBar {
     animation: none;
   }

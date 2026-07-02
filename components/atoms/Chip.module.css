@@ -43,6 +43,18 @@
   border-color: var(--hairline-strong);
 }
 
+/* Gated: this action requires human approval before it runs. A calm human-purple
+   wash + border (same --state-running family as human/review states), carried at
+   rest so the gate is visible without hovering. Not a chunky stroke - tint + 1px. */
+.chipGated {
+  background: rgba(124, 58, 237, 0.06);
+  border-color: rgba(124, 58, 237, 0.3);
+}
+.chipGated:hover {
+  background: rgba(124, 58, 237, 0.1);
+  border-color: rgba(124, 58, 237, 0.42);
+}
+
 /* Placeholder variant ("@ action") - a uniform DASHED hairline (not the beveled
    solid stroke) while the action is still being chosen/configured (Figma
    647:41076). Gray-3 Medium text; no hover darkening (it's transient). */
@@ -210,4 +222,47 @@
 
 .chip.isDraft .chipVerb {
   color: var(--ink-soft);
+}
+
+/* Trailing remove-x - lives INSIDE the chip, revealed on hover. On the chip's own
+   opaque bg so nothing bleeds through; width animates from 0 so idle chips stay
+   compact (no reserved gap). Click removes the action (stopPropagation so it does
+   not also trigger the chip's reconfigure click). */
+.chipRemove {
+  display: inline-grid;
+  place-items: center;
+  width: 0;
+  height: 16px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  opacity: 0;
+  overflow: hidden;
+  flex: none;
+  transition:
+    width var(--t-fast),
+    opacity var(--t-fast),
+    margin-left var(--t-fast),
+    color var(--t-fast);
+}
+/* An ancestor can opt in with data-chip-zone (the editor's token wrapper, which
+   also holds the floating approval button) so the x stays expanded while the
+   cursor moves from the chip to that button - otherwise leaving the chip
+   collapses the x, the chip narrows, and the button shifts under the cursor. */
+.chip:hover .chipRemove,
+.chip:focus-within .chipRemove,
+:global([data-chip-zone]:hover) .chipRemove,
+:global([data-chip-zone]:focus-within) .chipRemove {
+  width: 16px;
+  opacity: 1;
+  margin-left: 1px;
+}
+.chipRemove svg {
+  width: 15px;
+  height: 15px;
+}
+.chipRemove:hover {
+  color: #cd3746;
 }

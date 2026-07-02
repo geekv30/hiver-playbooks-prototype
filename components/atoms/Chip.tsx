@@ -6,7 +6,7 @@ import { CONNECTOR_META } from '@/data/connectors';
 import { CONNECTOR_ICON } from '@/components/icons/connectors';
 import { ACTION_ICON } from '@/components/icons/ui';
 import { BranchIcon } from '@/components/icons/ui/Branch';
-import { RiAtLine } from 'react-icons/ri';
+import { RiAtLine, RiCloseLine } from 'react-icons/ri';
 import styles from './Chip.module.css';
 
 type ChipMode = 'action' | 'ref' | 'condition' | 'placeholder';
@@ -31,12 +31,15 @@ interface Props {
   subtle?: boolean;
   /** Condition mode only: makes the tag a button (the ELSE-IF / ELSE prompt opens a picker). */
   onConditionClick?: () => void;
+  /** Action mode: when set, a trailing remove-x reveals on hover (inside the chip)
+   *  and calls this with the chip id. Only wired in the editor, not in previews. */
+  onRemove?: (chipId: string) => void;
 }
 
 // The action-tag. One pill chrome, several variants (Figma component 241:16557):
 // action / connector verbs, @-references, condition branch labels, and the
 // connector setup-required state.
-export default function Chip({ chip, metaText, onClick, mode = 'action', label, setupNeeded, plain, subtle, onConditionClick }: Props) {
+export default function Chip({ chip, metaText, onClick, mode = 'action', label, setupNeeded, plain, subtle, onConditionClick, onRemove }: Props) {
   // Reference (@attri) - @ glyph + mono value.
   if (mode === 'ref') {
     return (
@@ -98,7 +101,9 @@ export default function Chip({ chip, metaText, onClick, mode = 'action', label, 
   if (!action) return null;
 
   const draft = chip.status === 'draft';
-  const cls = [styles.chip, draft ? styles.isDraft : '', plain ? styles.plain : ''].filter(Boolean).join(' ');
+  // Gated = requires human approval at runtime. Carried at rest as a purple tint.
+  const gated = chip.requiresApproval === true;
+  const cls = [styles.chip, draft ? styles.isDraft : '', gated ? styles.chipGated : '', plain ? styles.plain : ''].filter(Boolean).join(' ');
   const handleClick = onClick
     ? (e: ReactMouseEvent<HTMLSpanElement>) => onClick(chip.id, e.currentTarget)
     : undefined;
@@ -186,6 +191,20 @@ export default function Chip({ chip, metaText, onClick, mode = 'action', label, 
       )}
       {!setupNeeded && chip.status !== 'ok' && (
         <span className={`${styles.chipState} ${draft ? styles.draft : ''}`} aria-hidden="true" />
+      )}
+      {onRemove && (
+        <button
+          type="button"
+          className={styles.chipRemove}
+          aria-label="Remove this action"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove(chip.id);
+          }}
+        >
+          <RiCloseLine />
+        </button>
       )}
     </span>
   );

@@ -1,0 +1,73 @@
+/* ModalShell - the single scrim + dialog chrome. Per-modal looks override the
+   --modal-* vars from their dialogClassName / scrimClassName (vars, not class
+   overrides, so there is no specificity war). Sizing (width / height / padding)
+   always lives on the modal's own dialog class. */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--modal-z, 60);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(52, 60, 69, 0.32); /* --ink at 32% */
+  animation: scrimIn var(--d-enter) var(--ease-snap) both;
+}
+.scrim[data-closing] {
+  animation: scrimOut var(--d-exit) var(--ease-snap) both;
+}
+@keyframes scrimIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes scrimOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.dialog {
+  position: relative;
+  background: var(--card);
+  /* No border here: the `border:` shorthand + var() colour mis-compiles under
+     Turbopack (see Chip.module.css). A modal that wants one (ColdStart) adds
+     its own longhand-safe rule on its dialogClassName. */
+  border-radius: var(--modal-radius, 16px);
+  box-shadow: var(
+    --modal-shadow,
+    0 1px 2px rgba(52, 60, 69, 0.06),
+    0 18px 48px rgba(52, 60, 69, 0.18)
+  );
+  animation: dialogIn var(--d-enter) var(--ease-snap) both;
+}
+.scrim[data-closing] .dialog {
+  animation: dialogOut var(--d-exit) var(--ease-snap) both;
+}
+@keyframes dialogIn {
+  from {
+    opacity: 0;
+    transform: scale(0.965) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+@keyframes dialogOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.975);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scrim,
+  .dialog,
+  .scrim[data-closing],
+  .scrim[data-closing] .dialog {
+    animation: none;
+  }
+}

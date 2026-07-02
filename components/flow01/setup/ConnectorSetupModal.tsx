@@ -1,20 +1,13 @@
 'use client';
 
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type CSSProperties,
-  type MouseEvent as ReactMouseEvent,
-} from 'react';
+import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { RiCloseLine, RiInformationLine, RiHashtag } from 'react-icons/ri';
 import { LuRefreshCcw } from 'react-icons/lu';
 import { CONNECTOR_ICON } from '@/components/icons/connectors';
 import { CONNECTOR_META } from '@/data/connectors';
 import { connectorTools } from '../paletteCatalog';
 import Button from '@/components/atoms/Button';
+import ModalShell from '@/components/atoms/ModalShell';
 import type { ConnectorSlug } from '@/types/playbook';
 import styles from './ConnectorSetupModal.module.css';
 
@@ -43,50 +36,16 @@ export default function ConnectorSetupModal({ connector, onConnected, onClose }:
 
   const [phase, setPhase] = useState<Phase>('intro');
   const [token, setToken] = useState('');
-  const [closing, setClosing] = useState(false);
-  const downTargetRef = useRef<EventTarget | null>(null);
-  const dialogRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
   // Card-resize: keep the width fixed and animate the height to the new phase's
-  // content (so the modal grows/shrinks smoothly instead of jumping).
+  // content (so the modal grows/shrinks smoothly instead of jumping). The dialog
+  // node is the content's parent (ModalShell owns it; scrim/Esc/close live there).
   useLayoutEffect(() => {
-    const d = dialogRef.current;
     const c = contentRef.current;
+    const d = c?.parentElement;
     if (d && c) d.style.height = `${c.offsetHeight}px`;
   }, [phase]);
-
-  const requestClose = useCallback(() => {
-    if (closing) return;
-    const reduce =
-      typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce) {
-      onClose();
-      return;
-    }
-    setClosing(true);
-    window.setTimeout(onClose, 150);
-  }, [closing, onClose]);
-
-  // Esc closes from any phase.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        requestClose();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [requestClose]);
-
-  // Dismiss only on a clean scrim press (down + up on the scrim itself).
-  const onScrimDown = (e: ReactMouseEvent) => {
-    downTargetRef.current = e.target;
-  };
-  const onScrimUp = (e: ReactMouseEvent) => {
-    if (e.target === e.currentTarget && downTargetRef.current === e.currentTarget) requestClose();
-  };
 
   // Success "tools enabled" summary: a few verb labels + a remainder count.
   const toolSummary =
@@ -96,21 +55,13 @@ export default function ConnectorSetupModal({ connector, onConnected, onClose }:
       .join(', ') + (tools.length > 3 ? ` +${tools.length - 3}` : '');
 
   return (
-    <div
-      className={styles.scrim}
-      data-closing={closing || undefined}
-      onMouseDown={onScrimDown}
-      onMouseUp={onScrimUp}
+    <ModalShell
+      ariaLabel={`Connect ${meta.name}`}
+      onClose={onClose}
+      phase={phase}
+      dialogClassName={styles.dialog}
     >
-      <div
-        ref={dialogRef}
-        className={styles.dialog}
-        data-phase={phase}
-        role="dialog"
-        aria-modal="true"
-        aria-label={`Connect ${meta.name}`}
-        onMouseDown={(e) => e.stopPropagation()}
-      >
+      {(requestClose) => (
       <div ref={contentRef} className={styles.content}>
         {phase === 'intro' && (
           <>
@@ -259,7 +210,7 @@ export default function ConnectorSetupModal({ connector, onConnected, onClose }:
           </>
         )}
       </div>
-      </div>
-    </div>
+      )}
+    </ModalShell>
   );
 }

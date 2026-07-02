@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RiCloseLine, RiAddLine, RiArrowUpLine, RiUpload2Line } from 'react-icons/ri';
 import Button from '@/components/atoms/Button';
+import ModalShell from '@/components/atoms/ModalShell';
 import { SparkleIcon, ExtractIcon } from '@/components/icons/ui';
 import type { EditorDoc } from './doc';
 import { STARTERS, buildStarterDoc, buildScaffoldDoc } from './coldStart';
@@ -48,66 +49,21 @@ export default function ColdStartModal({ onGenerate, onDismiss }: Props) {
   const [dragOver, setDragOver] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  const dialogRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  // Records where a scrim press began, so we only dismiss on a clean scrim
-  // click (down + up on the scrim) - never when a drag-select ends there.
-  const downTargetRef = useRef<EventTarget | null>(null);
-
-  // Graceful close: run the exit animation, then unmount. Reduced-motion skips
-  // straight to dismiss (closing stays false, so the [data-closing] exit never runs).
-  const [closing, setClosing] = useState(false);
-  const requestClose = useCallback(() => {
-    if (closing) return; // a second Esc / scrim click can't queue a second dismiss
-    const reduce =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce) {
-      onDismiss();
-      return;
-    }
-    setClosing(true);
-    window.setTimeout(onDismiss, 150); // > --d-crossfade (140ms), the longest exit
-  }, [onDismiss, closing]);
 
   const canGenerate = text.trim().length > 0 || file != null;
 
-  // Focus the input on open.
+  // Focus the input on open. (Scrim/Esc/Tab-trap/close mechanics live on the
+  // shared ModalShell; only Cmd/Ctrl+Enter submit stays modal-specific.)
   useEffect(() => {
     taRef.current?.focus();
   }, []);
 
-  // Dialog-level keys: Esc closes, Cmd/Ctrl+Enter submits, and a minimal focus
-  // trap keeps Tab inside.
   const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      requestClose();
-      return;
-    }
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       e.preventDefault();
       startGenerate();
-      return;
-    }
-    if (e.key !== 'Tab') return;
-    const root = dialogRef.current;
-    if (!root) return;
-    const focusables = Array.from(
-      root.querySelectorAll<HTMLElement>(
-        'button, [href], input, textarea, [tabindex]:not([tabindex="-1"])',
-      ),
-    ).filter((el) => !el.hasAttribute('disabled') && el.offsetParent !== null);
-    if (focusables.length === 0) return;
-    const first = focusables[0]!;
-    const last = focusables[focusables.length - 1]!;
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
     }
   };
 
@@ -181,25 +137,16 @@ export default function ColdStartModal({ onGenerate, onDismiss }: Props) {
   };
 
   return (
-    <div
-      className={styles.scrim}
-      data-closing={closing || undefined}
-      onMouseDown={(e) => {
-        downTargetRef.current = e.target;
-      }}
-      onClick={(e) => {
-        if (downTargetRef.current === e.currentTarget && e.target === e.currentTarget)
-          requestClose();
-      }}
+    <ModalShell
+      ariaLabelledby="cs-title"
+      onClose={onDismiss}
+      scrimClassName={styles.scrimCold}
+      dialogClassName={styles.dialog}
       onKeyDown={onKeyDown}
+      exitMs={150}
     >
-      <div
-        ref={dialogRef}
-        className={styles.dialog}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="cs-title"
-      >
+      {(requestClose) => (
+      <>
         <button type="button" className={styles.close} aria-label="Close" onClick={requestClose}>
           <RiCloseLine />
         </button>
@@ -350,7 +297,8 @@ export default function ColdStartModal({ onGenerate, onDismiss }: Props) {
             Generate AOP
           </Button>
         </footer>
-      </div>
-    </div>
+      </>
+      )}
+    </ModalShell>
   );
 }

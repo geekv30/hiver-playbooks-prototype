@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { RiDraggable, RiMore2Fill } from 'react-icons/ri';
 import type { Fragment, ConnectorSlug } from '@/types/playbook';
+import type { SimStatusKind } from '@/data/simFixtures';
 import { findAction } from '@/data/library';
 import { UnauthedConnectorsContext } from './connectorAuth';
 import ConnectorSetupModal from './setup/ConnectorSetupModal';
@@ -23,6 +24,8 @@ import ConditionBlock from './condition/ConditionBlock';
 import ColdStartModal from './ColdStartModal';
 import ActionHint from './ActionHint';
 import EnableModal from './enable/EnableModal';
+import EvalNudgeModal from './enable/EvalNudgeModal';
+import { useEvalState } from '@/components/simulate/useEvalState';
 import SimulatePanel from '@/components/simulate/SimulatePanel';
 import { type CopilotMessage, type CopilotProposalData } from './copilot/CopilotPanel';
 import SidePanel, { type SideTab } from './copilot/SidePanel';
@@ -228,12 +231,6 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
     null,
   );
   const [focusReq, setFocusReq] = useState<FocusReq | null>(null);
-  // The step whose caret is active. The "@ for actions" pill anchors to this line
-  // and stays put while the user types; we only update it when a step gains focus
-  // (we do NOT reset it from the trigger / condition lines), so the pill stays
-  // "fixed" until the caret enters another step. null = no step focused yet
-  // (initial load) -> the pill rests under the last step.
-  const [activeStepId, setActiveStepId] = useState<string | null>(null);
   // Step reorder (drag the row handle) + the row 3-dot menu (Figma 647:40811).
   // `drag` = the step being dragged; `dropIdx` = the gap it would drop into (0..N);
   // `menuStepId` = the step whose kebab menu is open. The row chrome (handle +
@@ -263,6 +260,16 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
   const [enableMode, setEnableMode] = useState<null | 'commit' | 'manage'>(null);
   const [enableName, setEnableName] = useState('');
   const [enableMailboxes, setEnableMailboxes] = useState<string[]>([]);
+  // The pre-enable evaluation nudge (spec 2026-07-02). Only 'commit' mode
+  // nudges; 'manage' (the gear) never does. Always skippable.
+  const [nudge, setNudge] = useState<null | 'untested' | 'failures'>(null);
+  // Evaluation aggregate: accumulated run results + staleness vs the live doc.
+  // Feeds the eval summary strip and the evaluation-aware Enable.
+  const { agg: evalAgg, recordRun } = useEvalState(doc);
+  const onRunRecorded = useCallback(
+    (statuses: SimStatusKind[]) => recordRun(statuses, docRef.current),
+    [recordRun],
+  );
   // The cold-start "draft with AI" modal shows on a fresh, empty canvas (no
   // initialDoc); the pre-seeded /api-example demo skips it. See ColdStartPhase above.
   const [coldPhase, setColdPhase] = useState<ColdStartPhase>(initialDoc ? 'docked' : 'hero');
@@ -333,6 +340,13 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
     },
     [doc],
   );
+  // Enable click gate (spec 2026-07-02): never evaluated -> nudge; failures ->
+  // caution nudge; else straight to the Enable modal. Always skippable.
+  const requestEnable = useCallback(() => {
+    if (evalAgg.total === 0) setNudge('untested');
+    else if (evalAgg.failed > 0) setNudge('failures');
+    else openEnable('commit');
+  }, [evalAgg.total, evalAgg.failed, openEnable]);
   const confirmEnable = useCallback(() => {
     api.setTitle(enableName.trim() || 'Untitled AOP');
     api.setMailboxes(enableMailboxes);
@@ -1098,17 +1112,15 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
   // The floating Simulate panel (non-companion routes; the toolbar toggle).
   const toggleSimulate = () => setSimOpen((o) => !o);
 
-  // Which single step shows the "@ for actions" pill. It anchors to the step line
-  // the caret is in and STAYS there as the user types (it does not vanish when the
-  // line gains content); it moves only when the caret enters a different step line.
-  // When no step has been focused (initial load) or the caret is elsewhere (the
-  // trigger / a condition line), it rests under the last step - the natural place
-  // to add the next action. Never more than one.
-  const stepIds = doc.steps.filter((s) => !isCondition(s)).map((s) => s.id);
-  const bubbleStepId =
-    activeStepId && stepIds.includes(activeStepId)
-      ? activeStepId
-      : (stepIds[stepIds.length - 1] ?? null);
+  // Which single step shows the "@ for actions" pill: the LAST plain step, and
+  // only while it is still EMPTY (a fresh line). Pre-written lines never carry it
+  // (the placeholder teaches '@' on any other empty line). Anchoring only to the
+  // last step means the floating pill (.hintFloat - absolute, zero layout space)
+  // has nothing below it but the doc's bottom padding, so it can never overlap a
+  // following step and never shifts anything.
+  const plainSteps = doc.steps.filter((s) => !isCondition(s));
+  const lastStep = plainSteps[plainSteps.length - 1];
+  const bubbleStepId = lastStep && !stepHasContent(lastStep) ? lastStep.id : null;
 
   return (
     <UnauthedConnectorsContext.Provider value={unauthedConnectors}>
@@ -1124,7 +1136,7 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
         // Enable is muted+disabled until the AOP has a trigger AND a step
         // (Figma 647:39849); then it routes THROUGH the guardrails commit panel.
         canEnable={lineHasContent(doc.trigger) && doc.steps.some((s) => stepHasContent(s))}
-        onEnable={() => openEnable('commit')}
+        onEnable={requestEnable}
         onSettings={() => openEnable('manage')}
         onPause={pauseAop}
         onResume={resumeAop}
@@ -1346,13 +1358,11 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
                     }
 
                     const t: LineTarget = { kind: 'step', id: step.id };
-                    // Returns [stepRow, hintRow?] - React flattens arrays from map.
-                    // The "@ for actions" pill (Figma 647:40172) follows ONLY the active
-                    // line (bubbleStepId) - never every empty line. It's its OWN in-flow
-                    // row beneath the step (not inside it) so it reserves its space: the
-                    // step number stays aligned to the placeholder and the pill never
-                    // overlaps a following step. The hint row pads left by the gutter
-                    // width to sit on the content rail (under the placeholder).
+                    // The "@ for actions" pill (Figma 647:40172) shows only under the
+                    // last, still-empty step (bubbleStepId). It lives INSIDE the row li
+                    // but FLOATS below it (.hintFloat: absolute, out of flow), so it
+                    // takes no layout space - and being last-only, nothing is below it
+                    // to overlap.
                     return [
                       dropBefore,
                       <li
@@ -1376,18 +1386,17 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
                             onRequestPalette={openPalette(t)}
                             onChipConfig={openChipEdit(t)}
                             autoFocus={focusFor(`step:${step.id}`)}
-                            onFocus={() => setActiveStepId(step.id)}
                             ariaLabel={`Step ${i + 1}`}
                           />
                         </div>
                         {renderRowMenu(step.id, i)}
+                        {step.id === bubbleStepId && !drag && (
+                          <ActionHint
+                            className={styles.hintFloat}
+                            onClick={(e) => openActionsFromPlus(t, e.currentTarget)}
+                          />
+                        )}
                       </li>,
-                      // The "@ for actions" hint is hidden while a drag is in progress.
-                      step.id === bubbleStepId && !drag ? (
-                        <li key={`${step.id}-hint`} className={styles.hintRow}>
-                          <ActionHint onClick={(e) => openActionsFromPlus(t, e.currentTarget)} />
-                        </li>
-                      ) : null,
                     ];
                   })}
                   {drag && dropIdx === doc.steps.length && (
@@ -1437,6 +1446,7 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
                 hasScenarios: lineHasContent(doc.trigger),
                 hasTrigger: lineHasContent(doc.trigger),
                 onAddTrigger: () => requestFocus('trigger', false),
+                onRunRecorded,
               }}
             />
           )
@@ -1447,6 +1457,7 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
             hasScenarios={lineHasContent(doc.trigger)}
             hasTrigger={lineHasContent(doc.trigger)}
             onAddTrigger={() => requestFocus('trigger', false)}
+            onRunRecorded={onRunRecorded}
           />
         )}
       </div>
@@ -1490,6 +1501,23 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
         <ColdStartModal
           onGenerate={handleColdStartGenerate}
           onDismiss={handleColdStartDismiss}
+        />
+      )}
+
+      {nudge && (
+        <EvalNudgeModal
+          variant={nudge}
+          agg={evalAgg}
+          onClose={() => setNudge(null)}
+          onEvaluate={() => {
+            setNudge(null);
+            if (companions) setPanelTab('simulate');
+            else setSimOpen(true);
+          }}
+          onEnableAnyway={() => {
+            setNudge(null);
+            openEnable('commit');
+          }}
         />
       )}
 

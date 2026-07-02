@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { RiAddLine, RiSendPlaneFill, RiStopCircleLine, RiMailLine } from 'react-icons/ri';
-import type { SimEmail } from '@/data/simFixtures';
+import type { SimEmail, SimStatusKind } from '@/data/simFixtures';
 import { useSimRun } from './useSimRun';
 import RunTrace from './RunTrace';
 import StatusPill, { type PillStatus } from './StatusPill';
@@ -15,7 +15,12 @@ import styles from './CustomEval.module.css';
  * run returns to Send (compose a new one), not a stuck Stop. Reuses useSimRun +
  * RunTrace; the trace itself is the scripted fixture (per the current scope).
  */
-export default function CustomEval() {
+interface Props {
+  /** Report a completed run's statuses up to the canvas (the eval aggregate). */
+  onRunRecorded?: (statuses: SimStatusKind[]) => void;
+}
+
+export default function CustomEval({ onRunRecorded }: Props) {
   const [body, setBody] = useState('');
   const [sentBody, setSentBody] = useState<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -27,7 +32,7 @@ export default function CustomEval() {
         : [],
     [sentBody],
   );
-  const { phase, runs, start, stop } = useSimRun(emails);
+  const { phase, runs, start, stop } = useSimRun(emails, onRunRecorded);
   const run = runs['custom'];
   const running = phase === 'running';
   const hasResult = sentBody !== null && !!run && run.status !== 'idle';

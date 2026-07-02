@@ -2,58 +2,20 @@
    848:30953). Three phases share one dialog shell; motion + tokens match the other
    modals (EnableModal / ColdStartModal). */
 
-.scrim {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  background: rgba(52, 60, 69, 0.32);
-  animation: scrimIn var(--d-enter) var(--ease-snap) both;
-}
-.scrim[data-closing] {
-  animation: scrimOut var(--d-exit) var(--ease-snap) both;
-}
-@keyframes scrimIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@keyframes scrimOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
-}
-
+/* Chrome (scrim / card / motion / close mechanics) lives on the shared
+   ModalShell; this class only sizes THIS dialog. */
 .dialog {
-  position: relative;
   width: 100%;
   /* Fixed width across all phases; only the height animates (no drastic jump). */
   max-width: 540px;
-  background: var(--card);
-  border-radius: 16px;
-  box-shadow:
-    0 1px 2px rgba(52, 60, 69, 0.06),
-    0 18px 48px rgba(52, 60, 69, 0.18);
   overflow: hidden;
-  animation: dialogIn var(--d-enter) var(--ease-snap) both;
   /* Card-resize: the JS sets an explicit height per phase; this animates it. */
   transition: height var(--d-indicator, 260ms) var(--ease-snap);
-}
-.scrim[data-closing] .dialog {
-  animation: dialogOut var(--d-exit) var(--ease-snap) both;
 }
 /* The measured content column (header / body / footer). */
 .content {
   display: flex;
   flex-direction: column;
-}
-@keyframes dialogIn {
-  from { opacity: 0; transform: scale(0.965) translateY(6px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
-}
-@keyframes dialogOut {
-  from { opacity: 1; transform: scale(1); }
-  to { opacity: 0; transform: scale(0.975); }
 }
 
 /* Shared brand mark (connector icon at true brand color). */

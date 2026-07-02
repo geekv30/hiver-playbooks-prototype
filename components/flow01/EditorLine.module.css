@@ -60,3 +60,105 @@
   pointer-events: none;
   white-space: nowrap;
 }
+
+/* --- Approval control: a SINGLE control, separate from remove ----------------
+   Remove lives ON the chip (trailing x, see Chip.module.css). Approval is its own
+   distinct button floating just right of the chip on hover - opaque (no bleed),
+   properly sized so the shield is legible. */
+.chipToken {
+  position: relative;
+}
+.chipControls {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 6px;
+  display: inline-flex;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--d-hover) var(--ease-snap);
+  z-index: 30;
+}
+/* transparent bridge so hover survives the gap between chip and control */
+.chipControls::before {
+  content: '';
+  position: absolute;
+  left: -9px;
+  top: 0;
+  bottom: 0;
+  width: 9px;
+}
+.chipToken:hover .chipControls,
+.chipToken:focus-within .chipControls {
+  opacity: 1;
+  pointer-events: auto;
+}
+.chipApprove {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--hairline);
+  border-radius: 50%;
+  background: var(--card, #fff);
+  box-shadow: 0 2px 6px rgba(52, 60, 69, 0.13);
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    background var(--d-hover) var(--ease-snap),
+    color var(--d-hover) var(--ease-snap),
+    border-color var(--d-hover) var(--ease-snap);
+}
+.chipApprove:hover {
+  background: var(--surface-soft);
+  color: var(--ink-soft);
+  border-color: var(--hairline-strong);
+}
+.chipApprove:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.chipApprove svg {
+  width: 17px;
+  height: 17px;
+  display: block;
+}
+/* approval ON - opaque light purple (the --state-running human family) */
+.chipApproveOn {
+  background: #ede9fe;
+  color: var(--state-running);
+  border-color: rgba(124, 58, 237, 0.4);
+}
+.chipApproveOn:hover {
+  background: #ddd6fe;
+  color: var(--state-running);
+}
+/* designed tooltip - centered under the button, short open delay */
+.chipApprove::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(2px);
+  background: var(--ink);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity var(--d-hover) var(--ease-snap),
+    transform var(--d-hover) var(--ease-snap);
+  transition-delay: 0.25s;
+  z-index: 40;
+}
+.chipApprove:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}

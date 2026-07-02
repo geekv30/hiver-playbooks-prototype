@@ -255,15 +255,16 @@
   height: 14px;
 }
 
-/* Row that carries the shared <ActionHint> pill (its visual lives in
-   ActionHint.module.css). It's its own in-flow row in the steps list, beneath the
-   empty step it belongs to, so it reserves space (no overlap with a following
-   step) and never affects the step number's alignment. padding-left = the gutter
-   width so the pill's left edge sits on the content rail (under the placeholder);
-   padding-bottom gives the gap to the next row (Figma 647:40172). */
-.hintRow {
-  padding-left: 40px;
-  padding-bottom: 8px;
+/* The shared <ActionHint> pill (visual in ActionHint.module.css), FLOATED below
+   its anchor row: absolute so it takes no layout space and appearing/moving it
+   never shifts the steps beneath (it overlays; the pill's opaque card bg +
+   shadow carry the "floating" read). left = the 40px gutter so it sits on the
+   content rail (under the placeholder), same spot the old in-flow row put it. */
+.hintFloat {
+  position: absolute;
+  top: 100%;
+  left: 40px;
+  z-index: 25;
 }
 
 /* --- Step row chrome: drag handle + 3-dot menu (Figma 647:40811) ------------

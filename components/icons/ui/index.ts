@@ -23,6 +23,7 @@ export { ApprovalIcon } from './Approval';
 export { WaitIcon } from './Wait';
 export { EndIcon } from './End';
 export { HumanReviewIcon } from './HumanReview';
+export { ShieldUserIcon } from './ShieldUser';
 export { BranchIcon } from './Branch';
 
 // Nav icons (from canvas n-* symbols)
