@@ -1,43 +1,15 @@
-/* EvalNudgeModal - same scrim/dialog family as EnableModal (values mirrored
-   from EnableModal.module.css), sized down to a focused prompt. Calm fade +
-   slight rise, no morphs; reduced-motion drops the animation. */
-
-.scrim {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  background: rgba(52, 60, 69, 0.32);
-  animation: scrimIn var(--d-enter) var(--ease-snap) both;
-}
-@keyframes scrimIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+/* EvalNudgeModal content - the chrome (scrim, card, motion, close mechanics)
+   lives on the shared ModalShell. Centered composition per the researched
+   pattern: illustration -> title -> body -> actions. */
 
 .dialog {
-  position: relative;
   width: 100%;
-  max-width: 420px;
-  background: var(--card);
-  border-radius: 16px;
-  box-shadow:
-    0 1px 2px rgba(52, 60, 69, 0.06),
-    0 18px 48px rgba(52, 60, 69, 0.18);
-  padding: 28px 28px 24px;
-  animation: dialogIn var(--d-enter) var(--ease-snap) both;
-}
-@keyframes dialogIn {
-  from {
-    opacity: 0;
-    transform: scale(0.965) translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
+  max-width: 440px;
+  padding: 30px 32px 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 .close {
@@ -67,23 +39,30 @@
   height: 16px;
 }
 
-.icon {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: var(--info-subtle);
-  color: var(--accent);
-  margin-bottom: 14px;
+/* The miniature evaluation preview. Trace rows + verdict stagger in calmly
+   (opacity + tiny rise only); reduced-motion shows everything settled. */
+.illu {
+  width: 240px;
+  height: 132px;
+  margin: 2px 0 16px;
 }
-.icon[data-warn] {
-  color: #b7791f;
-  background: rgba(183, 121, 31, 0.08);
+.illuRow {
+  animation: rowIn 0.32s var(--ease-snap) both;
+  animation-delay: calc(0.12s + var(--i) * 0.14s);
 }
-.icon svg {
-  width: 20px;
-  height: 20px;
+.illuVerdict {
+  animation: rowIn 0.32s var(--ease-snap) both;
+  animation-delay: 0.6s;
+}
+@keyframes rowIn {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .title {
@@ -95,15 +74,16 @@
 }
 
 .body {
-  margin: 0 0 20px;
+  margin: 0 0 22px;
+  max-width: 350px;
   font-size: var(--fs-body);
-  line-height: 1.5;
+  line-height: 1.55;
   color: var(--body);
 }
 
 .actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   align-items: center;
   gap: 10px;
 }
@@ -128,8 +108,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .scrim,
-  .dialog {
+  .illuRow,
+  .illuVerdict {
     animation: none;
   }
 }

@@ -1,10 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { RiCloseLine, RiSearchLine, RiInformationLine } from 'react-icons/ri';
 import { SparkleIcon } from '@/components/icons/ui';
 import Checkbox from '@/components/atoms/Checkbox';
 import Button from '@/components/atoms/Button';
+import ModalShell from '@/components/atoms/ModalShell';
 import Spinner from '@/components/atoms/Spinner';
 import { MAILBOXES, mailboxName, mailboxList, mailboxSummary } from '@/data/mailboxes';
 import type { EvalAggregate } from '@/components/simulate/useEvalState';
@@ -82,76 +83,23 @@ export default function EnableModal({
   onConfirm,
   evalStatus,
 }: Props) {
-  const [closing, setClosing] = useState(false);
   const [phase, setPhase] = useState<Phase>('form');
   const [query, setQuery] = useState('');
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
-  const dialogRef = useRef<HTMLDivElement>(null);
-  const restoreFocusRef = useRef<HTMLElement | null>(null);
-  const downTargetRef = useRef<EventTarget | null>(null);
   const timers = useRef<number[]>([]);
 
-  // Reset transient state each time the modal opens; capture the element to
-  // restore focus to on close, and move focus into the dialog.
+  // Reset transient state each time the modal opens and move focus into the
+  // dialog. (Scrim/Esc/close mechanics + focus restore live on ModalShell.)
   useEffect(() => {
     if (!open) return;
-    restoreFocusRef.current = (document.activeElement as HTMLElement) ?? null;
     setPhase('form');
-    setClosing(false);
     setQuery('');
     setBannerDismissed(false);
     requestAnimationFrame(() => nameRef.current?.focus());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   useEffect(() => () => timers.current.forEach((t) => window.clearTimeout(t)), []);
-
-  const requestClose = useCallback(() => {
-    if (phase !== 'form' || closing) return; // never bail mid go-live anim; no re-entry
-    const restore = () => restoreFocusRef.current?.focus();
-    if (prefersReduced()) {
-      onClose();
-      restore();
-      return;
-    }
-    setClosing(true);
-    timers.current.push(
-      window.setTimeout(() => {
-        setClosing(false);
-        onClose();
-        restore();
-      }, 180),
-    );
-  }, [onClose, phase, closing]);
-
-  // Dialog keys: Esc closes; Tab is trapped inside the dialog (focus never escapes
-  // into the live editor behind the modal).
-  const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      requestClose();
-      return;
-    }
-    if (e.key !== 'Tab') return;
-    const root = dialogRef.current;
-    if (!root) return;
-    const f = Array.from(
-      root.querySelectorAll<HTMLElement>(
-        'button, input, textarea, [href], [tabindex]:not([tabindex="-1"])',
-      ),
-    ).filter((el) => !el.hasAttribute('disabled') && el.offsetParent !== null);
-    if (f.length === 0) return;
-    const first = f[0]!;
-    const last = f[f.length - 1]!;
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
-    }
-  };
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -195,26 +143,15 @@ export default function EnableModal({
       : 'Save changes';
 
   return (
-    <div
-      className={styles.scrim}
-      data-closing={closing || undefined}
-      onKeyDown={onKeyDown}
-      onMouseDown={(e) => {
-        downTargetRef.current = e.target;
-      }}
-      onMouseUp={(e) => {
-        if (downTargetRef.current === e.currentTarget && e.target === e.currentTarget)
-          requestClose();
-      }}
+    <ModalShell
+      ariaLabel={mode === 'commit' ? 'Enable AOP' : 'AOP settings'}
+      onClose={onClose}
+      locked={phase !== 'form'} /* never bail mid go-live anim */
+      phase={phase}
+      dialogClassName={styles.dialog}
     >
-      <div
-        ref={dialogRef}
-        className={styles.dialog}
-        role="dialog"
-        aria-modal="true"
-        aria-label={mode === 'commit' ? 'Enable AOP' : 'AOP settings'}
-        data-phase={phase}
-      >
+      {(requestClose) => (
+        <>
         {phase === 'success' ? (
           <SuccessView name={liveName} mailboxes={selected} />
         ) : (
@@ -341,7 +278,8 @@ export default function EnableModal({
             </footer>
           </>
         )}
-      </div>
-    </div>
+        </>
+      )}
+    </ModalShell>
   );
 }
