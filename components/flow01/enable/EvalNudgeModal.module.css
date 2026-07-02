@@ -1,0 +1,135 @@
+/* EvalNudgeModal - same scrim/dialog family as EnableModal (values mirrored
+   from EnableModal.module.css), sized down to a focused prompt. Calm fade +
+   slight rise, no morphs; reduced-motion drops the animation. */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(52, 60, 69, 0.32);
+  animation: scrimIn var(--d-enter) var(--ease-snap) both;
+}
+@keyframes scrimIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.dialog {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  background: var(--card);
+  border-radius: 16px;
+  box-shadow:
+    0 1px 2px rgba(52, 60, 69, 0.06),
+    0 18px 48px rgba(52, 60, 69, 0.18);
+  padding: 28px 28px 24px;
+  animation: dialogIn var(--d-enter) var(--ease-snap) both;
+}
+@keyframes dialogIn {
+  from {
+    opacity: 0;
+    transform: scale(0.965) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    background var(--d-hover) var(--ease-snap),
+    color var(--d-hover) var(--ease-snap);
+}
+.close:hover {
+  background: var(--surface-soft);
+  color: var(--ink-soft);
+}
+.close svg {
+  width: 16px;
+  height: 16px;
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--info-subtle);
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+.icon[data-warn] {
+  color: #b7791f;
+  background: rgba(183, 121, 31, 0.08);
+}
+.icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.title {
+  margin: 0 0 6px;
+  font-size: var(--fs-h5);
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.011em;
+}
+
+.body {
+  margin: 0 0 20px;
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  color: var(--body);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+
+.ghost {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: var(--fs-body);
+  font-weight: 500;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    background var(--d-hover) var(--ease-snap),
+    color var(--d-hover) var(--ease-snap);
+}
+.ghost:hover {
+  background: var(--surface-soft);
+  color: var(--ink-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scrim,
+  .dialog {
+    animation: none;
+  }
+}

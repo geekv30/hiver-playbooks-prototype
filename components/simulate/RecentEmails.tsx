@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { RiPlayFill, RiStopCircleLine, RiInboxLine } from 'react-icons/ri';
 import { MAILBOXES } from '@/data/mailboxes';
-import { recentForMailbox } from '@/data/simFixtures';
+import { recentForMailbox, type SimStatusKind } from '@/data/simFixtures';
 import Dropdown from '@/components/atoms/Dropdown';
 import EmailCard from './EmailCard';
 import EvalBackHeader from './EvalBackHeader';
@@ -14,6 +14,8 @@ import styles from './RecentEmails.module.css';
 interface Props {
   /** Leave this flow back to the Evaluate menu (the top-left back control). */
   onExit: () => void;
+  /** Report a completed run's statuses up to the canvas (the eval aggregate). */
+  onRunRecorded?: (statuses: SimStatusKind[]) => void;
 }
 
 /**
@@ -23,7 +25,7 @@ interface Props {
  * + a persisted human verdict. Back always lives at the top: from results it
  * returns to the conversation list, from the list it leaves to the Evaluate menu.
  */
-export default function RecentEmails({ onExit }: Props) {
+export default function RecentEmails({ onExit, onRunRecorded }: Props) {
   const [mailbox, setMailbox] = useState('');
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [verdicts, setVerdicts] = useState<Record<string, Verdict>>({});
@@ -43,7 +45,7 @@ export default function RecentEmails({ onExit }: Props) {
     () => (runIds ? emails.filter((e) => runIds.includes(e.id)) : []),
     [runIds, emails],
   );
-  const { phase, runs, start, stop } = useSimRun(runEmails);
+  const { phase, runs, start, stop } = useSimRun(runEmails, onRunRecorded);
 
   // Start the run once we've entered run mode (after runEmails has updated).
   useEffect(() => {

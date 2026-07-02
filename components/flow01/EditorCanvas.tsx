@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { RiDraggable, RiMore2Fill } from 'react-icons/ri';
 import type { Fragment, ConnectorSlug } from '@/types/playbook';
+import type { SimStatusKind } from '@/data/simFixtures';
 import { findAction } from '@/data/library';
 import { UnauthedConnectorsContext } from './connectorAuth';
 import ConnectorSetupModal from './setup/ConnectorSetupModal';
@@ -23,6 +24,8 @@ import ConditionBlock from './condition/ConditionBlock';
 import ColdStartModal from './ColdStartModal';
 import ActionHint from './ActionHint';
 import EnableModal from './enable/EnableModal';
+import EvalNudgeModal from './enable/EvalNudgeModal';
+import { useEvalState } from '@/components/simulate/useEvalState';
 import SimulatePanel from '@/components/simulate/SimulatePanel';
 import { type CopilotMessage, type CopilotProposalData } from './copilot/CopilotPanel';
 import SidePanel, { type SideTab } from './copilot/SidePanel';
@@ -257,6 +260,16 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
   const [enableMode, setEnableMode] = useState<null | 'commit' | 'manage'>(null);
   const [enableName, setEnableName] = useState('');
   const [enableMailboxes, setEnableMailboxes] = useState<string[]>([]);
+  // The pre-enable evaluation nudge (spec 2026-07-02). Only 'commit' mode
+  // nudges; 'manage' (the gear) never does. Always skippable.
+  const [nudge, setNudge] = useState<null | 'untested' | 'failures'>(null);
+  // Evaluation aggregate: accumulated run results + staleness vs the live doc.
+  // Feeds the eval summary strip and the evaluation-aware Enable.
+  const { agg: evalAgg, recordRun } = useEvalState(doc);
+  const onRunRecorded = useCallback(
+    (statuses: SimStatusKind[]) => recordRun(statuses, docRef.current),
+    [recordRun],
+  );
   // The cold-start "draft with AI" modal shows on a fresh, empty canvas (no
   // initialDoc); the pre-seeded /api-example demo skips it. See ColdStartPhase above.
   const [coldPhase, setColdPhase] = useState<ColdStartPhase>(initialDoc ? 'docked' : 'hero');
@@ -327,6 +340,13 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
     },
     [doc],
   );
+  // Enable click gate (spec 2026-07-02): never evaluated -> nudge; failures ->
+  // caution nudge; else straight to the Enable modal. Always skippable.
+  const requestEnable = useCallback(() => {
+    if (evalAgg.total === 0) setNudge('untested');
+    else if (evalAgg.failed > 0) setNudge('failures');
+    else openEnable('commit');
+  }, [evalAgg.total, evalAgg.failed, openEnable]);
   const confirmEnable = useCallback(() => {
     api.setTitle(enableName.trim() || 'Untitled AOP');
     api.setMailboxes(enableMailboxes);
@@ -1116,7 +1136,7 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
         // Enable is muted+disabled until the AOP has a trigger AND a step
         // (Figma 647:39849); then it routes THROUGH the guardrails commit panel.
         canEnable={lineHasContent(doc.trigger) && doc.steps.some((s) => stepHasContent(s))}
-        onEnable={() => openEnable('commit')}
+        onEnable={requestEnable}
         onSettings={() => openEnable('manage')}
         onPause={pauseAop}
         onResume={resumeAop}
@@ -1426,6 +1446,8 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
                 hasScenarios: lineHasContent(doc.trigger),
                 hasTrigger: lineHasContent(doc.trigger),
                 onAddTrigger: () => requestFocus('trigger', false),
+                onRunRecorded,
+                evalSummary: evalAgg,
               }}
             />
           )
@@ -1436,6 +1458,8 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
             hasScenarios={lineHasContent(doc.trigger)}
             hasTrigger={lineHasContent(doc.trigger)}
             onAddTrigger={() => requestFocus('trigger', false)}
+            onRunRecorded={onRunRecorded}
+            evalSummary={evalAgg}
           />
         )}
       </div>
@@ -1482,10 +1506,28 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
         />
       )}
 
+      {nudge && (
+        <EvalNudgeModal
+          variant={nudge}
+          agg={evalAgg}
+          onClose={() => setNudge(null)}
+          onEvaluate={() => {
+            setNudge(null);
+            if (companions) setPanelTab('simulate');
+            else setSimOpen(true);
+          }}
+          onEnableAnyway={() => {
+            setNudge(null);
+            openEnable('commit');
+          }}
+        />
+      )}
+
       {enableMode && (
         <EnableModal
           open
           mode={enableMode}
+          evalStatus={evalAgg}
           name={enableName}
           onNameChange={setEnableName}
           selected={enableMailboxes}

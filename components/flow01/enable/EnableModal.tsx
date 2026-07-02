@@ -7,6 +7,7 @@ import Checkbox from '@/components/atoms/Checkbox';
 import Button from '@/components/atoms/Button';
 import Spinner from '@/components/atoms/Spinner';
 import { MAILBOXES, mailboxName, mailboxList, mailboxSummary } from '@/data/mailboxes';
+import type { EvalAggregate } from '@/components/simulate/useEvalState';
 import styles from './EnableModal.module.css';
 
 type Phase = 'form' | 'enabling' | 'success';
@@ -27,6 +28,8 @@ interface Props {
   onClose: () => void;
   /** commit: go live (fired after the success moment). manage: save changes. */
   onConfirm: () => void;
+  /** Evaluation aggregate - renders the quiet status row when runs exist. */
+  evalStatus?: EvalAggregate | null;
 }
 
 const ENABLING_MS = 720;
@@ -77,6 +80,7 @@ export default function EnableModal({
   preEnabled,
   onClose,
   onConfirm,
+  evalStatus,
 }: Props) {
   const [closing, setClosing] = useState(false);
   const [phase, setPhase] = useState<Phase>('form');
@@ -240,6 +244,20 @@ export default function EnableModal({
                   autoComplete="off"
                 />
               </div>
+
+              {evalStatus && evalStatus.total > 0 && (
+                <div
+                  className={styles.evalRow}
+                  data-ok={evalStatus.passed === evalStatus.total || undefined}
+                >
+                  <span className={styles.evalDot} aria-hidden />
+                  <span>
+                    {evalStatus.passed} of {evalStatus.total} evaluation
+                    {evalStatus.total === 1 ? '' : 's'} passed
+                    {evalStatus.stale ? ' - evaluated an earlier version' : ''}
+                  </span>
+                </div>
+              )}
 
               <div className={styles.section}>
                 <span className={styles.label}>Go live on</span>

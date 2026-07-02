@@ -4,6 +4,8 @@ import { useState } from 'react';
 import PanelTabs, { type SideTab } from './PanelTabs';
 import CopilotPanel, { type CopilotMessage } from './CopilotPanel';
 import SimulatePanel from '@/components/simulate/SimulatePanel';
+import type { EvalAggregate } from '@/components/simulate/useEvalState';
+import type { SimStatusKind } from '@/data/simFixtures';
 import type { Verdict } from '@/components/atoms/ThumbsRating';
 import styles from './SidePanel.module.css';
 
@@ -28,6 +30,10 @@ interface SimProps {
   hasScenarios?: boolean;
   hasTrigger?: boolean;
   onAddTrigger?: () => void;
+  /** Completed-run statuses reported up to the canvas (the eval aggregate). */
+  onRunRecorded?: (statuses: SimStatusKind[]) => void;
+  /** The canvas-owned aggregate - the n-of-m summary strip on the eval menu. */
+  evalSummary?: EvalAggregate;
 }
 
 interface Props {

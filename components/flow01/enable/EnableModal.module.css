@@ -3,6 +3,27 @@
    Motion adapts transitions.dev (modal open/close, success-check, texts-reveal,
    card-resize) to our tokens. */
 
+/* Quiet evaluation status row under the name field (spec 2026-07-02): the
+   lightweight readiness signal, not the full P0 readiness engine. */
+.evalRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: -6px 0 14px;
+  font-size: var(--fs-small);
+  color: var(--body);
+}
+.evalDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #b7791f; /* not-all-passed = amber */
+  flex: none;
+}
+.evalRow[data-ok] .evalDot {
+  background: var(--state-ok);
+}
+
 .scrim {
   position: fixed;
   inset: 0;

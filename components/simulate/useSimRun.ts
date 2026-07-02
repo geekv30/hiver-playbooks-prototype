@@ -70,12 +70,23 @@ function resolveEmail(email: SimEmail): Resolved {
  * attention (scripted per the fixture), then the next email starts. Honours
  * prefers-reduced-motion (jump to resolved) and resets when the topic changes.
  */
-export function useSimRun(emails: SimEmail[]) {
+export function useSimRun(
+  emails: SimEmail[],
+  /** Fired once when a run completes (never on stop): the per-email final
+   *  statuses, in order - feeds the eval aggregate (useEvalState.recordRun). */
+  onComplete?: (statuses: SimStatusKind[]) => void,
+) {
   const [phase, setPhase] = useState<RunPhase>('idle');
   const [runs, setRuns] = useState<Record<string, EmailRun>>({});
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ei = useRef(0); // email index
   const si = useRef(0); // step index
+  // Latest-ref for the completion callback so a parent re-render mid-run never
+  // resets the engine (the callbacks stay out of the hook deps).
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
 
   const clear = useCallback(() => {
     if (timer.current) {
@@ -84,10 +95,17 @@ export function useSimRun(emails: SimEmail[]) {
     }
   }, []);
 
+  const finish = useCallback(() => {
+    setPhase('done');
+    if (emails.length > 0) {
+      onCompleteRef.current?.(emails.map((e) => resolveEmail(e).finalStatus));
+    }
+  }, [emails]);
+
   const advance = useCallback(() => {
     const email = emails[ei.current];
     if (!email) {
-      setPhase('done');
+      finish();
       return;
     }
     const res = resolveEmail(email);
@@ -129,10 +147,10 @@ export function useSimRun(emails: SimEmail[]) {
         si.current = 0;
         timer.current = setTimeout(advance, nextDur0);
       } else {
-        setPhase('done');
+        finish();
       }
     }
-  }, [emails]);
+  }, [emails, finish]);
 
   const start = useCallback(() => {
     clear();
@@ -149,7 +167,7 @@ export function useSimRun(emails: SimEmail[]) {
         done[e.id] = { status: res.finalStatus, steps: { ...res.stepFinal }, durations: {} };
       });
       setRuns(done);
-      setPhase('done');
+      finish();
       return;
     }
 
@@ -167,7 +185,7 @@ export function useSimRun(emails: SimEmail[]) {
     setRuns(init);
     setPhase('running');
     timer.current = setTimeout(advance, dur0);
-  }, [emails, advance, clear]);
+  }, [emails, advance, clear, finish]);
 
   const stop = useCallback(() => {
     clear();

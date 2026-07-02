@@ -13,6 +13,8 @@ import EmailList from './EmailList';
 import TestAllBar, { type TestAllMode } from './TestAllBar';
 import { useSimRun } from './useSimRun';
 import type { Verdict } from './RunOutcome';
+import EvalSummary from './EvalSummary';
+import type { EvalAggregate } from './useEvalState';
 import styles from './SimulatePanel.module.css';
 
 interface Props {
@@ -35,6 +37,11 @@ interface Props {
   /** Report whether a flow is entered, so the shell swaps the Copilot | Evaluation
    *  tabs for the flow's own top back-header. */
   onSubview?: (inSubview: boolean) => void;
+  /** Report a completed run's per-email statuses up to the canvas (the eval
+   *  aggregate that makes Enable evaluation-aware). */
+  onRunRecorded?: (statuses: SimStatusKind[]) => void;
+  /** The canvas-owned aggregate - renders the n-of-m summary strip on the menu. */
+  evalSummary?: EvalAggregate;
 }
 
 interface TopicResult {
@@ -69,6 +76,8 @@ export default function SimulatePanel({
   floating,
   docked,
   onSubview,
+  onRunRecorded,
+  evalSummary,
 }: Props) {
   const [view, setView] = useState<EvalView>('menu');
   const [openTopicId, setOpenTopicId] = useState<string | null>(null);
@@ -83,7 +92,7 @@ export default function SimulatePanel({
   }, [view, onSubview]);
 
   const topic = openTopicId ? SIM_TOPICS.find((t) => t.id === openTopicId) ?? null : null;
-  const { phase, runs, start, stop } = useSimRun(topic?.emails ?? NO_EMAILS);
+  const { phase, runs, start, stop } = useSimRun(topic?.emails ?? NO_EMAILS, onRunRecorded);
   const mode: TestAllMode = phase === 'running' ? 'running' : phase === 'done' ? 'done' : 'idle';
 
   // Persist the rollup when a scenario run completes so the list reflects it later.
@@ -149,14 +158,19 @@ export default function SimulatePanel({
         )}
 
         <div className={styles.viewWrap} data-dir={dir ?? undefined} key={slideKey}>
-          {view === 'menu' && <EvalMenu onOpen={openFlow} />}
+          {view === 'menu' && (
+            <>
+              {evalSummary && <EvalSummary agg={evalSummary} />}
+              <EvalMenu onOpen={openFlow} />
+            </>
+          )}
 
-          {view === 'recent' && <RecentEmails onExit={toMenu} />}
+          {view === 'recent' && <RecentEmails onExit={toMenu} onRunRecorded={onRunRecorded} />}
 
           {view === 'custom' && (
             <div className={styles.flow}>
               <EvalBackHeader title={EVAL_TITLES.custom} onBack={toMenu} />
-              <CustomEval />
+              <CustomEval onRunRecorded={onRunRecorded} />
             </div>
           )}
 
