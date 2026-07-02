@@ -1,15 +1,25 @@
 /* EvalNudgeModal content - the chrome (scrim, card, motion, close mechanics)
-   lives on the shared ModalShell. Centered composition per the researched
-   pattern: illustration -> title -> body -> actions. */
+   lives on the shared ModalShell. Anatomy matches the app's modal register:
+   full-width illustration band, LEFT-aligned title + body, right-aligned
+   footer actions (like EnableModal / ConnectorSetup). */
 
 .dialog {
   width: 100%;
   max-width: 440px;
-  padding: 30px 32px 26px;
+  padding: 24px 24px 20px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
+}
+
+/* The illustration band: a quiet canvas-tint panel the preview sits on. */
+.illuBand {
+  display: grid;
+  place-items: center;
+  padding: 14px 0 8px;
+  margin: 0 0 16px;
+  background: var(--canvas);
+  border: 1px solid var(--hairline-soft);
+  border-radius: 10px;
 }
 
 .close {
@@ -44,7 +54,6 @@
 .illu {
   width: 240px;
   height: 132px;
-  margin: 2px 0 16px;
 }
 .illuRow {
   animation: rowIn 0.32s var(--ease-snap) both;
@@ -74,8 +83,7 @@
 }
 
 .body {
-  margin: 0 0 22px;
-  max-width: 350px;
+  margin: 0 0 20px;
   font-size: var(--fs-body);
   line-height: 1.55;
   color: var(--body);
@@ -83,7 +91,7 @@
 
 .actions {
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   align-items: center;
   gap: 10px;
 }

@@ -5,11 +5,11 @@
 // skippable - Esc / scrim / x close it, "Enable anyway" proceeds. Chrome comes
 // from the shared ModalShell (one renderer per pattern); only content lives here.
 //
-// Layout follows the researched pattern (centered illustration -> title -> body
-// -> actions; Mobbin: Digg/Deel confirm dialogs, Ferndesk publish): the
-// illustration is not decoration - it PREVIEWS an evaluation result (a mini
-// email run with its trace and verdict), drawn in our own hairline/tint
-// language (no 3D, no gradients).
+// Anatomy matches OUR modal register (EnableModal / ConnectorSetup: left-aligned
+// title, body, right-aligned footer actions - centered text is reserved for
+// success moments). The illustration sits as a full-width band above the text
+// and is not decoration - it PREVIEWS an evaluation result (a mini email run
+// with its trace and verdict), drawn in our own hairline/tint language.
 import { useEffect, useRef, type CSSProperties } from 'react';
 import { RiCloseLine } from 'react-icons/ri';
 import Button from '@/components/atoms/Button';
@@ -116,7 +116,9 @@ export default function EvalNudgeModal({ variant, agg, onEvaluate, onEnableAnywa
           <button type="button" className={styles.close} aria-label="Close" onClick={requestClose}>
             <RiCloseLine />
           </button>
-          <EvalPreviewIllustration failed={failures} />
+          <div className={styles.illuBand}>
+            <EvalPreviewIllustration failed={failures} />
+          </div>
           <h2 className={styles.title}>{title}</h2>
           <p className={styles.body}>{body}</p>
           <div className={styles.actions} ref={actionsRef}>
