@@ -22,6 +22,8 @@ interface Props {
 const STAGGER_MS = 240;
 const SETTLE_PAD_MS = 420;
 const CONNECT_MS = 1100;
+/** Entity chips shown per row before collapsing into "+N more". */
+const MAX_CHIPS = 4;
 
 const prefersReduced = () =>
   typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -111,6 +113,21 @@ export default function ReadinessReview({
             <span className={styles.rowText}>
               <span className={styles.rowTitle}>{check.title}</span>
               <span className={styles.rowDetail}>{check.detail}</span>
+              {check.chips && check.chips.length > 0 && (
+                <span className={styles.chipRow}>
+                  {check.chips.slice(0, MAX_CHIPS).map((c) => (
+                    <span key={c.label} className={styles.chip}>
+                      {c.label}
+                      {c.sub && <span className={styles.chipSub}>{c.sub}</span>}
+                    </span>
+                  ))}
+                  {check.chips.length > MAX_CHIPS && (
+                    <span className={styles.chip} data-more>
+                      +{check.chips.length - MAX_CHIPS} more
+                    </span>
+                  )}
+                </span>
+              )}
             </span>
             <span className={styles.rowEnd}>
               {action?.type === 'connect' &&

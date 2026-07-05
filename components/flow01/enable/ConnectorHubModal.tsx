@@ -32,7 +32,7 @@ const STATE_COPY: Record<
   { line: string; action: string }
 > = {
   reauth: {
-    line: 'Session expired - AOPs using this connector are paused',
+    line: "Session expired - AOPs can't use this connector until you reconnect",
     action: 'Re-authenticate',
   },
   error: {

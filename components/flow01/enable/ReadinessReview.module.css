@@ -98,6 +98,38 @@
   color: var(--muted);
 }
 
+/* Entity chips under the detail line - the scannable form of "which tags /
+   which mailboxes" (structured lists never render as comma prose). */
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+  background: var(--card);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: var(--ls-body);
+  color: var(--ink-soft, var(--body));
+}
+.chip[data-more] {
+  border-style: dashed;
+  color: var(--muted);
+  font-weight: 400;
+}
+.chipSub {
+  font-weight: 400;
+  color: var(--muted-soft);
+}
+
 /* ---- trailing action / status ---- */
 .rowEnd {
   flex: none;

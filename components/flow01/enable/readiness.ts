@@ -4,7 +4,7 @@ import type { ConnectorHealth } from '../connectorHealth';
 import { findAction } from '@/data/library';
 import { CONNECTOR_META } from '@/data/connectors';
 import { mailboxHasTag, mailboxHasMember, isTeamMember } from '@/data/mailboxDirectory';
-import { mailboxList } from '@/data/mailboxes';
+import { mailboxName } from '@/data/mailboxes';
 import { isCondition, lineHasContent, type EditorDoc } from '../doc';
 
 /**
@@ -35,7 +35,11 @@ export interface ReadinessCheck {
   kind: CheckKind;
   tone: CheckTone;
   title: string;
+  /** One short line - structured lists go in `chips`, never in prose. */
   detail: string;
+  /** Scannable entities under the detail line (tags to create, mailboxes an
+   *  invite covers). label + an optional muted sub ("4 mailboxes"). */
+  chips?: { label: string; sub?: string }[];
   /** The inline fix: 'connect' carries its slug + state-specific label,
    *  'invite' its person. */
   action?:
@@ -157,8 +161,7 @@ export function computeChecks(
         kind: 'evaluation',
         tone: 'pending',
         title: 'Evaluation',
-        detail:
-          'This AOP has never been evaluated. A quick run on past emails catches broken steps before customers see them.',
+        detail: 'Never evaluated - a quick run on past emails catches broken steps early.',
         action: { type: 'evaluate' },
       });
     } else if (evalAgg.failed > 0) {
@@ -167,7 +170,7 @@ export function computeChecks(
         kind: 'evaluation',
         tone: 'warn',
         title: 'Evaluation',
-        detail: `${evalAgg.failed} of ${evalAgg.total} evaluation ${evalAgg.total === 1 ? 'run' : 'runs'} failed. Review them before going live.`,
+        detail: `${evalAgg.failed} of ${evalAgg.total} ${evalAgg.total === 1 ? 'run' : 'runs'} failed - review them before going live.`,
         action: { type: 'evaluate' },
       });
     } else {
@@ -196,7 +199,7 @@ export function computeChecks(
         kind: 'tags',
         tone: 'ok',
         title: 'Tags',
-        detail: `${listQuoted(inputs.tags)} ${inputs.tags.length === 1 ? 'exists' : 'exist'} in all selected mailboxes.`,
+        detail: 'Every tag this AOP applies exists in all selected mailboxes.',
         status: 'Ready',
       });
     } else {
@@ -205,9 +208,11 @@ export function computeChecks(
         kind: 'tags',
         tone: 'auto',
         title: 'Tags',
-        detail: `${missing
-          .map((m) => `'${m.tag}' is missing in ${mailboxList(m.mailboxes)}`)
-          .join('; ')}. We'll create ${missing.length === 1 ? 'it' : 'them'} there when this AOP goes live.`,
+        detail: `Missing in some selected mailboxes - we'll create ${missing.length === 1 ? 'this tag' : 'these tags'} when this AOP goes live.`,
+        chips: missing.map((m) => ({
+          label: m.tag,
+          sub: `${m.mailboxes.length} ${m.mailboxes.length === 1 ? 'mailbox' : 'mailboxes'}`,
+        })),
         status: 'Done for you',
       });
     }
@@ -230,13 +235,15 @@ export function computeChecks(
       continue;
     }
     const uninvited = missing.filter((id) => !session.invited.has(inviteKey(person, id)));
+    const missingChips = missing.map((id) => ({ label: mailboxName(id) }));
     if (uninvited.length > 0) {
       checks.push({
         id: `assign-${person}`,
         kind: 'assignment',
         tone: 'warn',
         title: person,
-        detail: `This AOP assigns to ${person}, but they're not a member of ${mailboxList(missing)}. Assignment steps there will pause until they join - everything else still runs.`,
+        detail: `This AOP assigns to ${person}, who hasn't joined ${missing.length === 1 ? 'this mailbox' : 'these mailboxes'} - assignment pauses there until they do:`,
+        chips: missingChips,
         action: { type: 'invite', person, mailboxes: missing },
       });
     } else {
@@ -245,19 +252,12 @@ export function computeChecks(
         kind: 'assignment',
         tone: 'pending',
         title: person,
-        detail: `Invite sent for ${mailboxList(missing)}. Assignment steps there pause until ${person} accepts - everything else still runs.`,
+        detail: `Invite sent - assignment pauses in ${missing.length === 1 ? 'this mailbox' : 'these mailboxes'} until ${person} accepts:`,
+        chips: missingChips,
         status: 'Invite sent',
       });
     }
   }
 
   return checks;
-}
-
-/** "'a'", "'a' and 'b'", "'a', 'b', and 'c'". */
-function listQuoted(items: string[]): string {
-  const q = items.map((t) => `'${t}'`);
-  if (q.length === 1) return q[0]!;
-  if (q.length === 2) return `${q[0]} and ${q[1]}`;
-  return `${q.slice(0, -1).join(', ')}, and ${q[q.length - 1]}`;
 }
