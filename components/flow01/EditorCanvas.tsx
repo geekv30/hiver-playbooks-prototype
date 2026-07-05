@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
@@ -24,7 +25,10 @@ import ConditionBlock from './condition/ConditionBlock';
 import ColdStartModal from './ColdStartModal';
 import ActionHint from './ActionHint';
 import EnableModal from './enable/EnableModal';
-import EvalNudgeModal from './enable/EvalNudgeModal';
+import ConnectorHubModal from './enable/ConnectorHubModal';
+import { deriveReadinessInputs, inviteKey } from './enable/readiness';
+import { useConnectorHealth, setConnectorHealth } from './connectorHealth';
+import { useRouter } from 'next/navigation';
 import { useEvalState } from '@/components/simulate/useEvalState';
 import SimulatePanel from '@/components/simulate/SimulatePanel';
 import { type CopilotMessage, type CopilotProposalData } from './copilot/CopilotPanel';
@@ -70,22 +74,6 @@ const TRIGGER_PLACEHOLDER = 'e.g. when an email reports an API error';
 // '@' opens the actions command palette (references are reachable inside it); the
 // hint pill is the no-keystroke path. Curly quotes around '@' per the Figma copy.
 const STEP_PLACEHOLDER = 'Write what to do. Type ‘@’ for actions';
-
-// The tag-owning mailboxes pre-selected when enabling. Shown ONLY when the AOP
-// actually uses tags (see docUsesTags) so the banner never asserts a false claim
-// on a tag-less AOP. Generic/config (reusability rule).
-const PRE_ENABLED_MAILBOXES = ['support', 'sales'];
-
-// Does the doc use any Tag action? (a chip with actionId 'tag', anywhere -
-// trigger, steps, condition branches). Recursive scan, no structural assumptions.
-function docUsesTags(doc: EditorDoc): boolean {
-  let found = false;
-  JSON.stringify(doc, (_k, v) => {
-    if (v && typeof v === 'object' && (v as { actionId?: string }).actionId === 'tag') found = true;
-    return v;
-  });
-  return found;
-}
 
 // Copilot cold-start handoff: the working steps shown while the AOP drafts,
 // then a short generic acknowledgement (reusability rule: generic copy).
@@ -213,6 +201,7 @@ type ColdStartPhase = 'hero' | 'docked';
 const ALL_CONNECTOR_SLUGS: ConnectorSlug[] = ['shopify', 'hubspot', 'slack', 'salesforce', 'clickup'];
 
 export default function EditorCanvas({ initialDoc, companions, connectorsStartUnauthed }: Props) {
+  const router = useRouter();
   const api = useEditorDoc(initialDoc);
   const { doc, undo, redo } = api;
   // Always-current doc (for handlers that need the freshest doc, e.g. snapshotting
@@ -260,9 +249,13 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
   const [enableMode, setEnableMode] = useState<null | 'commit' | 'manage'>(null);
   const [enableName, setEnableName] = useState('');
   const [enableMailboxes, setEnableMailboxes] = useState<string[]>([]);
-  // The pre-enable evaluation nudge (spec 2026-07-02). Only 'commit' mode
-  // nudges; 'manage' (the gear) never does. Always skippable.
-  const [nudge, setNudge] = useState<null | 'untested' | 'failures'>(null);
+  // Enable-flow state: connector health comes from the SHARED store (the
+  // Connectors hub - fixing a connector anywhere fixes it here), invites sent
+  // are session state owned here so they survive the modal closing.
+  const connectorHealth = useConnectorHealth();
+  const [enableInvited, setEnableInvited] = useState<ReadonlySet<string>>(new Set());
+  // The Connectors hub, opened from the toolbar (same surface as the list page).
+  const [connectorHubOpen, setConnectorHubOpen] = useState(false);
   // Evaluation aggregate: accumulated run results + staleness vs the live doc.
   // Feeds the eval summary strip and the evaluation-aware Enable.
   const { agg: evalAgg, recordRun } = useEvalState(doc);
@@ -329,24 +322,41 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
   }, []);
 
   // --- Enable / pause / resume / settings ------------------------------------
-  // Open the modal, seeding its LOCAL draft from the doc (pre-selecting the
-  // tag-owning mailboxes on a fresh AOP). Commit applies the draft to the doc.
+  // Open the modal, seeding its LOCAL draft from the doc. Commit applies the
+  // draft to the doc.
   const openEnable = useCallback(
     (mode: 'commit' | 'manage') => {
       setEnableName(doc.title);
-      const pre = docUsesTags(doc) ? PRE_ENABLED_MAILBOXES : [];
-      setEnableMailboxes(doc.mailboxes.length ? doc.mailboxes : pre);
+      setEnableMailboxes(doc.mailboxes);
       setEnableMode(mode);
     },
     [doc],
   );
-  // Enable click gate (spec 2026-07-02): never evaluated -> nudge; failures ->
-  // caution nudge; else straight to the Enable modal. Always skippable.
-  const requestEnable = useCallback(() => {
-    if (evalAgg.total === 0) setNudge('untested');
-    else if (evalAgg.failed > 0) setNudge('failures');
-    else openEnable('commit');
-  }, [evalAgg.total, evalAgg.failed, openEnable]);
+  // Enable click goes straight into the two-step modal - every readiness
+  // concern (connectors, evaluation, tags, assignment) lives in its Review
+  // step, computed against the actual mailbox selection.
+  const requestEnable = useCallback(() => openEnable('commit'), [openEnable]);
+  // What the doc depends on, for the Review step's checks.
+  const readinessInputs = useMemo(() => deriveReadinessInputs(doc), [doc]);
+  const markConnected = useCallback(
+    (slug: ConnectorSlug) => setConnectorHealth(slug, 'connected'),
+    [],
+  );
+  const sendInvites = useCallback(
+    (person: string, mailboxIds: string[]) =>
+      setEnableInvited((prev) => {
+        const next = new Set(prev);
+        mailboxIds.forEach((id) => next.add(inviteKey(person, id)));
+        return next;
+      }),
+    [],
+  );
+  // "Evaluate" from the Review step: leave the modal, open the eval surface.
+  const evaluateFromEnable = useCallback(() => {
+    setEnableMode(null);
+    if (companions) setPanelTab('simulate');
+    else setSimOpen(true);
+  }, [companions]);
   const confirmEnable = useCallback(() => {
     api.setTitle(enableName.trim() || 'Untitled AOP');
     api.setMailboxes(enableMailboxes);
@@ -1140,7 +1150,17 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
         onSettings={() => openEnable('manage')}
         onPause={pauseAop}
         onResume={resumeAop}
-        onBack={() => showHint('Your AOPs are coming soon.')}
+        onBack={() => router.push('/aops')}
+        // Scoped to the DOC's connectors so the editor surface stays accurate:
+        // no button when the AOP uses none, and the dot only means "one of THIS
+        // AOP's connectors needs attention".
+        onConnectors={
+          readinessInputs.connectors.length > 0 ? () => setConnectorHubOpen(true) : undefined
+        }
+        connectorIssues={readinessInputs.connectors.some(({ slug }) => {
+          const s = connectorHealth[slug];
+          return s === 'reauth' || s === 'error' || s === 'disconnected';
+        })}
       />
 
       <div className={styles.stage}>
@@ -1504,23 +1524,6 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
         />
       )}
 
-      {nudge && (
-        <EvalNudgeModal
-          variant={nudge}
-          agg={evalAgg}
-          onClose={() => setNudge(null)}
-          onEvaluate={() => {
-            setNudge(null);
-            if (companions) setPanelTab('simulate');
-            else setSimOpen(true);
-          }}
-          onEnableAnyway={() => {
-            setNudge(null);
-            openEnable('commit');
-          }}
-        />
-      )}
-
       {enableMode && (
         <EnableModal
           open
@@ -1529,9 +1532,22 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
           onNameChange={setEnableName}
           selected={enableMailboxes}
           onSelectedChange={setEnableMailboxes}
-          preEnabled={docUsesTags(doc) ? PRE_ENABLED_MAILBOXES : []}
+          readiness={readinessInputs}
+          evalAgg={evalAgg}
+          connectorHealth={connectorHealth}
+          onConnect={markConnected}
+          invited={enableInvited}
+          onInvite={sendInvites}
+          onEvaluate={evaluateFromEnable}
           onClose={() => setEnableMode(null)}
           onConfirm={confirmEnable}
+        />
+      )}
+
+      {connectorHubOpen && (
+        <ConnectorHubModal
+          only={readinessInputs.connectors.map((c) => c.slug)}
+          onClose={() => setConnectorHubOpen(false)}
         />
       )}
 

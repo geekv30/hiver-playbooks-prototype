@@ -1,6 +1,6 @@
 'use client';
 
-import { RiArrowLeftLine, RiPlayLine, RiSettings3Line } from 'react-icons/ri';
+import { RiArrowLeftLine, RiPlayLine, RiSettings3Line, RiPlugLine } from 'react-icons/ri';
 import Button from '@/components/atoms/Button';
 import Badge from '@/components/atoms/Badge';
 import TitleField from './TitleField';
@@ -39,6 +39,10 @@ interface Props {
   /** Hide the title + status here (when the AOP identity moves onto a canvas
    *  header). The Back button stays. */
   hideIdentity?: boolean;
+  /** Open the Connectors hub (the same surface the list page opens). */
+  onConnectors?: () => void;
+  /** True when any connector needs attention - shows a dot on the plug button. */
+  connectorIssues?: boolean;
 }
 
 // Editor toolbar. Left = back + the AOP identity (title + status pill).
@@ -59,6 +63,8 @@ export default function Toolbar({
   simulating,
   hideSimulate,
   hideIdentity,
+  onConnectors,
+  connectorIssues,
 }: Props) {
   return (
     <div className={styles.bar}>
@@ -76,6 +82,17 @@ export default function Toolbar({
       </div>
 
       <div className={styles.right}>
+        {onConnectors && (
+          <span className={styles.connectorsWrap}>
+            <Button
+              variant="secondary"
+              iconOnly={<RiPlugLine />}
+              ariaLabel="Connectors"
+              onClick={onConnectors}
+            />
+            {connectorIssues && <span className={styles.connectorsDot} aria-hidden />}
+          </span>
+        )}
         {!hideSimulate && (
           <Button
             variant="secondary"

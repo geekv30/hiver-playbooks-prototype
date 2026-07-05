@@ -109,9 +109,15 @@ export const SEED_TAGS: PickerOption[] = [
   { id: 'escalation', label: 'escalation' },
 ];
 
-// Generic queues + roles only - no named individuals from any one account.
+// Queues + the seeded team (data/mailboxDirectory.ts) - people picked here get
+// membership-checked by the Enable flow's readiness review.
 export const SEED_ASSIGNEES: PickerOption[] = [
   { id: 'me', label: 'Me', sub: 'Assign to myself' },
+  { id: 'varun', label: 'Varun', sub: 'Teammate' },
+  { id: 'aisha-khan', label: 'Aisha Khan', sub: 'Teammate' },
+  { id: 'daniel-lee', label: 'Daniel Lee', sub: 'Teammate' },
+  { id: 'priya-nair', label: 'Priya Nair', sub: 'Teammate' },
+  { id: 'tom-becker', label: 'Tom Becker', sub: 'Teammate' },
   { id: 'support-queue', label: 'Support queue', sub: 'Shared inbox' },
   { id: 'billing-queue', label: 'Billing queue', sub: 'Shared inbox' },
   { id: 'escalations-queue', label: 'Escalations queue', sub: 'Shared inbox' },

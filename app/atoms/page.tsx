@@ -7,6 +7,8 @@
    those are seen live in the journeys. Each specimen renders the real component. */
 
 import { useEffect, useRef, useState, type ReactNode, type ComponentType, type SVGProps, type CSSProperties } from 'react';
+import type { ConnectorSlug } from '@/types/playbook';
+import type { ConnectorHealth } from '@/components/flow01/connectorHealth';
 import {
   RiPlayLine,
   RiArrowDownSLine,
@@ -202,6 +204,14 @@ function ToolbarDemo({ title, status, canEnable }: { title: string; status: 'dra
 function EnableModalDemo() {
   const [name, setName] = useState('API error triage');
   const [selected, setSelected] = useState<string[]>(['support', 'sales']);
+  const [health, setHealth] = useState<Record<ConnectorSlug, ConnectorHealth>>({
+    shopify: 'connected',
+    hubspot: 'reauth',
+    clickup: 'connected',
+    slack: 'connected',
+    salesforce: 'connected',
+  });
+  const [invited, setInvited] = useState<ReadonlySet<string>>(new Set());
   return (
     <div className={styles.modalStage} style={{ height: 900 }}>
       <EnableModal
@@ -211,7 +221,24 @@ function EnableModalDemo() {
         onNameChange={setName}
         selected={selected}
         onSelectedChange={setSelected}
-        preEnabled={['support', 'sales']}
+        readiness={{
+          connectors: [{ slug: 'hubspot', steps: 2 }],
+          tags: ['api-error', 'support'],
+          assignees: ['Varun'],
+          hasSteps: true,
+        }}
+        evalAgg={{ total: 0, passed: 0, failed: 0, attention: 0, stale: false }}
+        connectorHealth={health}
+        onConnect={(slug) => setHealth((prev) => ({ ...prev, [slug]: 'connected' }))}
+        invited={invited}
+        onInvite={(person, ids) =>
+          setInvited((prev) => {
+            const next = new Set(prev);
+            ids.forEach((id) => next.add(`${person}|${id}`));
+            return next;
+          })
+        }
+        onEvaluate={() => {}}
         onClose={() => {}}
         onConfirm={() => {}}
       />

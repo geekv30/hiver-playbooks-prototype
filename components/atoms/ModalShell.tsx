@@ -1,7 +1,7 @@
 'use client';
 
 // ModalShell - THE one modal chrome (one renderer per pattern). Every centered
-// scrim + dialog in the app renders through this: EnableModal, EvalNudgeModal,
+// scrim + dialog in the app renders through this: EnableModal,
 // ConnectorSetupModal, ColdStartModal. It owns the mechanics they all repeated:
 //   - scrim (fixed, centered, ink @ 32%) with fade in/out
 //   - dialog card chrome (bg / radius / shadow via CSS vars, so a modal like
