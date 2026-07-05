@@ -1,5 +1,6 @@
 import type { ConnectorSlug } from '@/types/playbook';
 import type { EvalAggregate } from '@/components/simulate/useEvalState';
+import type { ConnectorHealth } from '../connectorHealth';
 import { findAction } from '@/data/library';
 import { CONNECTOR_META } from '@/data/connectors';
 import { mailboxHasTag, mailboxHasMember, isTeamMember } from '@/data/mailboxDirectory';
@@ -35,9 +36,10 @@ export interface ReadinessCheck {
   tone: CheckTone;
   title: string;
   detail: string;
-  /** The inline fix: 'connect' carries its slug, 'invite' its person. */
+  /** The inline fix: 'connect' carries its slug + state-specific label,
+   *  'invite' its person. */
   action?:
-    | { type: 'connect'; slug: ConnectorSlug }
+    | { type: 'connect'; slug: ConnectorSlug; label: string }
     | { type: 'invite'; person: string; mailboxes: string[] }
     | { type: 'evaluate' };
   /** Trailing status label when no action is needed/possible. */
@@ -92,8 +94,8 @@ export function deriveReadinessInputs(doc: EditorDoc): ReadinessInputs {
 // ---- checks -------------------------------------------------------------------
 
 export interface ReadinessSession {
-  /** Connectors re-authenticated this session. */
-  connected: ReadonlySet<ConnectorSlug>;
+  /** Connector health from the shared store (the Connectors hub). */
+  connectorHealth: Record<ConnectorSlug, ConnectorHealth>;
   /** Invites sent this session, keyed `${person}|${mailboxId}`. */
   invited: ReadonlySet<string>;
 }
@@ -108,26 +110,41 @@ export function computeChecks(
 ): ReadinessCheck[] {
   const checks: ReadinessCheck[] = [];
 
-  // Connectors - doc-level; the AOP cannot run those steps unauthenticated.
+  // Connectors - doc-level; the AOP cannot run those steps until the connector
+  // is healthy. Reads the shared health store, so a connector fixed in the
+  // Connectors hub is already green here - never an enablement step.
   for (const { slug, steps } of inputs.connectors) {
     const name = CONNECTOR_META[slug].name;
-    if (session.connected.has(slug)) {
+    const state = session.connectorHealth[slug] ?? 'connected';
+    const stepsPhrase = `${steps} ${steps === 1 ? 'step' : 'steps'}`;
+    if (state === 'connected') {
       checks.push({
         id: `connector-${slug}`,
         kind: 'connector',
         tone: 'ok',
         title: name,
-        detail: `Connected - ${steps} ${steps === 1 ? 'step is' : 'steps are'} ready to run.`,
+        detail: `Connected - ${stepsPhrase} ${steps === 1 ? 'is' : 'are'} ready to run.`,
         status: 'Connected',
       });
     } else {
+      const reason =
+        state === 'reauth'
+          ? `${stepsPhrase} won't run until ${name} is re-authenticated.`
+          : state === 'error'
+            ? `The ${name} connection is broken - ${stepsPhrase} won't run until it's fixed.`
+            : `${stepsPhrase} won't run until ${name} is connected.`;
       checks.push({
         id: `connector-${slug}`,
         kind: 'connector',
         tone: 'warn',
         title: name,
-        detail: `${steps} ${steps === 1 ? 'step' : 'steps'} won't run until ${name} is re-authenticated.`,
-        action: { type: 'connect', slug },
+        detail: reason,
+        action: {
+          type: 'connect',
+          slug,
+          label:
+            state === 'reauth' ? 'Re-authenticate' : state === 'error' ? 'Fix connection' : 'Connect',
+        },
       });
     }
   }

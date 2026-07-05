@@ -197,6 +197,14 @@ export function exampleDoc(): EditorDoc {
       {
         id: 'ex-s6',
         body: normalizeLine([
+          txt('Log the error in '),
+          exChip('ex-c5b', 'clickup_create_task', 'Engineering · Bugs'),
+          txt(' so the team can track it.'),
+        ]),
+      },
+      {
+        id: 'ex-s7a',
+        body: normalizeLine([
           txt('If the fix needs engineering, assign the ticket to '),
           exChip('ex-c6', 'assign', 'Varun'),
           txt(' to follow up.'),

@@ -25,7 +25,10 @@ import ConditionBlock from './condition/ConditionBlock';
 import ColdStartModal from './ColdStartModal';
 import ActionHint from './ActionHint';
 import EnableModal from './enable/EnableModal';
+import ConnectorHubModal from './enable/ConnectorHubModal';
 import { deriveReadinessInputs, inviteKey } from './enable/readiness';
+import { useConnectorHealth, setConnectorHealth } from './connectorHealth';
+import { useRouter } from 'next/navigation';
 import { useEvalState } from '@/components/simulate/useEvalState';
 import SimulatePanel from '@/components/simulate/SimulatePanel';
 import { type CopilotMessage, type CopilotProposalData } from './copilot/CopilotPanel';
@@ -198,6 +201,7 @@ type ColdStartPhase = 'hero' | 'docked';
 const ALL_CONNECTOR_SLUGS: ConnectorSlug[] = ['shopify', 'hubspot', 'slack', 'salesforce', 'clickup'];
 
 export default function EditorCanvas({ initialDoc, companions, connectorsStartUnauthed }: Props) {
+  const router = useRouter();
   const api = useEditorDoc(initialDoc);
   const { doc, undo, redo } = api;
   // Always-current doc (for handlers that need the freshest doc, e.g. snapshotting
@@ -245,12 +249,13 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
   const [enableMode, setEnableMode] = useState<null | 'commit' | 'manage'>(null);
   const [enableName, setEnableName] = useState('');
   const [enableMailboxes, setEnableMailboxes] = useState<string[]>([]);
-  // Enable-flow session state (owned here so it survives the modal closing):
-  // connectors re-authenticated + membership invites sent this session. The
-  // Review step reads these; the doc gaining a new connector/assignee simply
-  // produces a fresh unresolved check next time.
-  const [enableConnected, setEnableConnected] = useState<ReadonlySet<ConnectorSlug>>(new Set());
+  // Enable-flow state: connector health comes from the SHARED store (the
+  // Connectors hub - fixing a connector anywhere fixes it here), invites sent
+  // are session state owned here so they survive the modal closing.
+  const connectorHealth = useConnectorHealth();
   const [enableInvited, setEnableInvited] = useState<ReadonlySet<string>>(new Set());
+  // The Connectors hub, opened from the toolbar (same surface as the list page).
+  const [connectorHubOpen, setConnectorHubOpen] = useState(false);
   // Evaluation aggregate: accumulated run results + staleness vs the live doc.
   // Feeds the eval summary strip and the evaluation-aware Enable.
   const { agg: evalAgg, recordRun } = useEvalState(doc);
@@ -334,7 +339,7 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
   // What the doc depends on, for the Review step's checks.
   const readinessInputs = useMemo(() => deriveReadinessInputs(doc), [doc]);
   const markConnected = useCallback(
-    (slug: ConnectorSlug) => setEnableConnected((prev) => new Set(prev).add(slug)),
+    (slug: ConnectorSlug) => setConnectorHealth(slug, 'connected'),
     [],
   );
   const sendInvites = useCallback(
@@ -1145,7 +1150,17 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
         onSettings={() => openEnable('manage')}
         onPause={pauseAop}
         onResume={resumeAop}
-        onBack={() => showHint('Your AOPs are coming soon.')}
+        onBack={() => router.push('/aops')}
+        // Scoped to the DOC's connectors so the editor surface stays accurate:
+        // no button when the AOP uses none, and the dot only means "one of THIS
+        // AOP's connectors needs attention".
+        onConnectors={
+          readinessInputs.connectors.length > 0 ? () => setConnectorHubOpen(true) : undefined
+        }
+        connectorIssues={readinessInputs.connectors.some(({ slug }) => {
+          const s = connectorHealth[slug];
+          return s === 'reauth' || s === 'error' || s === 'disconnected';
+        })}
       />
 
       <div className={styles.stage}>
@@ -1519,13 +1534,20 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
           onSelectedChange={setEnableMailboxes}
           readiness={readinessInputs}
           evalAgg={evalAgg}
-          connected={enableConnected}
+          connectorHealth={connectorHealth}
           onConnect={markConnected}
           invited={enableInvited}
           onInvite={sendInvites}
           onEvaluate={evaluateFromEnable}
           onClose={() => setEnableMode(null)}
           onConfirm={confirmEnable}
+        />
+      )}
+
+      {connectorHubOpen && (
+        <ConnectorHubModal
+          only={readinessInputs.connectors.map((c) => c.slug)}
+          onClose={() => setConnectorHubOpen(false)}
         />
       )}
 

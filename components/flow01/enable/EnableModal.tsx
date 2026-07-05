@@ -16,6 +16,7 @@ import Spinner from '@/components/atoms/Spinner';
 import { MAILBOXES, mailboxName, mailboxSummary } from '@/data/mailboxes';
 import type { ConnectorSlug } from '@/types/playbook';
 import type { EvalAggregate } from '@/components/simulate/useEvalState';
+import type { ConnectorHealth } from '../connectorHealth';
 import { computeChecks, type ReadinessInputs, type ReadinessCheck } from './readiness';
 import ReadinessReview from './ReadinessReview';
 import styles from './EnableModal.module.css';
@@ -42,8 +43,8 @@ interface Props {
   /** What the AOP depends on (doc scan) - feeds the Review step's checks. */
   readiness: ReadinessInputs;
   evalAgg: EvalAggregate;
-  /** Session state, owned by the canvas so it survives modal close/reopen. */
-  connected: ReadonlySet<ConnectorSlug>;
+  /** Connector health from the shared store (the Connectors hub). */
+  connectorHealth: Record<ConnectorSlug, ConnectorHealth>;
   onConnect: (slug: ConnectorSlug) => void;
   invited: ReadonlySet<string>;
   onInvite: (person: string, mailboxIds: string[]) => void;
@@ -141,7 +142,7 @@ export default function EnableModal({
   onSelectedChange,
   readiness,
   evalAgg,
-  connected,
+  connectorHealth,
   onConnect,
   invited,
   onInvite,
@@ -178,8 +179,8 @@ export default function EnableModal({
   useEffect(() => () => timers.current.forEach((t) => window.clearTimeout(t)), []);
 
   const checks = useMemo(
-    () => computeChecks(readiness, selected, evalAgg, { connected, invited }),
-    [readiness, selected, evalAgg, connected, invited],
+    () => computeChecks(readiness, selected, evalAgg, { connectorHealth, invited }),
+    [readiness, selected, evalAgg, connectorHealth, invited],
   );
 
   // Card-resize (transitions.dev): the setup step wants the tall fixed dialog

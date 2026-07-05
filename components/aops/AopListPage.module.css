@@ -1,0 +1,519 @@
+/* AopListPage - the AOP entry point (Figma 1312:14506): Gmail bar + Admin Panel
+   main nav (240) + Hiver AI nav (240) + the procedures page. Colors and metrics
+   follow the Figma frame; type stays on the app's Inter stack. */
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--card, #fff);
+}
+.shell {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
+}
+
+/* ---- Admin Panel main nav (Figma: #f6f8fc, border #d6dde8) ---- */
+.mainNav {
+  flex: none;
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-soft); /* #f6f8fc */
+  border-right: 1px solid var(--hairline); /* #d6dde8 */
+}
+.mainNavHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 24px 20px;
+}
+.hiverMark {
+  flex: none;
+  width: 36px;
+  height: 36px;
+}
+.hiverMark img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.mainNavHeadText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.mainNavOverline {
+  font-size: 12px;
+  line-height: 18px;
+  letter-spacing: var(--ls-body);
+  color: var(--muted); /* #6f7c90 */
+}
+.mainNavTitle {
+  font-size: var(--fs-body); /* 14px */
+  font-weight: 600;
+  line-height: 20px;
+  letter-spacing: var(--ls-body);
+  color: var(--ink); /* #343c45 */
+}
+.mainNavClose {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.mainNavClose svg {
+  width: 17px;
+  height: 17px;
+}
+.mainNavMenu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 8px 8px 0;
+}
+.mainNavItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px 8px 24px;
+  border: none;
+  border-radius: 0 30px 30px 0;
+  background: none;
+  font-family: var(--font);
+  font-size: var(--fs-body); /* 14px */
+  font-weight: 400;
+  line-height: 20px;
+  letter-spacing: var(--ls-body);
+  color: var(--body); /* #3e4c5a */
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap);
+}
+.mainNavItem:hover {
+  background: var(--hairline-soft);
+}
+.mainNavItem[data-active] {
+  background: #e6edfb; /* Figma active pill */
+  font-weight: 500;
+}
+.mainNavItem[data-chevron] {
+  padding-left: 6px;
+}
+.mainNavChevron {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  transform: rotate(-90deg);
+  color: var(--muted);
+}
+.mainNavIcon {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  color: var(--body);
+}
+
+/* ---- Hiver AI nav (white, border #eceff6) ---- */
+.aiNav {
+  flex: none;
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px 16px;
+  background: var(--card, #fff);
+  border-right: 1px solid var(--hairline-soft); /* #eceff6 */
+}
+.aiNavHead {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 42px;
+  padding: 0 12px;
+  font-size: var(--fs-h5); /* 16px */
+  font-weight: 600;
+  line-height: 24px;
+  letter-spacing: var(--ls-h5);
+  color: var(--ink);
+}
+.aiNavHeadIcon {
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+.aiNavMenu {
+  display: flex;
+  flex-direction: column;
+}
+.aiNavItem {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 9px 12px;
+  border: none;
+  border-radius: var(--r-sm); /* 4px */
+  background: none;
+  font-family: var(--font);
+  font-size: var(--fs-body); /* 14px */
+  font-weight: 400;
+  line-height: 20px;
+  letter-spacing: var(--ls-body);
+  color: var(--body);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap);
+}
+.aiNavItem:hover {
+  background: var(--surface-soft);
+}
+.aiNavItem[data-active] {
+  background: #f0f3ff; /* Figma light purple */
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* ---- Page ---- */
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+/* Header (Figma 1816:18623) */
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 0 2px;
+}
+.titleBlock {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.title {
+  margin: 0;
+  font-size: var(--fs-body); /* 14px */
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: var(--ls-body);
+  color: var(--ink);
+}
+.subtitle {
+  margin: 0;
+  font-size: var(--fs-small); /* 13px */
+  line-height: 19px;
+  letter-spacing: var(--ls-body);
+  color: #4d596c;
+}
+.headerActions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.connectorsWrap {
+  position: relative;
+  display: inline-flex;
+}
+.issueDot {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--state-warn);
+  border: 2px solid var(--card, #fff);
+}
+/* The accent CTA (Figma Primary Button #506dff, px12 py8 r6, 13 medium). */
+.newBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--accent); /* #506dff */
+  font-size: var(--fs-small); /* 13px */
+  font-weight: 500;
+  line-height: 19px;
+  letter-spacing: -0.065px;
+  color: #fff;
+  text-decoration: none;
+  transition: background var(--d-hover) var(--ease-snap);
+}
+.newBtn:hover {
+  background: var(--accent-hover);
+}
+.newBtn svg {
+  width: 16px;
+  height: 16px;
+}
+.countLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding-left: 2px;
+  font-size: var(--fs-small); /* 13px */
+  line-height: 19px;
+  letter-spacing: var(--ls-body);
+  color: #4d596c;
+}
+.dotActive {
+  color: #05a570;
+}
+.dotInactive {
+  color: var(--muted-soft); /* #97a3b7 */
+}
+
+/* ---- Meet-AOP banner (empty state, Figma 1773:17947) ---- */
+.banner {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid #f7ebd7;
+  background: #fff7e9;
+}
+.bannerText {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 697px;
+  padding: 24px 24px 28px 28px;
+}
+.bannerTitle {
+  margin: 0;
+  font-size: var(--fs-h5); /* 16px */
+  font-weight: 500;
+  line-height: 24px;
+  letter-spacing: var(--ls-h5);
+  color: var(--ink);
+}
+.bannerBody {
+  margin: 0;
+  font-size: var(--fs-body); /* 14px */
+  line-height: 20px;
+  letter-spacing: var(--ls-body);
+  color: #4d596c;
+}
+.bannerLink {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+.bannerLink:hover {
+  text-decoration: underline;
+}
+.bannerArt {
+  position: absolute;
+  right: -47px;
+  bottom: -55px;
+  width: 193px;
+  height: 160px;
+  pointer-events: none;
+}
+.bannerArt img {
+  width: 221px;
+  height: 228px;
+  display: block;
+}
+
+/* ---- Table (both states) ---- */
+.table {
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--hairline-soft); /* #eceff6 */
+}
+.tableHead {
+  display: flex;
+  gap: 20px;
+  padding: 16px 28px;
+  background: var(--surface-soft); /* #f6f8fc */
+  border-bottom: 1px solid var(--hairline-soft);
+  font-size: 12px;
+  line-height: 14px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #4d596c;
+}
+.colMain {
+  flex: 1;
+  min-width: 0;
+}
+.colEnd {
+  flex: none;
+  width: 120px;
+  text-align: right;
+}
+
+/* Empty state body (Figma 1773:18290) */
+.emptyBody {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 364px;
+  padding: 24px 24px 46px;
+}
+.emptyArt {
+  width: 130px;
+  height: 142px;
+  overflow: hidden;
+  display: block;
+}
+.emptyArt img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.emptyTitle {
+  margin: 0 0 22px;
+  font-size: var(--fs-h5); /* 16px */
+  font-weight: 500;
+  line-height: 24px;
+  letter-spacing: var(--ls-h5);
+  color: var(--ink);
+}
+
+/* Rows (Figma h76, border #eceff6) */
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  height: 76px;
+  padding: 0 28px;
+  border-bottom: 1px solid var(--hairline-soft);
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap);
+}
+.rows li:last-child .row {
+  border-bottom: none;
+}
+.row:hover {
+  background: var(--surface-soft);
+}
+.row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.cellAop {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.aopText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.aopName {
+  font-size: var(--fs-small); /* 13px */
+  font-weight: 500;
+  line-height: 19px;
+  letter-spacing: -0.065px;
+  color: var(--body); /* #3e4c5a */
+}
+.aopDesc {
+  font-size: var(--fs-small); /* 13px */
+  line-height: 19px;
+  letter-spacing: -0.065px;
+  color: #4d596c;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cellMapped {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+/* Mailbox chip (Figma: #f0f3ff bg, #196fe0 13 medium, 20px avatar) */
+.mbChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px 2px 4px;
+  border-radius: 6px;
+  background: #f0f3ff;
+  font-size: var(--fs-small); /* 13px */
+  font-weight: 500;
+  line-height: 19px;
+  letter-spacing: -0.065px;
+  color: #196fe0;
+}
+.mbChipAvatar {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 600;
+}
+.mbChipMore {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #f0f3ff;
+  font-size: var(--fs-small);
+  font-weight: 500;
+  line-height: 19px;
+  letter-spacing: -0.065px;
+  color: #196fe0;
+}
+.unassigned {
+  font-size: var(--fs-small); /* 13px */
+  line-height: 19px;
+  letter-spacing: -0.065px;
+  color: var(--muted-soft); /* #97a3b7 */
+}
+.cellTime {
+  font-size: var(--fs-small); /* 13px */
+  line-height: 19px;
+  letter-spacing: -0.065px;
+  color: var(--body);
+}
+.cellTime[data-muted] {
+  color: var(--muted-soft);
+}

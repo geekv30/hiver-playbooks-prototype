@@ -1,0 +1,46 @@
+/* Toggle - 36x20 switch (Figma 1817:18991). Transform-only knob motion. */
+
+.track {
+  flex: none;
+  position: relative;
+  width: 36px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--muted-soft);
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap);
+}
+.track[data-on] {
+  background: var(--accent);
+}
+.track:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.track:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(20, 24, 33, 0.18);
+  transition: transform var(--d-hover) var(--ease-snap);
+}
+.track[data-on] .knob {
+  transform: translateX(16px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track,
+  .knob {
+    transition: none;
+  }
+}

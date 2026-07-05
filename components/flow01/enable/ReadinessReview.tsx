@@ -121,7 +121,7 @@ export default function ReadinessReview({
                   </span>
                 ) : (
                   <Button variant="secondary" onClick={() => connect(action.slug)}>
-                    Connect
+                    {action.label}
                   </Button>
                 ))}
               {action?.type === 'invite' && (

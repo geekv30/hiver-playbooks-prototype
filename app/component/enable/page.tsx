@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import EnableModal from '@/components/flow01/enable/EnableModal';
 import type { ReadinessInputs } from '@/components/flow01/enable/readiness';
+import type { ConnectorHealth } from '@/components/flow01/connectorHealth';
 import type { ConnectorSlug } from '@/types/playbook';
 
 const btn: React.CSSProperties = {
@@ -31,7 +32,13 @@ export default function EnableComponentPage() {
   const [mode, setMode] = useState<'commit' | 'manage'>('commit');
   const [name, setName] = useState('');
   const [selected, setSelected] = useState<string[]>(['support', 'sales']);
-  const [connected, setConnected] = useState<ReadonlySet<ConnectorSlug>>(new Set());
+  const [health, setHealth] = useState<Record<ConnectorSlug, ConnectorHealth>>({
+    shopify: 'connected',
+    hubspot: 'reauth',
+    clickup: 'connected',
+    slack: 'error',
+    salesforce: 'disconnected',
+  });
   const [invited, setInvited] = useState<ReadonlySet<string>>(new Set());
 
   const openCommit = () => {
@@ -85,8 +92,8 @@ export default function EnableComponentPage() {
         onSelectedChange={setSelected}
         readiness={DEMO_READINESS}
         evalAgg={ZERO_AGG}
-        connected={connected}
-        onConnect={(slug) => setConnected((prev) => new Set(prev).add(slug))}
+        connectorHealth={health}
+        onConnect={(slug) => setHealth((prev) => ({ ...prev, [slug]: 'connected' }))}
         invited={invited}
         onInvite={(person, ids) =>
           setInvited((prev) => {
