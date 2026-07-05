@@ -54,7 +54,7 @@
 }
 
 /* ---- body (scrolls; the list is the scroll region) ---- */
-/* The body does NOT scroll - the name / Go-live label / search / banner are
+/* The body does NOT scroll - the name / Go-live label / tabs / search are
    fixed; only the mailbox .list (below) scrolls. */
 .body {
   flex: 1;
@@ -145,66 +145,63 @@
   color: var(--muted-soft);
 }
 
-/* ---- pre-enabled info banner (warn variant when a required SM is removed) ---- */
-.banner {
+/* ---- go-live surface tabs (Figma 1854:14203) ---- */
+/* Two equal full-width tabs (AI Agents | AI Copilot) over a hairline base, the
+   active tab inked in the accent over a sliding 2px accent underline (the
+   PanelTabs anatomy on the modal's palette). */
+.tabs {
+  position: relative;
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 10px 10px 10px 12px;
-  border-radius: var(--r-md);
-  background: #ebf7ff; /* --background/info/default (Figma 724:33482) */
-  animation: bannerIn var(--d-enter) var(--ease-snap) both;
+  margin-top: -8px;
+  border-bottom: 1px solid var(--hairline);
 }
-.banner[data-warn] {
-  background: var(--state-warn-bg);
-}
-@keyframes bannerIn {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-.bannerIco {
-  flex: none;
-  width: 16px;
-  height: 16px;
-  margin-top: 1px;
-  color: #065b89; /* --text/info/default */
-}
-.banner[data-warn] .bannerIco {
-  color: var(--state-warn);
-}
-.bannerText {
+.tab {
   flex: 1;
-  font-size: var(--fs-small); /* 13px */
-  line-height: 1.45;
-  letter-spacing: var(--ls-body);
-  color: #065b89; /* --text/info/default (Figma 724:33482) */
-}
-.bannerClose {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 8px 12px;
   border: none;
-  border-radius: var(--r-xs);
   background: none;
+  font-family: var(--font);
+  font-size: var(--fs-body); /* 14px */
+  font-weight: 500;
+  letter-spacing: var(--ls-body);
   color: var(--muted);
   cursor: pointer;
   transition: color var(--d-hover) var(--ease-snap);
 }
-.bannerClose svg {
-  width: 15px;
-  height: 15px;
-}
-.bannerClose:hover {
+.tab:hover {
   color: var(--ink-soft);
+}
+.tab[data-active] {
+  color: var(--accent);
+}
+.tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: var(--r-xs);
+}
+.tabIcon {
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+}
+.tabIcon svg {
+  width: 16px;
+  height: 16px;
+}
+.tabUnderline {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 50%;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--accent);
+  transition: transform var(--d-indicator) var(--ease-snap);
 }
 
 /* ---- mailbox list ---- */
@@ -406,7 +403,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .banner,
   .successTitle,
   .successSub,
   .mbChip {
@@ -414,7 +410,8 @@
     opacity: 1;
     transform: none;
   }
-  .dialog {
+  .dialog,
+  .tabUnderline {
     transition: none;
   }
   .checkCircle,

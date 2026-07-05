@@ -25,6 +25,7 @@ import ColdStartModal from './ColdStartModal';
 import ActionHint from './ActionHint';
 import EnableModal from './enable/EnableModal';
 import EvalNudgeModal from './enable/EvalNudgeModal';
+import ConnectorGateModal from './enable/ConnectorGateModal';
 import { useEvalState } from '@/components/simulate/useEvalState';
 import SimulatePanel from '@/components/simulate/SimulatePanel';
 import { type CopilotMessage, type CopilotProposalData } from './copilot/CopilotPanel';
@@ -71,20 +72,21 @@ const TRIGGER_PLACEHOLDER = 'e.g. when an email reports an API error';
 // hint pill is the no-keystroke path. Curly quotes around '@' per the Figma copy.
 const STEP_PLACEHOLDER = 'Write what to do. Type ‘@’ for actions';
 
-// The tag-owning mailboxes pre-selected when enabling. Shown ONLY when the AOP
-// actually uses tags (see docUsesTags) so the banner never asserts a false claim
-// on a tag-less AOP. Generic/config (reusability rule).
-const PRE_ENABLED_MAILBOXES = ['support', 'sales'];
-
-// Does the doc use any Tag action? (a chip with actionId 'tag', anywhere -
-// trigger, steps, condition branches). Recursive scan, no structural assumptions.
-function docUsesTags(doc: EditorDoc): boolean {
-  let found = false;
+// Which connectors do the doc's action chips use? (anywhere - trigger, steps,
+// condition branches). Recursive scan, no structural assumptions: each chip's
+// actionId resolves to its action's connectorSlug (a bare connector-tag chip
+// carries the slug itself as its actionId). Feeds the pre-enable connector gate.
+function docConnectorSlugs(doc: EditorDoc, all: ConnectorSlug[]): ConnectorSlug[] {
+  const found = new Set<ConnectorSlug>();
   JSON.stringify(doc, (_k, v) => {
-    if (v && typeof v === 'object' && (v as { actionId?: string }).actionId === 'tag') found = true;
+    const id = v && typeof v === 'object' ? (v as { actionId?: string }).actionId : undefined;
+    if (id) {
+      const slug = findAction(id)?.connectorSlug ?? (all.includes(id as ConnectorSlug) ? (id as ConnectorSlug) : undefined);
+      if (slug) found.add(slug);
+    }
     return v;
   });
-  return found;
+  return all.filter((slug) => found.has(slug));
 }
 
 // Copilot cold-start handoff: the working steps shown while the AOP drafts,
@@ -263,6 +265,11 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
   // The pre-enable evaluation nudge (spec 2026-07-02). Only 'commit' mode
   // nudges; 'manage' (the gear) never does. Always skippable.
   const [nudge, setNudge] = useState<null | 'untested' | 'failures'>(null);
+  // The pre-enable connector gate: the connectors the doc uses that still need a
+  // re-auth this session. Continue marks them re-authed so a second Enable click
+  // goes straight through; the doc gaining a NEW connector re-opens the gate.
+  const [connectorGate, setConnectorGate] = useState<ConnectorSlug[] | null>(null);
+  const reauthedRef = useRef<Set<ConnectorSlug>>(new Set());
   // Evaluation aggregate: accumulated run results + staleness vs the live doc.
   // Feeds the eval summary strip and the evaluation-aware Enable.
   const { agg: evalAgg, recordRun } = useEvalState(doc);
@@ -329,24 +336,32 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
   }, []);
 
   // --- Enable / pause / resume / settings ------------------------------------
-  // Open the modal, seeding its LOCAL draft from the doc (pre-selecting the
-  // tag-owning mailboxes on a fresh AOP). Commit applies the draft to the doc.
+  // Open the modal, seeding its LOCAL draft from the doc. Commit applies the
+  // draft to the doc.
   const openEnable = useCallback(
     (mode: 'commit' | 'manage') => {
       setEnableName(doc.title);
-      const pre = docUsesTags(doc) ? PRE_ENABLED_MAILBOXES : [];
-      setEnableMailboxes(doc.mailboxes.length ? doc.mailboxes : pre);
+      setEnableMailboxes(doc.mailboxes);
       setEnableMode(mode);
     },
     [doc],
   );
-  // Enable click gate (spec 2026-07-02): never evaluated -> nudge; failures ->
+  // Evaluation gate (spec 2026-07-02): never evaluated -> nudge; failures ->
   // caution nudge; else straight to the Enable modal. Always skippable.
-  const requestEnable = useCallback(() => {
+  const requestEnableEval = useCallback(() => {
     if (evalAgg.total === 0) setNudge('untested');
     else if (evalAgg.failed > 0) setNudge('failures');
     else openEnable('commit');
   }, [evalAgg.total, evalAgg.failed, openEnable]);
+  // Enable click: first-level check - the doc's connector actions must re-auth
+  // before going live (once per session per connector); then the eval gate.
+  const requestEnable = useCallback(() => {
+    const pending = docConnectorSlugs(doc, ALL_CONNECTOR_SLUGS).filter(
+      (slug) => !reauthedRef.current.has(slug),
+    );
+    if (pending.length > 0) setConnectorGate(pending);
+    else requestEnableEval();
+  }, [doc, requestEnableEval]);
   const confirmEnable = useCallback(() => {
     api.setTitle(enableName.trim() || 'Untitled AOP');
     api.setMailboxes(enableMailboxes);
@@ -1504,6 +1519,18 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
         />
       )}
 
+      {connectorGate && (
+        <ConnectorGateModal
+          connectors={connectorGate}
+          onContinue={() => {
+            connectorGate.forEach((slug) => reauthedRef.current.add(slug));
+            setConnectorGate(null);
+            requestEnableEval();
+          }}
+          onClose={() => setConnectorGate(null)}
+        />
+      )}
+
       {nudge && (
         <EvalNudgeModal
           variant={nudge}
@@ -1529,7 +1556,6 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
           onNameChange={setEnableName}
           selected={enableMailboxes}
           onSelectedChange={setEnableMailboxes}
-          preEnabled={docUsesTags(doc) ? PRE_ENABLED_MAILBOXES : []}
           onClose={() => setEnableMode(null)}
           onConfirm={confirmEnable}
         />

@@ -1,16 +1,20 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { RiCloseLine, RiSearchLine, RiInformationLine } from 'react-icons/ri';
+import { RiSearchLine, RiRobot2Line } from 'react-icons/ri';
 import { SparkleIcon } from '@/components/icons/ui';
 import Checkbox from '@/components/atoms/Checkbox';
 import Button from '@/components/atoms/Button';
 import ModalShell from '@/components/atoms/ModalShell';
 import Spinner from '@/components/atoms/Spinner';
-import { MAILBOXES, mailboxName, mailboxList, mailboxSummary } from '@/data/mailboxes';
+import { MAILBOXES, mailboxName, mailboxSummary } from '@/data/mailboxes';
 import styles from './EnableModal.module.css';
 
 type Phase = 'form' | 'enabling' | 'success';
+/** The go-live surface tabs (Figma 1854:14203): AI Agents = the AOP runs
+ *  autonomously; AI Copilot = it assists teammates. Directional - both tabs
+ *  pick over the same shared-mailbox selection for now. */
+type Surface = 'agents' | 'copilot';
 
 interface Props {
   open: boolean;
@@ -22,9 +26,6 @@ interface Props {
   /** Selected mailbox ids. */
   selected: string[];
   onSelectedChange: (ids: string[]) => void;
-  /** Tag-owning mailboxes, pre-selected for this AOP (the banner explains why; a
-   *  warning shows if any is removed). */
-  preEnabled: string[];
   onClose: () => void;
   /** commit: go live (fired after the success moment). manage: save changes. */
   onConfirm: () => void;
@@ -75,13 +76,12 @@ export default function EnableModal({
   onNameChange,
   selected,
   onSelectedChange,
-  preEnabled,
   onClose,
   onConfirm,
 }: Props) {
   const [phase, setPhase] = useState<Phase>('form');
   const [query, setQuery] = useState('');
-  const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [surface, setSurface] = useState<Surface>('agents');
   const nameRef = useRef<HTMLInputElement>(null);
   const timers = useRef<number[]>([]);
 
@@ -91,7 +91,7 @@ export default function EnableModal({
     if (!open) return;
     setPhase('form');
     setQuery('');
-    setBannerDismissed(false);
+    setSurface('agents');
     requestAnimationFrame(() => nameRef.current?.focus());
   }, [open]);
 
@@ -108,8 +108,6 @@ export default function EnableModal({
   const toggle = (id: string) =>
     onSelectedChange(selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id]);
 
-  const removedPre = preEnabled.filter((id) => !selected.includes(id));
-  const warn = removedPre.length > 0;
   const canConfirm = name.trim().length > 0 && selected.length > 0;
   const liveName = name.trim() || 'Untitled AOP';
 
@@ -130,9 +128,6 @@ export default function EnableModal({
 
   if (!open) return null;
 
-  // The warn variant (a tag-owning mailbox was removed) can't be dismissed - it's
-  // a "this may break your steps" safety notice, not an FYI.
-  const showBanner = preEnabled.length > 0 && phase === 'form' && (warn || !bannerDismissed);
   const primaryLabel =
     mode === 'commit'
       ? `Enable on ${selected.length} ${selected.length === 1 ? 'mailbox' : 'mailboxes'}`
@@ -180,10 +175,50 @@ export default function EnableModal({
 
               <div className={styles.section}>
                 <span className={styles.label}>Go live on</span>
-                <span className={styles.sublabel}>
-                  Select the shared mailboxes this AOP runs on
-                </span>
               </div>
+
+              <div className={styles.tabs} role="tablist" aria-label="Go live on">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={surface === 'agents'}
+                  className={styles.tab}
+                  data-active={surface === 'agents' || undefined}
+                  onClick={() => setSurface('agents')}
+                >
+                  <span className={styles.tabIcon} aria-hidden>
+                    <RiRobot2Line />
+                  </span>
+                  AI Agents
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={surface === 'copilot'}
+                  className={styles.tab}
+                  data-active={surface === 'copilot' || undefined}
+                  onClick={() => setSurface('copilot')}
+                >
+                  <span className={styles.tabIcon} aria-hidden>
+                    <SparkleIcon />
+                  </span>
+                  AI Copilot
+                </button>
+                {/* Sliding active-tab underline: two equal tabs, offset = one width. */}
+                <span
+                  className={styles.tabUnderline}
+                  style={{
+                    transform: surface === 'agents' ? 'translateX(0)' : 'translateX(100%)',
+                  }}
+                  aria-hidden
+                />
+              </div>
+
+              <span className={styles.sublabel}>
+                {surface === 'agents'
+                  ? 'Select the shared mailboxes this AOP runs on'
+                  : 'Select the shared mailboxes where this AOP assists your team'}
+              </span>
 
               <div className={styles.search}>
                 <RiSearchLine className={styles.searchIco} aria-hidden />
@@ -196,27 +231,6 @@ export default function EnableModal({
                   autoComplete="off"
                 />
               </div>
-
-              {showBanner && (
-                <div className={styles.banner} data-warn={warn || undefined}>
-                  <RiInformationLine className={styles.bannerIco} aria-hidden />
-                  <span className={styles.bannerText}>
-                    {warn
-                      ? `${mailboxList(removedPre)} own${removedPre.length === 1 ? 's' : ''} tags this AOP uses. Removing ${removedPre.length === 1 ? 'it' : 'them'} may break those steps.`
-                      : `${mailboxList(preEnabled)} ${preEnabled.length === 1 ? 'is' : 'are'} pre-selected because this AOP uses tags that live in ${preEnabled.length === 1 ? 'it' : 'them'}.`}
-                  </span>
-                  {!warn && (
-                    <button
-                      type="button"
-                      className={styles.bannerClose}
-                      onClick={() => setBannerDismissed(true)}
-                      aria-label="Dismiss"
-                    >
-                      <RiCloseLine />
-                    </button>
-                  )}
-                </div>
-              )}
 
               <ul className={styles.list}>
                 {filtered.map((m) => {

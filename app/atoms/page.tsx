@@ -211,7 +211,6 @@ function EnableModalDemo() {
         onNameChange={setName}
         selected={selected}
         onSelectedChange={setSelected}
-        preEnabled={['support', 'sales']}
         onClose={() => {}}
         onConfirm={() => {}}
       />
