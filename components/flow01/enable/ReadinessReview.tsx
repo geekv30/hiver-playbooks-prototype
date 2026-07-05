@@ -1,9 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { RiCheckLine, RiTimeLine } from 'react-icons/ri';
-import { CONNECTOR_ICON } from '@/components/icons/connectors';
-import { PlayIcon, TagIcon } from '@/components/icons/ui';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { RiCheckboxCircleFill, RiErrorWarningFill, RiTimeFill } from 'react-icons/ri';
 import Button from '@/components/atoms/Button';
 import Spinner from '@/components/atoms/Spinner';
 import type { ConnectorSlug } from '@/types/playbook';
@@ -22,31 +20,25 @@ interface Props {
 const STAGGER_MS = 240;
 const SETTLE_PAD_MS = 420;
 const CONNECT_MS = 1100;
-/** Entity chips shown per row before collapsing into "+N more". */
-const MAX_CHIPS = 4;
 
 const prefersReduced = () =>
   typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-/** The leading kind icon: brand mark for connectors, avatar initial for people,
- *  UI glyphs for evaluation/tags. Tone tints the tile, not the glyph shape. */
-function KindIcon({ check }: { check: ReadinessCheck }): ReactNode {
-  if (check.kind === 'connector') {
-    const slug = check.id.replace('connector-', '') as ConnectorSlug;
-    const Brand = CONNECTOR_ICON[slug];
-    return Brand ? <Brand /> : null;
-  }
-  if (check.kind === 'evaluation') return <PlayIcon />;
-  if (check.kind === 'tags') return <TagIcon />;
-  return <span className={styles.avatarInitial}>{check.title.slice(0, 1)}</span>;
+/** One status glyph per tone, same position and size on every row - the ONLY
+ *  place state color appears. ok and auto are both green (nothing for the user
+ *  to do); pending is the blue clock (resolves outside this flow). */
+function ToneGlyph({ tone }: { tone: ReadinessCheck['tone'] }) {
+  if (tone === 'warn') return <RiErrorWarningFill aria-hidden />;
+  if (tone === 'pending') return <RiTimeFill aria-hidden />;
+  return <RiCheckboxCircleFill aria-hidden />;
 }
 
 /**
- * The Review step's check list: every readiness item as one row - leading kind
- * icon, title + consequence copy, and the fix inline on the right (Connect /
- * Send invite / Evaluate) or an honest status when there's nothing to click
- * (Done for you / Invite sent / Connected). Rows reveal staggered on entry
- * (transitions.dev texts-reveal on our tokens); reduced motion shows all at once.
+ * The Review step's check list, one calm grammar per row: a status glyph, ONE
+ * sentence (bold lead + consequence), and at most one action button. State
+ * lives only in the glyph; lists live inside the sentence as counts or short
+ * names - no tiles, no chips, no trailing status labels. Rows reveal staggered
+ * on entry (reduced motion shows all at once).
  */
 export default function ReadinessReview({
   checks,
@@ -107,60 +99,40 @@ export default function ReadinessReview({
             style={{ '--i': i } as CSSProperties}
             aria-hidden={!shown}
           >
-            <span className={styles.kindIcon} data-tone={check.tone} data-kind={check.kind}>
-              <KindIcon check={check} />
+            <span className={styles.glyph} data-tone={check.tone}>
+              <ToneGlyph tone={check.tone} />
             </span>
-            <span className={styles.rowText}>
-              <span className={styles.rowTitle}>{check.title}</span>
-              <span className={styles.rowDetail}>{check.detail}</span>
-              {check.chips && check.chips.length > 0 && (
-                <span className={styles.chipRow}>
-                  {check.chips.slice(0, MAX_CHIPS).map((c) => (
-                    <span key={c.label} className={styles.chip}>
-                      {c.label}
-                      {c.sub && <span className={styles.chipSub}>{c.sub}</span>}
+            <span className={styles.sentence}>
+              <strong>{check.title}</strong> {check.detail}
+            </span>
+            {action && (
+              <span className={styles.rowEnd}>
+                {action.type === 'connect' &&
+                  (connecting.has(action.slug) ? (
+                    <span className={styles.busy}>
+                      <Spinner size={14} />
+                      Connecting…
                     </span>
+                  ) : (
+                    <Button variant="secondary" onClick={() => connect(action.slug)}>
+                      {action.label}
+                    </Button>
                   ))}
-                  {check.chips.length > MAX_CHIPS && (
-                    <span className={styles.chip} data-more>
-                      +{check.chips.length - MAX_CHIPS} more
-                    </span>
-                  )}
-                </span>
-              )}
-            </span>
-            <span className={styles.rowEnd}>
-              {action?.type === 'connect' &&
-                (connecting.has(action.slug) ? (
-                  <span className={styles.busy}>
-                    <Spinner size={14} />
-                    Connecting…
-                  </span>
-                ) : (
-                  <Button variant="secondary" onClick={() => connect(action.slug)}>
-                    {action.label}
+                {action.type === 'invite' && (
+                  <Button
+                    variant="secondary"
+                    onClick={() => onInvite(action.person, action.mailboxes)}
+                  >
+                    Send invite
                   </Button>
-                ))}
-              {action?.type === 'invite' && (
-                <Button
-                  variant="secondary"
-                  onClick={() => onInvite(action.person, action.mailboxes)}
-                >
-                  Send invite
-                </Button>
-              )}
-              {action?.type === 'evaluate' && (
-                <Button variant="secondary" onClick={onEvaluate}>
-                  Evaluate
-                </Button>
-              )}
-              {!action && check.status && (
-                <span className={styles.status} data-tone={check.tone}>
-                  {check.tone === 'pending' ? <RiTimeLine aria-hidden /> : <RiCheckLine aria-hidden />}
-                  {check.status}
-                </span>
-              )}
-            </span>
+                )}
+                {action.type === 'evaluate' && (
+                  <Button variant="secondary" onClick={onEvaluate}>
+                    Evaluate
+                  </Button>
+                )}
+              </span>
+            )}
           </li>
         );
       })}

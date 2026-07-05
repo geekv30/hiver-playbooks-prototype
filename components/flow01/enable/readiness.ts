@@ -34,20 +34,18 @@ export interface ReadinessCheck {
   id: string;
   kind: CheckKind;
   tone: CheckTone;
+  /** The bold sentence lead (a connector name, "Evaluation", a person). */
   title: string;
-  /** One short line - structured lists go in `chips`, never in prose. */
+  /** The rest of the sentence: `title + ' ' + detail` reads as ONE line.
+   *  Lists render as counts ("4 of the selected mailboxes") or short inline
+   *  names - never comma walls, never extra UI elements. */
   detail: string;
-  /** Scannable entities under the detail line (tags to create, mailboxes an
-   *  invite covers). label + an optional muted sub ("4 mailboxes"). */
-  chips?: { label: string; sub?: string }[];
   /** The inline fix: 'connect' carries its slug + state-specific label,
-   *  'invite' its person. */
+   *  'invite' its person. At most one control per row. */
   action?:
     | { type: 'connect'; slug: ConnectorSlug; label: string }
     | { type: 'invite'; person: string; mailboxes: string[] }
     | { type: 'evaluate' };
-  /** Trailing status label when no action is needed/possible. */
-  status?: string;
 }
 
 // ---- doc scan -----------------------------------------------------------------
@@ -127,16 +125,15 @@ export function computeChecks(
         kind: 'connector',
         tone: 'ok',
         title: name,
-        detail: `Connected - ${stepsPhrase} ${steps === 1 ? 'is' : 'are'} ready to run.`,
-        status: 'Connected',
+        detail: `is connected - ${stepsPhrase} ready to run.`,
       });
     } else {
       const reason =
         state === 'reauth'
-          ? `${stepsPhrase} won't run until ${name} is re-authenticated.`
+          ? `needs re-authentication - ${stepsPhrase} won't run until it's reconnected.`
           : state === 'error'
-            ? `The ${name} connection is broken - ${stepsPhrase} won't run until it's fixed.`
-            : `${stepsPhrase} won't run until ${name} is connected.`;
+            ? `has a broken connection - ${stepsPhrase} won't run until it's fixed.`
+            : `isn't connected - ${stepsPhrase} won't run until it is.`;
       checks.push({
         id: `connector-${slug}`,
         kind: 'connector',
@@ -161,7 +158,7 @@ export function computeChecks(
         kind: 'evaluation',
         tone: 'pending',
         title: 'Evaluation',
-        detail: 'Never evaluated - a quick run on past emails catches broken steps early.',
+        detail: "hasn't been run yet - a quick pass on past emails catches broken steps early.",
         action: { type: 'evaluate' },
       });
     } else if (evalAgg.failed > 0) {
@@ -170,7 +167,7 @@ export function computeChecks(
         kind: 'evaluation',
         tone: 'warn',
         title: 'Evaluation',
-        detail: `${evalAgg.failed} of ${evalAgg.total} ${evalAgg.total === 1 ? 'run' : 'runs'} failed - review them before going live.`,
+        detail: `flagged ${evalAgg.failed} of ${evalAgg.total} ${evalAgg.total === 1 ? 'run' : 'runs'} - review them before going live.`,
         action: { type: 'evaluate' },
       });
     } else {
@@ -179,8 +176,7 @@ export function computeChecks(
         kind: 'evaluation',
         tone: 'ok',
         title: 'Evaluation',
-        detail: `${evalAgg.total} ${evalAgg.total === 1 ? 'run' : 'runs'}, all passed.`,
-        status: 'Passed',
+        detail: `passed - ${evalAgg.total} of ${evalAgg.total} runs succeeded.`,
       });
     }
   }
@@ -199,21 +195,17 @@ export function computeChecks(
         kind: 'tags',
         tone: 'ok',
         title: 'Tags',
-        detail: 'Every tag this AOP applies exists in all selected mailboxes.',
-        status: 'Ready',
+        detail: 'are ready - every tag this AOP applies exists in the selected mailboxes.',
       });
     } else {
+      // Union of mailboxes that are missing at least one tag, phrased inline.
+      const affected = [...new Set(missing.flatMap((m) => m.mailboxes))];
       checks.push({
         id: 'tags',
         kind: 'tags',
         tone: 'auto',
-        title: 'Tags',
-        detail: `Missing in some selected mailboxes - we'll create ${missing.length === 1 ? 'this tag' : 'these tags'} when this AOP goes live.`,
-        chips: missing.map((m) => ({
-          label: m.tag,
-          sub: `${m.mailboxes.length} ${m.mailboxes.length === 1 ? 'mailbox' : 'mailboxes'}`,
-        })),
-        status: 'Done for you',
+        title: missing.length === 1 ? `The '${missing[0]!.tag}' tag` : `${missing.length} tags`,
+        detail: `${missing.length === 1 ? 'is' : 'are'} missing in ${mailboxPhrase(affected)} - we'll create ${missing.length === 1 ? 'it' : 'them'} for you at go-live.`,
       });
     }
   }
@@ -229,21 +221,18 @@ export function computeChecks(
         kind: 'assignment',
         tone: 'ok',
         title: person,
-        detail: `A member of all selected mailboxes - assignments will land normally.`,
-        status: 'Ready',
+        detail: 'can take assignments in every selected mailbox.',
       });
       continue;
     }
     const uninvited = missing.filter((id) => !session.invited.has(inviteKey(person, id)));
-    const missingChips = missing.map((id) => ({ label: mailboxName(id) }));
     if (uninvited.length > 0) {
       checks.push({
         id: `assign-${person}`,
         kind: 'assignment',
         tone: 'warn',
         title: person,
-        detail: `This AOP assigns to ${person}, who hasn't joined ${missing.length === 1 ? 'this mailbox' : 'these mailboxes'} - assignment pauses there until they do:`,
-        chips: missingChips,
+        detail: `isn't a member of ${mailboxPhrase(missing)} - assignment pauses there until they join.`,
         action: { type: 'invite', person, mailboxes: missing },
       });
     } else {
@@ -252,12 +241,18 @@ export function computeChecks(
         kind: 'assignment',
         tone: 'pending',
         title: person,
-        detail: `Invite sent - assignment pauses in ${missing.length === 1 ? 'this mailbox' : 'these mailboxes'} until ${person} accepts:`,
-        chips: missingChips,
-        status: 'Invite sent',
+        detail: `has been invited - assignment pauses in ${mailboxPhrase(missing)} until they accept.`,
       });
     }
   }
 
   return checks;
+}
+
+/** Inline phrasing for a mailbox list: short sets are named ("Sales and
+ *  Marketing"), longer ones become a count ("4 of the selected mailboxes"). */
+function mailboxPhrase(ids: string[]): string {
+  if (ids.length === 1) return mailboxName(ids[0]!);
+  if (ids.length === 2) return `${mailboxName(ids[0]!)} and ${mailboxName(ids[1]!)}`;
+  return `${ids.length} of the selected mailboxes`;
 }
