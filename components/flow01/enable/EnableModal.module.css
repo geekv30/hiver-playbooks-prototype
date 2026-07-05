@@ -8,16 +8,19 @@
 .dialog {
   width: 100%;
   max-width: 560px;
-  /* Fixed, tall height so the modal occupies the page; only the mailbox list
-     scrolls inside (Figma 724:33482 - the list is a fixed-height scroll region,
-     the header/name/search/banner/footer stay put). */
+  /* Tall by default (the setup step's mailbox list is the scroll region, so it
+     naturally fills to the cap); the review step is shorter - an inline height,
+     measured per step by the modal's card-resize effect, animates between the
+     two so a short check list never leaves a dead void. */
   height: calc(100vh - 88px);
-  max-height: 860px;
+  max-height: min(860px, calc(100vh - 88px));
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  /* smoothly resize between the form and the success state. */
-  transition: max-width var(--d-indicator) var(--ease-snap);
+  /* smoothly resize between steps and into the success state. */
+  transition:
+    max-width var(--d-indicator) var(--ease-snap),
+    height var(--d-indicator) var(--ease-snap);
 }
 .dialog[data-phase='success'] {
   max-width: 440px;
@@ -52,6 +55,13 @@
   letter-spacing: var(--ls-h5);
   color: var(--ink);
 }
+.stepCrumb {
+  margin-left: auto;
+  font-size: var(--fs-small); /* 13px */
+  font-weight: 500;
+  letter-spacing: var(--ls-body);
+  color: var(--muted-soft);
+}
 
 /* ---- body (scrolls; the list is the scroll region) ---- */
 /* The body does NOT scroll - the name / Go-live label / tabs / search are
@@ -64,6 +74,95 @@
   gap: 14px;
   padding: 18px 24px 8px;
   overflow: hidden;
+}
+/* Keyed directional slide between the Setup and Review steps (transform +
+   opacity only). fwd = entering Review (slides in from the right); back =
+   returning to Setup (slides in from the left). */
+.body[data-slide='fwd'] {
+  animation: slideFwd var(--d-enter) var(--ease-snap) both;
+}
+.body[data-slide='back'] {
+  animation: slideBack var(--d-enter) var(--ease-snap) both;
+}
+@keyframes slideFwd {
+  from {
+    opacity: 0;
+    transform: translateX(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes slideBack {
+  from {
+    opacity: 0;
+    transform: translateX(-22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ---- Review step ---- */
+/* The live verdict strip: reviewing spinner -> ok / warn / pending summary. */
+.verdict {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 11px 12px;
+  border-radius: var(--r-md);
+  font-size: var(--fs-small); /* 13px */
+  line-height: 1.45;
+  letter-spacing: var(--ls-body);
+  font-weight: 500;
+}
+.verdict svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+}
+.verdict[data-tone='checking'] {
+  background: var(--surface-soft);
+  color: var(--muted);
+}
+.verdict[data-tone='ok'] {
+  background: var(--state-ok-bg);
+  color: #14532d;
+}
+.verdict[data-tone='ok'] svg {
+  color: var(--state-ok);
+}
+.verdict[data-tone='warn'] {
+  background: var(--state-warn-bg);
+  color: #78350f;
+}
+.verdict[data-tone='warn'] svg {
+  color: var(--state-warn);
+}
+.verdict[data-tone='pending'] {
+  background: #ebf7ff; /* --background/info/default */
+  color: #065b89; /* --text/info/default */
+}
+.reviewScope {
+  font-size: var(--fs-small); /* 13px */
+  letter-spacing: var(--ls-body);
+  color: var(--muted);
+}
+/* The check list is the Review step's scroll region (mirrors .list). */
+.reviewList {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0 -2px;
+  padding-bottom: 4px;
+}
+/* When the dialog height is 'auto' mid-measure, the review body must not
+   stretch - it sizes to its checks (the card-resize effect reads this). */
+.body[data-step='review'] {
+  flex: 0 1 auto;
 }
 
 .field {
@@ -287,6 +386,11 @@
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+.cancel:disabled {
+  color: var(--muted-soft);
+  cursor: default;
+  background: none;
+}
 .enabling {
   display: inline-flex;
   align-items: center;
@@ -405,7 +509,9 @@
 @media (prefers-reduced-motion: reduce) {
   .successTitle,
   .successSub,
-  .mbChip {
+  .mbChip,
+  .body[data-slide='fwd'],
+  .body[data-slide='back'] {
     animation: none;
     opacity: 1;
     transform: none;

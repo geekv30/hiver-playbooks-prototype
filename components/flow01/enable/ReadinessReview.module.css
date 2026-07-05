@@ -1,0 +1,158 @@
+/* ReadinessReview - the Enable flow's Review step check list. One row per
+   readiness item: kind icon tile (tone-tinted), title + consequence copy, and
+   the inline fix or status on the right. Rows rise in staggered on entry. */
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 13px 2px;
+  border-bottom: 1px solid var(--hairline);
+  opacity: 0;
+  transform: translateY(6px);
+}
+.row:last-child {
+  border-bottom: none;
+}
+.row[data-shown] {
+  animation: rowIn var(--d-enter) var(--ease-snap) forwards;
+}
+@keyframes rowIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---- leading kind icon tile ---- */
+.kindIcon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-top: 1px;
+  border-radius: var(--r-md);
+  background: var(--surface-soft);
+  color: var(--muted);
+}
+.kindIcon svg {
+  width: 16px;
+  height: 16px;
+}
+.kindIcon[data-tone='ok'] {
+  background: var(--state-ok-bg);
+  color: var(--state-ok);
+}
+.kindIcon[data-tone='auto'] {
+  background: var(--state-ok-bg);
+  color: var(--state-ok);
+}
+.kindIcon[data-tone='warn'] {
+  background: var(--state-warn-bg);
+  color: var(--state-warn);
+}
+.kindIcon[data-tone='pending'] {
+  background: #ebf7ff; /* --background/info/default */
+  color: #065b89; /* --text/info/default */
+}
+/* Connector rows keep the brand mark's true colors - the tile stays neutral
+   regardless of tone (an amber wash behind an orange HubSpot mark reads muddy). */
+.kindIcon[data-kind='connector'] {
+  background: var(--surface-soft);
+  color: var(--muted);
+}
+.avatarInitial {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* ---- text ---- */
+.rowText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 1px;
+}
+.rowTitle {
+  font-size: var(--fs-body); /* 14px */
+  font-weight: 500;
+  letter-spacing: var(--ls-body);
+  color: var(--ink);
+}
+.rowDetail {
+  font-size: var(--fs-small); /* 13px */
+  line-height: 1.5;
+  letter-spacing: var(--ls-body);
+  color: var(--muted);
+}
+
+/* ---- trailing action / status ---- */
+.rowEnd {
+  flex: none;
+  display: flex;
+  align-items: center;
+  min-height: 30px;
+}
+.busy {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: var(--fs-small); /* 13px */
+  font-weight: 500;
+  letter-spacing: var(--ls-body);
+  color: var(--muted);
+}
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--fs-small); /* 13px */
+  font-weight: 500;
+  letter-spacing: var(--ls-body);
+  animation: statusIn var(--d-enter) var(--ease-snap) both;
+}
+.status svg {
+  width: 15px;
+  height: 15px;
+}
+.status[data-tone='ok'],
+.status[data-tone='auto'] {
+  color: var(--state-ok);
+}
+.status[data-tone='pending'] {
+  color: #065b89; /* --text/info/default */
+}
+@keyframes statusIn {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row,
+  .row[data-shown] {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  .status {
+    animation: none;
+  }
+}

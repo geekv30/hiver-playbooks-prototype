@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
@@ -24,8 +25,7 @@ import ConditionBlock from './condition/ConditionBlock';
 import ColdStartModal from './ColdStartModal';
 import ActionHint from './ActionHint';
 import EnableModal from './enable/EnableModal';
-import EvalNudgeModal from './enable/EvalNudgeModal';
-import ConnectorGateModal from './enable/ConnectorGateModal';
+import { deriveReadinessInputs, inviteKey } from './enable/readiness';
 import { useEvalState } from '@/components/simulate/useEvalState';
 import SimulatePanel from '@/components/simulate/SimulatePanel';
 import { type CopilotMessage, type CopilotProposalData } from './copilot/CopilotPanel';
@@ -71,23 +71,6 @@ const TRIGGER_PLACEHOLDER = 'e.g. when an email reports an API error';
 // '@' opens the actions command palette (references are reachable inside it); the
 // hint pill is the no-keystroke path. Curly quotes around '@' per the Figma copy.
 const STEP_PLACEHOLDER = 'Write what to do. Type ‘@’ for actions';
-
-// Which connectors do the doc's action chips use? (anywhere - trigger, steps,
-// condition branches). Recursive scan, no structural assumptions: each chip's
-// actionId resolves to its action's connectorSlug (a bare connector-tag chip
-// carries the slug itself as its actionId). Feeds the pre-enable connector gate.
-function docConnectorSlugs(doc: EditorDoc, all: ConnectorSlug[]): ConnectorSlug[] {
-  const found = new Set<ConnectorSlug>();
-  JSON.stringify(doc, (_k, v) => {
-    const id = v && typeof v === 'object' ? (v as { actionId?: string }).actionId : undefined;
-    if (id) {
-      const slug = findAction(id)?.connectorSlug ?? (all.includes(id as ConnectorSlug) ? (id as ConnectorSlug) : undefined);
-      if (slug) found.add(slug);
-    }
-    return v;
-  });
-  return all.filter((slug) => found.has(slug));
-}
 
 // Copilot cold-start handoff: the working steps shown while the AOP drafts,
 // then a short generic acknowledgement (reusability rule: generic copy).
@@ -262,14 +245,12 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
   const [enableMode, setEnableMode] = useState<null | 'commit' | 'manage'>(null);
   const [enableName, setEnableName] = useState('');
   const [enableMailboxes, setEnableMailboxes] = useState<string[]>([]);
-  // The pre-enable evaluation nudge (spec 2026-07-02). Only 'commit' mode
-  // nudges; 'manage' (the gear) never does. Always skippable.
-  const [nudge, setNudge] = useState<null | 'untested' | 'failures'>(null);
-  // The pre-enable connector gate: the connectors the doc uses that still need a
-  // re-auth this session. Continue marks them re-authed so a second Enable click
-  // goes straight through; the doc gaining a NEW connector re-opens the gate.
-  const [connectorGate, setConnectorGate] = useState<ConnectorSlug[] | null>(null);
-  const reauthedRef = useRef<Set<ConnectorSlug>>(new Set());
+  // Enable-flow session state (owned here so it survives the modal closing):
+  // connectors re-authenticated + membership invites sent this session. The
+  // Review step reads these; the doc gaining a new connector/assignee simply
+  // produces a fresh unresolved check next time.
+  const [enableConnected, setEnableConnected] = useState<ReadonlySet<ConnectorSlug>>(new Set());
+  const [enableInvited, setEnableInvited] = useState<ReadonlySet<string>>(new Set());
   // Evaluation aggregate: accumulated run results + staleness vs the live doc.
   // Feeds the eval summary strip and the evaluation-aware Enable.
   const { agg: evalAgg, recordRun } = useEvalState(doc);
@@ -346,22 +327,31 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
     },
     [doc],
   );
-  // Evaluation gate (spec 2026-07-02): never evaluated -> nudge; failures ->
-  // caution nudge; else straight to the Enable modal. Always skippable.
-  const requestEnableEval = useCallback(() => {
-    if (evalAgg.total === 0) setNudge('untested');
-    else if (evalAgg.failed > 0) setNudge('failures');
-    else openEnable('commit');
-  }, [evalAgg.total, evalAgg.failed, openEnable]);
-  // Enable click: first-level check - the doc's connector actions must re-auth
-  // before going live (once per session per connector); then the eval gate.
-  const requestEnable = useCallback(() => {
-    const pending = docConnectorSlugs(doc, ALL_CONNECTOR_SLUGS).filter(
-      (slug) => !reauthedRef.current.has(slug),
-    );
-    if (pending.length > 0) setConnectorGate(pending);
-    else requestEnableEval();
-  }, [doc, requestEnableEval]);
+  // Enable click goes straight into the two-step modal - every readiness
+  // concern (connectors, evaluation, tags, assignment) lives in its Review
+  // step, computed against the actual mailbox selection.
+  const requestEnable = useCallback(() => openEnable('commit'), [openEnable]);
+  // What the doc depends on, for the Review step's checks.
+  const readinessInputs = useMemo(() => deriveReadinessInputs(doc), [doc]);
+  const markConnected = useCallback(
+    (slug: ConnectorSlug) => setEnableConnected((prev) => new Set(prev).add(slug)),
+    [],
+  );
+  const sendInvites = useCallback(
+    (person: string, mailboxIds: string[]) =>
+      setEnableInvited((prev) => {
+        const next = new Set(prev);
+        mailboxIds.forEach((id) => next.add(inviteKey(person, id)));
+        return next;
+      }),
+    [],
+  );
+  // "Evaluate" from the Review step: leave the modal, open the eval surface.
+  const evaluateFromEnable = useCallback(() => {
+    setEnableMode(null);
+    if (companions) setPanelTab('simulate');
+    else setSimOpen(true);
+  }, [companions]);
   const confirmEnable = useCallback(() => {
     api.setTitle(enableName.trim() || 'Untitled AOP');
     api.setMailboxes(enableMailboxes);
@@ -1519,35 +1509,6 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
         />
       )}
 
-      {connectorGate && (
-        <ConnectorGateModal
-          connectors={connectorGate}
-          onContinue={() => {
-            connectorGate.forEach((slug) => reauthedRef.current.add(slug));
-            setConnectorGate(null);
-            requestEnableEval();
-          }}
-          onClose={() => setConnectorGate(null)}
-        />
-      )}
-
-      {nudge && (
-        <EvalNudgeModal
-          variant={nudge}
-          agg={evalAgg}
-          onClose={() => setNudge(null)}
-          onEvaluate={() => {
-            setNudge(null);
-            if (companions) setPanelTab('simulate');
-            else setSimOpen(true);
-          }}
-          onEnableAnyway={() => {
-            setNudge(null);
-            openEnable('commit');
-          }}
-        />
-      )}
-
       {enableMode && (
         <EnableModal
           open
@@ -1556,6 +1517,13 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
           onNameChange={setEnableName}
           selected={enableMailboxes}
           onSelectedChange={setEnableMailboxes}
+          readiness={readinessInputs}
+          evalAgg={evalAgg}
+          connected={enableConnected}
+          onConnect={markConnected}
+          invited={enableInvited}
+          onInvite={sendInvites}
+          onEvaluate={evaluateFromEnable}
           onClose={() => setEnableMode(null)}
           onConfirm={confirmEnable}
         />
