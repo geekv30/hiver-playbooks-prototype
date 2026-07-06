@@ -100,7 +100,7 @@ export default function ReviewIterationsPage() {
         <h1 className={styles.pageTitle}>The readiness review, four iterations</h1>
         <p className={styles.pageSub}>
           One scenario everywhere: two connectors healthy, evaluation not run, two tags missing,
-          one assignee awaiting an invite. The live version is v3 - open the worked example and
+          one assignee awaiting an invite. The live version is v4.3 - open the worked example and
           click Enable to drive it.
         </p>
       </header>
@@ -257,10 +257,10 @@ export default function ReviewIterationsPage() {
         {/* ---------------- v3 ---------------- */}
         <section className={styles.cell}>
           <div className={styles.caption}>
-            <h2>v3 · One glyph, one sentence, one button (live)</h2>
+            <h2>v3 · One glyph, one sentence, one button</h2>
             <p>
               One grammar per row: state lives in the glyph, lists live inside the sentence as
-              counts. This is what shipped.
+              counts. The calm baseline v4.3 builds on.
             </p>
           </div>
           <Chrome>
@@ -407,10 +407,11 @@ export default function ReviewIterationsPage() {
         {/* ---------------- v4.3 · synthesis ---------------- */}
         <section className={styles.cell}>
           <div className={styles.caption}>
-            <h2>v4.3 · Triage + inset groups (synthesis)</h2>
+            <h2>v4.3 · Triage + inset groups (live)</h2>
             <p>
               The triage order in the inset-card aesthetic: one quiet box per group, compact rows,
-              ready items summarized. The verdict, the groups, and the CTA tell one story.
+              ready items summarized. The verdict, the groups, and the CTA tell one story. This is
+              what shipped.
             </p>
           </div>
           <Chrome>
