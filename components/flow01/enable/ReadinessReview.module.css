@@ -1,8 +1,77 @@
-/* ReadinessReview - the Enable flow's Review step. ONE grammar per row: a
-   status glyph (the only state color), one sentence, at most one button.
-   Rows rise in staggered on entry. */
+/* ReadinessReview - the Enable flow's Review step (v4.3 triage). Checks grouped
+   by what they mean to the user: "Needs attention" (fix here), "Pending"
+   (resolves elsewhere), "Ready" (collapsed to one green sentence). Each group
+   is a quiet inset box; rows keep the calm grammar (glyph + sentence + one
+   button). Groups reveal staggered on entry. */
 
-.list {
+.groups {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ---- group ---- */
+.group {
+  opacity: 0;
+  transform: translateY(6px);
+}
+.group[data-shown] {
+  animation: groupIn var(--d-enter) var(--ease-snap) forwards;
+}
+@keyframes groupIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.groupHead {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  padding: 14px 2px 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.group:first-child .groupHead {
+  padding-top: 2px;
+}
+.groupCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 5px;
+  border-radius: var(--r-pill);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.groupCount[data-tone='warn'] {
+  background: var(--state-warn-bg);
+  color: var(--state-warn);
+}
+.groupCount[data-tone='pending'] {
+  background: #ebf7ff; /* --background/info/default */
+  color: #065b89; /* --text/info/default */
+}
+.groupCount[data-tone='ok'] {
+  background: var(--state-ok-bg);
+  color: var(--state-ok);
+}
+
+/* ---- inset box ---- */
+.inset {
+  border: 1px solid var(--hairline-soft);
+  border-radius: 10px;
+  background: var(--surface-soft);
+  overflow: hidden;
+}
+.rows {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -10,27 +79,17 @@
   flex-direction: column;
 }
 
+/* ---- row ---- */
 .row {
   display: flex;
   align-items: center;
   gap: 10px;
   min-height: 52px;
-  padding: 10px 2px;
-  border-bottom: 1px solid var(--hairline);
-  opacity: 0;
-  transform: translateY(6px);
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--hairline-soft);
 }
 .row:last-child {
   border-bottom: none;
-}
-.row[data-shown] {
-  animation: rowIn var(--d-enter) var(--ease-snap) forwards;
-}
-@keyframes rowIn {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 /* The status glyph - same slot on every row; tone is the only color. */
@@ -53,11 +112,10 @@
   color: var(--state-warn);
 }
 .glyph[data-tone='pending'] {
-  color: #1c7ed6; /* --text/info on white, matches the pending verdict */
+  color: #1c7ed6;
 }
 
-/* One sentence per row: bold lead + consequence. Wraps to two lines at most
-   at the modal's width - never a paragraph block. */
+/* One sentence per row: bold lead + consequence. */
 .sentence {
   flex: 1;
   min-width: 0;
@@ -69,6 +127,9 @@
 .sentence strong {
   font-weight: 500;
   color: var(--ink);
+}
+.sep {
+  color: var(--muted-soft);
 }
 
 .rowEnd {
@@ -87,8 +148,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .row,
-  .row[data-shown] {
+  .group,
+  .group[data-shown] {
     animation: none;
     opacity: 1;
     transform: none;
