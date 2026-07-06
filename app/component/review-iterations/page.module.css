@@ -305,82 +305,110 @@
   color: var(--ink);
 }
 
-/* ---- v4 rows: feed grammar ---- */
-.v4row {
+/* ---- v4.1 / v4.3: triage group headers ---- */
+.groupHead {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 14px 2px;
-}
-.v4avatar {
-  position: relative;
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  margin-top: 1px;
-  border-radius: 50%;
-  border: 1px solid var(--hairline);
-  background: var(--card);
-}
-.v4avatar > svg {
-  width: 16px;
-  height: 16px;
-}
-.v4kindIco {
-  color: var(--muted);
-}
-.v4initial {
-  font-size: 12px;
+  align-items: center;
+  gap: 7px;
+  padding: 14px 2px 8px;
+  font-size: 11.5px;
   font-weight: 600;
-  color: var(--body);
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: none !important;
 }
-/* The status dot - state without a color wash (the Align UI presence dot). */
-.v4dot {
-  position: absolute;
-  top: -1px;
-  right: -1px;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  border: 2px solid var(--card, #fff);
-}
-.v4dot[data-tone='ok'] {
-  background: var(--state-ok);
-}
-.v4dot[data-tone='warn'] {
-  background: var(--state-warn);
-}
-.v4dot[data-tone='pending'] {
-  background: #1c7ed6;
-}
-.v4text {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
+.rows > .groupHead:first-child {
   padding-top: 2px;
 }
-.v4headline {
+.groupCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 5px;
+  border-radius: var(--r-pill);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.groupCount[data-tone='warn'] {
+  background: var(--state-warn-bg);
+  color: var(--state-warn);
+}
+.groupCount[data-tone='pending'] {
+  background: #ebf7ff;
+  color: #065b89;
+}
+.groupCount[data-tone='ok'] {
+  background: var(--state-ok-bg);
+  color: var(--state-ok);
+}
+.v3row[data-last] {
+  border-bottom: none;
+}
+
+/* ---- v4.2 / v4.3: inset group card ---- */
+.inset {
+  border: 1px solid var(--hairline-soft);
+  border-radius: 10px;
+  background: var(--surface-soft);
+  overflow: hidden;
+  border-bottom: 1px solid var(--hairline-soft) !important;
+}
+.rows > .inset + .groupHead {
+  margin-top: 2px;
+}
+.insetRows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.insetRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 6px 14px;
+  border-bottom: 1px solid var(--hairline-soft);
+}
+.insetRow:last-child {
+  border-bottom: none;
+}
+.insetRow[data-tall] {
+  min-height: 56px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+.insetText {
+  flex: 1;
+  min-width: 0;
   font-size: var(--fs-small);
-  line-height: 1.45;
   letter-spacing: var(--ls-body);
   color: var(--body);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.v4headline strong {
+.insetText[data-wrap] {
+  white-space: normal;
+  line-height: 1.5;
+}
+.insetText strong {
   font-weight: 500;
   color: var(--ink);
 }
-.v4meta {
-  font-size: 12.5px;
-  line-height: 1.45;
+.insetAction {
+  flex: none;
+  font-size: var(--fs-small);
+  font-weight: 500;
   letter-spacing: var(--ls-body);
-  color: var(--muted-soft);
+  color: var(--accent);
+  cursor: pointer;
 }
-.v4actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
+.insetAction:hover {
+  text-decoration: underline;
 }

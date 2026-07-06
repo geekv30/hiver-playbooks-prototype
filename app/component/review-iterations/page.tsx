@@ -5,8 +5,6 @@ import {
   RiCheckboxCircleFill,
   RiErrorWarningFill,
   RiTimeFill,
-  RiPlayFill,
-  RiPriceTag3Fill,
 } from 'react-icons/ri';
 import { HubSpotIcon, ClickUpIcon } from '@/components/icons/connectors';
 import { SparkleIcon, PlayIcon, TagIcon } from '@/components/icons/ui';
@@ -91,44 +89,6 @@ function V1Row({
         <span className={styles.v1detail}>{detail}</span>
       </span>
       <span className={styles.rowEnd}>{end}</span>
-    </li>
-  );
-}
-
-/* ---- v4: notification-feed grammar (Align UI reference) - identity avatar +
-   status dot, headline, muted consequence line, actions on their own line ---- */
-function V4Row({
-  avatar,
-  tone,
-  lead,
-  rest,
-  meta,
-  action,
-}: {
-  avatar: ReactNode;
-  tone: Tone;
-  lead: string;
-  rest: string;
-  meta: string;
-  action?: string;
-}) {
-  return (
-    <li className={styles.v4row}>
-      <span className={styles.v4avatar}>
-        {avatar}
-        <span className={styles.v4dot} data-tone={tone} aria-hidden />
-      </span>
-      <span className={styles.v4text}>
-        <span className={styles.v4headline}>
-          <strong>{lead}</strong> {rest}
-        </span>
-        <span className={styles.v4meta}>{meta}</span>
-        {action && (
-          <span className={styles.v4actions}>
-            <Button variant="secondary">{action}</Button>
-          </span>
-        )}
-      </span>
     </li>
   );
 }
@@ -346,54 +306,162 @@ export default function ReviewIterationsPage() {
           </Chrome>
         </section>
 
-        {/* ---------------- v4 ---------------- */}
+        {/* ---------------- v4.1 · triage ---------------- */}
         <section className={styles.cell}>
           <div className={styles.caption}>
-            <h2>v4 · Feed grammar (exploration)</h2>
+            <h2>v4.1 · Triage - only problems get rows</h2>
             <p>
-              The notification-feed layout: identity avatar with a status dot, a headline, a muted
-              consequence line, and the action on its own line. Brand identity returns without the
-              color noise.
+              Checks grouped by what they mean to you. Everything that&apos;s fine collapses into
+              one green line - you read what needs you, and skip what doesn&apos;t.
             </p>
           </div>
           <Chrome>
-            <V4Row
-              avatar={<HubSpotIcon />}
-              tone="ok"
-              lead="HubSpot"
-              rest="is connected"
-              meta="1 step ready to run"
-            />
-            <V4Row
-              avatar={<ClickUpIcon />}
-              tone="ok"
-              lead="ClickUp"
-              rest="is connected"
-              meta="1 step ready to run"
-            />
-            <V4Row
-              avatar={<RiPlayFill className={styles.v4kindIco} />}
-              tone="pending"
-              lead="Evaluation"
-              rest="hasn't been run yet"
-              meta="A quick pass on past emails catches broken steps early"
-              action="Evaluate"
-            />
-            <V4Row
-              avatar={<RiPriceTag3Fill className={styles.v4kindIco} />}
-              tone="ok"
-              lead="2 tags"
-              rest="are missing in 4 of the selected mailboxes"
-              meta="We'll create them for you at go-live"
-            />
-            <V4Row
-              avatar={<span className={styles.v4initial}>V</span>}
-              tone="warn"
-              lead="Varun"
-              rest="isn't a member of 4 of the selected mailboxes"
-              meta="Assignment pauses there until they join - everything else runs"
-              action="Send invite"
-            />
+            <li className={styles.groupHead}>
+              Needs attention <span className={styles.groupCount} data-tone="warn">1</span>
+            </li>
+            <li className={styles.v3row}>
+              <Glyph tone="warn" />
+              <span className={styles.v3sentence}>
+                <strong>Varun</strong>{' '}isn&apos;t a member of 4 of the selected mailboxes -
+                assignment pauses there until they join.
+              </span>
+              <span className={styles.rowEnd}>
+                <Button variant="secondary">Send invite</Button>
+              </span>
+            </li>
+            <li className={styles.groupHead}>
+              Pending <span className={styles.groupCount} data-tone="pending">1</span>
+            </li>
+            <li className={styles.v3row}>
+              <Glyph tone="pending" />
+              <span className={styles.v3sentence}>
+                <strong>Evaluation</strong>{' '}hasn&apos;t been run yet - a quick pass catches
+                broken steps early.
+              </span>
+              <span className={styles.rowEnd}>
+                <Button variant="secondary">Evaluate</Button>
+              </span>
+            </li>
+            <li className={styles.groupHead}>
+              Ready <span className={styles.groupCount} data-tone="ok">3</span>
+            </li>
+            <li className={styles.v3row} data-last>
+              <Glyph tone="ok" />
+              <span className={styles.v3sentence}>
+                <strong>HubSpot</strong> and <strong>ClickUp</strong> are connected, and 2 missing
+                tags will be created for you at go-live.
+              </span>
+            </li>
+          </Chrome>
+        </section>
+
+        {/* ---------------- v4.2 · inset group ---------------- */}
+        <section className={styles.cell}>
+          <div className={styles.caption}>
+            <h2>v4.2 · Inset group - settings-card compactness</h2>
+            <p>
+              Every check as a 44px single-line row inside one quiet inset container. Headline-only
+              copy; actions become accent text links. The whole review reads like one component.
+            </p>
+          </div>
+          <Chrome>
+            <li className={styles.inset}>
+              <ul className={styles.insetRows}>
+                <li className={styles.insetRow}>
+                  <Glyph tone="ok" />
+                  <span className={styles.insetText}>
+                    <strong>HubSpot</strong> connected
+                  </span>
+                </li>
+                <li className={styles.insetRow}>
+                  <Glyph tone="ok" />
+                  <span className={styles.insetText}>
+                    <strong>ClickUp</strong> connected
+                  </span>
+                </li>
+                <li className={styles.insetRow}>
+                  <Glyph tone="pending" />
+                  <span className={styles.insetText}>
+                    <strong>Evaluation</strong> not run yet
+                  </span>
+                  <span className={styles.insetAction}>Evaluate</span>
+                </li>
+                <li className={styles.insetRow}>
+                  <Glyph tone="ok" />
+                  <span className={styles.insetText}>
+                    <strong>2 tags</strong> will be created for you at go-live
+                  </span>
+                </li>
+                <li className={styles.insetRow}>
+                  <Glyph tone="warn" />
+                  <span className={styles.insetText}>
+                    <strong>Varun</strong> needs an invite to 4 mailboxes
+                  </span>
+                  <span className={styles.insetAction}>Send invite</span>
+                </li>
+              </ul>
+            </li>
+          </Chrome>
+        </section>
+
+        {/* ---------------- v4.3 · synthesis ---------------- */}
+        <section className={styles.cell}>
+          <div className={styles.caption}>
+            <h2>v4.3 · Triage + inset groups (synthesis)</h2>
+            <p>
+              The triage order in the inset-card aesthetic: one quiet box per group, compact rows,
+              ready items summarized. The verdict, the groups, and the CTA tell one story.
+            </p>
+          </div>
+          <Chrome>
+            <li className={styles.groupHead}>
+              Needs attention <span className={styles.groupCount} data-tone="warn">1</span>
+            </li>
+            <li className={styles.inset}>
+              <ul className={styles.insetRows}>
+                <li className={styles.insetRow} data-tall>
+                  <Glyph tone="warn" />
+                  <span className={styles.insetText} data-wrap>
+                    <strong>Varun</strong>{' '}isn&apos;t a member of 4 of the selected mailboxes -
+                    assignment pauses there until they join
+                  </span>
+                  <span className={styles.rowEnd}>
+                    <Button variant="secondary">Send invite</Button>
+                  </span>
+                </li>
+              </ul>
+            </li>
+            <li className={styles.groupHead}>
+              Pending <span className={styles.groupCount} data-tone="pending">1</span>
+            </li>
+            <li className={styles.inset}>
+              <ul className={styles.insetRows}>
+                <li className={styles.insetRow} data-tall>
+                  <Glyph tone="pending" />
+                  <span className={styles.insetText} data-wrap>
+                    <strong>Evaluation</strong>{' '}hasn&apos;t been run yet - a quick pass catches
+                    broken steps early
+                  </span>
+                  <span className={styles.rowEnd}>
+                    <Button variant="secondary">Evaluate</Button>
+                  </span>
+                </li>
+              </ul>
+            </li>
+            <li className={styles.groupHead}>
+              Ready <span className={styles.groupCount} data-tone="ok">3</span>
+            </li>
+            <li className={styles.inset}>
+              <ul className={styles.insetRows}>
+                <li className={styles.insetRow} data-tall>
+                  <Glyph tone="ok" />
+                  <span className={styles.insetText} data-wrap>
+                    <strong>HubSpot</strong> and <strong>ClickUp</strong> are connected · 2 missing
+                    tags will be created for you
+                  </span>
+                </li>
+              </ul>
+            </li>
           </Chrome>
         </section>
       </div>
