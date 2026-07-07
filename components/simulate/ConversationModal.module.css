@@ -1,0 +1,144 @@
+/* ConversationModal - the full-email reader behind a recent conversation's
+   redirect. Sized narrower than the go-live modals; scrolls its body. */
+
+.dialog {
+  width: min(560px, calc(100vw - 48px));
+  max-height: min(640px, calc(100vh - 96px));
+}
+
+.inner {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 20px 24px 24px;
+  outline: none; /* focused programmatically on open (a11y) - no focus ring */
+}
+
+.header {
+  flex: none;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--surface-soft);
+  border: 1px solid var(--hairline-soft);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--ink-soft);
+}
+.whoText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.name {
+  font-size: var(--fs-body); /* 14px */
+  font-weight: 600;
+  line-height: 20px;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.addr {
+  font-size: var(--fs-small); /* 13px */
+  line-height: 18px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin: -4px -6px 0 0;
+  padding: 0;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap), color var(--d-hover) var(--ease-snap);
+}
+.close svg {
+  width: 18px;
+  height: 18px;
+}
+.close:hover {
+  background: var(--surface-soft);
+  color: var(--ink-soft);
+}
+.close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.subjectRow {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--hairline-soft);
+}
+.subject {
+  margin: 0;
+  font-size: var(--fs-h5); /* 16px */
+  font-weight: 600;
+  line-height: 22px;
+  letter-spacing: -0.011em;
+  color: var(--ink);
+}
+.received {
+  flex: none;
+  font-size: var(--fs-small);
+  line-height: 18px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.body p {
+  margin: 0;
+  font-size: var(--fs-body); /* 14px */
+  line-height: 22px;
+  letter-spacing: var(--ls-body);
+  color: var(--body);
+  white-space: pre-wrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .close {
+    transition: none;
+  }
+}

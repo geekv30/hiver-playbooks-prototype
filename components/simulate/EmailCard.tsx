@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { RiMailLine } from 'react-icons/ri';
 import Checkbox from '@/components/atoms/Checkbox';
 import type { SimEmail } from '@/data/simFixtures';
 import type { EmailRun } from './useSimRun';
-import StatusPill, { type PillStatus } from './StatusPill';
-import RunOutcome, { type Verdict } from './RunOutcome';
+import StatusPill from './StatusPill';
+import RunOutcome, { type OutcomeStatus } from './RunOutcome';
 import RunTrace from './RunTrace';
 import styles from './EmailCard.module.css';
 
@@ -14,42 +14,55 @@ interface Props {
   email: SimEmail;
   /** Run state (present once a run starts). */
   run?: EmailRun;
-  /** Persisted human verdict for this email (survives re-runs). */
-  verdict?: Verdict;
-  onVerdict?: (v: Verdict) => void;
-  /** Recent-emails select mode: show a checkbox + make the card a toggle. */
+  /** Re-run this email's evaluation (Redo / Retry). */
+  onRerun?: () => void;
+  /** Open Copilot to fix a caught gap (Fix with Copilot). */
+  onFix?: () => void;
+  /** Legacy select mode (used only by the /atoms gallery specimen). */
   selectable?: boolean;
   selected?: boolean;
   onToggleSelect?: () => void;
 }
 
 /**
- * EmailCard - Figma 211:20104 / 211:20418: bordered card with sender, subject,
- * single-line preview. When a run is in flight it grows a status pill + the
- * collapsible trace, and auto-scrolls into view when it starts running (so the
- * panel follows the run from one email to the next).
+ * EmailCard - the evaluated conversation's result card (Figma 1769:20959 etc.):
+ * sender / subject / preview head, then the run outcome (pill + action) and the
+ * redesigned trace. Approve resolves an approval run to passed; Decline holds it.
  */
-export default function EmailCard({ email, run, verdict, onVerdict, selectable, selected, onToggleSelect }: Props) {
+export default function EmailCard({ email, run, onRerun, onFix, selectable, selected, onToggleSelect }: Props) {
   const showRun = !!run && run.status !== 'idle';
   const inSelect = !!selectable && !showRun;
   const ref = useRef<HTMLElement>(null);
   const status = run?.status;
 
+  const [decision, setDecision] = useState<'approved' | 'declined' | null>(null);
+  // Reset the approval decision whenever a fresh run starts.
   useEffect(() => {
-    if (status === 'running') {
-      ref.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
+    setDecision(null);
   }, [status]);
 
+  useEffect(() => {
+    if (status !== 'running') return;
+    const reduce =
+      typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    ref.current?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'nearest' });
+  }, [status]);
+
+  const running = status === 'running';
+  const outcomeStatus: OutcomeStatus | null =
+    !status || running
+      ? null
+      : decision === 'approved'
+        ? 'passed'
+        : decision === 'declined'
+          ? 'declined'
+          : (status as OutcomeStatus);
+  // Approve un-gates the reply in the trace; Decline keeps it held (gated), so the
+  // trace and the "Declined" verdict never contradict each other.
+  const traceOutcome = decision === 'approved' ? 'passed' : status;
+
   return (
-    <article
-      ref={ref}
-      className={styles.card}
-      data-selectable={inSelect || undefined}
-      data-selected={(inSelect && selected) || undefined}
-      onClick={inSelect ? onToggleSelect : undefined}
-      style={{ scrollMarginBlock: 12 }}
-    >
+    <article ref={ref} className={styles.card} data-selectable={inSelect || undefined} data-selected={(inSelect && selected) || undefined} onClick={inSelect ? onToggleSelect : undefined} style={{ scrollMarginBlock: 12 }}>
       <div className={styles.head}>
         <div className={styles.sender}>
           {inSelect ? (
@@ -67,16 +80,25 @@ export default function EmailCard({ email, run, verdict, onVerdict, selectable, 
 
       {showRun && (
         <>
-          <div className={styles.pillRow}>
-            <StatusPill status={run!.status as PillStatus} />
-          </div>
-          {run!.status === 'passed' && (
-            <RunOutcome kind="passed" draft={email.draft} verdict={verdict} onVerdict={onVerdict} />
+          {running ? (
+            <div className={styles.pillRow}>
+              <StatusPill status="running" />
+            </div>
+          ) : (
+            outcomeStatus && (
+              <RunOutcome
+                status={outcomeStatus}
+                draft={email.draft}
+                onRedo={onRerun}
+                onRetry={onRerun}
+                onFix={onFix}
+                onApprove={() => setDecision('approved')}
+                onDecline={() => setDecision('declined')}
+              />
+            )
           )}
-          {run!.status === 'attention' && <RunOutcome kind="attention" />}
-          {run!.status === 'failed' && <RunOutcome kind="failed" />}
           <div className={styles.divider} aria-hidden />
-          <RunTrace stepStatus={run!.steps} stepMs={run!.durations} outcome={run!.status} />
+          <RunTrace stepStatus={run!.steps} stepMs={run!.durations} outcome={traceOutcome} draft={email.draft} />
         </>
       )}
     </article>

@@ -1467,6 +1467,7 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
                 hasTrigger: lineHasContent(doc.trigger),
                 onAddTrigger: () => requestFocus('trigger', false),
                 onRunRecorded,
+                onOpenCopilot: () => setPanelTab('copilot'),
               }}
             />
           )

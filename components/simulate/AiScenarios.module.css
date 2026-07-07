@@ -1,0 +1,158 @@
+/* AiScenarios - the flattened AI scenarios flow (Figma 1752:20293). Flat radio
+   list + Regenerate; Choose enters the editable-email step. */
+
+.scenarios {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Regenerate - a quiet accent text action in the back-header. */
+.regen {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 6px;
+  margin-right: -6px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-family: var(--font);
+  font-size: var(--fs-small); /* 13px */
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: var(--ls-small);
+  color: var(--accent);
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap), opacity var(--d-hover) var(--ease-snap);
+}
+.regen svg {
+  width: 15px;
+  height: 15px;
+}
+.regen:hover {
+  background: var(--surface-soft);
+}
+.regen:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.regen:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.regen svg[data-spin] {
+  animation: regenSpin 0.7s linear infinite;
+}
+@keyframes regenSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Scenario list - scrolls; staggers in (re-keys on regenerate to replay).
+   pt-16 sits it 20px below the back-header (header pb-4 + this). */
+.list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 18px 16px;
+}
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.cardReveal {
+  animation: scenarioCardIn var(--d-enter) var(--ease-snap) backwards;
+  animation-delay: calc(var(--i) * 45ms);
+}
+@keyframes scenarioCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+/* Regenerate loading. */
+.loading {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--muted);
+}
+.loadingText {
+  margin: 0;
+  font-size: var(--fs-small);
+  line-height: 19px;
+  color: var(--muted);
+}
+
+/* Footer Choose CTA (disabled -> accent, mirrors Evaluate). */
+.footer {
+  flex: none;
+  padding: 16px 18px;
+  border-top: 1px solid var(--hairline-soft);
+}
+.chooseBtn {
+  width: 100%;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--r-sm); /* 6px */
+  background: var(--surface-card);
+  color: var(--muted-soft);
+  font-family: var(--font);
+  font-size: var(--fs-body); /* 14px */
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: var(--ls-body);
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap), color var(--d-hover) var(--ease-snap);
+}
+.chooseBtn[data-ready] {
+  background: var(--accent);
+  color: #fff;
+}
+.chooseBtn[data-ready]:hover {
+  background: var(--accent-hover);
+}
+.chooseBtn:disabled {
+  cursor: default;
+}
+.chooseBtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .regen,
+  .chooseBtn {
+    transition: none;
+  }
+  .regen svg[data-spin] {
+    animation: none;
+  }
+  .cardReveal {
+    animation: none;
+  }
+}

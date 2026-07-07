@@ -1,16 +1,19 @@
-/* TraceStep - status rail (dot + connector) + the action-tag (shared Chip atom)
-   + resolved detail (timing/output). */
+/* TraceStep - status rail + label row + payload (Figma 1839:34067). */
 
 .step {
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+}
+
+.row {
+  display: flex;
   align-items: stretch;
 }
 
-/* Rail - the status dot (grey -> green as it succeeds) and the connector line. */
+/* Rail - an 8px column carrying the dot (label row) and the connector (below). */
 .rail {
   flex: none;
-  width: 14px;
+  width: 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -19,7 +22,7 @@
   flex: none;
   width: 6px;
   height: 6px;
-  margin-top: 13px; /* centre on the ~32px chip row */
+  margin-top: 10px; /* centre on the ~26px label row */
   border-radius: 50%;
   background: var(--muted-soft); /* pending */
   transition: background var(--d-indicator) var(--ease-snap);
@@ -28,17 +31,14 @@
   position: relative;
   flex: 1;
   width: 1px;
-  min-height: 6px;
-  margin: 4px 0;
+  min-height: 8px;
   background: var(--hairline);
 }
-/* The connector draws green once this step is done, so the run visibly FLOWS
-   down the rail as it executes (success-check stroke-draw idiom on the rail). */
 .line::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: var(--state-ok);
+  background: var(--status-green);
   transform: scaleY(0);
   transform-origin: top;
   transition: transform var(--d-indicator) var(--ease-snap);
@@ -47,64 +47,106 @@
   transform: scaleY(1);
 }
 
+/* Label row - icon box + name + optional " · medium". */
+.label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 6px 3px 4px;
+  min-width: 0;
+}
+.iconBox {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  color: var(--body); /* Gray 2 #4D596C */
+}
+.iconBox svg {
+  width: 14px;
+  height: 14px;
+}
+.name {
+  font-size: var(--fs-small); /* 13px */
+  line-height: 19px;
+  font-weight: 400;
+  letter-spacing: var(--ls-small);
+  color: var(--body); /* Gray 2 #4D596C */
+  white-space: nowrap;
+}
+.sep {
+  color: var(--muted-soft);
+  font-size: var(--fs-small);
+}
+.medium {
+  font-size: var(--fs-small);
+  line-height: 19px;
+  font-weight: 500;
+  letter-spacing: var(--ls-small);
+  color: var(--ink-soft); /* Gray 1 #3E4C5A */
+}
+
+/* Content column - reasoning text or an output box, p-8 (Figma Component 6/7). */
 .content {
   flex: 1;
   min-width: 0;
-  padding-bottom: 6px;
+  padding: 8px;
+}
+.reasoning {
+  margin: 0;
+  font-size: var(--fs-small); /* 13px */
+  line-height: 19px;
+  letter-spacing: var(--ls-small);
+  color: var(--ink-soft); /* Gray 1 #3E4C5A */
+}
+.reasoning[data-warn] {
+  color: var(--status-amber);
 }
 
-/* The action-tag (shared Chip atom) sits in a fixed-height row so the rail dot
-   lines up with its centre. */
-.chipRow {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  min-height: 32px;
-}
-
-/* Resolved detail - aligns flush at the content edge (under the chip's icon),
-   exactly as Figma 293:32581: the timing/output rows share the chip's left,
-   they are NOT indented under the label. */
-.branch {
-  padding-left: 0;
+/* Grey output / draft box: Gray 6a fill. Tighter vertical padding than the outcome
+   box - the trace is a dense list of these, so they read compact. */
+.box {
+  padding: 10px 12px;
+  background: var(--surface-soft);
+  border-radius: 10px;
   font-size: var(--fs-small);
   line-height: 19px;
+  letter-spacing: var(--ls-small);
   color: var(--ink-soft);
-}
-.branch[data-warn] {
-  color: var(--state-warn);
-}
-.detail {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 2px 0 0 0;
-}
-.timing {
-  font-family: var(--mono);
-  font-size: var(--fs-small);
-  line-height: 19px;
-  color: var(--muted);
-}
-.output {
-  font-size: var(--fs-small);
-  line-height: 19px;
-  color: var(--ink-soft);
+  white-space: pre-wrap;
   word-break: break-word;
 }
-.error {
+.errorBox {
+  padding: 10px 12px;
+  background: var(--state-error-bg);
+  border-radius: 10px;
   font-size: var(--fs-small);
   line-height: 19px;
   color: var(--state-error);
 }
 
+.replyWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.approvalNote {
+  margin: 0;
+  font-size: var(--fs-small);
+  line-height: 19px;
+  letter-spacing: var(--ls-small);
+  color: var(--ink-soft);
+}
+
 /* Dot status colours. */
 .step[data-status='running'] .dot {
   background: var(--accent);
-  animation: traceDot 1.6s ease-in-out infinite;  /* slow, gentle breath - not a blink */
+  animation: traceDot 1.6s ease-in-out infinite;
 }
 .step[data-status='done'] .dot {
-  background: var(--state-ok);
+  background: var(--status-green);
 }
 .step[data-status='failed'] .dot {
   background: var(--state-error);
@@ -113,8 +155,13 @@
   background: var(--hairline-strong);
   opacity: 0.5;
 }
-.step[data-status='skipped'] .content {
+.step[data-status='skipped'] .content,
+.step[data-status='skipped'] .label {
   opacity: 0.45;
+}
+/* Reply held for approval - the dot goes amber (Figma 1839:34134). */
+.step[data-dot='approval'] .dot {
+  background: var(--status-amber);
 }
 
 @keyframes traceDot {

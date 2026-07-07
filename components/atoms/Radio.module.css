@@ -1,0 +1,53 @@
+/* Radio - single-select control (sibling of Checkbox). Unchecked: 1px slate ring
+   on white. Checked: a solid ink disc with a small white center dot (Figma
+   1745:68759). */
+
+.ring {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--muted-soft);
+  background: var(--card);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  cursor: pointer;
+  /* Never let a flex/grid parent (a tall two-line row) squash the circle. */
+  flex: none;
+  box-sizing: border-box;
+  aspect-ratio: 1 / 1;
+  transition:
+    border-color var(--d-hover) var(--ease-snap),
+    background var(--d-hover) var(--ease-snap);
+}
+.ring:hover {
+  border-color: var(--hairline-strong);
+}
+
+.checked {
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ring:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ring {
+    transition: none;
+  }
+}

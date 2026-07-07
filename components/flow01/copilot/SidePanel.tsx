@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import PanelTabs, { type SideTab } from './PanelTabs';
 import CopilotPanel, { type CopilotMessage } from './CopilotPanel';
 import SimulatePanel from '@/components/simulate/SimulatePanel';
@@ -31,6 +30,8 @@ interface SimProps {
   onAddTrigger?: () => void;
   /** Completed-run statuses reported up to the canvas (the eval aggregate). */
   onRunRecorded?: (statuses: SimStatusKind[]) => void;
+  /** Open the Copilot tab (Fix with Copilot on a caught gap). */
+  onOpenCopilot?: () => void;
 }
 
 interface Props {
@@ -47,14 +48,11 @@ interface Props {
  * a sim run) survives a tab switch.
  */
 export default function SidePanel({ tab, onTab, copilot, sim }: Props) {
-  // Once an Evaluate flow is entered, its own top back-header replaces the tabs
-  // (back always on top); the tabs return when you back out to the menu.
-  const [evalSubview, setEvalSubview] = useState(false);
-  const showTabs = !(tab === 'simulate' && evalSubview);
-
+  // The Copilot | Evaluation tabs stay pinned across every Evaluate flow; each flow
+  // renders its own `‹` back-header as a row BELOW the tabs (Figma 1745:67909).
   return (
     <aside className={styles.panel} aria-label="Copilot and Evaluation">
-      {showTabs && <PanelTabs active={tab} onChange={onTab} />}
+      <PanelTabs active={tab} onChange={onTab} />
       <div className={styles.body}>
         <div
           className={styles.pane}
@@ -75,7 +73,7 @@ export default function SidePanel({ tab, onTab, copilot, sim }: Props) {
           data-active={tab === 'simulate' || undefined}
           inert={tab !== 'simulate' || undefined}
         >
-          <SimulatePanel docked open={tab === 'simulate'} onSubview={setEvalSubview} {...sim} />
+          <SimulatePanel docked open={tab === 'simulate'} {...sim} />
         </div>
       </div>
     </aside>

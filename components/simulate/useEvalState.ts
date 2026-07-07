@@ -24,12 +24,15 @@ export function useEvalState(doc: EditorDoc) {
 
   const recordRun = useCallback((statuses: SimStatusKind[], docAtRun: EditorDoc) => {
     if (statuses.length === 0) return;
+    // Map the new outcome kinds onto the existing aggregate shape so the shipped
+    // Enable readiness engine is untouched: an 'approval' run means the AOP behaved
+    // correctly (reply drafted, just gated) -> counts as passed; 'errored' -> failed.
     setCounts((prev) =>
       statuses.reduce(
         (a, s) => ({
           total: a.total + 1,
-          passed: a.passed + (s === 'passed' ? 1 : 0),
-          failed: a.failed + (s === 'failed' ? 1 : 0),
+          passed: a.passed + (s === 'passed' || s === 'approval' ? 1 : 0),
+          failed: a.failed + (s === 'failed' || s === 'errored' ? 1 : 0),
           attention: a.attention + (s === 'attention' ? 1 : 0),
         }),
         prev,

@@ -8,22 +8,72 @@
   min-height: 0;
 }
 
-/* SM picker row (Figma 536:33992): 12px 18px padding, a label + a select. */
-.pickerRow {
+/* Controls (Figma 1745:68740): the mailbox picker + search, stacked gap-16, sat
+   20px below the back-header (header pb-4 + this pt-16). */
+.controls {
   flex: none;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  /* 20px top to match the AI scenarios / Custom email flows (consistent gap below
-     the back-header across every drill-down view). */
-  padding: 20px 18px 12px;
+  gap: 16px;
+  padding: 16px 18px 0;
 }
-.pickerLabel {
-  font-size: var(--fs-small); /* 13px */
-  font-weight: 500;
-  line-height: 19px;
+
+/* Search field (Figma 1745:68128): h-40, rounded-8, a TRAILING magnifier. */
+.searchRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  height: 40px;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: var(--card);
+  transition: border-color var(--d-hover) var(--ease-snap);
+}
+.searchRow:focus-within {
+  border-color: var(--hairline-strong);
+}
+.searchIcon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  color: var(--muted-soft);
+}
+.searchIcon svg {
+  width: 20px;
+  height: 20px;
+}
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font);
+  font-size: var(--fs-body); /* 14px (Figma body/sm/regular) */
+  line-height: 20px;
   letter-spacing: var(--ls-body);
-  color: var(--ink-soft);
+  color: var(--ink);
+}
+.searchInput::placeholder {
+  color: var(--muted-soft);
+}
+
+/* Search yielded nothing in this mailbox. */
+.noMatch {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  text-align: center;
+}
+.noMatchText {
+  margin: 0;
+  font-size: var(--fs-small);
+  line-height: 1.45;
+  color: var(--muted);
 }
 /* Email list (select cards) / result list (run cards). */
 .list {
@@ -33,14 +83,8 @@
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 4px 16px 16px;
-}
-/* During a run the picker + tabs are hidden, so the list sits directly under the
-   header - give it the same 20px top breathing room the other panes have (the
-   picker provides that spacing in the select state). */
-.list[data-running] {
-  padding-top: 20px;
+  gap: 14px; /* Figma 1745:68464 */
+  padding: 20px 18px 16px;
 }
 /* Cards stagger in when the inbox loads (texts-reveal technique). */
 .cardReveal {
@@ -101,7 +145,7 @@
 .footer {
   flex: none;
   padding: 16px 18px;
-  border-top: 1px solid var(--hairline);
+  border-top: 1px solid var(--hairline-soft);
 }
 .evalBtn,
 .stopBtn {
