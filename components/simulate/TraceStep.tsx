@@ -1,8 +1,8 @@
 'use client';
 
 import { motion, useReducedMotion } from 'motion/react';
-import type { Chip as ChipModel } from '@/types/playbook';
-import Chip from '@/components/atoms/Chip';
+import { RiBrain2Line, RiContactsLine } from 'react-icons/ri';
+import { ACTION_ICON } from '@/components/icons/ui/action-icon-map';
 import { SIM_COPY } from '@/data/simFixtures';
 import type { TraceStepDef, StepStatus } from './traceFixture';
 import styles from './TraceStep.module.css';
@@ -10,81 +10,121 @@ import styles from './TraceStep.module.css';
 interface Props {
   step: TraceStepDef;
   status: StepStatus;
-  /** Actual elapsed ms for this run (falls back to the base step.ms). */
-  runMs?: number;
   isLast: boolean;
-  /** Style the branch line as a caught gap (amber). */
+  /** Actual elapsed ms for this run (drives the "Thought for Ns" label). */
+  runMs?: number;
+  /** Reply step: the drafted reply shown in the box. */
+  draft?: string;
+  /** Reply step: the reply is gated - show "Approval needed" + amber dot. */
+  approval?: boolean;
+  /** Condition step: no branch matched (attention) - amber note. */
   branchWarn?: boolean;
 }
 
-const CONDLABEL: Record<'if' | 'elseif' | 'else', string> = {
-  if: 'IF',
-  elseif: 'ELSE-IF',
-  else: 'ELSE',
-};
+function StepIcon({ step }: { step: TraceStepDef }) {
+  if (step.kind === 'thinking') return <RiBrain2Line />;
+  if (step.iconKey === 'contact') return <RiContactsLine />;
+  const key = step.kind === 'condition' ? 'condition' : step.iconKey;
+  const Icon = key ? ACTION_ICON[key] : undefined;
+  return Icon ? <Icon /> : null;
+}
 
 /**
- * TraceStep - one execution step (Figma 211:20462): a status rail (dot + the
- * connector line) + the action-tag rendered by the SHARED Chip atom (so trace
- * action-tags are identical to the editor's). Once resolved it springs in timing
- * + output; a failed step shows an error; skipped steps dim; a Condition shows
- * its matched branch (or the caught gap when none matched).
+ * TraceStep - one execution step in the redesigned trace (Figma 1839:34067). A
+ * status rail (dot + connector) beside a label row (icon + name + optional
+ * " · medium"), then the step's payload below: reasoning text for a thinking
+ * step, a gray output box for an action, the matched branch for a condition, or
+ * the drafted reply (with "Approval needed" when gated) for the reply step.
  */
-export default function TraceStep({ step, status, isLast, branchWarn }: Props) {
-  const done = status === 'done';
-  const failed = status === 'failed';
+export default function TraceStep({ step, status, isLast, runMs, draft, approval, branchWarn }: Props) {
   const reduce = useReducedMotion();
   const spring = { type: 'spring' as const, stiffness: 520, damping: 38 };
   const enter = reduce ? false : { opacity: 0, y: -3 };
+  const revealed = status === 'done' || status === 'failed';
 
-  const chipModel: ChipModel = {
-    id: step.id,
-    actionId: step.actionId,
-    status: 'ok',
-    config: step.meta ? { meta: step.meta } : {},
-  };
-
-  // A condition step renders the SAME condition-mode tag the editor uses: the
-  // matched arm (IF / ELSE-IF / ELSE), or the subtle ELSE-IF / ELSE prompt when
-  // nothing matched (the caught-gap case).
+  const isThinking = step.kind === 'thinking';
+  const isReply = step.kind === 'reply';
   const isCond = step.kind === 'condition';
-  const condLabel = branchWarn ? 'ELSE-IF / ELSE' : CONDLABEL[step.condType ?? 'if'];
+  // The reply's dot goes amber when the reply is held for approval.
+  const dotKind = isReply && approval && revealed ? 'approval' : undefined;
+
+  // A thinking step reads "Thinking" while in flight, "Thought for Ns" once done.
+  const thoughtSec = Math.max(1, Math.round((runMs ?? step.ms) / 1000));
+  const label = isThinking
+    ? status === 'done'
+      ? `Thought for ${thoughtSec}s`
+      : 'Thinking'
+    : isCond
+      ? 'Categorize'
+      : step.label;
 
   return (
-    <div className={styles.step} data-status={status}>
-      <div className={styles.rail}>
-        <span className={styles.dot} aria-hidden />
-        {!isLast && <span className={styles.line} aria-hidden />}
-      </div>
-      <div className={styles.content}>
-        <div className={styles.chipRow}>
-          {isCond ? (
-            <Chip mode="condition" label={condLabel} subtle={branchWarn} plain />
-          ) : (
-            <Chip chip={chipModel} metaText={step.meta} plain />
+    <div className={styles.step} data-status={status} data-dot={dotKind}>
+      <div className={styles.row}>
+        <div className={styles.rail}>
+          <span className={styles.dot} aria-hidden />
+        </div>
+        <div className={styles.label} data-thinking={isThinking || undefined}>
+          <span className={styles.iconBox} aria-hidden>
+            <StepIcon step={step} />
+          </span>
+          <span className={styles.name}>{label}</span>
+          {step.suffix && (
+            <>
+              <span className={styles.sep} aria-hidden>
+                ·
+              </span>
+              <span className={styles.medium}>{step.suffix}</span>
+            </>
           )}
         </div>
-        {(done || failed) && step.branch && (
-          <motion.div
-            className={styles.branch}
-            data-warn={branchWarn || undefined}
-            initial={enter}
-            animate={{ opacity: 1, y: 0 }}
-            transition={spring}
-          >
-            {step.branch}
-          </motion.div>
-        )}
-        {done && step.output && (
-          <motion.div className={styles.detail} initial={enter} animate={{ opacity: 1, y: 0 }} transition={spring}>
-            <div className={styles.output}>{step.output}</div>
-          </motion.div>
-        )}
-        {failed && (
-          <motion.div className={styles.detail} initial={enter} animate={{ opacity: 1, y: 0 }} transition={spring}>
-            <div className={styles.error}>{SIM_COPY.stepError}</div>
-          </motion.div>
-        )}
+      </div>
+
+      <div className={styles.row}>
+        <div className={styles.rail}>{!isLast && <span className={styles.line} aria-hidden />}</div>
+        <div className={styles.content}>
+          {/* Thinking: the reasoning appears as the step runs (it IS the step). */}
+          {isThinking && (status === 'running' || revealed) && (
+            <motion.p className={styles.reasoning} initial={enter} animate={{ opacity: 1, y: 0 }} transition={spring}>
+              {step.text}
+            </motion.p>
+          )}
+
+          {isCond && revealed && (
+            <motion.p
+              className={styles.reasoning}
+              data-warn={branchWarn || undefined}
+              initial={enter}
+              animate={{ opacity: 1, y: 0 }}
+              transition={spring}
+            >
+              {branchWarn ? SIM_COPY.noBranchTrace : `Matched: ${step.branch}`}
+            </motion.p>
+          )}
+
+          {step.kind === 'action' && status === 'done' && step.output && (
+            <motion.div className={styles.box} initial={enter} animate={{ opacity: 1, y: 0 }} transition={spring}>
+              {step.output}
+            </motion.div>
+          )}
+          {step.kind === 'action' && status === 'failed' && (
+            <motion.div className={styles.errorBox} initial={enter} animate={{ opacity: 1, y: 0 }} transition={spring}>
+              {SIM_COPY.stepError}
+            </motion.div>
+          )}
+
+          {isReply && revealed && (
+            <motion.div
+              className={styles.replyWrap}
+              initial={enter}
+              animate={{ opacity: 1, y: 0 }}
+              transition={spring}
+            >
+              {approval && <p className={styles.approvalNote}>{SIM_COPY.approvalTrace}</p>}
+              <div className={styles.box}>{draft}</div>
+            </motion.div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -1,78 +1,112 @@
 'use client';
 
 import { motion, useReducedMotion } from 'motion/react';
-import { RiCornerUpLeftLine, RiAlertLine, RiErrorWarningLine } from 'react-icons/ri';
-import ThumbsRating, { type Verdict } from '@/components/atoms/ThumbsRating';
+import { RiRestartLine, RiSparkling2Line } from 'react-icons/ri';
 import { SIM_COPY } from '@/data/simFixtures';
-import { SIM_BRANCH, SIM_DRAFT } from './traceFixture';
+import { SIM_DRAFT } from './traceFixture';
+import StatusPill from './StatusPill';
 import styles from './RunOutcome.module.css';
 
-// Re-exported so existing consumers (EmailCard, EmailList, RecentEmails,
-// SimulatePanel) keep importing Verdict from here; the type now lives on the atom.
-export type { Verdict };
+export type OutcomeStatus = 'passed' | 'attention' | 'errored' | 'approval' | 'declined';
 
 interface Props {
-  /** 'passed' shows the drafted reply; 'attention' the caught-gap nudge; 'failed'
-   *  the failure reason. */
-  kind: 'passed' | 'attention' | 'failed';
-  branch?: string;
+  status: OutcomeStatus;
+  /** The drafted reply, shown in the approval box (Figma 1839:33930). */
   draft?: string;
-  /** Controlled verdict (persisted by the panel, so it survives re-runs). */
-  verdict?: Verdict;
-  onVerdict?: (v: Verdict) => void;
+  onRedo?: () => void;
+  onFix?: () => void;
+  onRetry?: () => void;
+  onApprove?: () => void;
+  onDecline?: () => void;
+}
+
+// The needs-attention body with "ELSE" emphasised (Figma 1769:20993).
+function AttentionBody() {
+  const [before, after] = SIM_COPY.noBranchBody.split('ELSE');
+  return (
+    <p className={styles.boxText}>
+      {before}
+      <strong className={styles.strong}>ELSE</strong>
+      {after}
+    </p>
+  );
 }
 
 /**
- * RunOutcome - the payoff above the trace: the drafted reply with its matched
- * branch attributed inside the box, and a controlled human verdict (icon-only
- * thumbs). For a caught logic gap it shows the needs-attention nudge (guidance
- * only, no dead button). Springs in via Motion (motion.dev), reduced-motion aware.
+ * RunOutcome - the result header + action (Figma 1769:20959 / 20792 / 1799:18390 /
+ * 1839:33930): a status pill, an optional message/draft box, and the contextual
+ * action(s). The drafted reply itself lives in the trace's Reply step; this block
+ * carries the verdict-free pill + next step (Redo / Fix with Copilot / Retry, or
+ * Approve / Decline). Springs in via Motion, reduced-motion aware.
  */
-export default function RunOutcome({ kind, branch = SIM_BRANCH, draft = SIM_DRAFT, verdict, onVerdict }: Props) {
+export default function RunOutcome({ status, draft = SIM_DRAFT, onRedo, onFix, onRetry, onApprove, onDecline }: Props) {
   const reduce = useReducedMotion();
   const spring = { type: 'spring' as const, stiffness: 420, damping: 34 };
   const enter = reduce ? false : { opacity: 0, y: 6 };
 
-  if (kind === 'failed') {
-    return (
-      <motion.div className={styles.fail} initial={enter} animate={{ opacity: 1, y: 0 }} transition={spring}>
-        <div className={styles.failHead}>
-          <RiErrorWarningLine aria-hidden />
-          {SIM_COPY.failedHead}
-        </div>
-        <p className={styles.failBody}>{SIM_COPY.failedBody}</p>
-      </motion.div>
-    );
-  }
-
-  if (kind === 'attention') {
-    return (
-      <motion.div className={styles.attn} initial={enter} animate={{ opacity: 1, y: 0 }} transition={spring}>
-        <div className={styles.attnHead}>
-          <RiAlertLine aria-hidden />
-          {SIM_COPY.noBranchHead}
-        </div>
-        <p className={styles.attnBody}>{SIM_COPY.noBranchBody}</p>
-      </motion.div>
-    );
-  }
-
   return (
     <motion.div className={styles.outcome} initial={enter} animate={{ opacity: 1, y: 0 }} transition={spring}>
-      <span className={styles.branchCaption}>Matched branch: {branch}</span>
-      <div className={styles.draftHead}>
-        <span className={styles.draftLabel}>
-          <RiCornerUpLeftLine aria-hidden />
-          Reply drafted
-        </span>
-        <ThumbsRating
-          verdict={verdict}
-          onVerdict={(v) => onVerdict?.(v)}
-          upLabel="Looks right"
-          downLabel="Needs work"
-        />
-      </div>
-      <p className={styles.draftCard}>{draft}</p>
+      {status === 'declined' ? (
+        <span className={styles.declinedPill}>Declined</span>
+      ) : (
+        <StatusPill status={status} />
+      )}
+
+      {status === 'attention' && (
+        <div className={styles.box}>
+          <AttentionBody />
+        </div>
+      )}
+      {status === 'errored' && (
+        <div className={styles.box}>
+          <p className={styles.boxText}>{SIM_COPY.erroredBody}</p>
+        </div>
+      )}
+      {status === 'approval' && (
+        <div className={styles.box}>
+          <p className={styles.boxText}>{draft}</p>
+        </div>
+      )}
+      {status === 'declined' && (
+        <div className={styles.box}>
+          <p className={styles.boxText}>{SIM_COPY.declinedBody}</p>
+        </div>
+      )}
+
+      {status === 'passed' && (
+        <button type="button" className={styles.strokeBtn} onClick={onRedo}>
+          <RiRestartLine aria-hidden />
+          <span>Redo evaluation</span>
+        </button>
+      )}
+      {status === 'attention' && (
+        <button type="button" className={styles.strokeBtn} onClick={onFix}>
+          <RiSparkling2Line className={styles.sparkle} aria-hidden />
+          <span>Fix with Copilot</span>
+        </button>
+      )}
+      {status === 'errored' && (
+        <button type="button" className={styles.strokeBtn} onClick={onRetry}>
+          <RiRestartLine aria-hidden />
+          <span>Retry evaluation</span>
+        </button>
+      )}
+      {status === 'declined' && (
+        <button type="button" className={styles.strokeBtn} onClick={onRedo}>
+          <RiRestartLine aria-hidden />
+          <span>Redo evaluation</span>
+        </button>
+      )}
+      {status === 'approval' && (
+        <div className={styles.approvalRow}>
+          <button type="button" className={styles.primaryBtn} onClick={onApprove}>
+            Approve
+          </button>
+          <button type="button" className={styles.tertiaryBtn} onClick={onDecline}>
+            Decline
+          </button>
+        </div>
+      )}
     </motion.div>
   );
 }

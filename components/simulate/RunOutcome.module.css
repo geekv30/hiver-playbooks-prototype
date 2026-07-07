@@ -1,111 +1,132 @@
-/* RunOutcome - the result payoff above the trace: branch chip (neutral) + the
-   drafted reply box with the human verdict as icon-only thumbs in its header;
-   or the "needs attention / add an ELSE" caught-gap nudge. */
+/* RunOutcome - status pill + optional message/draft box + contextual action
+   (Figma 1769:20959 / 20792 / 1799:18390 / 1839:33930). gap-10 between rows. */
 
 .outcome {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  align-items: flex-start;
+  gap: 12px;
 }
 
-/* Matched-branch attribution above the reply (Figma 745:19707) - quiet/muted. */
-.branchCaption {
-  font-size: var(--fs-caption); /* 12px */
-  line-height: 16px;
-  font-weight: 400;
-  letter-spacing: var(--ls-caption);
-  color: var(--muted);
+/* Message / draft box (Figma 1769:20992): Gray 6a fill, 13/19 body. A touch more
+   breathing room than the trace boxes - this is the prominent single result box. */
+.box {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--surface-soft); /* Neutrals/Gray 6a #F6F8FC */
+  border-radius: 10px;
+}
+.boxText {
+  margin: 0;
+  font-size: var(--fs-small); /* 13px */
+  line-height: 20px;
+  letter-spacing: var(--ls-small);
+  color: var(--ink-soft); /* Gray 1 #3E4C5A */
+  white-space: pre-wrap;
+}
+.strong {
+  font-weight: 500;
+  color: var(--ink); /* #343C45 */
 }
 
-/* "Reply drafted" label + the human verdict thumbs, above the reply card. */
-.draftHead {
-  display: flex;
+/* Declined - a quiet neutral pill (post-Decline). */
+.declinedPill {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  height: 22px;
+  padding: 2px 9px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+  background: var(--surface-soft);
+  font-size: var(--fs-caption); /* 12px */
+  line-height: 18px;
+  letter-spacing: var(--ls-caption);
+  color: var(--body);
 }
-.draftLabel {
+
+/* Secondary stroke button (Figma 1769:21000): white, 1px Gray 5, 12px label. */
+.strokeBtn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: var(--fs-small); /* 13px */
-  line-height: 18px;
+  padding: 6px 10px;
+  border: 1px solid var(--hairline); /* Gray 5 #D6DDE8 */
+  border-radius: 6px;
+  background: var(--card);
+  font-family: var(--font);
+  font-size: var(--fs-caption); /* 12px */
   font-weight: 500;
-  color: var(--ink-soft);
+  line-height: 18px;
+  letter-spacing: var(--ls-caption);
+  color: var(--ink-soft); /* Gray 1 #3E4C5A */
+  cursor: pointer;
+  transition: border-color var(--d-hover) var(--ease-snap), background var(--d-hover) var(--ease-snap);
 }
-.draftLabel svg {
+.strokeBtn svg {
   width: 14px;
   height: 14px;
-  color: var(--muted);
 }
-
-/* The drafted reply itself, in a soft rounded card (Figma 745:19707). */
-.draftCard {
-  margin: 0;
-  padding: 12px 14px;
+.strokeBtn:hover {
+  border-color: var(--hairline-strong);
   background: var(--surface-soft);
-  border-radius: 10px;
-  font-size: var(--fs-small); /* 13px */
-  line-height: 1.55;
-  color: var(--ink-soft);
+}
+.strokeBtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+/* Copilot sparkle carries the accent (Figma 1769:21000 icon). */
+.sparkle {
+  color: var(--accent);
 }
 
-/* Needs-attention (caught gap). */
-.attn {
+/* Approval row (Figma 1839:33954): primary Approve + tertiary Decline. */
+.approvalRow {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px 12px;
-  background: var(--state-warn-bg);
-  border: 1px solid color-mix(in srgb, var(--state-warn) 28%, transparent);
-  border-radius: var(--r-md);
+  align-items: center;
+  gap: 4px;
 }
-.attnHead {
+.primaryBtn,
+.tertiaryBtn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: var(--fs-small);
-  line-height: 19px;
-  font-weight: 600;
-  color: var(--state-warn);
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-family: var(--font);
+  font-size: var(--fs-caption); /* 12px */
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: var(--ls-caption);
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap), color var(--d-hover) var(--ease-snap);
 }
-.attnHead svg {
-  width: 15px;
-  height: 15px;
+.primaryBtn {
+  border: none;
+  background: var(--accent); /* Primary purple #506DFF */
+  color: #fff;
 }
-.attnBody {
-  margin: 0;
-  font-size: var(--fs-small);
-  line-height: 1.5;
+.primaryBtn:hover {
+  background: var(--accent-hover);
+}
+.tertiaryBtn {
+  border: none;
+  background: transparent;
+  color: var(--muted); /* Gray 3 #6F7C90 */
+}
+.tertiaryBtn:hover {
+  background: var(--surface-soft);
   color: var(--ink-soft);
+}
+.primaryBtn:focus-visible,
+.tertiaryBtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
-/* Failed run - the failure reason (mirrors .attn, error-toned). */
-.fail {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px 12px;
-  background: var(--state-error-bg);
-  border: 1px solid color-mix(in srgb, var(--state-error) 28%, transparent);
-  border-radius: var(--r-md);
-}
-.failHead {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--fs-small);
-  line-height: 19px;
-  font-weight: 600;
-  color: var(--state-error);
-}
-.failHead svg {
-  width: 15px;
-  height: 15px;
-}
-.failBody {
-  margin: 0;
-  font-size: var(--fs-small);
-  line-height: 1.5;
-  color: var(--ink-soft);
+@media (prefers-reduced-motion: reduce) {
+  .strokeBtn,
+  .primaryBtn,
+  .tertiaryBtn {
+    transition: none;
+  }
 }

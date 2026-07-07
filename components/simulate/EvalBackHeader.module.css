@@ -1,22 +1,22 @@
-/* EvalBackHeader - the entered-flow header (Figma 695:15007). Same 66px height as
-   the tab header so swapping tabs <-> back-header never shifts the body. */
+/* EvalBackHeader - the entered-flow header, a lightweight row BELOW the persistent
+   Copilot | Evaluation tabs (Figma 1745:67909 / 68100). NO divider of its own - the
+   only separator is the tabs band's bottom border. Self-contained padding
+   (pt-24 px-18, matching the flow content area) so flows drop it in directly. */
 .header {
   flex: none;
   display: flex;
   align-items: center;
   gap: 6px;
-  height: 66px;
-  padding: 0 20px;
-  background: var(--card);
-  border-bottom: 1px solid var(--hairline); /* #D6DDE8 */
+  padding: 24px 18px 4px;
+  background: transparent;
 }
 
 .back {
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
-  margin-left: -4px;
+  width: 24px;
+  height: 24px;
+  margin-left: -2px;
   padding: 0;
   border: none;
   background: transparent;
@@ -37,12 +37,31 @@
   height: 20px;
 }
 
+/* Flow glyph before the title (matches the entry card icon). */
+.icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  color: var(--body); /* Neutrals/Gray 2 #4D596C */
+}
+.icon svg {
+  width: 20px;
+  height: 20px;
+}
+
 .title {
-  font-size: var(--fs-body); /* 14px - Figma 695:15016 (was wrongly 16px) */
+  font-size: var(--fs-body); /* 14px */
   font-weight: 500;
   line-height: 20px;
-  color: var(--ink-soft); /* Neutrals/Gray 1 #3E4C5A */
-  letter-spacing: var(--ls-body); /* -0.005em (Figma -0.07px on 14) */
+  color: var(--body); /* Neutrals/Gray 2 #4D596C (Figma 1745:67931) */
+  letter-spacing: var(--ls-body);
+}
+
+/* Trailing action (e.g. Regenerate) sits at the far right. */
+.action {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
 }
 
 @media (prefers-reduced-motion: reduce) {

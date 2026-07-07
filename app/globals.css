@@ -135,6 +135,12 @@
   --state-error-bg: #fee2e2;
   --state-running: #7c3aed;
 
+  /* ===== Eval status pills (exact Figma "AOP - ai" status palette) ===== */
+  --status-amber: #f07530; /* Status/Dark orange - Needs attention / Errored / Approval */
+  --status-amber-bg: #ffefe0; /* Orange light */
+  --status-green: #05a570; /* Status/Dark green - Passed */
+  --status-green-bg: #e3fcf4; /* Green light */
+
   /* ===== Hiver tint (accent only - CTA, focus, active) ===== */
   --primary: #e15524;
   --primary-hover: #c8431c;

@@ -1,11 +1,12 @@
-/* StatusPill - Figma 211:20446: h22 pill, pl6 pr7 py2, gap8, 12px label. */
+/* StatusPill - Figma 1769:20959 / 20792 / 1799:18390: 22px pill, 12px label.
+   Amber (info-led) for attention/errored/approval; green (dot) for passed. */
 
 .pill {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   height: 22px;
-  padding: 2px 7px 2px 6px;
+  padding: 2px 7px 2px 8px;
   border-radius: var(--r-pill);
   background: var(--surface-card); /* running */
 }
@@ -18,7 +19,13 @@
   color: var(--ink-soft);
 }
 
-/* Running - three sequenced dots (the animated "in progress" cue). */
+.icon {
+  width: 12px;
+  height: 12px;
+  flex: none;
+}
+
+/* Running - three sequenced dots. */
 .dots {
   display: inline-flex;
   align-items: center;
@@ -56,17 +63,37 @@
   border-radius: 50%;
 }
 
+/* Passed - green dot (gap 4, pl 6 pr 8 per Figma 1799:18390). */
 .pill[data-status='passed'] {
-  background: var(--state-ok-bg);
+  gap: 4px;
+  padding: 2px 8px 2px 6px;
+  background: var(--status-green-bg);
 }
 .pill[data-status='passed'] .label {
-  color: var(--state-ok);
+  color: var(--status-green);
 }
 .pill[data-status='passed'] .dot {
-  background: var(--state-ok);
+  background: var(--status-green);
 }
 
+/* Amber, info-led: attention / errored / approval. */
+.pill[data-status='attention'],
+.pill[data-status='errored'],
+.pill[data-status='approval'] {
+  background: var(--status-amber-bg);
+}
+.pill[data-status='attention'] .label,
+.pill[data-status='errored'] .label,
+.pill[data-status='approval'] .label,
+.pill[data-status='attention'] .icon,
+.pill[data-status='errored'] .icon,
+.pill[data-status='approval'] .icon {
+  color: var(--status-amber);
+}
+
+/* Failed - retained for the /atoms gallery (red dot). */
 .pill[data-status='failed'] {
+  gap: 4px;
   background: var(--state-error-bg);
 }
 .pill[data-status='failed'] .label {
@@ -74,16 +101,6 @@
 }
 .pill[data-status='failed'] .dot {
   background: var(--state-error);
-}
-
-.pill[data-status='attention'] {
-  background: var(--state-warn-bg);
-}
-.pill[data-status='attention'] .label {
-  color: var(--state-warn);
-}
-.pill[data-status='attention'] .dot {
-  background: var(--state-warn);
 }
 
 @media (prefers-reduced-motion: reduce) {

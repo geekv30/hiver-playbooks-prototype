@@ -42,24 +42,27 @@ interface Resolved {
 function resolveEmail(email: SimEmail): Resolved {
   const outcome = email.outcome ?? 'passed';
   const stepFinal: Record<string, StepStatus> = {};
-  if (outcome === 'failed') {
+  if (outcome === 'errored') {
+    // The evaluation broke at a step (later steps skipped) - retryable.
     const failAt = email.failAt ?? LAST;
     STEP_IDS.forEach((id, i) => {
       stepFinal[id] = i < failAt ? 'done' : i === failAt ? 'failed' : 'skipped';
     });
-    return { finalStatus: 'failed', stepFinal, lastIdx: failAt };
+    return { finalStatus: 'errored', stepFinal, lastIdx: failAt };
   }
   if (outcome === 'attention') {
-    // Runs through the condition; the matched-branch step (last) is skipped.
+    // Runs through the condition; the reply step (last) is skipped (no branch matched).
     STEP_IDS.forEach((id, i) => {
       stepFinal[id] = i === LAST ? 'skipped' : 'done';
     });
     return { finalStatus: 'attention', stepFinal, lastIdx: Math.max(0, LAST - 1) };
   }
+  // passed OR approval: every step runs; approval just holds the reply for sign-off,
+  // so the trace is identical - only the final status (and the reply step's UI) differ.
   STEP_IDS.forEach((id) => {
     stepFinal[id] = 'done';
   });
-  return { finalStatus: 'passed', stepFinal, lastIdx: LAST };
+  return { finalStatus: outcome === 'approval' ? 'approval' : 'passed', stepFinal, lastIdx: LAST };
 }
 
 /**

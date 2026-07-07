@@ -1,45 +1,45 @@
-/* EvalMenu - the Evaluate root entry cards (Figma 647:43211). */
+/* EvalMenu - the Evaluate root entry cards (Figma 1721:67361). Content area
+   pt-24 px-18 pb-20, gap-20 between the heading and the card stack. */
 .menu {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 28px 18px 20px;
+  gap: 20px;
+  padding: 24px 18px 20px;
 }
 
 .heading {
-  margin: 0 0 0 2px;
-  font-size: var(--fs-h5); /* 16px */
+  margin: 0;
+  padding: 0 4px; /* Figma 1721:67759 wraps the text in a 4px pad */
+  font-size: var(--fs-body); /* 14px (Figma body/sm/medium) */
   font-weight: 500;
-  line-height: 24px;
+  line-height: 20px;
   color: var(--ink); /* Neutrals/Black #343C45 */
-  letter-spacing: -0.011em;
+  letter-spacing: var(--ls-body);
 }
 
 .cards {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
-/* One entry card: title + subtitle on the left, a chevron on the right. */
+/* One entry card (Figma 1721:67654): icon-on-top, title + sub, chevron right. */
 .card {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   width: 100%;
-  padding: 16px 20px;
+  padding: 14px 18px;
   border: 1px solid var(--hairline-soft); /* Gray 6 #ECEFF6 */
   border-radius: 10px;
   background: var(--card);
   text-align: left;
   cursor: pointer;
-  /* Buttons don't inherit the document font - without this the title rendered in
-     Arial, not Inter (the "font weights look off" report). */
+  /* Buttons don't inherit the document font - keep Inter, not Arial. */
   font-family: var(--font);
   transition:
     border-color var(--d-hover) var(--ease-snap),
-    background var(--d-hover) var(--ease-snap),
-    box-shadow var(--d-hover) var(--ease-snap);
+    background var(--d-hover) var(--ease-snap);
 }
 .card:hover {
   border-color: var(--hairline);
@@ -50,22 +50,43 @@
   outline-offset: 1px;
 }
 
+/* Left column: icon above the title/sub group (gap-10). */
 .text {
   display: flex;
   flex: 1 1 auto;
   min-width: 0;
   flex-direction: column;
-  gap: 4px;
+  gap: 10px;
+}
+.icon {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 20px;
+  color: var(--ink-soft);
+}
+.icon svg {
+  width: 18px;
+  height: 18px;
+}
+.titleSub {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 .title {
-  font-size: var(--fs-body); /* 14px */
+  font-size: var(--fs-small); /* 13px (Figma body/xs/medium) */
   font-weight: 500;
-  line-height: 20px;
+  line-height: 19px;
+  letter-spacing: var(--ls-small);
   color: var(--ink-soft); /* Gray 1 #3E4C5A */
 }
 .sub {
-  font-size: 13px;
+  font-size: var(--fs-small); /* 13px (Figma body/xs/regular) */
+  font-weight: 400;
   line-height: 19px;
+  letter-spacing: var(--ls-small);
   color: var(--body); /* Gray 2 #4D596C */
 }
 

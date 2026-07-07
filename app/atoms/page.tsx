@@ -23,6 +23,7 @@ import {
 import Badge from '@/components/atoms/Badge';
 import Button from '@/components/atoms/Button';
 import Checkbox from '@/components/atoms/Checkbox';
+import Radio from '@/components/atoms/Radio';
 import Chip from '@/components/atoms/Chip';
 import Dropdown from '@/components/atoms/Dropdown';
 import GutterMarker from '@/components/atoms/GutterMarker';
@@ -55,14 +56,11 @@ import EnableModal from '@/components/flow01/enable/EnableModal';
 // Evaluate (simulate)
 import StatusPill from '@/components/simulate/StatusPill';
 import SimStatus from '@/components/simulate/SimStatus';
-import TopicCard from '@/components/simulate/TopicCard';
-import ScenarioList from '@/components/simulate/ScenarioList';
 import TraceStep from '@/components/simulate/TraceStep';
 import RunTrace from '@/components/simulate/RunTrace';
 import RunOutcome from '@/components/simulate/RunOutcome';
 import EmailCard from '@/components/simulate/EmailCard';
-import EmailList from '@/components/simulate/EmailList';
-import TestAllBar from '@/components/simulate/TestAllBar';
+import PickableEmailCard from '@/components/simulate/PickableEmailCard';
 import EvalMenu from '@/components/simulate/EvalMenu';
 import EvalBackHeader from '@/components/simulate/EvalBackHeader';
 import SimEmptyState from '@/components/simulate/SimEmptyState';
@@ -311,10 +309,10 @@ const NOOP = () => {};
 // ----------------------------------------------------------------------------
 
 const NAV: { id: string; label: string; count: number }[] = [
-  { id: 'atoms', label: 'Atoms', count: 8 },
+  { id: 'atoms', label: 'Atoms', count: 9 },
   { id: 'editor', label: 'Editor', count: 9 },
   { id: 'copilot', label: 'Copilot', count: 5 },
-  { id: 'evaluate', label: 'Evaluate', count: 14 },
+  { id: 'evaluate', label: 'Evaluate', count: 11 },
   { id: 'modals', label: 'Modals', count: 4 },
   { id: 'icons', label: 'Icons', count: 2 },
 ];
@@ -409,7 +407,7 @@ export default function ComponentLibrary() {
         <section id="atoms" className={styles.category}>
           <div className={styles.categoryHead}>
             <h2>Atoms</h2>
-            <span className={styles.categoryCount}>8</span>
+            <span className={styles.categoryCount}>9</span>
           </div>
           <p className={styles.categoryNote}>The leaf primitives the journeys build on.</p>
           <div className={styles.categoryRule} />
@@ -457,6 +455,15 @@ export default function ComponentLibrary() {
               <Spec label="disabled"><Checkbox disabled /></Spec>
               <Spec label="disabled · checked"><Checkbox checked disabled /></Spec>
               <Spec label="subtle · 16"><Checkbox presentational subtle size={16} checked /></Spec>
+            </Row>
+          </Block>
+
+          <Block name="Radio" imp="atoms/Radio" desc="Single-select control (sibling of Checkbox) - a slate ring that fills to a solid ink disc with a white centre dot when selected.">
+            <Row>
+              <Spec label="unchecked"><Radio /></Spec>
+              <Spec label="checked"><Radio checked /></Spec>
+              <Spec label="disabled"><Radio disabled /></Spec>
+              <Spec label="presentational · checked"><Radio presentational checked /></Spec>
             </Row>
           </Block>
 
@@ -701,17 +708,18 @@ export default function ComponentLibrary() {
         <section id="evaluate" className={styles.category}>
           <div className={styles.categoryHead}>
             <h2>Evaluate</h2>
-            <span className={styles.categoryCount}>14</span>
+            <span className={styles.categoryCount}>11</span>
           </div>
-          <p className={styles.categoryNote}>The test-run building blocks - status pills, scenario cards, the run trace, and the eval entry pieces.</p>
+          <p className={styles.categoryNote}>The test-run building blocks - status pills, conversation rows, the run trace, and the eval entry pieces.</p>
           <div className={styles.categoryRule} />
 
-          <Block name="StatusPill" imp="simulate/StatusPill" desc="Run-state pill on an email result card - animated dots for running, a colored dot + outcome label otherwise.">
+          <Block name="StatusPill" imp="simulate/StatusPill" desc="Run-state pill on an email result card - animated dots for running, a green dot for passed, an amber info glyph for attention / errored / approval.">
             <Row>
               <Spec label="running"><StatusPill status="running" /></Spec>
               <Spec label="passed"><StatusPill status="passed" /></Spec>
-              <Spec label="failed"><StatusPill status="failed" /></Spec>
               <Spec label="needs attention"><StatusPill status="attention" /></Spec>
+              <Spec label="errored"><StatusPill status="errored" /></Spec>
+              <Spec label="approval"><StatusPill status="approval" /></Spec>
             </Row>
           </Block>
 
@@ -725,20 +733,6 @@ export default function ComponentLibrary() {
             </Row>
           </Block>
 
-          <Block name="TopicCard" imp="simulate/TopicCard" desc="One AI-grouped scenario row - topic name, SimStatus, drill chevron on hover.">
-            <div style={{ width: 360, display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <TopicCard topic={{ id: 't1', label: 'Refund requests', status: 'idle', runCount: 0, emails: [] }} onOpen={() => {}} />
-              <TopicCard topic={{ id: 't2', label: 'Password resets', status: 'passed', runCount: 1, emails: [] }} onOpen={() => {}} />
-              <TopicCard topic={{ id: 't3', label: 'Shipping delays', status: 'attention', runCount: 2, emails: [] }} onOpen={() => {}} />
-            </div>
-          </Block>
-
-          <Block name="ScenarioList" imp="simulate/ScenarioList" desc="The stack of TopicCards in the Scenarios tab.">
-            <div style={{ width: 360 }}>
-              <ScenarioList topics={[{ id: 't1', label: '404 errors', status: 'passed', runCount: 1, emails: [] }, { id: 't2', label: 'Server errors', status: 'failed', runCount: 1, emails: [] }, { id: 't3', label: 'Edge cases', status: 'attention', runCount: 1, emails: [] }]} onOpenTopic={() => {}} />
-            </div>
-          </Block>
-
           <Block name="TraceStep" imp="simulate/TraceStep" desc="One execution step in a run trace - a status rail plus the shared Chip action-tag, with spring-in output.">
             <div style={{ width: 360 }}>
               <TraceStep step={SIM_TRACE[1]!} status="done" isLast={false} />
@@ -747,47 +741,41 @@ export default function ComponentLibrary() {
             </div>
           </Block>
 
-          <Block name="RunTrace" imp="simulate/RunTrace" desc="The collapsible Trace section on an email card - the SIM_TRACE fixture keyed by status.">
+          <Block name="RunTrace" imp="simulate/RunTrace" desc="The collapsible Trace section - thinking + action steps with output boxes, ending in the reply step (which can pause for approval).">
             <Row>
               <Spec label="passed">
-                <div style={{ width: 360 }}><RunTrace stepStatus={{ s1: 'done', s2: 'done', s3: 'done', s4: 'done', s5: 'done', s6: 'done' }} outcome="passed" /></div>
+                <div style={{ width: 360 }}><RunTrace stepStatus={{ t1: 'done', s1: 'done', s2: 'done', s3: 'done', s4: 'done', t2: 'done', s5: 'done', s6: 'done' }} outcome="passed" /></div>
               </Spec>
-              <Spec label="failed at KB">
-                <div style={{ width: 360 }}><RunTrace stepStatus={{ s1: 'done', s2: 'done', s3: 'done', s4: 'failed', s5: 'skipped', s6: 'skipped' }} outcome="failed" /></div>
+              <Spec label="approval">
+                <div style={{ width: 360 }}><RunTrace stepStatus={{ t1: 'done', s1: 'done', s2: 'done', s3: 'done', s4: 'done', t2: 'done', s5: 'done', s6: 'done' }} outcome="approval" /></div>
               </Spec>
-            </Row>
-          </Block>
-
-          <Block name="RunOutcome" imp="simulate/RunOutcome" desc="The payoff above the trace - the drafted reply + a thumbs verdict, or the needs-attention / failure nudge.">
-            <Row>
-              <Spec label="passed"><div style={{ width: 360 }}><RunOutcome kind="passed" onVerdict={() => {}} /></div></Spec>
-              <Spec label="attention"><div style={{ width: 360 }}><RunOutcome kind="attention" /></div></Spec>
-              <Spec label="failed"><div style={{ width: 360 }}><RunOutcome kind="failed" /></div></Spec>
-            </Row>
-          </Block>
-
-          <Block name="EmailCard" imp="simulate/EmailCard" desc="A bordered email card that grows a status pill + trace + outcome once a run is in flight; optional select mode.">
-            <Row>
-              <Spec label="static">
-                <div style={{ width: 360 }}><EmailCard email={{ id: 'e1', sender: 'Maria Gomez', subject: '404 on the /v2/orders endpoint', preview: 'Since this morning every call to /v2/orders comes back 404 not found.' }} /></div>
-              </Spec>
-              <Spec label="selectable (checked)">
-                <div style={{ width: 360 }}><EmailCard email={{ id: 'e2', sender: 'Liam Smith', subject: 'Trouble with my subscription payment', preview: 'My card was charged twice this month.' }} selectable selected onToggleSelect={() => {}} /></div>
+              <Spec label="errored at KB">
+                <div style={{ width: 360 }}><RunTrace stepStatus={{ t1: 'done', s1: 'done', s2: 'done', s3: 'done', s4: 'failed', t2: 'skipped', s5: 'skipped', s6: 'skipped' }} outcome="errored" /></div>
               </Spec>
             </Row>
           </Block>
 
-          <Block name="EmailList" imp="simulate/EmailList" desc="The stack of EmailCards inside a topic drill-down.">
-            <div style={{ width: 360 }}>
-              <EmailList emails={[{ id: 'e1', sender: 'Maria Gomez', subject: '404 on /v2/orders', preview: 'Every call comes back 404 not found.' }, { id: 'e2', sender: 'Devin Park', subject: 'Getting 404s after the v1.2.1 upgrade', preview: 'Webhook receiver returns 404 for routes that worked yesterday.' }]} />
-            </div>
+          <Block name="RunOutcome" imp="simulate/RunOutcome" desc="The result header + action - a status pill, an optional message/draft box, and the next step (Redo / Fix with Copilot / Retry, or Approve / Decline).">
+            <Row>
+              <Spec label="passed"><div style={{ width: 360 }}><RunOutcome status="passed" /></div></Spec>
+              <Spec label="attention"><div style={{ width: 360 }}><RunOutcome status="attention" /></div></Spec>
+              <Spec label="errored"><div style={{ width: 360 }}><RunOutcome status="errored" /></div></Spec>
+              <Spec label="approval"><div style={{ width: 360 }}><RunOutcome status="approval" /></div></Spec>
+            </Row>
           </Block>
 
-          <Block name="TestAllBar" imp="simulate/TestAllBar" desc="Pinned footer CTA - Test all emails / Stop test / Re-test all.">
+          <Block name="EmailCard" imp="simulate/EmailCard" desc="The evaluated conversation's result card - sender / subject / preview, then the run outcome (pill + action) and the trace once a run is in flight.">
+            <div style={{ width: 360 }}><EmailCard email={{ id: 'e1', sender: 'Maria Gomez', subject: '404 on the /v2/orders endpoint', preview: 'Since this morning every call to /v2/orders comes back 404 not found.' }} /></div>
+          </Block>
+
+          <Block name="PickableEmailCard" imp="simulate/PickableEmailCard" desc="A single-select conversation row - radio + sender / subject / preview, with a hover-revealed redirect to read the full email (recent conversations).">
             <Row>
-              <Spec label="idle"><div style={{ width: 360 }}><TestAllBar mode="idle" onTestAll={() => {}} /></div></Spec>
-              <Spec label="running"><div style={{ width: 360 }}><TestAllBar mode="running" onStop={() => {}} /></div></Spec>
-              <Spec label="done"><div style={{ width: 360 }}><TestAllBar mode="done" onTestAll={() => {}} /></div></Spec>
+              <Spec label="unselected">
+                <div style={{ width: 360 }}><PickableEmailCard email={{ id: 'e1', sender: 'Maria Gomez', subject: '404 on the /v2/orders endpoint', preview: 'Every call to /v2/orders comes back 404 not found.' }} selected={false} onSelect={() => {}} onOpen={() => {}} /></div>
+              </Spec>
+              <Spec label="selected">
+                <div style={{ width: 360 }}><PickableEmailCard email={{ id: 'e2', sender: 'Devin Park', subject: 'Getting 404s after the v1.2.1 upgrade', preview: 'Webhook receiver returns 404 for routes that worked yesterday.' }} selected onSelect={() => {}} onOpen={() => {}} /></div>
+              </Spec>
             </Row>
           </Block>
 
@@ -815,10 +803,13 @@ export default function ComponentLibrary() {
             <div style={{ width: 360 }}>
               <SimEmptyState
                 icon={RiFlaskLine}
-                title="No scenarios to simulate yet"
-                body="Once your AOP has a trigger, Hiver AI groups real past emails into scenarios you can test here."
-                ghosts={['Refund requests', 'Password resets', 'Shipping delays'].map((label, i) => (
-                  <TopicCard key={label} topic={{ id: `g${i}`, label, status: 'idle', runCount: 0, emails: [] }} />
+                title="No scenarios to test yet"
+                body="Once your AOP has a trigger, Hiver AI turns real past emails into scenarios you can test here."
+                ghosts={[
+                  { id: 'g1', sender: 'Priya Nair', subject: 'Empty payload returns 200 instead of 400', preview: 'The API responds 200 OK rather than a validation error.' },
+                  { id: 'g2', sender: 'Aisha Khan', subject: '500s spiking on checkout', preview: 'Intermittent 500 Internal Server Error on the checkout API.' },
+                ].map((e) => (
+                  <PickableEmailCard key={e.id} email={e} selected={false} onSelect={() => {}} />
                 ))}
               />
             </div>
