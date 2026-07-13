@@ -1,0 +1,73 @@
+/* Unpublished-changes strip: a quiet amber band under the toolbar. Soft tint +
+   1px hairline (never a chunky edge marker); enters with a small fade-rise. */
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 20px;
+  background: #fffbeb; /* soft amber wash (between --state-warn-bg and the card) */
+  border-bottom: 1px solid #f2e5bf;
+  flex: none;
+  animation: barIn var(--d-enter) var(--ease-snap) both;
+}
+@keyframes barIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.icon {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  color: var(--state-warn);
+}
+
+.msg {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-small); /* 13px */
+  line-height: 1.45;
+  letter-spacing: var(--ls-body);
+  color: #78350f; /* warn ink (the verdict strip's amber text) */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.discard {
+  flex: none;
+  padding: 5px 10px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: none;
+  font-family: var(--font);
+  font-size: var(--fs-small); /* 13px */
+  font-weight: 500;
+  letter-spacing: var(--ls-body);
+  color: #92400e;
+  cursor: pointer;
+  transition:
+    background var(--d-hover) var(--ease-snap),
+    color var(--d-hover) var(--ease-snap);
+}
+.discard:hover {
+  background: var(--state-warn-bg);
+  color: #78350f;
+}
+.discard:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar {
+    animation: none;
+  }
+}

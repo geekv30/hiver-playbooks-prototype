@@ -43,6 +43,11 @@ interface Props {
   onConnectors?: () => void;
   /** True when any connector needs attention - shows a dot on the plug button. */
   connectorIssues?: boolean;
+  /** True when a live/paused AOP has edits its running version doesn't (the
+   *  draft-and-publish model): shows the amber pill + the Publish changes CTA. */
+  unpublished?: boolean;
+  /** Open the review-and-publish modal. */
+  onPublish?: () => void;
 }
 
 // Editor toolbar. Left = back + the AOP identity (title + status pill).
@@ -65,6 +70,8 @@ export default function Toolbar({
   hideIdentity,
   onConnectors,
   connectorIssues,
+  unpublished,
+  onPublish,
 }: Props) {
   return (
     <div className={styles.bar}>
@@ -79,6 +86,7 @@ export default function Toolbar({
           <TitleField value={title} onChange={onTitleChange} className={styles.title} />
         )}
         {!hideIdentity && <Badge intent={status}>{STATUS_LABEL[status]}</Badge>}
+        {!hideIdentity && unpublished && <Badge intent="warning">unpublished edits</Badge>}
       </div>
 
       <div className={styles.right}>
@@ -112,13 +120,30 @@ export default function Toolbar({
           />
         )}
         {status === 'active' ? (
-          <Button variant="secondary" onClick={onPause}>
-            Pause
-          </Button>
+          // Pause controls the RUNNING version; Publish controls the definition.
+          // They stay orthogonal: with unpublished edits, Publish is the primary
+          // (accent) action and Pause holds its secondary spot.
+          <>
+            <Button variant="secondary" onClick={onPause}>
+              Pause
+            </Button>
+            {unpublished && (
+              <Button variant="accent" onClick={onPublish}>
+                Publish changes
+              </Button>
+            )}
+          </>
         ) : status === 'paused' ? (
-          <Button variant="accent" onClick={onResume}>
-            Resume
-          </Button>
+          <>
+            <Button variant={unpublished ? 'secondary' : 'accent'} onClick={onResume}>
+              Resume
+            </Button>
+            {unpublished && (
+              <Button variant="accent" onClick={onPublish}>
+                Publish changes
+              </Button>
+            )}
+          </>
         ) : (
           <Button variant="accent" onClick={onEnable} disabled={!canEnable}>
             Enable

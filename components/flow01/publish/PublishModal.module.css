@@ -1,0 +1,223 @@
+/* PublishModal - the review-and-publish step of the draft-and-publish model.
+   Same modal grammar as EnableModal (head / body / foot, verdict strip); the
+   dialog sizes to its content (changes + checks) up to the viewport cap. */
+
+.dialog {
+  width: 100%;
+  max-width: 560px;
+  max-height: min(760px, calc(100vh - 88px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ---- header ---- */
+.head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--hairline);
+}
+.headIcon {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  color: var(--accent);
+}
+.headIcon svg {
+  width: 19px;
+  height: 19px;
+}
+.headTitle {
+  margin: 0;
+  font-size: var(--fs-h5); /* 16px */
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: var(--ls-h5);
+  color: var(--ink);
+}
+
+/* ---- body (the one scroll region) ---- */
+.body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 24px 14px;
+  overflow-y: auto;
+}
+
+/* Verdict strip - the Enable review's anatomy on publish copy. */
+.verdict {
+  flex: none;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 11px 12px;
+  border-radius: var(--r-md);
+  font-size: var(--fs-small); /* 13px */
+  line-height: 1.45;
+  letter-spacing: var(--ls-body);
+  font-weight: 500;
+}
+.verdict svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+}
+.verdict[data-tone='checking'] {
+  background: var(--surface-soft);
+  color: var(--muted);
+}
+.verdict[data-tone='ok'] {
+  background: var(--state-ok-bg);
+  color: #14532d;
+}
+.verdict[data-tone='ok'] svg {
+  color: var(--state-ok);
+}
+.verdict[data-tone='warn'] {
+  background: var(--state-warn-bg);
+  color: #78350f;
+}
+.verdict[data-tone='warn'] svg {
+  color: var(--state-warn);
+}
+.verdict[data-tone='pending'] {
+  background: #ebf7ff; /* --background/info/default */
+  color: #065b89; /* --text/info/default */
+}
+
+.scope {
+  font-size: var(--fs-small); /* 13px */
+  line-height: 1.45;
+  letter-spacing: var(--ls-body);
+  color: var(--muted);
+}
+
+.sectionLabel {
+  margin-top: 4px;
+  font-size: var(--fs-small); /* 13px */
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: var(--ls-body);
+  color: var(--ink);
+}
+
+/* ---- What changed: quiet inset box, one row per change ---- */
+.changes {
+  list-style: none;
+  margin: 0;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-soft);
+  border: 1px solid var(--hairline-soft);
+  border-radius: 10px;
+}
+.changeRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 6px;
+  min-width: 0;
+  font-size: var(--fs-small); /* 13px */
+  line-height: 1.5;
+  letter-spacing: var(--ls-body);
+}
+.changeGlyph {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  align-self: center;
+  color: var(--muted);
+}
+.changeGlyph svg {
+  width: 15px;
+  height: 15px;
+}
+.changeGlyph[data-kind='added'] {
+  color: var(--state-ok);
+}
+.changeGlyph[data-kind='removed'] {
+  color: var(--state-error);
+}
+.changeGlyph[data-kind='edited'] {
+  color: var(--accent);
+}
+.changeLabel {
+  flex: none;
+  font-weight: 500;
+  color: var(--ink);
+}
+.changeDetail {
+  flex: 1;
+  min-width: 0;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.changeEmpty {
+  padding: 10px 6px;
+  font-size: var(--fs-small);
+  letter-spacing: var(--ls-body);
+  color: var(--muted);
+}
+
+/* ---- Readiness re-run (ReadinessReview renders its own rows) ---- */
+.reviewList {
+  flex: none;
+  margin: 0 -2px;
+}
+
+/* ---- footer ---- */
+.foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--hairline);
+}
+.cancel {
+  padding: 9px 14px;
+  border: none;
+  border-radius: var(--r-md);
+  background: none;
+  font-family: var(--font);
+  font-size: var(--fs-body); /* 14px */
+  font-weight: 500;
+  letter-spacing: var(--ls-body);
+  color: var(--body);
+  cursor: pointer;
+  transition:
+    background var(--d-hover) var(--ease-snap),
+    color var(--d-hover) var(--ease-snap);
+}
+.cancel:hover {
+  background: var(--surface-soft);
+  color: var(--ink);
+}
+.cancel:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.cancel:disabled {
+  color: var(--muted-soft);
+  cursor: default;
+  background: none;
+}
+.publishing {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}

@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useMemo, useReducer, useRef } from 'react';
+import { useCallback, useMemo, useReducer, useRef, useState } from 'react';
 import type { Fragment } from '@/types/playbook';
+import { docFingerprint } from './publish/diff';
 import {
   EditorDoc,
   DocStep,
@@ -150,10 +151,27 @@ export interface EditorApi {
   setMailboxes: (ids: string[]) => void;
   /** Set how the AOP is triggered (automatic vs manual). */
   setTriggerMode: (mode: EditorDoc['triggerMode']) => void;
-  /** Go live: status -> 'active'. */
+  /** Go live: status -> 'active' AND snapshot the doc as the published version. */
   enable: () => void;
   /** Stop: status -> 'paused' (instant; undoable). */
   pause: () => void;
+  /** Restart a paused AOP: status -> 'active' only. Never touches the published
+   *  snapshot - resuming with unpublished edits must not silently publish them. */
+  resume: () => void;
+  /** The doc the running AOP executes (null while draft). Edits never touch it. */
+  publishedDoc: EditorDoc | null;
+  /** True when a live/paused AOP's working doc diverges from its published
+   *  snapshot (runtime status and empty scaffold lines excluded). */
+  hasUnpublishedChanges: boolean;
+  /** Make the working doc the published version (the running AOP picks it up). */
+  publishChanges: () => void;
+  /** Throw away unpublished edits: restore the published definition, keeping
+   *  the current runtime status. One history entry, so it is undoable. */
+  discardChanges: () => void;
+  /** Fold settings saved through the manage modal (name / mailboxes) into the
+   *  published snapshot too - an explicit "Save changes" applies immediately and
+   *  must not linger as unpublished canvas edits. */
+  publishSettings: (fields: Pick<EditorDoc, 'title' | 'mailboxes'>) => void;
   /** Replace the WHOLE document (used by the cold-start "draft with AI" flow to
    *  seed a generated AOP into the blank canvas). Undoable back to the blank. */
   loadDoc: (doc: EditorDoc) => void;
@@ -199,16 +217,26 @@ export function useEditorDoc(initial?: EditorDoc): EditorApi {
   const docRef = useRef(state.present);
   docRef.current = state.present;
 
+  // The published snapshot: the doc the RUNNING AOP executes. Set at enable,
+  // replaced by publishChanges, untouched by canvas edits and undo/redo. A
+  // pre-enabled initial doc (status not draft) starts published as-is.
+  const [published, setPublished] = useState<EditorDoc | null>(() =>
+    initial && initial.status !== 'draft' ? withTrailingEmpty(initial) : null,
+  );
+  const publishedRef = useRef(published);
+  publishedRef.current = published;
+
   // Every commit normalizes the trailing line: a condition block always keeps an
   // empty line below it to type into (it can't be escaped with Enter); normal
   // steps do not auto-append - a new line appears only on Enter.
   // We also mirror the committed doc into docRef SYNCHRONOUSLY (not just on the
   // next render), so two commits fired back-to-back in one tick chain correctly -
   // the second reads the first's result instead of the stale pre-commit doc.
-  const commit = useCallback((next: EditorDoc, key: string | null) => {
+  const commit = useCallback((next: EditorDoc, key: string | null): EditorDoc => {
     const wrapped = withTrailingEmpty(next);
     docRef.current = wrapped;
     dispatch({ type: 'commit', next: wrapped, key });
+    return wrapped;
   }, []);
 
   const setLine = useCallback(
@@ -248,12 +276,40 @@ export function useEditorDoc(initial?: EditorDoc): EditorApi {
   );
 
   const enable = useCallback(() => {
-    commit({ ...docRef.current, status: 'active' }, null);
+    // Going live publishes the doc as it stands: the snapshot IS what runs.
+    const live = commit({ ...docRef.current, status: 'active' }, null);
+    publishedRef.current = live;
+    setPublished(live);
   }, [commit]);
 
   const pause = useCallback(() => {
     commit({ ...docRef.current, status: 'paused' }, null);
   }, [commit]);
+
+  const resume = useCallback(() => {
+    commit({ ...docRef.current, status: 'active' }, null);
+  }, [commit]);
+
+  const publishChanges = useCallback(() => {
+    publishedRef.current = docRef.current;
+    setPublished(docRef.current);
+  }, []);
+
+  const discardChanges = useCallback(() => {
+    const pub = publishedRef.current;
+    if (!pub) return;
+    // Restore the published definition; runtime status stays as it is now
+    // (discarding edits on a paused AOP must not resume it).
+    commit({ ...pub, status: docRef.current.status }, null);
+  }, [commit]);
+
+  const publishSettings = useCallback((fields: Pick<EditorDoc, 'title' | 'mailboxes'>) => {
+    setPublished((p) => {
+      const next = p ? { ...p, ...fields } : p;
+      publishedRef.current = next;
+      return next;
+    });
+  }, []);
 
   const loadDoc = useCallback(
     (next: EditorDoc) => {
@@ -487,6 +543,17 @@ export function useEditorDoc(initial?: EditorDoc): EditorApi {
     return triggerOk && aStepOk;
   }, [state.present]);
 
+  // Dirty vs the published snapshot. Gated on status: undoing back past the
+  // enable (status -> draft) returns the editor to the plain draft flow.
+  const publishedFp = useMemo(() => (published ? docFingerprint(published) : null), [published]);
+  const hasUnpublishedChanges = useMemo(
+    () =>
+      publishedFp != null &&
+      state.present.status !== 'draft' &&
+      docFingerprint(state.present) !== publishedFp,
+    [publishedFp, state.present],
+  );
+
   return {
     doc: state.present,
     canUndo: state.past.length > 0,
@@ -499,6 +566,12 @@ export function useEditorDoc(initial?: EditorDoc): EditorApi {
     setTriggerMode,
     enable,
     pause,
+    resume,
+    publishedDoc: published,
+    hasUnpublishedChanges,
+    publishChanges,
+    discardChanges,
+    publishSettings,
     loadDoc,
     applyPatch,
     addStepAfter,
