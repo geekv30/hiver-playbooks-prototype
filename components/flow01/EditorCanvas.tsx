@@ -25,7 +25,6 @@ import ConditionBlock from './condition/ConditionBlock';
 import ColdStartModal from './ColdStartModal';
 import ActionHint from './ActionHint';
 import EnableModal from './enable/EnableModal';
-import ConnectorHubModal from './enable/ConnectorHubModal';
 import { deriveReadinessInputs, inviteKey } from './enable/readiness';
 import { useConnectorHealth, setConnectorHealth } from './connectorHealth';
 import { useRouter } from 'next/navigation';
@@ -254,8 +253,6 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
   // are session state owned here so they survive the modal closing.
   const connectorHealth = useConnectorHealth();
   const [enableInvited, setEnableInvited] = useState<ReadonlySet<string>>(new Set());
-  // The Connectors hub, opened from the toolbar (same surface as the list page).
-  const [connectorHubOpen, setConnectorHubOpen] = useState(false);
   // Evaluation aggregate: accumulated run results + staleness vs the live doc.
   // Feeds the eval summary strip and the evaluation-aware Enable.
   const { agg: evalAgg, recordRun } = useEvalState(doc);
@@ -1151,16 +1148,6 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
         onPause={pauseAop}
         onResume={resumeAop}
         onBack={() => router.push('/aops')}
-        // Scoped to the DOC's connectors so the editor surface stays accurate:
-        // no button when the AOP uses none, and the dot only means "one of THIS
-        // AOP's connectors needs attention".
-        onConnectors={
-          readinessInputs.connectors.length > 0 ? () => setConnectorHubOpen(true) : undefined
-        }
-        connectorIssues={readinessInputs.connectors.some(({ slug }) => {
-          const s = connectorHealth[slug];
-          return s === 'reauth' || s === 'error' || s === 'disconnected';
-        })}
       />
 
       <div className={styles.stage}>
@@ -1542,13 +1529,6 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
           onEvaluate={evaluateFromEnable}
           onClose={() => setEnableMode(null)}
           onConfirm={confirmEnable}
-        />
-      )}
-
-      {connectorHubOpen && (
-        <ConnectorHubModal
-          only={readinessInputs.connectors.map((c) => c.slug)}
-          onClose={() => setConnectorHubOpen(false)}
         />
       )}
 
