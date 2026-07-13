@@ -26,6 +26,9 @@ import ColdStartModal from './ColdStartModal';
 import ActionHint from './ActionHint';
 import EnableModal from './enable/EnableModal';
 import ConnectorHubModal from './enable/ConnectorHubModal';
+import PublishModal from './publish/PublishModal';
+import UnpublishedBar from './publish/UnpublishedBar';
+import { diffDocs } from './publish/diff';
 import { deriveReadinessInputs, inviteKey } from './enable/readiness';
 import { useConnectorHealth, setConnectorHealth } from './connectorHealth';
 import { useRouter } from 'next/navigation';
@@ -249,6 +252,9 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
   const [enableMode, setEnableMode] = useState<null | 'commit' | 'manage'>(null);
   const [enableName, setEnableName] = useState('');
   const [enableMailboxes, setEnableMailboxes] = useState<string[]>([]);
+  // The review-and-publish modal (draft-and-publish model): a live/paused AOP's
+  // edits stay off the running version until published through here.
+  const [publishOpen, setPublishOpen] = useState(false);
   // Enable-flow state: connector health comes from the SHARED store (the
   // Connectors hub - fixing a connector anywhere fixes it here), invites sent
   // are session state owned here so they survive the modal closing.
@@ -358,23 +364,51 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
     else setSimOpen(true);
   }, [companions]);
   const confirmEnable = useCallback(() => {
-    api.setTitle(enableName.trim() || 'Untitled AOP');
+    const title = enableName.trim() || 'Untitled AOP';
+    api.setTitle(title);
     api.setMailboxes(enableMailboxes);
     if (enableMode === 'commit') {
       api.enable(); // the modal's success moment already played; this flips status
     } else {
+      // The manage gear is an explicit save: these settings apply to the running
+      // AOP now, so fold them into the published snapshot too - they must not
+      // linger as unpublished canvas edits.
+      api.publishSettings({ title, mailboxes: enableMailboxes });
       showHint('Changes saved.');
     }
     setEnableMode(null);
   }, [api, enableName, enableMailboxes, enableMode, showHint]);
   const pauseAop = useCallback(() => {
     api.pause();
-    showHint(`${doc.title || 'This AOP'} paused.`, { label: 'Undo', run: () => api.enable() });
+    showHint(`${doc.title || 'This AOP'} paused.`, { label: 'Undo', run: () => api.resume() });
   }, [api, doc.title, showHint]);
   const resumeAop = useCallback(() => {
-    api.enable();
+    api.resume();
     showHint(`${doc.title || 'This AOP'} is live again.`);
   }, [api, doc.title, showHint]);
+
+  // --- Publish / discard (draft-and-publish) ---------------------------------
+  // What changed vs the published snapshot - the publish review's headline list.
+  const pendingChanges = useMemo(
+    () => (api.publishedDoc ? diffDocs(api.publishedDoc, doc) : []),
+    [api.publishedDoc, doc],
+  );
+  const confirmPublish = useCallback(() => {
+    api.publishChanges();
+    setPublishOpen(false);
+    showHint(`Changes published. ${docRef.current.title || 'This AOP'} now runs the new version.`);
+  }, [api, showHint]);
+  const discardEdits = useCallback(() => {
+    api.discardChanges();
+    // The discard is one history entry, so Undo restores the edits exactly.
+    showHint('Edits discarded.', { label: 'Undo', run: () => api.undo() });
+  }, [api, showHint]);
+  // "Evaluate" from the publish review: leave the modal, open the eval surface.
+  const evaluateFromPublish = useCallback(() => {
+    setPublishOpen(false);
+    if (companions) setPanelTab('simulate');
+    else setSimOpen(true);
+  }, [companions]);
 
   const focusFor = (key: string): { token: number; atStart: boolean } | null =>
     focusReq && focusReq.key === key ? { token: focusReq.token, atStart: focusReq.atStart } : null;
@@ -1161,7 +1195,13 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
           const s = connectorHealth[slug];
           return s === 'reauth' || s === 'error' || s === 'disconnected';
         })}
+        unpublished={api.hasUnpublishedChanges}
+        onPublish={() => setPublishOpen(true)}
       />
+
+      {api.hasUnpublishedChanges && (
+        <UnpublishedBar status={doc.status} onDiscard={discardEdits} />
+      )}
 
       <div className={styles.stage}>
         <div className={styles.area}>
@@ -1542,6 +1582,23 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
           onEvaluate={evaluateFromEnable}
           onClose={() => setEnableMode(null)}
           onConfirm={confirmEnable}
+        />
+      )}
+
+      {publishOpen && (
+        <PublishModal
+          open
+          changes={pendingChanges}
+          selected={doc.mailboxes}
+          readiness={readinessInputs}
+          evalAgg={evalAgg}
+          connectorHealth={connectorHealth}
+          onConnect={markConnected}
+          invited={enableInvited}
+          onInvite={sendInvites}
+          onEvaluate={evaluateFromPublish}
+          onClose={() => setPublishOpen(false)}
+          onConfirm={confirmPublish}
         />
       )}
 
