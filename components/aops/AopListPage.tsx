@@ -15,13 +15,9 @@ import {
   RiSettings3Line,
   RiArrowDownSLine,
   RiAddLine,
-  RiPlugLine,
 } from 'react-icons/ri';
 import GmailBar from '@/components/flow01/GmailBar';
-import Button from '@/components/atoms/Button';
 import Toggle from '@/components/atoms/Toggle';
-import ConnectorHubModal from '@/components/flow01/enable/ConnectorHubModal';
-import { useConnectorHealth, hasConnectorIssues } from '@/components/flow01/connectorHealth';
 import { SparkleIcon } from '@/components/icons/ui';
 import styles from './AopListPage.module.css';
 
@@ -101,15 +97,13 @@ const AI_NAV = [
  * The AOP entry point (Figma 1312:14506): the Admin Panel list of AI Operating
  * Procedures inside the Hiver Admin chrome (Gmail bar + main nav + Hiver AI
  * nav). Two states, one renderer: `empty` shows the meet-AOP banner + the
- * create-first shell; otherwise the live table. The Connectors button (with a
- * needs-attention dot) is this page's consistent connector-settings placement -
- * the same hub the editor toolbar opens.
+ * create-first shell; otherwise the live table. Connector health surfaces only
+ * inside the Enable / Publish review flows (inline fixes) - no standalone
+ * Connectors entry point.
  */
 export default function AopListPage({ empty }: { empty?: boolean }) {
   const router = useRouter();
   const [rows, setRows] = useState<AopRow[]>(empty ? [] : SEED_ROWS);
-  const [hubOpen, setHubOpen] = useState(false);
-  const health = useConnectorHealth();
 
   const activeCount = rows.filter((r) => r.active).length;
   const inactiveCount = rows.length - activeCount;
@@ -185,16 +179,6 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
                 </p>
               </div>
               <div className={styles.headerActions}>
-                <span className={styles.connectorsWrap}>
-                  <Button
-                    variant="secondary"
-                    iconLeft={<RiPlugLine />}
-                    onClick={() => setHubOpen(true)}
-                  >
-                    Connectors
-                  </Button>
-                  {hasConnectorIssues(health) && <span className={styles.issueDot} aria-hidden />}
-                </span>
                 <Link href="/aops/new" className={styles.newBtn}>
                   <RiAddLine aria-hidden />
                   New AOP
@@ -325,7 +309,6 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
         </main>
       </div>
 
-      {hubOpen && <ConnectorHubModal onClose={() => setHubOpen(false)} />}
     </div>
   );
 }
