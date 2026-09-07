@@ -288,11 +288,12 @@ const SENDERS = [
 
 // How long ago each row arrived - the pool is newest first, so the label grows
 // with the index (minutes, then hours, then days).
+const ago = (n: number, unit: string) => `${n} ${unit}${n === 1 ? '' : 's'} ago`;
 function receivedLabel(i: number): string {
   if (i === 0) return 'just now';
-  if (i < 6) return `${i * 9} mins ago`;
-  if (i < 30) return `${Math.round(i / 5)} hrs ago`;
-  return `${Math.round(i / 24)} days ago`;
+  if (i < 6) return ago(i * 9, 'min');
+  if (i < 30) return ago(Math.max(1, Math.round(i / 5)), 'hr');
+  return ago(Math.max(1, Math.round(i / 24)), 'day');
 }
 
 function hash(s: string): number {

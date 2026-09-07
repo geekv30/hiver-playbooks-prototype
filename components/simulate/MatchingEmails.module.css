@@ -173,6 +173,11 @@
   gap: 14px;
   padding: 16px 18px;
 }
+/* Matched against a trigger that has since changed - readable, not actionable. */
+.list[data-stale] {
+  opacity: 0.45;
+}
+
 .cardReveal {
   animation: matchCardIn var(--d-enter) var(--ease-snap) backwards;
   animation-delay: calc(var(--i) * 45ms);

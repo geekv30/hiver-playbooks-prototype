@@ -15,12 +15,15 @@ import {
   RiMailLine,
   RiShieldCheckLine,
   RiChatNewLine,
+  RiSearchEyeLine,
+  RiPlayLine,
 } from 'react-icons/ri';
 import type { IconType } from 'react-icons';
 import Spinner from '@/components/atoms/Spinner';
 import ThumbsRating, { type Verdict } from '@/components/atoms/ThumbsRating';
 import CopilotSparkle from './CopilotSparkle';
 import CopilotProposal, { type ProposalState } from './CopilotProposal';
+import CopilotMailboxAsk from './CopilotMailboxAsk';
 import type { DocPatch } from '../doc';
 import styles from './CopilotPanel.module.css';
 
@@ -72,6 +75,15 @@ export interface CopilotMessage {
   proposalState?: ProposalState;
   /** The user's thumbs verdict on this reply. */
   verdict?: Verdict;
+  /** Asks which shared mailboxes the skill will run on (once, after drafting).
+   *  Answering stores them on the skill and starts trigger matching. */
+  mailboxAsk?: boolean;
+  /** Set once the ask is answered - the message becomes thread history. */
+  mailboxChosen?: string[];
+  /** Trigger matching was started for this mailbox. The line renders from the
+   *  LIVE scan (see `scanState`), so the thread never holds a stale copy of it;
+   *  the results themselves live in the Evaluation tab, this only points there. */
+  scan?: { mailbox: string };
 }
 
 interface Props {
@@ -104,6 +116,12 @@ interface Props {
   onUndoProposal: (index: number) => void;
   /** Thumbs verdict on an assistant reply. */
   onVerdict: (index: number, v: Verdict) => void;
+  /** The mailbox question was answered (index = its message index). */
+  onMailboxAnswer?: (index: number, mailboxIds: string[]) => void;
+  /** Open the Evaluation tab - the scan handoff's one action. */
+  onOpenEvaluation?: () => void;
+  /** The live trigger scan, for any message that started one. */
+  scanState?: { scanning: boolean; count: number };
 }
 
 /** Copy-to-clipboard affordance on an assistant message (icon swaps to a check). */
@@ -226,6 +244,9 @@ export default function CopilotPanel({
   onDismissProposal,
   onUndoProposal,
   onVerdict,
+  onMailboxAnswer,
+  onOpenEvaluation,
+  scanState,
 }: Props) {
   const [value, setValue] = useState('');
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -383,8 +404,16 @@ export default function CopilotPanel({
                   const settled = !thinking && !m.streaming;
                   const proposalState: ProposalState = m.proposalState ?? 'open';
                   const isLast = i === lastAssistantIdx;
+                  // A question waiting on its answer is not a finished reply:
+                  // no copy/regenerate/thumbs row, and no follow-up chips
+                  // competing with the answer we just asked for.
+                  const awaitingAnswer = !!m.mailboxAsk && !m.mailboxChosen?.length;
                   const showFollowups =
-                    isLast && settled && !!m.text && (!m.proposal || proposalState !== 'open');
+                    isLast &&
+                    settled &&
+                    !!m.text &&
+                    !awaitingAnswer &&
+                    (!m.proposal || proposalState !== 'open');
                   return (
                     <div key={i} className={`${styles.msg} ${styles.msgAssistant}`}>
                       <div className={styles.assistantWrap} data-last={isLast || undefined}>
@@ -413,7 +442,45 @@ export default function CopilotPanel({
                               />
                             )}
 
-                            {settled && m.text && (
+                            {settled && m.mailboxAsk && (
+                              <CopilotMailboxAsk
+                                chosen={m.mailboxChosen}
+                                onAnswer={(ids) => onMailboxAnswer?.(i, ids)}
+                              />
+                            )}
+
+                            {settled && m.scan && (
+                              <div
+                                className={styles.scanNote}
+                                data-found={!scanState?.scanning || undefined}
+                                aria-live="polite"
+                              >
+                                <span className={styles.scanIcon} aria-hidden>
+                                  {scanState?.scanning ? <Spinner size={14} /> : <RiSearchEyeLine />}
+                                </span>
+                                <span className={styles.scanText}>
+                                  {scanState?.scanning
+                                    ? `Looking for emails that match your trigger in ${m.scan.mailbox}`
+                                    : (scanState?.count ?? 0) === 0
+                                      ? `Nothing in ${m.scan.mailbox} matches your trigger yet`
+                                      : `Found ${scanState!.count} ${scanState!.count === 1 ? 'email' : 'emails'} in ${m.scan.mailbox} that match your trigger`}
+                                </span>
+                                {!scanState?.scanning &&
+                                  (scanState?.count ?? 0) > 0 &&
+                                  onOpenEvaluation && (
+                                    <button
+                                      type="button"
+                                      className={styles.scanBtn}
+                                      onClick={onOpenEvaluation}
+                                    >
+                                      <RiPlayLine aria-hidden />
+                                      Open Evaluation
+                                    </button>
+                                  )}
+                              </div>
+                            )}
+
+                            {settled && m.text && !awaitingAnswer && (
                               <div
                                 className={styles.actionsRow}
                                 data-has-verdict={m.verdict || undefined}

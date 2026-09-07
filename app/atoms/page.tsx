@@ -44,6 +44,7 @@ import ConditionBlock from '@/components/flow01/condition/ConditionBlock';
 // Copilot
 import CopilotSparkle from '@/components/flow01/copilot/CopilotSparkle';
 import PanelTabs, { type SideTab } from '@/components/flow01/copilot/PanelTabs';
+import CopilotMailboxAsk from '@/components/flow01/copilot/CopilotMailboxAsk';
 import CopilotProposal from '@/components/flow01/copilot/CopilotProposal';
 import CopilotPanel from '@/components/flow01/copilot/CopilotPanel';
 import SidePanel from '@/components/flow01/copilot/SidePanel';
@@ -290,11 +291,11 @@ function GlowAnimated() {
   );
 }
 
-function PanelTabsDemo({ initial }: { initial: SideTab }) {
+function PanelTabsDemo({ initial, badge }: { initial: SideTab; badge?: number }) {
   const [activeTab, setActiveTab] = useState<SideTab>(initial);
   return (
     <div style={{ width: 360 }}>
-      <PanelTabs active={activeTab} onChange={setActiveTab} />
+      <PanelTabs active={activeTab} onChange={setActiveTab} badge={badge} />
     </div>
   );
 }
@@ -311,7 +312,7 @@ const NOOP = () => {};
 const NAV: { id: string; label: string; count: number }[] = [
   { id: 'atoms', label: 'Atoms', count: 9 },
   { id: 'editor', label: 'Editor', count: 9 },
-  { id: 'copilot', label: 'Copilot', count: 5 },
+  { id: 'copilot', label: 'Copilot', count: 6 },
   { id: 'evaluate', label: 'Evaluate', count: 11 },
   { id: 'modals', label: 'Modals', count: 4 },
   { id: 'icons', label: 'Icons', count: 2 },
@@ -672,6 +673,22 @@ export default function ComponentLibrary() {
             <Row>
               <Spec label="copilot active"><PanelTabsDemo initial="copilot" /></Spec>
               <Spec label="evaluation active"><PanelTabsDemo initial="simulate" /></Spec>
+              <Spec label="match count found"><PanelTabsDemo initial="copilot" badge={9} /></Spec>
+            </Row>
+          </Block>
+
+          <Block name="CopilotMailboxAsk" imp="flow01/copilot/CopilotMailboxAsk" desc="The one question Copilot asks after drafting a skill - which shared mailboxes it runs on. The answer starts trigger matching.">
+            <Row>
+              <Spec label="asking">
+                <div style={{ width: 340 }}>
+                  <CopilotMailboxAsk onAnswer={() => {}} />
+                </div>
+              </Spec>
+              <Spec label="answered">
+                <div style={{ width: 340 }}>
+                  <CopilotMailboxAsk chosen={['support', 'billing']} onAnswer={() => {}} />
+                </div>
+              </Spec>
             </Row>
           </Block>
 
@@ -786,10 +803,19 @@ export default function ComponentLibrary() {
             </div>
           </Block>
 
-          <Block name="EvalMenu" imp="simulate/EvalMenu" desc="The Evaluate root - three entry cards (Recent conversations / AI scenarios / Custom email).">
-            <div style={{ width: 360 }}>
-              <EvalMenu onOpen={() => {}} />
-            </div>
+          <Block name="EvalMenu" imp="simulate/EvalMenu" desc="The Evaluate root - four entry cards (Matching emails / Recent conversations / AI scenarios / Custom email).">
+            <Row>
+              <Spec label="no scan yet">
+                <div style={{ width: 360 }}>
+                  <EvalMenu onOpen={() => {}} />
+                </div>
+              </Spec>
+              <Spec label="matches found">
+                <div style={{ width: 360 }}>
+                  <EvalMenu onOpen={() => {}} matchCount={9} matchMailbox="Support" matchIsNew />
+                </div>
+              </Spec>
+            </Row>
           </Block>
 
           <Block name="ScenariosEmpty" imp="simulate/ScenariosEmpty" desc="The Scenarios empty state - faded ghost cards behind an icon and a light 'Add a trigger' action.">

@@ -23,6 +23,12 @@ interface CopilotProps {
   onDismissProposal: (i: number) => void;
   onUndoProposal: (i: number) => void;
   onVerdict: (i: number, v: Verdict) => void;
+  /** The in-thread mailbox question was answered. */
+  onMailboxAnswer?: (i: number, mailboxIds: string[]) => void;
+  /** The scan handoff's one action: open the Evaluation tab. */
+  onOpenEvaluation?: () => void;
+  /** The live trigger scan, for the handoff line. */
+  scanState?: { scanning: boolean; count: number };
 }
 
 interface SimProps {

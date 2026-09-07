@@ -275,7 +275,15 @@ export default function MatchingEmails({
           </div>
         </div>
       ) : (
-        <div className={styles.list} role="radiogroup" aria-label="Matching emails">
+        <div
+          className={styles.list}
+          role="radiogroup"
+          aria-label="Matching emails"
+          // A stale scan's rows are dimmed and inert: they were matched against
+          // a trigger that no longer exists, so Rematch is the only move.
+          data-stale={stale || undefined}
+          inert={stale || undefined}
+        >
           {matches.map((e, i) => (
             <div key={e.id} className={styles.cardReveal} style={{ '--i': i % 6 } as CSSProperties}>
               <PickableEmailCard

@@ -12,6 +12,7 @@ import { RiDraggable, RiMore2Fill } from 'react-icons/ri';
 import type { Fragment, ConnectorSlug } from '@/types/playbook';
 import type { SimStatusKind } from '@/data/simFixtures';
 import { findAction } from '@/data/library';
+import { mailboxName } from '@/data/mailboxes';
 import { UnauthedConnectorsContext } from './connectorAuth';
 import ConnectorSetupModal from './setup/ConnectorSetupModal';
 import GutterMarker from '@/components/atoms/GutterMarker';
@@ -87,6 +88,10 @@ const COPILOT_THINK_STEPS = [
 // streams; afterwards they collapse into an expandable "Thought for Ns". Generic
 // copy (reusability rule). The pace is a tuned, deliberate value (was too fast).
 const FOLLOWUP_THINK_STEPS = ['Reading your skill', 'Planning the change'];
+// The one question Copilot asks after drafting: where this skill will run. The
+// answer is stored on the skill and starts trigger matching in the background.
+const COPILOT_MAILBOX_ASK =
+  'Which shared mailboxes will this skill run on? I will look there for real emails your trigger would fire on.';
 const COPILOT_PER_STEP = 820; // ms per thinking step (deliberate, not instant)
 const COPILOT_ACK =
   'Drafted a first version on the left - a trigger, the steps, and the reply. Tell me what to adjust and I will update it.';
@@ -448,10 +453,39 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
         steps: COPILOT_THINK_STEPS,
       })),
     );
+    // Beat 3 of the cold start: one question, in the thread. Only when the
+    // drafted skill has no mailboxes yet (a seeded skill already knows them).
+    if (docRef.current.mailboxes.length === 0) {
+      setCopilotMessages((prev) => [
+        ...prev,
+        { role: 'assistant', text: COPILOT_MAILBOX_ASK, mailboxAsk: true },
+      ]);
+    }
     setThinkIdx(-1);
     requestFocus('trigger', false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [thinkIdx]);
+
+  // Beat 4: the answer lands. Store the mailboxes on the skill (so Enable
+  // arrives pre-filled), then start matching in the background against the first
+  // one - one mailbox at a time - with a status line and no results in the thread.
+  const answerMailboxes = useCallback(
+    (index: number, ids: string[]) => {
+      api.setMailboxes(ids);
+      setCopilotMessages((prev) =>
+        prev.map((m, i) => (i === index ? { ...m, mailboxChosen: ids } : m)),
+      );
+      const first = ids[0];
+      if (!first || !lineHasContent(docRef.current.trigger)) return;
+      setCopilotMessages((prev) => [
+        ...prev,
+        { role: 'assistant', text: '', scan: { mailbox: mailboxName(first) } },
+      ]);
+      scan.start(first);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [api],
+  );
 
   // Stream a reply into the latest assistant message (used by send + regenerate):
   // a brief think, then word-by-word. An optional proposal is attached on the
@@ -1469,6 +1503,14 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
                 onDismissProposal: dismissProposal,
                 onUndoProposal: undoProposal,
                 onVerdict: setCopilotVerdict,
+                onMailboxAnswer: answerMailboxes,
+                onOpenEvaluation: () => setPanelTab('simulate'),
+                // Beat 5: the handoff line reads the LIVE scan, so the thread
+                // never carries a stale copy of what the scan found.
+                scanState: {
+                  scanning: scan.state.phase === 'scanning',
+                  count: scan.state.matches.length,
+                },
               }}
               sim={{
                 hasScenarios: lineHasContent(doc.trigger),
