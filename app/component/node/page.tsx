@@ -137,7 +137,7 @@ export default function NodeComponentPage() {
       <header className={styles.docbar}>
         <div className={styles.brand}>P</div>
         <div className={styles.crumb}>
-          <Link href="/atoms">AOPs</Link>
+          <Link href="/atoms">Skills</Link>
           <span className={styles.csep}>/</span>
           <Link href="/atoms">Components</Link>
           <span className={styles.csep}>/</span>
@@ -175,7 +175,7 @@ export default function NodeComponentPage() {
           <span className={styles.seclabel}><span className={styles.secnum}>01</span> Living canvas</span>
           <h2 className={styles.h2}>One canvas, three modes, real interactions</h2>
           <p className={styles.sub}>
-            The Walk Japan AOP as Nodes on a textured canvas. Switch modes with the pill toggle.
+            The Walk Japan Skill as Nodes on a textured canvas. Switch modes with the pill toggle.
             Hover any card → toolbar fades in. Click a chip → Inspector slides in. Click a status dot → trace popover.
           </p>
 

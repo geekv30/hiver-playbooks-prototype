@@ -259,7 +259,7 @@ function GlowLit() {
   return (
     <div className={styles.glowLit}>
       <div className="ai-input-glow" style={glowFieldStyle}>
-        <span style={{ color: 'var(--muted)', fontSize: 'var(--fs-body)' }}>Describe what you want your AOP to do…</span>
+        <span style={{ color: 'var(--muted)', fontSize: 'var(--fs-body)' }}>Describe what you want your skill to do…</span>
       </div>
     </div>
   );
@@ -283,7 +283,7 @@ function GlowAnimated() {
   return (
     <div ref={ref} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div key={playId} className="ai-input-glow" style={glowFieldStyle}>
-        <span style={{ color: 'var(--muted)', fontSize: 'var(--fs-body)' }}>Describe what you want your AOP to do…</span>
+        <span style={{ color: 'var(--muted)', fontSize: 'var(--fs-body)' }}>Describe what you want your skill to do…</span>
       </div>
       <span><Button variant="secondary" onClick={() => setPlayId((p) => p + 1)}>Replay</Button></span>
     </div>
@@ -371,7 +371,7 @@ export default function ComponentLibrary() {
         <div className={styles.navBrand}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/hiver-mark.png" alt="" className={styles.navMark} />
-          AOP
+          Skill
         </div>
         <p className={styles.navSub}>Component library</p>
         <ul className={styles.navList}>
@@ -529,24 +529,24 @@ export default function ComponentLibrary() {
           <p className={styles.categoryNote}>The flow-01 authoring surface - chrome, the token line, the insert palette, and conditions.</p>
           <div className={styles.categoryRule} />
 
-          <Block name="TitleField" imp="flow01/TitleField" desc="The editable AOP title - a content-sized contentEditable with a 'name me' dotted underline while unnamed.">
+          <Block name="TitleField" imp="flow01/TitleField" desc="The editable skill title - a content-sized contentEditable with a 'name me' dotted underline while unnamed.">
             <Row>
               <Spec label="named"><TitleFieldDemo initial="Refund triage" /></Spec>
-              <Spec label="unnamed (name-me)"><TitleFieldDemo initial="Untitled AOP" /></Spec>
+              <Spec label="unnamed (name-me)"><TitleFieldDemo initial="Untitled skill" /></Spec>
             </Row>
           </Block>
 
           <Block name="Toolbar" imp="flow01/Toolbar" desc="The editor toolbar as the journeys show it - back + editable title + status pill, the settings gear, and one state-driven control (Enable / Pause / Resume). Simulate is hidden (the docked panel owns it).">
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 980 }}>
-              <ToolbarDemo title="Untitled AOP" status="draft" />
+              <ToolbarDemo title="Untitled skill" status="draft" />
               <ToolbarDemo title="Refund triage" status="draft" canEnable={false} />
               <ToolbarDemo title="Refund triage" status="active" />
               <ToolbarDemo title="Refund triage" status="paused" />
             </div>
           </Block>
 
-          <Block name="GmailBar" imp="flow01/GmailBar" desc="The host Gmail top-bar chrome (menu + logo) that wraps the AOP editor.">
+          <Block name="GmailBar" imp="flow01/GmailBar" desc="The host Gmail top-bar chrome (menu + logo) that wraps the skill editor.">
             <Row>
               <Spec label="default"><div style={{ width: 520 }}><GmailBar /></div></Spec>
             </Row>
@@ -562,7 +562,7 @@ export default function ComponentLibrary() {
             <Row>
               <Spec label="plain NL trigger">
                 <div style={{ width: 440 }}>
-                  <EditorLine fragments={[{ kind: 'text', text: 'When a refund is requested' }]} onChange={EDITABLE_NOOP} noActions ariaLabel="When should this AOP run" />
+                  <EditorLine fragments={[{ kind: 'text', text: 'When a refund is requested' }]} onChange={EDITABLE_NOOP} noActions ariaLabel="When should this skill run" />
                 </div>
               </Spec>
               <Spec label="text + ref token">
@@ -804,7 +804,7 @@ export default function ComponentLibrary() {
               <SimEmptyState
                 icon={RiFlaskLine}
                 title="No scenarios to test yet"
-                body="Once your AOP has a trigger, Hiver AI turns real past emails into scenarios you can test here."
+                body="Once your skill has a trigger, Hiver AI turns real past emails into scenarios you can test here."
                 ghosts={[
                   { id: 'g1', sender: 'Priya Nair', subject: 'Empty payload returns 200 instead of 400', preview: 'The API responds 200 OK rather than a validation error.' },
                   { id: 'g2', sender: 'Aisha Khan', subject: '500s spiking on checkout', preview: 'Intermittent 500 Internal Server Error on the checkout API.' },
@@ -832,13 +832,13 @@ export default function ComponentLibrary() {
             </Row>
           </Block>
 
-          <Block name="ColdStartModal" imp="flow01/ColdStartModal" desc="The /canvas entry - 'Draft your AOP with AI': the describe input with its AI glow, generic starters, and an SOP upload drop target.">
+          <Block name="ColdStartModal" imp="flow01/ColdStartModal" desc="The /canvas entry - 'Draft your skill with AI': the describe input with its AI glow, generic starters, and an SOP upload drop target.">
             <div className={styles.modalStage} style={{ height: 540 }}>
               <ColdStartModal onGenerate={() => {}} onDismiss={() => {}} />
             </div>
           </Block>
 
-          <Block name="EnableModal" imp="flow01/enable/EnableModal" desc="The /api-example go-live - name the AOP and pick the shared mailboxes (tag-owning ones pre-selected), then the success moment.">
+          <Block name="EnableModal" imp="flow01/enable/EnableModal" desc="The /api-example go-live - name the skill and pick the shared mailboxes (tag-owning ones pre-selected), then the success moment.">
             <EnableModalDemo />
           </Block>
 

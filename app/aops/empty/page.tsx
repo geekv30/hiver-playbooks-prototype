@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import AopListPage from '@/components/aops/AopListPage';
 
 export const metadata: Metadata = {
-  title: 'AI Operating Procedures · Hiver',
-  description: 'The AOP list, before the first AOP exists.',
+  title: 'Skills · Hiver',
+  description: 'The skill list, before the first skill exists.',
 };
 
 export default function Page() {

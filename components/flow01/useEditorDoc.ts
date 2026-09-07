@@ -144,18 +144,18 @@ export interface EditorApi {
   /** Replace a line's fragments. `coalesceKey` merges consecutive edits into one undo. */
   setLine: (target: LineTarget, frags: Fragment[], coalesceKey?: string) => void;
   setTitle: (title: string) => void;
-  /** Update the AOP's guardrails (tone / custom instructions). Coalesces. */
+  /** Update the skill's guardrails (tone / custom instructions). Coalesces. */
   setGuardrails: (patch: Partial<Guardrails>) => void;
-  /** Set the shared mailboxes the AOP will be enabled on. */
+  /** Set the shared mailboxes the skill will be enabled on. */
   setMailboxes: (ids: string[]) => void;
-  /** Set how the AOP is triggered (automatic vs manual). */
+  /** Set how the skill is triggered (automatic vs manual). */
   setTriggerMode: (mode: EditorDoc['triggerMode']) => void;
   /** Go live: status -> 'active'. */
   enable: () => void;
   /** Stop: status -> 'paused' (instant; undoable). */
   pause: () => void;
   /** Replace the WHOLE document (used by the cold-start "draft with AI" flow to
-   *  seed a generated AOP into the blank canvas). Undoable back to the blank. */
+   *  seed a generated Skill into the blank canvas). Undoable back to the blank. */
   loadDoc: (doc: EditorDoc) => void;
   /** Apply a Copilot-proposed change as ONE undo entry (so a single undo reverts
    *  the whole applied change). The doc only changes when the user clicks Apply. */

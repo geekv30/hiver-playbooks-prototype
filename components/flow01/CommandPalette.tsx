@@ -103,9 +103,9 @@ function actionIcon(id: string): IconCmp | null {
 // Brief, plain-language tooltip copy. Catalog actions carry their own `desc`;
 // these cover the palette-only entries that have no ActionDef.
 const PALETTE_DESC: Record<string, string> = {
-  condition: 'Branch the AOP - take a different path when a condition is true or false.',
+  condition: 'Branch the skill - take a different path when a condition is true or false.',
   [REFERENCE_ID]: 'Insert a value from the email, the customer, or a connector.',
-  wait: 'Pause the AOP until a set time.',
+  wait: 'Pause the skill until a set time.',
 };
 const rowDesc = (id: string): string | undefined => findAction(id)?.desc ?? PALETTE_DESC[id];
 

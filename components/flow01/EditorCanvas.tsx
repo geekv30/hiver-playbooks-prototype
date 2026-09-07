@@ -74,17 +74,17 @@ const TRIGGER_PLACEHOLDER = 'e.g. when an email reports an API error';
 // hint pill is the no-keystroke path. Curly quotes around '@' per the Figma copy.
 const STEP_PLACEHOLDER = 'Write what to do. Type ‘@’ for actions';
 
-// Copilot cold-start handoff: the working steps shown while the AOP drafts,
+// Copilot cold-start handoff: the working steps shown while the skill drafts,
 // then a short generic acknowledgement (reusability rule: generic copy).
 const COPILOT_THINK_STEPS = [
   'Thinking through your request',
   'Referencing recent emails',
-  'Building your AOP',
+  'Building your skill',
 ];
 // Follow-up reasoning steps shown (deliberately, not instantly) before a reply
 // streams; afterwards they collapse into an expandable "Thought for Ns". Generic
 // copy (reusability rule). The pace is a tuned, deliberate value (was too fast).
-const FOLLOWUP_THINK_STEPS = ['Reading your AOP', 'Planning the change'];
+const FOLLOWUP_THINK_STEPS = ['Reading your skill', 'Planning the change'];
 const COPILOT_PER_STEP = 820; // ms per thinking step (deliberate, not instant)
 const COPILOT_ACK =
   'Drafted a first version on the left - a trigger, the steps, and the reply. Tell me what to adjust and I will update it.';
@@ -126,7 +126,7 @@ const proposalFoolproof = (): CannedProposal => ({
   reply:
     "To make this sturdier I'd add an approval checkpoint before anything is sent, and a fallback branch so nothing slips through. Here is the change - apply it when you're ready:",
   data: {
-    title: 'Make your AOP foolproof',
+    title: 'Make your skill foolproof',
     summary: [
       'Add a fallback branch for anything unmatched',
       'Add an approval step before replies are sent',
@@ -179,7 +179,7 @@ function updateLastAssistant(
 }
 
 interface Props {
-  /** Optional starting document. Omit for a fresh empty AOP (/canvas);
+  /** Optional starting document. Omit for a fresh empty Skill (/canvas);
    *  /api-example passes the seeded example. */
   initialDoc?: EditorDoc;
   /** Mount the Copilot + Evaluate companions: the floating tool-switcher rail and
@@ -242,9 +242,9 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
   // The docked SidePanel's active tab (companions): Copilot or Simulate.
   const [panelTab, setPanelTab] = useState<SideTab>('copilot');
   // The Enable / settings modal: 'commit' = the go-live flow (Enable button) ->
-  // success moment; 'manage' = edit a live AOP's name + mailboxes (the gear). Name
+  // success moment; 'manage' = edit a live Skill's name + mailboxes (the gear). Name
   // + mailbox edits are held LOCALLY and committed to the doc only on confirm, so
-  // editing a live AOP and cancelling never mutates it.
+  // editing a live Skill and cancelling never mutates it.
   const [enableMode, setEnableMode] = useState<null | 'commit' | 'manage'>(null);
   const [enableName, setEnableName] = useState('');
   const [enableMailboxes, setEnableMailboxes] = useState<string[]>([]);
@@ -355,7 +355,7 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
     else setSimOpen(true);
   }, [companions]);
   const confirmEnable = useCallback(() => {
-    api.setTitle(enableName.trim() || 'Untitled AOP');
+    api.setTitle(enableName.trim() || 'Untitled skill');
     api.setMailboxes(enableMailboxes);
     if (enableMode === 'commit') {
       api.enable(); // the modal's success moment already played; this flips status
@@ -366,11 +366,11 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
   }, [api, enableName, enableMailboxes, enableMode, showHint]);
   const pauseAop = useCallback(() => {
     api.pause();
-    showHint(`${doc.title || 'This AOP'} paused.`, { label: 'Undo', run: () => api.enable() });
+    showHint(`${doc.title || 'This skill'} paused.`, { label: 'Undo', run: () => api.enable() });
   }, [api, doc.title, showHint]);
   const resumeAop = useCallback(() => {
     api.enable();
-    showHint(`${doc.title || 'This AOP'} is live again.`);
+    showHint(`${doc.title || 'This skill'} is live again.`);
   }, [api, doc.title, showHint]);
 
   const focusFor = (key: string): { token: number; atStart: boolean } | null =>
@@ -378,7 +378,7 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
 
   // Cold-start -> Copilot continuity. Generate seeds the query as the user's first
   // Copilot message, opens Copilot, and runs a short "working" animation; when it
-  // finishes the drafted AOP loads on the left and Copilot posts an ack, so
+  // finishes the drafted Skill loads on the left and Copilot posts an ack, so
   // any follow-up continues in the Copilot thread. Skip lands on a blank canvas.
   const handleColdStartGenerate = useCallback((genDoc: EditorDoc, query: string) => {
     // Seed the dock (messages, pending doc, working animation), then dock it. The
@@ -1140,7 +1140,7 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
         onSimulate={toggleSimulate}
         simulating={simOpen}
         hideSimulate={companions}
-        // Enable is muted+disabled until the AOP has a trigger AND a step
+        // Enable is muted+disabled until the skill has a trigger AND a step
         // (Figma 647:39849); then it routes THROUGH the guardrails commit panel.
         canEnable={lineHasContent(doc.trigger) && doc.steps.some((s) => stepHasContent(s))}
         onEnable={requestEnable}
@@ -1170,7 +1170,7 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
                         // no command palette. '@' and '/' type literally (noActions).
                         noActions
                         autoFocus={focusFor('trigger')}
-                        ariaLabel="When should this AOP run"
+                        ariaLabel="When should this skill run"
                       />
                     </div>
                   </div>

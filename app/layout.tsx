@@ -4,8 +4,8 @@ import AgentationMount from '@/components/dev/AgentationMount';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'AOP · Hiver',
-  description: 'AOP editor prototype for Hiver',
+  title: 'Skills · Hiver',
+  description: 'Skills editor prototype for Hiver',
 };
 
 const SHOW_AGENTATION = process.env.NODE_ENV !== 'production';

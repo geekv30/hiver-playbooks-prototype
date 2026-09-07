@@ -15,9 +15,9 @@ interface Props {
   open: boolean;
   /** Close the panel (the floating header X; docked has no close). */
   onClose?: () => void;
-  /** Whether this AOP has generated scenarios; false shows the informative empty state. */
+  /** Whether this skill has generated scenarios; false shows the informative empty state. */
   hasScenarios?: boolean;
-  /** Whether the live AOP has a trigger (drives the empty-state action). */
+  /** Whether the live Skill has a trigger (drives the empty-state action). */
   hasTrigger?: boolean;
   /** Focus the trigger line in the editor (the empty-state action). */
   onAddTrigger?: () => void;

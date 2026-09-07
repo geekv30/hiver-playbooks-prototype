@@ -27,7 +27,7 @@ const NO_EMAILS: SimEmail[] = [];
 /**
  * Recent conversations (Figma 1745:67909 / 68080 / 68759). Pick a shared mailbox
  * -> search + single-select ONE recent conversation (radio) -> Evaluate it against
- * the AOP. Each card's hover redirect opens the full email in a modal. The
+ * the skill. Each card's hover redirect opens the full email in a modal. The
  * Copilot | Evaluation tabs stay pinned above this flow's back-header.
  */
 export default function RecentEmails({ onExit, onRunRecorded, onOpenCopilot }: Props) {

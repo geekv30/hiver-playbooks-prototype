@@ -47,7 +47,7 @@ function Chrome({ children, verdict }: { children: ReactNode; verdict?: 'warn' }
       <div className={styles.body}>
         <div className={styles.verdict} data-tone={verdict ?? 'warn'}>
           <RiErrorWarningFill aria-hidden />
-          <span>1 thing needs attention before this AOP can run cleanly.</span>
+          <span>1 thing needs attention before this skill can run cleanly.</span>
         </div>
         <p className={styles.scope}>
           Checked against Sales, Support, Marketing, and 2 more · AI Agents
@@ -143,7 +143,7 @@ export default function ReviewIterationsPage() {
                 </span>
               }
               title="Evaluation"
-              detail="This AOP has never been evaluated. A quick run on past emails catches broken steps before customers see them."
+              detail="This skill has never been evaluated. A quick run on past emails catches broken steps before customers see them."
               end={<Button variant="secondary">Evaluate</Button>}
             />
             <V1Row
@@ -153,7 +153,7 @@ export default function ReviewIterationsPage() {
                 </span>
               }
               title="Tags"
-              detail="'api-error' is missing in Sales, Marketing, Customer Service, and Refunds; 'support' is missing in Marketing, Customer Service, and Refunds. We'll create them there when this AOP goes live."
+              detail="'api-error' is missing in Sales, Marketing, Customer Service, and Refunds; 'support' is missing in Marketing, Customer Service, and Refunds. We'll create them there when this skill goes live."
               end={okStatus('Done for you')}
             />
             <V1Row
@@ -163,7 +163,7 @@ export default function ReviewIterationsPage() {
                 </span>
               }
               title="Varun"
-              detail="This AOP assigns to Varun, but they're not a member of Sales, Marketing, Customer Service, and Refunds. Assignment steps there will pause until they join - everything else still runs."
+              detail="This skill assigns to Varun, but they're not a member of Sales, Marketing, Customer Service, and Refunds. Assignment steps there will pause until they join - everything else still runs."
               end={<Button variant="secondary">Send invite</Button>}
             />
           </Chrome>
@@ -216,7 +216,7 @@ export default function ReviewIterationsPage() {
               <span className={styles.v1text}>
                 <span className={styles.v1title}>Tags</span>
                 <span className={styles.v1detail}>
-                  Missing in some selected mailboxes - we&apos;ll create these tags when this AOP
+                  Missing in some selected mailboxes - we&apos;ll create these tags when this skill
                   goes live.
                 </span>
                 <span className={styles.chipRow}>
@@ -237,7 +237,7 @@ export default function ReviewIterationsPage() {
               <span className={styles.v1text}>
                 <span className={styles.v1title}>Varun</span>
                 <span className={styles.v1detail}>
-                  This AOP assigns to Varun, who hasn&apos;t joined these mailboxes - assignment
+                  This skill assigns to Varun, who hasn&apos;t joined these mailboxes - assignment
                   pauses there until they do:
                 </span>
                 <span className={styles.chipRow}>

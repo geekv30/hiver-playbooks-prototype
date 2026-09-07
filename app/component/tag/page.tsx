@@ -302,7 +302,7 @@ export default function TagComponentPage() {
       <header className={styles.docbar}>
         <div className={styles.brand}>P</div>
         <div className={styles.crumb}>
-          <Link href="/atoms">AOPs</Link>
+          <Link href="/atoms">Skills</Link>
           <span className={styles.csep}>/</span>
           <Link href="/component/node">Components</Link>
           <span className={styles.csep}>/</span>

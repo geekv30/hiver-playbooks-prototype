@@ -5,7 +5,7 @@ import { GmailLogo } from '@/components/icons/ui/GmailLogo';
 import styles from './GmailBar.module.css';
 
 // Gmail top-bar chrome (flow-01 256:3080). Presentational - this is the host
-// Gmail surface that wraps the AOP editor, not our product UI.
+// Gmail surface that wraps the skill editor, not our product UI.
 // Stripped to the brand-left only (search + right-cluster removed per review).
 export default function GmailBar() {
   return (

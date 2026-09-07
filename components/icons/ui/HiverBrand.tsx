@@ -1,6 +1,6 @@
 import type { SVGProps } from 'react';
 
-// Hiver brand mark: the amber hive hexagon with a white "H" (matches the AOP Figma's
+// Hiver brand mark: the amber hive hexagon with a white "H" (matches the skill Figma's
 // connector-setup logo). Full-color brand mark - not currentColor.
 export function HiverBrandIcon(props: SVGProps<SVGSVGElement>) {
   return (

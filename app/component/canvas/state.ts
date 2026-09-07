@@ -136,8 +136,8 @@ function reducer(state: CanvasState, action: Action): CanvasState {
     }
     case 'setConfigChipId':    return { ...state, configChipId: action.id };
     case 'loadPlaybook': {
-      // Replace the AOP entirely. Reset transient state - trace, statuses, history,
-      // clean-wipe snapshot, configChipId - so the user starts fresh on the new AOP.
+      // Replace the skill entirely. Reset transient state - trace, statuses, history,
+      // clean-wipe snapshot, configChipId - so the user starts fresh on the new skill.
       return {
         ...state,
         playbook: action.playbook,
@@ -786,8 +786,8 @@ export function useCanvasState() {
         }
       }
     };
-    collect(INITIAL_STATE.playbook.steps); // use snapshot pattern - execute against current AOP
-    // Actually walk the LIVE AOP, not the initial seed
+    collect(INITIAL_STATE.playbook.steps); // use snapshot pattern - execute against current Skill
+    // Actually walk the LIVE Skill, not the initial seed
     order.length = 0;
     collect(state.playbook.steps);
 

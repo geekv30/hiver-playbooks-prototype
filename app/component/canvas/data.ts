@@ -159,7 +159,7 @@ export const ACTIONS: ActionDef[] = [
 
   // flow
   { id: 'condition',            bucket: 'flow',                         verb: 'Condition',     name: 'Condition',             desc: 'Branch on an expression',                                              iconKey: 'condition' },
-  { id: 'end',                  bucket: 'flow',                         verb: 'End AOP',  name: 'End AOP',          desc: 'Stop here',                                                            iconKey: 'end' },
+  { id: 'end',                  bucket: 'flow',                         verb: 'End skill',  name: 'End skill',          desc: 'Stop here',                                                            iconKey: 'end' },
 ];
 
 export const BUCKET_TITLES: Record<Bucket, string> = {
@@ -610,7 +610,7 @@ export const DEVANSH_API_SEED: Playbook = {
 };
 
 /* ============================================================ */
-/* AOP registry - drives the topbar switcher                      */
+/* Skill registry - drives the topbar switcher                      */
 /* ============================================================ */
 export interface PlaybookOption {
   id: string;

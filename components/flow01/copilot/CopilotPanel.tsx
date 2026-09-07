@@ -36,7 +36,7 @@ const STARTERS: { label: string; prompt: string; icon: IconType }[] = [
   },
   { label: 'Refine the trigger', prompt: 'Refine the trigger so it ', icon: RiFlashlightLine },
   { label: 'Draft a reply', prompt: 'Draft a reply that ', icon: RiMailLine },
-  { label: 'Make it foolproof', prompt: 'Make this AOP foolproof', icon: RiShieldCheckLine },
+  { label: 'Make it foolproof', prompt: 'Make this skill foolproof', icon: RiShieldCheckLine },
 ];
 
 // Generic follow-up quick-replies shown under the latest settled reply - they
@@ -66,7 +66,7 @@ export interface CopilotMessage {
   pending?: boolean;
   /** The assistant reply is still streaming in. */
   streaming?: boolean;
-  /** A reviewable change the user can apply to the AOP. */
+  /** A reviewable change the user can apply to the skill. */
   proposal?: CopilotProposalData;
   /** Resolution of the proposal card (defaults to 'open' when a proposal exists). */
   proposalState?: ProposalState;
@@ -290,7 +290,7 @@ export default function CopilotPanel({
             submit();
           }
         }}
-        placeholder="Ask Copilot to build or change this AOP…"
+        placeholder="Ask Copilot to build or change this skill…"
         aria-label="Ask Copilot"
       />
       <div className={styles.composerRow}>

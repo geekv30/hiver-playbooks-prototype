@@ -58,7 +58,7 @@ export const ACTIONS: ActionDef[] = [
 
   // Control flow & end (2)
   { id: 'condition',               name: 'Condition',                 desc: 'Branch on a plain-English expression',         meta: 'if / else if / else',  bucket: 'flow',     iconKey: 'condition' },
-  { id: 'end',                     name: 'End AOP',              desc: 'Stop here; no further steps run',              bucket: 'flow',     iconKey: 'end' },
+  { id: 'end',                     name: 'End skill',              desc: 'Stop here; no further steps run',              bucket: 'flow',     iconKey: 'end' },
 ];
 
 export function actionsByBucket(bucket: ActionDef['bucket']): ActionDef[] {

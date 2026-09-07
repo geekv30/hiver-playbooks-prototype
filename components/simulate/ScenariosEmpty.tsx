@@ -7,14 +7,14 @@ import PickableEmailCard from './PickableEmailCard';
 import SimEmptyState from './SimEmptyState';
 
 interface Props {
-  /** Whether the live AOP has a trigger yet (drives the action). */
+  /** Whether the live Skill has a trigger yet (drives the action). */
   hasTrigger: boolean;
   /** Focus the trigger line in the editor (the "add a trigger" action). */
   onAddTrigger?: () => void;
 }
 
 // Generic preview rows - universal support scenarios, NOT one customer's data.
-// They only exist to show what AI scenarios will look like once an AOP has a
+// They only exist to show what AI scenarios will look like once a skill has a
 // trigger. Rendered through the REAL PickableEmailCard (dimmed + inert), so this
 // stays in sync with the live flat scenario list (one renderer per pattern).
 const GHOST_SCENARIOS: SimEmail[] = [
@@ -54,7 +54,7 @@ export default function ScenariosEmpty({ hasTrigger, onAddTrigger }: Props) {
       body={
         hasTrigger
           ? 'Hiver AI is turning past emails that match your trigger into test scenarios. They will show up here.'
-          : 'Once your AOP has a trigger, Hiver AI turns real past emails into scenarios you can test here.'
+          : 'Once your skill has a trigger, Hiver AI turns real past emails into scenarios you can test here.'
       }
       action={
         !hasTrigger && onAddTrigger ? (

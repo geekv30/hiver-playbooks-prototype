@@ -14,29 +14,29 @@ const PROTOTYPES = [
   {
     href: '/aops',
     tag: 'Entry point',
-    name: 'AOP list',
-    desc: 'Where AOP begins in the Admin Panel: every procedure with its status, mailboxes, and run history - plus the Connectors hub.',
+    name: 'Skills list',
+    desc: 'Where Skills begin in the Admin Panel: every skill with its status, mailboxes, and run history - plus the Connectors hub.',
     Icon: RiListCheck2,
   },
   {
     href: '/aops/empty',
     tag: 'First run',
-    name: 'AOP list - empty',
-    desc: 'The same entry point before the first AOP exists: the meet-AOP banner and the create-first moment.',
+    name: 'Skills list - empty',
+    desc: 'The same entry point before the first skill exists: the meet-Skills banner and the create-first moment.',
     Icon: RiInboxArchiveLine,
   },
   {
     href: '/api-example',
     tag: 'Pre-built',
     name: 'Worked example',
-    desc: 'A finished API-error-triage AOP with the Copilot and Evaluation panels live, plus the full Enable flow with its readiness review.',
+    desc: 'A finished API-error-triage skill with the Copilot and Evaluation panels live, plus the full Enable flow with its readiness review.',
     Icon: RiFileList3Line,
   },
   {
     href: '/canvas',
     tag: 'Cold start',
     name: 'Draft with AI',
-    desc: 'Begin on an empty canvas. Describe the procedure in plain language and Copilot drafts the trigger, the steps, and the reply.',
+    desc: 'Begin on an empty canvas. Describe the skill in plain language and Copilot drafts the trigger, the steps, and the reply.',
     Icon: RiSparkling2Line,
   },
   {
@@ -58,9 +58,9 @@ export default function Home() {
             <img src="/hiver-mark.png" alt="" className={styles.mark} />
             Hiver
           </span>
-          <h1 className={styles.title}>AOP</h1>
+          <h1 className={styles.title}>Skills</h1>
           <p className={styles.sub}>
-            AI Operating Procedures. Every flow at a glance - the list entry point, the AI
+            Skills. Every flow at a glance - the list entry point, the AI
             builder, a worked example, and the connector journeys.
           </p>
         </header>

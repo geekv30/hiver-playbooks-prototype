@@ -32,8 +32,8 @@ export const CONNECTOR_META: Record<ConnectorSlug, ConnectorMeta> = {
   slack: {
     slug: 'slack', name: 'Slack',
     accountLabelPlaceholder: 'your-workspace.slack.com', fakeAuthedLabel: 'your-workspace.slack.com',
-    tagline: 'Notify the right channel from your AOP.',
-    blurb: 'Connect Slack to post updates and loop in teammates from inside an AOP. Use it to escalate or notify without switching tools.',
+    tagline: 'Notify the right channel from your skill.',
+    blurb: 'Connect Slack to post updates and loop in teammates from inside a skill. Use it to escalate or notify without switching tools.',
     tokenPlaceholder: 'xoxb-1234-5678',
   },
   salesforce: {
@@ -46,8 +46,8 @@ export const CONNECTOR_META: Record<ConnectorSlug, ConnectorMeta> = {
   clickup: {
     slug: 'clickup', name: 'ClickUp',
     accountLabelPlaceholder: 'your-workspace.clickup.com', fakeAuthedLabel: 'your-workspace.clickup.com',
-    tagline: 'Create and track tasks from your AOP.',
-    blurb: 'Connect ClickUp to look up and create tasks from inside an AOP. Use it to turn a customer request into tracked work.',
+    tagline: 'Create and track tasks from your skill.',
+    blurb: 'Connect ClickUp to look up and create tasks from inside a skill. Use it to turn a customer request into tracked work.',
     tokenPlaceholder: 'pk_1234_ABCD',
   },
 };

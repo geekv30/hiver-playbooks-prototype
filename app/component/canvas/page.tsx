@@ -344,7 +344,7 @@ function StepRow({
     return (
       <div className={`${styles.stepRow} ${styles.stepEnd}`} data-step-id={step.id}>
         <span className={styles.endIcon}><RiStopCircleLine /></span>
-        <span className={styles.endLabel}>End AOP</span>
+        <span className={styles.endLabel}>End skill</span>
         {step.reason && <span className={styles.endReason}>{step.reason}</span>}
       </div>
     );
@@ -542,8 +542,8 @@ function PlaybookSwitcher({ state }: { state: ReturnType<typeof useCanvasState> 
   const btnRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
-  // Match the currently-loaded AOP to a registry entry by frontmatter name.
-  // (No persistent AOP id in state - name is the user-visible label.)
+  // Match the currently-loaded Skill to a registry entry by frontmatter name.
+  // (No persistent Skill id in state - name is the user-visible label.)
   const current = PLAYBOOKS.find((p) => p.label === state.playbook.frontmatter.name) ?? PLAYBOOKS[0]!;
 
   useEffect(() => {
@@ -572,13 +572,13 @@ function PlaybookSwitcher({ state }: { state: ReturnType<typeof useCanvasState> 
         className={`${styles.playbookSwitchBtn} ${open ? styles.playbookSwitchBtnOpen : ''}`}
         onClick={() => setOpen((o) => !o)}
         type="button"
-        title="Switch AOP"
+        title="Switch skill"
         aria-haspopup="menu"
         aria-expanded={open}
       ><RiArrowDownSLine /></button>
       {open && (
         <div ref={menuRef} className={styles.playbookSwitchMenu} role="menu">
-          <div className={styles.playbookSwitchLabel}>AOPs</div>
+          <div className={styles.playbookSwitchLabel}>Skills</div>
           {PLAYBOOKS.map((p) => {
             const active = p.id === current.id;
             return (
@@ -619,13 +619,13 @@ function Topbar({ state, onOpenOverflow, overflowOpen, onOpenActivate, activateO
     <header className={styles.topbar}>
       <Link href="/atoms" className={styles.brand}>P</Link>
       <div className={styles.crumb}>
-        <Link href="/component/canvas">AOPs</Link>
+        <Link href="/component/canvas">Skills</Link>
         <span className={styles.csep}>/</span>
         <span
           className={styles.crumbName}
           contentEditable={!inTest && !inCleanWipe}
           suppressContentEditableWarning
-          data-placeholder="Untitled AOP"
+          data-placeholder="Untitled skill"
           onKeyDown={(e) => {
             if (e.key === 'Enter') { e.preventDefault(); (e.currentTarget as HTMLElement).blur(); }
             if (e.key === 'Escape') { (e.currentTarget as HTMLElement).blur(); }
@@ -851,7 +851,7 @@ function FrontmatterCard({
         className={styles.fmTitle}
         contentEditable={!readOnly}
         suppressContentEditableWarning
-        data-placeholder="Untitled AOP"
+        data-placeholder="Untitled skill"
         onKeyDown={(e) => {
           if (e.key === 'Enter') { e.preventDefault(); (e.currentTarget as HTMLElement).blur(); }
         }}
@@ -1477,7 +1477,7 @@ function TestBanner({ state }: { state: ReturnType<typeof useCanvasState> }) {
 function ValidationStrip({ state }: { state: ReturnType<typeof useCanvasState> }) {
   const issues: { label: string; targetSel: string }[] = [];
   if (!state.playbook.frontmatter.name.trim()) {
-    issues.push({ label: 'AOP name is required', targetSel: 'h1[contenteditable]' });
+    issues.push({ label: 'Skill name is required', targetSel: 'h1[contenteditable]' });
   }
   if (!state.playbook.frontmatter.triggerFragments.length) {
     issues.push({ label: 'WHEN trigger must include at least one filter', targetSel: '[class*="fmTrigger"]' });
@@ -1612,7 +1612,7 @@ export default function CanvasPage() {
   };
 
   const handleReset = () => {
-    if (window.confirm('Reset AOP to Walk Japan seed? This will discard all changes.')) {
+    if (window.confirm('Reset skill to Walk Japan seed? This will discard all changes.')) {
       window.location.reload();
     }
   };

@@ -57,7 +57,7 @@ const ACTIONS: Action[] = [
 
   // Flow
   { id: 'condition', bucket: 'flow', name: 'Condition', verb: 'Condition', meta: 'if / else if / else', desc: 'Branch on an expression', slug: 'flow.condition', icon: RiGitBranchLine },
-  { id: 'end', bucket: 'flow', name: 'End AOP', verb: 'End AOP', desc: 'Stop here, no further steps run', slug: 'flow.end', icon: RiStopCircleLine },
+  { id: 'end', bucket: 'flow', name: 'End skill', verb: 'End skill', desc: 'Stop here, no further steps run', slug: 'flow.end', icon: RiStopCircleLine },
 ];
 
 const BUCKET_META: Record<Bucket, { name: string; tag: string; sub: string }> = {
@@ -205,7 +205,7 @@ export default function InlineActionsPage() {
       <header className={styles.docbar}>
         <div className={styles.brand}>P</div>
         <div className={styles.crumb}>
-          <Link href="/atoms">AOPs</Link>
+          <Link href="/atoms">Skills</Link>
           <span className={styles.csep}>/</span>
           <Link href="/component/node">Components</Link>
           <span className={styles.csep}>/</span>
@@ -226,7 +226,7 @@ export default function InlineActionsPage() {
           <span className={styles.eyebrow}>Component · Inline Actions · umbrella</span>
           <h1 className={styles.h1}>The chip atom + 6 buckets + slash menu</h1>
           <p className={styles.lede}>
-            Every verb an AOP can run is an Inline Action - rendered as an atomic chip inside a Node body.
+            Every verb a skill can run is an Inline Action - rendered as an atomic chip inside a Node body.
             29 actions across 6 buckets share one shell. Click any chip → contextual Inspector. Press <strong>/</strong> inside a Node → discover all actions.
             This umbrella is the structural foundation; each variant (Tag, Note, Approval, Condition…) has its own child extraction for its variant-specific config.
           </p>

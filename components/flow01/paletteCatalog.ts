@@ -34,7 +34,7 @@ export const PALETTE_ACTIONS: PaletteAction[] = [
   { id: 'set_field', label: 'Set a field' },
   { id: 'approval', label: 'Request approval' },
   { id: 'wait_for_reply', label: 'Wait for reply' },
-  { id: 'end', label: 'End AOP' },
+  { id: 'end', label: 'End skill' },
 ];
 
 // Connectors shown as brands (proper brand casing, not the Figma's "Hubspot"/"Clickup").

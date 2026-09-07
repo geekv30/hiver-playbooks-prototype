@@ -17,7 +17,7 @@ const btn: React.CSSProperties = {
   cursor: 'pointer',
 };
 
-// What the demo "AOP" depends on - exercises every check kind in the Review
+// What the demo "Skill" depends on - exercises every check kind in the Review
 // step: a connector, tags that are missing somewhere, and a person assignee.
 const DEMO_READINESS: ReadinessInputs = {
   connectors: [{ slug: 'hubspot', steps: 2 }],
@@ -65,7 +65,7 @@ export default function EnableComponentPage() {
           margin: 0,
         }}
       >
-        Enable AOP modal - two-step commit (setup, readiness review, success) & manage mode
+        Enable skill modal - two-step commit (setup, readiness review, success) & manage mode
       </h1>
       <p style={{ fontSize: 13, lineHeight: 1.55, color: '#6F7C90', margin: 0, maxWidth: 640 }}>
         Commit = the Enable flow: name + go-live surface (AI Agents / AI Copilot) + mailboxes →

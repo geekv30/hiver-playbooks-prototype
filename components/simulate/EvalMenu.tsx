@@ -34,14 +34,14 @@ interface Props {
 }
 
 /**
- * EvalMenu - the Evaluate root (Figma 1721:67361): "Evaluate your AOP in one of
+ * EvalMenu - the Evaluate root (Figma 1721:67361): "Evaluate your skill in one of
  * these ways" over three entry cards. Each card carries its icon, title and
  * subtitle; opening one enters its flow (the tabs stay pinned above).
  */
 export default function EvalMenu({ onOpen }: Props) {
   return (
     <div className={styles.menu}>
-      <h3 className={styles.heading}>Evaluate your AOP in one of these ways</h3>
+      <h3 className={styles.heading}>Evaluate your skill in one of these ways</h3>
       <div className={styles.cards}>
         {EVAL_ENTRIES.map((e) => (
           <button key={e.id} type="button" className={styles.card} onClick={() => onOpen(e.id)}>

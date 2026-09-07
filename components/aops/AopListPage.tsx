@@ -85,7 +85,7 @@ const MAIN_NAV = [
 
 const AI_NAV = [
   'AI Agents',
-  'AI Operating Procedures',
+  'Skills',
   'AI Tools',
   'Knowledge Sources',
   'AI Insights',
@@ -94,9 +94,9 @@ const AI_NAV = [
 ];
 
 /**
- * The AOP entry point (Figma 1312:14506): the Admin Panel list of AI Operating
+ * The skill entry point (Figma 1312:14506): the Admin Panel list of AI Operating
  * Procedures inside the Hiver Admin chrome (Gmail bar + main nav + Hiver AI
- * nav). Two states, one renderer: `empty` shows the meet-AOP banner + the
+ * nav). Two states, one renderer: `empty` shows the meet-Skills banner + the
  * create-first shell; otherwise the live table. Connector health surfaces only
  * inside the Enable / Publish review flows (inline fixes) - no standalone
  * Connectors entry point.
@@ -160,7 +160,7 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
                 key={label}
                 type="button"
                 className={styles.aiNavItem}
-                data-active={label === 'AI Operating Procedures' || undefined}
+                data-active={label === 'Skills' || undefined}
               >
                 {label}
               </button>
@@ -173,7 +173,7 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
           <header className={styles.header}>
             <div className={styles.titleRow}>
               <div className={styles.titleBlock}>
-                <h1 className={styles.title}>AI Operating Procedures</h1>
+                <h1 className={styles.title}>Skills</h1>
                 <p className={styles.subtitle}>
                   Automate complex workflows with step-by-step instructions for Hiver.
                 </p>
@@ -181,14 +181,14 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
               <div className={styles.headerActions}>
                 <Link href="/aops/new" className={styles.newBtn}>
                   <RiAddLine aria-hidden />
-                  New AOP
+                  New skill
                 </Link>
               </div>
             </div>
             {!showEmpty && (
               <p className={styles.countLine}>
                 <span>
-                  {rows.length} {rows.length === 1 ? 'procedure' : 'procedures'}
+                  {rows.length} {rows.length === 1 ? 'skill' : 'skills'}
                 </span>
                 <span className={styles.dotActive} aria-hidden>
                   •
@@ -210,9 +210,9 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
             <>
               <section className={styles.banner}>
                 <div className={styles.bannerText}>
-                  <h2 className={styles.bannerTitle}>Meet AOP - AI Operating Procedures</h2>
+                  <h2 className={styles.bannerTitle}>Meet Skills</h2>
                   <p className={styles.bannerBody}>
-                    Enhance your workflow with AI Operating Procedures. Automate tasks like email
+                    Enhance your workflow with Skills. Automate tasks like email
                     tagging and reply drafting to boost productivity. Join our early access program
                     for free, and upgrade to the paid add-on whenever you&apos;re ready.{' '}
                     <a href="#" onClick={(e) => e.preventDefault()} className={styles.bannerLink}>
@@ -229,7 +229,7 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
 
               <section className={styles.table}>
                 <div className={styles.tableHead}>
-                  <span className={styles.colMain}>AOP</span>
+                  <span className={styles.colMain}>Skill</span>
                   <span className={styles.colMain}>Mapped to</span>
                   <span className={styles.colEnd}>Last run</span>
                   <span className={styles.colEnd}>Last updated</span>
@@ -239,7 +239,7 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src="/aop-empty-illustration.png" alt="" />
                   </span>
-                  <p className={styles.emptyTitle}>Create your first AOP</p>
+                  <p className={styles.emptyTitle}>Create your first skill</p>
                   <Link href="/aops/new" className={styles.newBtn}>
                     <RiAddLine aria-hidden />
                     Create New
@@ -250,7 +250,7 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
           ) : (
             <section className={styles.table}>
               <div className={styles.tableHead}>
-                <span className={styles.colMain}>AOP</span>
+                <span className={styles.colMain}>Skill</span>
                 <span className={styles.colMain}>Mapped to</span>
                 <span className={styles.colEnd}>Last run</span>
                 <span className={styles.colEnd}>Last updated</span>
