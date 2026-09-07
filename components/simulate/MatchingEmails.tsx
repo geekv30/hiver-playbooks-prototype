@@ -160,21 +160,14 @@ export default function MatchingEmails({
     return (
       <div className={styles.flow}>
         <EvalBackHeader title={EVAL_TITLES.matching} icon={EVAL_ICONS.matching} onBack={onExit} />
-        <div className={styles.pick}>
-          <RiInboxUnarchiveLine className={styles.pickIcon} aria-hidden />
-          <p className={styles.pickTitle}>Which mailbox should we read?</p>
-          <p className={styles.pickBody}>
-            The scan covers one shared mailbox at a time, newest mail first.
-          </p>
-          <div className={styles.pickField}>
-            <Dropdown
-              options={mailboxOptions}
-              value=""
-              onChange={switchMailbox}
-              placeholder="Select a shared mailbox"
-              ariaLabel="Select a shared mailbox to scan"
-            />
-          </div>
+        <div className={styles.controls}>
+          <Dropdown
+            options={mailboxOptions}
+            value=""
+            onChange={switchMailbox}
+            placeholder="Select a shared mailbox"
+            ariaLabel="Select a shared mailbox"
+          />
         </div>
       </div>
     );

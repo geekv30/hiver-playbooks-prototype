@@ -17,43 +17,15 @@
   flex-direction: column;
 }
 
-/* ---- mailbox pick (no mailbox on the skill yet, or the user cleared it) ----
-   A centred cluster rather than a control pinned above an empty panel. */
-.pick {
-  flex: 1;
-  min-height: 0;
+/* ---- mailbox pick: IDENTICAL to the Recent conversations flow. Shared-mailbox
+   selection is one pattern across the panel, so it is the same control in the
+   same place with the same copy, never a variant. ---- */
+.controls {
+  flex: none;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 24px 28px;
-  text-align: center;
-}
-.pickIcon {
-  width: 26px;
-  height: 26px;
-  margin-bottom: 4px;
-  color: var(--muted-soft);
-}
-.pickTitle {
-  margin: 0;
-  font-size: var(--fs-body);
-  font-weight: 500;
-  color: var(--ink-soft);
-}
-.pickBody {
-  margin: 0;
-  max-width: 32ch;
-  font-size: var(--fs-small);
-  line-height: 1.45;
-  color: var(--muted);
-}
-.pickField {
-  width: 100%;
-  max-width: 260px;
-  margin-top: 12px;
-  text-align: left;
+  gap: 16px;
+  padding: 16px 18px 0;
 }
 
 /* ---- scope row: which mailbox, and how deep the scan went ---- */
