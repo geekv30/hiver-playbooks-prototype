@@ -33,6 +33,9 @@ export interface ScanState {
   triggerAtScan: string;
   /** True once the ceiling is reached: there is nothing deeper to read. */
   exhausted: boolean;
+  /** The user cleared this scan on purpose (to pick a different mailbox), so
+   *  nothing may start another one for them - only an explicit `start`. */
+  cleared: boolean;
 }
 
 const IDLE: ScanState = {
@@ -42,6 +45,7 @@ const IDLE: ScanState = {
   matches: [],
   triggerAtScan: '',
   exhausted: false,
+  cleared: false,
 };
 
 // Emails read per animation step, and the step interval. 10 every 90ms fills a
@@ -128,6 +132,7 @@ export function useTriggerScan(trigger: string): TriggerScan {
           matches: found,
           triggerAtScan: triggerRef.current,
           exhausted: scanned >= SCAN_CEILING,
+          cleared: false,
         });
         return;
       }
@@ -139,6 +144,7 @@ export function useTriggerScan(trigger: string): TriggerScan {
         matches: keep,
         triggerAtScan: triggerRef.current,
         exhausted: false,
+        cleared: false,
       });
 
       timer.current = setInterval(() => {
@@ -197,7 +203,7 @@ export function useTriggerScan(trigger: string): TriggerScan {
 
   const reset = useCallback(() => {
     clear();
-    setState(IDLE);
+    setState({ ...IDLE, cleared: true });
   }, [clear]);
 
   const stale = state.phase === 'settled' && state.triggerAtScan.trim() !== trigger.trim();

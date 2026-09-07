@@ -76,6 +76,9 @@ export default function SimulatePanel({
   const [dir, setDir] = useState<'fwd' | 'back' | null>(null);
 
   const openFlow = (v: Exclude<EvalView, 'menu'>) => {
+    // Matching emails needs the canvas-level scan; without it the card would
+    // open an empty view, so it stays put instead.
+    if (v === 'matching' && !scan) return;
     if (v === 'matching') onMatchingSeen?.();
     setDir('fwd');
     setView(v);

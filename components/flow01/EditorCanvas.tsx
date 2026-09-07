@@ -276,15 +276,20 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
   // Session state on purpose: a reload is a fresh look at the new type.
   const [matchingIsNew, setMatchingIsNew] = useState(true);
   // Journey B: a skill we already know the mailboxes for scans on open, quietly -
-  // the badge is the only signal. Runs once per trigger version (the hook holds
-  // the trigger it scanned, and `stale` covers a later edit).
+  // the badge is the only signal. Exactly ONCE per trigger version: a user who
+  // clears the scan to pick a different mailbox must not have this restart it
+  // on the skill's first mailbox underneath them.
+  const autoScanned = useRef<string | null>(null);
   useEffect(() => {
-    if (scan.state.phase !== 'idle') return;
-    if (!triggerText.trim()) return;
+    if (scan.state.phase !== 'idle' || scan.state.cleared) return;
+    const trigger = triggerText.trim();
+    if (!trigger || autoScanned.current === trigger) return;
     const first = doc.mailboxes[0];
-    if (first) scan.start(first);
+    if (!first) return;
+    autoScanned.current = trigger;
+    scan.start(first);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scan.state.phase, triggerText, doc.mailboxes]);
+  }, [scan.state.phase, scan.state.cleared, triggerText, doc.mailboxes]);
 
   // The cold-start "draft with AI" modal shows on a fresh, empty canvas (no
   // initialDoc); the pre-seeded /api-example demo skips it. See ColdStartPhase above.

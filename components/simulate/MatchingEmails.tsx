@@ -160,17 +160,21 @@ export default function MatchingEmails({
     return (
       <div className={styles.flow}>
         <EvalBackHeader title={EVAL_TITLES.matching} icon={EVAL_ICONS.matching} onBack={onExit} />
-        <div className={styles.controls}>
-          <p className={styles.pickHint}>
-            Pick the shared mailbox to read. The scan covers one mailbox at a time.
+        <div className={styles.pick}>
+          <RiInboxUnarchiveLine className={styles.pickIcon} aria-hidden />
+          <p className={styles.pickTitle}>Which mailbox should we read?</p>
+          <p className={styles.pickBody}>
+            The scan covers one shared mailbox at a time, newest mail first.
           </p>
-          <Dropdown
-            options={mailboxOptions}
-            value=""
-            onChange={switchMailbox}
-            placeholder="Select a shared mailbox"
-            ariaLabel="Select a shared mailbox to scan"
-          />
+          <div className={styles.pickField}>
+            <Dropdown
+              options={mailboxOptions}
+              value=""
+              onChange={switchMailbox}
+              placeholder="Select a shared mailbox"
+              ariaLabel="Select a shared mailbox to scan"
+            />
+          </div>
         </div>
       </div>
     );
@@ -181,6 +185,9 @@ export default function MatchingEmails({
   const showScanMore = settled && !state.exhausted && !running && !stale;
   // The footer holds Evaluate until a run finishes, then gets out of the way.
   const showFooter = !zero && (!running || runPhase !== 'done');
+  // Zero after the ceiling is a finding; zero after a cancelled scan is just as
+  // far as we read, so the copy and the actions differ.
+  const zeroAtCeiling = zero && state.exhausted;
 
   return (
     <div className={styles.flow}>
@@ -203,7 +210,8 @@ export default function MatchingEmails({
             </span>
           )}
 
-          <p className={styles.depth} aria-live="polite">
+          {/* Announced when it settles, silent while the count ticks. */}
+          <p className={styles.depth} aria-live={scanning ? 'off' : 'polite'}>
             {scanning ? (
               <>
                 Scanning {mailboxName(mailbox)}
@@ -239,7 +247,7 @@ export default function MatchingEmails({
           <ul className={styles.introList}>
             <li>We read the {SCAN_CEILING} most recent emails in one mailbox, 50 at a time.</li>
             <li>Hiver AI keeps the ones your trigger would fire on, and stops at the first batch with matches.</li>
-            <li>These are real customer emails. Evaluating one never replies to anyone.</li>
+            <li>These are real customer emails. Evaluating one is a dry run - nothing is sent.</li>
           </ul>
           <button type="button" className={styles.introBtn} onClick={markMatchingIntroSeen}>
             Got it
@@ -256,19 +264,42 @@ export default function MatchingEmails({
       ) : zero ? (
         <div className={styles.zero}>
           <RiSearchEyeLine className={styles.zeroIcon} aria-hidden />
-          <p className={styles.zeroTitle}>No matches in the {SCAN_CEILING} most recent emails</p>
+          <p className={styles.zeroTitle}>
+            {zeroAtCeiling
+              ? `No matches in the ${SCAN_CEILING} most recent emails`
+              : `No matches in the first ${state.scanned} emails`}
+          </p>
           <p className={styles.zeroBody}>
-            Nothing in {mailboxName(mailbox)} looks like what your trigger describes. A narrow trigger,
-            or a quiet mailbox, both read this way.
+            {zeroAtCeiling
+              ? `Nothing in ${mailboxName(mailbox)} looks like what your trigger describes. A narrow trigger, or a quiet mailbox, both read this way.`
+              : `That is as far as this scan read. There are ${SCAN_CEILING - state.scanned} more recent emails in ${mailboxName(mailbox)} to look through.`}
           </p>
           <div className={styles.zeroActions}>
+            {showScanMore && (
+              <Button variant="secondary" onClick={scan.more}>
+                Scan the next 50
+              </Button>
+            )}
             {onTryScenarios && (
-              <Button variant="secondary" iconLeft={<RiFlaskLine />} onClick={onTryScenarios}>
+              <Button
+                variant={showScanMore ? 'text' : 'secondary'}
+                iconLeft={showScanMore ? undefined : <RiFlaskLine />}
+                onClick={onTryScenarios}
+              >
                 Try AI scenarios
               </Button>
             )}
             {mailboxOptions.length > 1 && (
-              <Button variant="text" onClick={() => setPicked('')}>
+              <Button
+                variant="text"
+                onClick={() => {
+                  // Clear the scan AND the pick, so the flow returns to its
+                  // mailbox picker instead of staying on the scanned one.
+                  scan.reset();
+                  setPicked('');
+                  setSelectedId(null);
+                }}
+              >
                 Try another mailbox
               </Button>
             )}
