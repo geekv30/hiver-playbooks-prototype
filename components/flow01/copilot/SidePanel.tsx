@@ -4,6 +4,7 @@ import PanelTabs, { type SideTab } from './PanelTabs';
 import CopilotPanel, { type CopilotMessage } from './CopilotPanel';
 import SimulatePanel from '@/components/simulate/SimulatePanel';
 import type { SimStatusKind } from '@/data/simFixtures';
+import type { TriggerScan } from '@/components/simulate/useTriggerScan';
 import type { Verdict } from '@/components/atoms/ThumbsRating';
 import styles from './SidePanel.module.css';
 
@@ -32,6 +33,12 @@ interface SimProps {
   onRunRecorded?: (statuses: SimStatusKind[]) => void;
   /** Open the Copilot tab (Fix with Copilot on a caught gap). */
   onOpenCopilot?: () => void;
+  /** The live trigger text + mailboxes + scan behind Matching emails. */
+  trigger?: string;
+  mailboxes?: string[];
+  scan?: TriggerScan;
+  onMatchingSeen?: () => void;
+  matchingIsNew?: boolean;
 }
 
 interface Props {
@@ -52,7 +59,7 @@ export default function SidePanel({ tab, onTab, copilot, sim }: Props) {
   // renders its own `‹` back-header as a row BELOW the tabs (Figma 1745:67909).
   return (
     <aside className={styles.panel} aria-label="Copilot and Evaluation">
-      <PanelTabs active={tab} onChange={onTab} />
+      <PanelTabs active={tab} onChange={onTab} badge={sim.scan?.badge ?? null} />
       <div className={styles.body}>
         <div
           className={styles.pane}

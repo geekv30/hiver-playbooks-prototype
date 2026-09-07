@@ -118,7 +118,10 @@ export function exampleDoc(): EditorDoc {
     title: 'API error triage',
     status: 'draft',
     triggerMode: 'automatic',
-    mailboxes: [],
+    // The mailboxes this skill is meant for. Known up front (the Skills list row
+    // shows it mapped to Support and Sales), so the Enable flow arrives
+    // pre-filled and trigger matching has a mailbox to read from the start.
+    mailboxes: ['support', 'sales'],
     guardrails: defaultGuardrails(),
     // Handwritten NL trigger (no references/chips - the trigger box is plain text).
     trigger: normalizeLine([

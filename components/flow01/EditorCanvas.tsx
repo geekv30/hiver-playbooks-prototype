@@ -29,6 +29,7 @@ import { deriveReadinessInputs, inviteKey } from './enable/readiness';
 import { useConnectorHealth, setConnectorHealth } from './connectorHealth';
 import { useRouter } from 'next/navigation';
 import { useEvalState } from '@/components/simulate/useEvalState';
+import { useTriggerScan } from '@/components/simulate/useTriggerScan';
 import SimulatePanel from '@/components/simulate/SimulatePanel';
 import { type CopilotMessage, type CopilotProposalData } from './copilot/CopilotPanel';
 import SidePanel, { type SideTab } from './copilot/SidePanel';
@@ -45,6 +46,7 @@ import {
   normalizeLine,
   lineIsEmpty,
   lineHasContent,
+  lineToText,
   stepHasContent,
   isCondition,
   type EditorDoc,
@@ -260,6 +262,25 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
     (statuses: SimStatusKind[]) => recordRun(statuses, docRef.current),
     [recordRun],
   );
+  // Trigger matching: the background scan behind the "Matching emails" evaluation
+  // type. It lives here, not in the flow, because the Evaluation tab's count badge
+  // and Copilot's handoff message both read it.
+  const triggerText = useMemo(() => lineToText(doc.trigger), [doc.trigger]);
+  const scan = useTriggerScan(triggerText);
+  // The New pill on the Matching emails card, retired once the user opens it.
+  // Session state on purpose: a reload is a fresh look at the new type.
+  const [matchingIsNew, setMatchingIsNew] = useState(true);
+  // Journey B: a skill we already know the mailboxes for scans on open, quietly -
+  // the badge is the only signal. Runs once per trigger version (the hook holds
+  // the trigger it scanned, and `stale` covers a later edit).
+  useEffect(() => {
+    if (scan.state.phase !== 'idle') return;
+    if (!triggerText.trim()) return;
+    const first = doc.mailboxes[0];
+    if (first) scan.start(first);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scan.state.phase, triggerText, doc.mailboxes]);
+
   // The cold-start "draft with AI" modal shows on a fresh, empty canvas (no
   // initialDoc); the pre-seeded /api-example demo skips it. See ColdStartPhase above.
   const [coldPhase, setColdPhase] = useState<ColdStartPhase>(initialDoc ? 'docked' : 'hero');
@@ -1455,6 +1476,11 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
                 onAddTrigger: () => requestFocus('trigger', false),
                 onRunRecorded,
                 onOpenCopilot: () => setPanelTab('copilot'),
+                trigger: triggerText,
+                mailboxes: doc.mailboxes,
+                scan,
+                matchingIsNew,
+                onMatchingSeen: () => setMatchingIsNew(false),
               }}
             />
           )
@@ -1466,6 +1492,11 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
             hasTrigger={lineHasContent(doc.trigger)}
             onAddTrigger={() => requestFocus('trigger', false)}
             onRunRecorded={onRunRecorded}
+            trigger={triggerText}
+            mailboxes={doc.mailboxes}
+            scan={scan}
+            matchingIsNew={matchingIsNew}
+            onMatchingSeen={() => setMatchingIsNew(false)}
           />
         )}
       </div>

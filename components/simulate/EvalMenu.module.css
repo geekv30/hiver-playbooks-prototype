@@ -76,6 +76,9 @@
   min-width: 0;
 }
 .title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: var(--fs-small); /* 13px (Figma body/xs/medium) */
   font-weight: 500;
   line-height: 19px;
@@ -107,4 +110,31 @@
   .chevron {
     transition: none;
   }
+}
+
+/* The Matching-emails card once a scan has found something: a bg tint and a
+   hairline, never a heavier border - the offer lives on the card, not a banner. */
+.card[data-highlight] {
+  background: var(--accent-bg);
+  border-color: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.card[data-highlight]:hover {
+  border-color: color-mix(in srgb, var(--accent) 36%, transparent);
+}
+.card[data-highlight] .icon {
+  color: var(--accent);
+}
+
+/* Title row carries the one-time New pill beside the name. */
+.new {
+  flex: none;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 14px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }

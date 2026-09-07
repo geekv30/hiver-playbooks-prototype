@@ -1,0 +1,344 @@
+'use client';
+
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import {
+  RiPlayFill,
+  RiStopCircleLine,
+  RiSearchEyeLine,
+  RiInboxUnarchiveLine,
+  RiRefreshLine,
+  RiFlaskLine,
+} from 'react-icons/ri';
+import { MAILBOXES, mailboxName } from '@/data/mailboxes';
+import { SCAN_CEILING, poolForMailbox } from '@/data/matchPool';
+import type { SimEmail, SimStatusKind } from '@/data/simFixtures';
+import Dropdown from '@/components/atoms/Dropdown';
+import Button from '@/components/atoms/Button';
+import EvalBackHeader from './EvalBackHeader';
+import { EVAL_ICONS, EVAL_TITLES } from './EvalMenu';
+import PickableEmailCard from './PickableEmailCard';
+import ConversationModal from './ConversationModal';
+import EmailCard from './EmailCard';
+import SimEmptyState from './SimEmptyState';
+import { useSimRun } from './useSimRun';
+import { markMatchingIntroSeen, useMatchingIntroSeen } from './matchingIntro';
+import type { TriggerScan } from './useTriggerScan';
+import styles from './MatchingEmails.module.css';
+
+interface Props {
+  /** The live trigger text - what every email is matched against. */
+  trigger: string;
+  /** The shared mailboxes this skill runs on (ids). Empty until it has any. */
+  mailboxes: string[];
+  /** The canvas-level scan (shared with the tab badge and Copilot's handoff). */
+  scan: TriggerScan;
+  /** Leave this flow back to the Evaluate menu. */
+  onExit: () => void;
+  /** Report a completed run's status up to the canvas (the eval aggregate). */
+  onRunRecorded?: (statuses: SimStatusKind[]) => void;
+  /** Open the Copilot tab (Fix with Copilot on a caught gap). */
+  onOpenCopilot?: () => void;
+  /** Focus the trigger line in the editor (the no-trigger empty state). */
+  onAddTrigger?: () => void;
+  /** Switch to the AI scenarios flow (offered when nothing matched). */
+  onTryScenarios?: () => void;
+}
+
+const NO_EMAILS: SimEmail[] = [];
+
+// Ghost rows for the no-trigger state: the real card renderer, dimmed, over
+// generic pool content (no skill-specific data - reusability rule).
+const GHOSTS = poolForMailbox('support', 3);
+
+/**
+ * MatchingEmails - the "Matching emails" evaluation type.
+ *
+ * Real inbound mail from ONE of the skill's shared mailboxes that matches the
+ * skill's trigger. The scan reads 50 at a time and stops at the first batch with
+ * matches; `Scan more` reads the next 50, up to 200. Everything the scan did is
+ * stated on the header, so the depth of the sample is never implied.
+ */
+export default function MatchingEmails({
+  trigger,
+  mailboxes,
+  scan,
+  onExit,
+  onRunRecorded,
+  onOpenCopilot,
+  onAddTrigger,
+  onTryScenarios,
+}: Props) {
+  const { state, stale } = scan;
+  const hasTrigger = trigger.trim().length > 0;
+
+  // Which mailbox this flow is looking at: what the scan covers, else the
+  // skill's first, else nothing until the user picks one.
+  const [picked, setPicked] = useState<string>('');
+  const mailbox = state.mailboxId ?? picked ?? '';
+
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [runId, setRunId] = useState<string | null>(null);
+  const [reviewId, setReviewId] = useState<string | null>(null);
+  // Read once, remembered across reloads (a module store, not component state).
+  const introSeen = useMatchingIntroSeen();
+
+  // Entering the flow with a mailbox but no scan yet: start one. (Journey B
+  // starts it on open at canvas level; this covers entering from a cold panel.)
+  useEffect(() => {
+    if (hasTrigger && mailbox && state.phase === 'idle') scan.start(mailbox);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasTrigger, mailbox, state.phase]);
+
+  const switchMailbox = (id: string) => {
+    setPicked(id);
+    setSelectedId(null);
+    setRunId(null);
+    scan.start(id);
+  };
+
+  const matches = state.matches;
+  const runEmail = useMemo(() => matches.find((e) => e.id === runId) ?? null, [matches, runId]);
+  const runEmails = useMemo(() => (runEmail ? [runEmail] : NO_EMAILS), [runEmail]);
+  const { phase: runPhase, runs, start: startRun, stop: stopRun } = useSimRun(runEmails, onRunRecorded);
+
+  useEffect(() => {
+    if (runId) startRun();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [runId]);
+
+  const running = runId !== null;
+  const scanning = state.phase === 'scanning';
+  const canEvaluate = !!selectedId && !stale && matches.some((e) => e.id === selectedId);
+
+  const back = () => {
+    if (running) {
+      stopRun();
+      setRunId(null);
+    } else {
+      onExit();
+    }
+  };
+
+  const reviewEmail = reviewId ? matches.find((e) => e.id === reviewId) ?? null : null;
+  const mailboxOptions = useMemo(
+    () =>
+      (mailboxes.length > 0 ? mailboxes : MAILBOXES.map((m) => m.id)).map((id) => ({
+        id,
+        label: mailboxName(id),
+      })),
+    [mailboxes],
+  );
+
+  // ---- no trigger: nothing can be matched yet -----------------------------
+  if (!hasTrigger) {
+    return (
+      <div className={styles.flow}>
+        <EvalBackHeader title={EVAL_TITLES.matching} icon={EVAL_ICONS.matching} onBack={onExit} />
+        <div className={styles.scroll}>
+          <SimEmptyState
+            ghosts={GHOSTS.map((e) => (
+              <PickableEmailCard key={e.id} email={e} selected={false} onSelect={() => {}} />
+            ))}
+            icon={RiSearchEyeLine}
+            title="No trigger to match against"
+            body="Matching emails reads the recent mail in a shared mailbox and keeps the ones your trigger would fire on. Write the trigger first and they will show up here."
+            action={
+              onAddTrigger ? (
+                <Button variant="text" onClick={onAddTrigger}>
+                  Add a trigger to get started
+                </Button>
+              ) : undefined
+            }
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // ---- no mailbox chosen yet ---------------------------------------------
+  if (!mailbox) {
+    return (
+      <div className={styles.flow}>
+        <EvalBackHeader title={EVAL_TITLES.matching} icon={EVAL_ICONS.matching} onBack={onExit} />
+        <div className={styles.controls}>
+          <p className={styles.pickHint}>
+            Pick the shared mailbox to read. The scan covers one mailbox at a time.
+          </p>
+          <Dropdown
+            options={mailboxOptions}
+            value=""
+            onChange={switchMailbox}
+            placeholder="Select a shared mailbox"
+            ariaLabel="Select a shared mailbox to scan"
+          />
+        </div>
+      </div>
+    );
+  }
+
+  const settled = state.phase === 'settled';
+  const zero = settled && matches.length === 0;
+  const showScanMore = settled && !state.exhausted && !running && !stale;
+  // The footer holds Evaluate until a run finishes, then gets out of the way.
+  const showFooter = !zero && (!running || runPhase !== 'done');
+
+  return (
+    <div className={styles.flow}>
+      <EvalBackHeader title={EVAL_TITLES.matching} icon={EVAL_ICONS.matching} onBack={back} />
+
+      {!running && (
+        <div className={styles.scope}>
+          {mailboxOptions.length > 1 ? (
+            <Dropdown
+              options={mailboxOptions}
+              value={mailbox}
+              onChange={switchMailbox}
+              placeholder="Select a shared mailbox"
+              ariaLabel="Mailbox being scanned"
+            />
+          ) : (
+            <span className={styles.scopeName}>
+              <RiInboxUnarchiveLine aria-hidden />
+              {mailboxName(mailbox)}
+            </span>
+          )}
+
+          <p className={styles.depth} aria-live="polite">
+            {scanning ? (
+              <>
+                Scanning {mailboxName(mailbox)}
+                <span className={styles.count}>
+                  {state.scanned} of {SCAN_CEILING}
+                </span>
+              </>
+            ) : (
+              <>
+                Scanned {state.scanned} of {SCAN_CEILING}
+                <span className={styles.count}>
+                  {matches.length} matched
+                </span>
+              </>
+            )}
+          </p>
+        </div>
+      )}
+
+      {stale && !running && (
+        <div className={styles.stale}>
+          <span>Your trigger changed since this scan.</span>
+          <button type="button" className={styles.staleBtn} onClick={() => scan.start(mailbox)}>
+            <RiRefreshLine aria-hidden />
+            Rematch
+          </button>
+        </div>
+      )}
+
+      {!introSeen && !running && (
+        <div className={styles.intro}>
+          <p className={styles.introTitle}>How matching works</p>
+          <ul className={styles.introList}>
+            <li>We read the {SCAN_CEILING} most recent emails in one mailbox, 50 at a time.</li>
+            <li>Hiver AI keeps the ones your trigger would fire on, and stops at the first batch with matches.</li>
+            <li>These are real customer emails. Evaluating one never replies to anyone.</li>
+          </ul>
+          <button type="button" className={styles.introBtn} onClick={markMatchingIntroSeen}>
+            Got it
+          </button>
+        </div>
+      )}
+
+      {running ? (
+        <div className={styles.list} data-running>
+          {runEmail && (
+            <EmailCard email={runEmail} run={runs[runEmail.id]} onRerun={startRun} onFix={onOpenCopilot} />
+          )}
+        </div>
+      ) : zero ? (
+        <div className={styles.zero}>
+          <RiSearchEyeLine className={styles.zeroIcon} aria-hidden />
+          <p className={styles.zeroTitle}>No matches in the {SCAN_CEILING} most recent emails</p>
+          <p className={styles.zeroBody}>
+            Nothing in {mailboxName(mailbox)} looks like what your trigger describes. A narrow trigger,
+            or a quiet mailbox, both read this way.
+          </p>
+          <div className={styles.zeroActions}>
+            {onTryScenarios && (
+              <Button variant="secondary" iconLeft={<RiFlaskLine />} onClick={onTryScenarios}>
+                Try AI scenarios
+              </Button>
+            )}
+            {mailboxOptions.length > 1 && (
+              <Button variant="text" onClick={() => setPicked('')}>
+                Try another mailbox
+              </Button>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className={styles.list} role="radiogroup" aria-label="Matching emails">
+          {matches.map((e, i) => (
+            <div key={e.id} className={styles.cardReveal} style={{ '--i': i % 6 } as CSSProperties}>
+              <PickableEmailCard
+                email={e}
+                selected={selectedId === e.id}
+                onSelect={() => setSelectedId(e.id)}
+                onOpen={() => setReviewId(e.id)}
+                aside={e.received}
+              />
+            </div>
+          ))}
+
+          {scanning && (
+            <div className={styles.skeletons} aria-hidden>
+              {[0, 1, 2].map((i) => (
+                <div key={i} className={styles.skeleton} style={{ '--i': i } as CSSProperties}>
+                  <span className={styles.skLine} data-w="short" />
+                  <span className={styles.skLine} data-w="long" />
+                  <span className={styles.skLine} data-w="mid" />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {showScanMore && (
+            <button type="button" className={styles.moreBtn} onClick={scan.more}>
+              Scan the next 50
+            </button>
+          )}
+          {settled && state.exhausted && !stale && (
+            <p className={styles.exhausted}>Scanned the {SCAN_CEILING} most recent emails.</p>
+          )}
+        </div>
+      )}
+
+      {showFooter && (
+        <div className={styles.footer}>
+          {running ? (
+            <button type="button" className={styles.stopBtn} onClick={back}>
+              <RiStopCircleLine aria-hidden />
+              <span>Stop evaluation</span>
+            </button>
+          ) : scanning ? (
+            <button type="button" className={styles.stopBtn} onClick={scan.cancel}>
+              <RiStopCircleLine aria-hidden />
+              <span>Stop scanning</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={styles.evalBtn}
+              data-ready={canEvaluate || undefined}
+              disabled={!canEvaluate}
+              onClick={() => canEvaluate && setRunId(selectedId)}
+            >
+              <RiPlayFill aria-hidden />
+              <span>Evaluate</span>
+            </button>
+          )}
+        </div>
+      )}
+
+      {reviewEmail && <ConversationModal email={reviewEmail} onClose={() => setReviewId(null)} />}
+    </div>
+  );
+}

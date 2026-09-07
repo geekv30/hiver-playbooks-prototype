@@ -5,9 +5,12 @@ import { RiPlayFill, RiCloseLine } from 'react-icons/ri';
 import type { SimStatusKind } from '@/data/simFixtures';
 import EvalMenu, { type EvalView, EVAL_TITLES, EVAL_ICONS } from './EvalMenu';
 import EvalBackHeader from './EvalBackHeader';
+import MatchingEmails from './MatchingEmails';
 import RecentEmails from './RecentEmails';
 import AiScenarios from './AiScenarios';
 import CustomEval from './CustomEval';
+import type { TriggerScan } from './useTriggerScan';
+import { mailboxName } from '@/data/mailboxes';
 import styles from './SimulatePanel.module.css';
 
 interface Props {
@@ -31,6 +34,16 @@ interface Props {
   onRunRecorded?: (statuses: SimStatusKind[]) => void;
   /** Open the Copilot tab (Fix with Copilot on a caught gap). */
   onOpenCopilot?: () => void;
+  /** The live trigger text - what Matching emails matches against. */
+  trigger?: string;
+  /** The shared mailboxes this skill runs on (ids). */
+  mailboxes?: string[];
+  /** The canvas-level trigger scan (shared with the tab badge + Copilot). */
+  scan?: TriggerScan;
+  /** Called the first time the user opens Matching emails (retires the New pill). */
+  onMatchingSeen?: () => void;
+  /** Whether the Matching emails card still carries its New pill. */
+  matchingIsNew?: boolean;
 }
 
 /**
@@ -52,12 +65,18 @@ export default function SimulatePanel({
   docked,
   onRunRecorded,
   onOpenCopilot,
+  trigger = '',
+  mailboxes = [],
+  scan,
+  onMatchingSeen,
+  matchingIsNew,
 }: Props) {
   const [view, setView] = useState<EvalView>('menu');
   // Drill direction for the slide (forward = into a flow, back = out to the menu).
   const [dir, setDir] = useState<'fwd' | 'back' | null>(null);
 
   const openFlow = (v: Exclude<EvalView, 'menu'>) => {
+    if (v === 'matching') onMatchingSeen?.();
     setDir('fwd');
     setView(v);
   };
@@ -92,7 +111,27 @@ export default function SimulatePanel({
         )}
 
         <div className={styles.viewWrap} data-dir={dir ?? undefined} key={view}>
-          {view === 'menu' && <EvalMenu onOpen={openFlow} />}
+          {view === 'menu' && (
+            <EvalMenu
+              onOpen={openFlow}
+              matchCount={scan?.badge ?? null}
+              matchMailbox={scan?.state.mailboxId ? mailboxName(scan.state.mailboxId) : undefined}
+              matchIsNew={matchingIsNew}
+            />
+          )}
+
+          {view === 'matching' && scan && (
+            <MatchingEmails
+              trigger={trigger}
+              mailboxes={mailboxes}
+              scan={scan}
+              onExit={toMenu}
+              onRunRecorded={onRunRecorded}
+              onOpenCopilot={onOpenCopilot}
+              onAddTrigger={onAddTrigger}
+              onTryScenarios={() => openFlow('scenarios')}
+            />
+          )}
 
           {view === 'recent' && (
             <RecentEmails onExit={toMenu} onRunRecorded={onRunRecorded} onOpenCopilot={onOpenCopilot} />

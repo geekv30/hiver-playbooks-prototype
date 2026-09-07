@@ -15,6 +15,9 @@ const TABS: { id: SideTab; label: string; icon: ReactNode }[] = [
 interface Props {
   active: SideTab;
   onChange: (t: SideTab) => void;
+  /** Matched-email count found in the background - a quiet count on the
+   *  Evaluation tab, which is the only signal a scan sends to the user. */
+  badge?: number | null;
 }
 
 /**
@@ -23,7 +26,7 @@ interface Props {
  * inked (Gray 1) over a sliding 3px black underline. Replaces the old floating
  * tool-switcher rail - the tabs live inside the docked panel's header.
  */
-export default function PanelTabs({ active, onChange }: Props) {
+export default function PanelTabs({ active, onChange, badge }: Props) {
   const activeIdx = TABS.findIndex((t) => t.id === active);
   return (
     <div className={styles.header}>
@@ -42,6 +45,11 @@ export default function PanelTabs({ active, onChange }: Props) {
               {t.icon}
             </span>
             <span className={styles.label}>{t.label}</span>
+            {t.id === 'simulate' && badge != null && badge > 0 && (
+              <span className={styles.badge} data-fresh={active !== 'simulate' || undefined}>
+                {badge}
+              </span>
+            )}
           </button>
         ))}
         {/* Sliding active-tab underline (3px, Neutrals/Black). Per-tab offset =

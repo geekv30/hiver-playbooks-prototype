@@ -72,3 +72,42 @@
     transition: none;
   }
 }
+
+/* Count badge on the Evaluation tab: the only signal a background scan sends.
+   Quiet by default; tinted while the tab has not been opened since the scan. */
+.badge {
+  flex: none;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--surface-card);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+  transition: background var(--d-hover) var(--ease-snap), color var(--d-hover) var(--ease-snap);
+}
+.badge[data-fresh] {
+  background: var(--accent);
+  color: #fff;
+  animation: badgePop var(--d-enter) var(--ease-spring, var(--ease-snap)) backwards;
+}
+@keyframes badgePop {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .badge[data-fresh] {
+    animation: none;
+  }
+}
