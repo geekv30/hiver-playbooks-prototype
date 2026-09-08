@@ -45,6 +45,7 @@ import ConditionBlock from '@/components/flow01/condition/ConditionBlock';
 import CopilotSparkle from '@/components/flow01/copilot/CopilotSparkle';
 import PanelTabs, { type SideTab } from '@/components/flow01/copilot/PanelTabs';
 import CopilotMailboxAsk from '@/components/flow01/copilot/CopilotMailboxAsk';
+import CopilotScanNote from '@/components/flow01/copilot/CopilotScanNote';
 import CopilotProposal from '@/components/flow01/copilot/CopilotProposal';
 import CopilotPanel from '@/components/flow01/copilot/CopilotPanel';
 import SidePanel from '@/components/flow01/copilot/SidePanel';
@@ -312,7 +313,7 @@ const NOOP = () => {};
 const NAV: { id: string; label: string; count: number }[] = [
   { id: 'atoms', label: 'Atoms', count: 9 },
   { id: 'editor', label: 'Editor', count: 9 },
-  { id: 'copilot', label: 'Copilot', count: 6 },
+  { id: 'copilot', label: 'Copilot', count: 7 },
   { id: 'evaluate', label: 'Evaluate', count: 11 },
   { id: 'modals', label: 'Modals', count: 4 },
   { id: 'icons', label: 'Icons', count: 2 },
@@ -687,6 +688,26 @@ export default function ComponentLibrary() {
               <Spec label="answered">
                 <div style={{ width: 340 }}>
                   <CopilotMailboxAsk chosen={['support', 'billing']} onAnswer={() => {}} />
+                </div>
+              </Spec>
+            </Row>
+          </Block>
+
+          <Block name="CopilotScanNote" imp="flow01/copilot/CopilotScanNote" desc="What trigger matching says inside Copilot, and all it says - a status line while it reads, then one sentence and one button pointing at the Evaluation tab. Same renderer in a reply and on the empty Copilot screen.">
+            <Row>
+              <Spec label="scanning">
+                <div style={{ width: 340 }}>
+                  <CopilotScanNote state={{ scanning: true, count: 0, mailbox: 'Support' }} />
+                </div>
+              </Spec>
+              <Spec label="matches found">
+                <div style={{ width: 340 }}>
+                  <CopilotScanNote state={{ scanning: false, count: 9, mailbox: 'Support' }} onOpenEvaluation={() => {}} />
+                </div>
+              </Spec>
+              <Spec label="nothing matched">
+                <div style={{ width: 340 }}>
+                  <CopilotScanNote state={{ scanning: false, count: 0, mailbox: 'Support' }} />
                 </div>
               </Spec>
             </Row>

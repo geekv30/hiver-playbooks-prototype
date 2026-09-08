@@ -1510,12 +1510,17 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
                 onVerdict: setCopilotVerdict,
                 onMailboxAnswer: answerMailboxes,
                 onOpenEvaluation: () => setPanelTab('simulate'),
-                // Beat 5: the handoff line reads the LIVE scan, so the thread
-                // never carries a stale copy of what the scan found.
-                scanState: {
-                  scanning: scan.state.phase === 'scanning',
-                  count: scan.state.matches.length,
-                },
+                // The handoff line and the unprompted hint both read the LIVE
+                // scan, so Copilot can never contradict the Evaluation tab.
+                // Absent until a scan exists, and dropped once it is stale.
+                scanState:
+                  scan.state.mailboxId && scan.state.phase !== 'idle' && !scan.stale
+                    ? {
+                        scanning: scan.state.phase === 'scanning',
+                        count: scan.state.matches.length,
+                        mailbox: mailboxName(scan.state.mailboxId),
+                      }
+                    : undefined,
               }}
               sim={{
                 hasScenarios: lineHasContent(doc.trigger),

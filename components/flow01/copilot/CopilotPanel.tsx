@@ -15,8 +15,6 @@ import {
   RiMailLine,
   RiShieldCheckLine,
   RiChatNewLine,
-  RiSearchEyeLine,
-  RiPlayLine,
 } from 'react-icons/ri';
 import type { IconType } from 'react-icons';
 import Spinner from '@/components/atoms/Spinner';
@@ -24,6 +22,7 @@ import ThumbsRating, { type Verdict } from '@/components/atoms/ThumbsRating';
 import CopilotSparkle from './CopilotSparkle';
 import CopilotProposal, { type ProposalState } from './CopilotProposal';
 import CopilotMailboxAsk from './CopilotMailboxAsk';
+import CopilotScanNote, { type ScanNoteState } from './CopilotScanNote';
 import type { DocPatch } from '../doc';
 import styles from './CopilotPanel.module.css';
 
@@ -120,8 +119,9 @@ interface Props {
   onMailboxAnswer?: (index: number, mailboxIds: string[]) => void;
   /** Open the Evaluation tab - the scan handoff's one action. */
   onOpenEvaluation?: () => void;
-  /** The live trigger scan, for any message that started one. */
-  scanState?: { scanning: boolean; count: number };
+  /** The live trigger scan: drives the handoff line in the thread AND the
+   *  unprompted hint on the empty screen (a skill scanned quietly on open). */
+  scanState?: ScanNoteState;
 }
 
 /** Copy-to-clipboard affordance on an assistant message (icon swaps to a check). */
@@ -449,34 +449,12 @@ export default function CopilotPanel({
                               />
                             )}
 
-                            {settled && m.scan && (
-                              <div
-                                className={styles.scanNote}
-                                data-found={!scanState?.scanning || undefined}
-                                aria-live="polite"
-                              >
-                                <span className={styles.scanIcon} aria-hidden>
-                                  {scanState?.scanning ? <Spinner size={14} /> : <RiSearchEyeLine />}
-                                </span>
-                                <span className={styles.scanText}>
-                                  {scanState?.scanning
-                                    ? `Looking for emails that match your trigger in ${m.scan.mailbox}`
-                                    : (scanState?.count ?? 0) === 0
-                                      ? `Nothing in ${m.scan.mailbox} matches your trigger yet`
-                                      : `Found ${scanState!.count} ${scanState!.count === 1 ? 'email' : 'emails'} in ${m.scan.mailbox} that match your trigger`}
-                                </span>
-                                {!scanState?.scanning &&
-                                  (scanState?.count ?? 0) > 0 &&
-                                  onOpenEvaluation && (
-                                    <button
-                                      type="button"
-                                      className={styles.scanBtn}
-                                      onClick={onOpenEvaluation}
-                                    >
-                                      <RiPlayLine aria-hidden />
-                                      Open Evaluation
-                                    </button>
-                                  )}
+                            {settled && m.scan && scanState && (
+                              <div className={styles.scanSlot}>
+                                <CopilotScanNote
+                                  state={scanState}
+                                  onOpenEvaluation={onOpenEvaluation}
+                                />
                               </div>
                             )}
 
@@ -542,6 +520,19 @@ export default function CopilotPanel({
                   <h2 className={styles.heroTitle}>How can Copilot help you?</h2>
                 </div>
               </div>
+              {scanState && (
+                <div className={styles.scanSlot}>
+                  {/* A skill that already exists is scanned on open, and the
+                      badge alone sits on the tab the user is not looking at.
+                      Unprompted, so it stays quiet and only speaks when it has
+                      something to offer (hideEmpty). */}
+                  <CopilotScanNote
+                    state={scanState}
+                    onOpenEvaluation={onOpenEvaluation}
+                    hideEmpty
+                  />
+                </div>
+              )}
               <ul className={styles.starters}>
                 {STARTERS.map((s, i) => (
                   <li

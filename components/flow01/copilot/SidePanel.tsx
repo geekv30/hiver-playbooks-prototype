@@ -5,6 +5,7 @@ import CopilotPanel, { type CopilotMessage } from './CopilotPanel';
 import SimulatePanel from '@/components/simulate/SimulatePanel';
 import type { SimStatusKind } from '@/data/simFixtures';
 import type { TriggerScan } from '@/components/simulate/useTriggerScan';
+import type { ScanNoteState } from './CopilotScanNote';
 import type { Verdict } from '@/components/atoms/ThumbsRating';
 import styles from './SidePanel.module.css';
 
@@ -27,8 +28,8 @@ interface CopilotProps {
   onMailboxAnswer?: (i: number, mailboxIds: string[]) => void;
   /** The scan handoff's one action: open the Evaluation tab. */
   onOpenEvaluation?: () => void;
-  /** The live trigger scan, for the handoff line. */
-  scanState?: { scanning: boolean; count: number };
+  /** The live trigger scan, for the handoff line and the unprompted hint. */
+  scanState?: ScanNoteState;
 }
 
 interface SimProps {
