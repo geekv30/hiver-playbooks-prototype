@@ -232,24 +232,34 @@ export default function MatchingEmails({
             </span>
           )}
 
-          {/* Announced when it settles, silent while the count ticks. */}
-          <p className={styles.depth} aria-live={scanning ? 'off' : 'polite'}>
-            {scanning ? (
-              <>
-                Scanning {mailboxName(mailbox)}
-                <span className={styles.count}>
-                  {state.scanned} of {SCAN_CEILING}
-                </span>
-              </>
-            ) : (
-              <>
-                Scanned {state.scanned} of {SCAN_CEILING}
-                <span className={styles.count}>
-                  {matches.length} matched
-                </span>
-              </>
+          <div className={styles.depthRow}>
+            {/* Announced when it settles, silent while the count ticks. */}
+            <p className={styles.depth} aria-live={scanning ? 'off' : 'polite'}>
+              {scanning ? (
+                <>
+                  Scanning {mailboxName(mailbox)}
+                  <span className={styles.count}>
+                    {state.scanned} of {SCAN_CEILING}
+                  </span>
+                </>
+              ) : (
+                <>
+                  Scanned {state.scanned} of {SCAN_CEILING}
+                  <span className={styles.count}>
+                    {matches.length} matched
+                  </span>
+                </>
+              )}
+            </p>
+            {/* Reading deeper belongs beside the depth it changes, not at the
+                foot of the list where a long list hides it and a one-row list
+                leaves it dangling. */}
+            {showScanMore && (
+              <button type="button" className={styles.moreBtn} onClick={scan.more}>
+                Scan 50 more
+              </button>
             )}
-          </p>
+          </div>
         </div>
       )}
 
@@ -306,7 +316,7 @@ export default function MatchingEmails({
           <div className={styles.zeroActions}>
             {showScanMore && (
               <Button variant="secondary" onClick={scan.more}>
-                Scan the next 50
+                Scan 50 more
               </Button>
             )}
             {onTryScenarios && (
@@ -366,15 +376,6 @@ export default function MatchingEmails({
                 </div>
               ))}
             </div>
-          )}
-
-          {showScanMore && (
-            <button type="button" className={styles.moreBtn} onClick={scan.more}>
-              Scan the next 50
-            </button>
-          )}
-          {settled && state.exhausted && !stale && (
-            <p className={styles.exhausted}>Scanned the {SCAN_CEILING} most recent emails.</p>
           )}
         </div>
       )}
