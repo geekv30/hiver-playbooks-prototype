@@ -1211,6 +1211,74 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
       />
 
       <div className={styles.stage}>
+        {/* The companion panel leads the row: Copilot and Evaluation sit on the
+            LEFT of the canvas window, equal height to it. Rendered first so the
+            reading and tab order match what is on screen. Non-companion routes
+            keep the toolbar-toggled floating Simulate panel. */}
+        {companions ? (
+          // The dock is not rendered while the cold-start modal is open; once the
+          // modal fades out (coldPhase -> 'docked') it mounts and fades itself in.
+          coldPhase === 'docked' && (
+            <SidePanel
+              tab={panelTab}
+              onTab={setPanelTab}
+              copilot={{
+                messages: copilotMessages,
+                onSend: sendCopilot,
+                onRegenerate: regenerateCopilot,
+                onClear: clearCopilot,
+                introReady: true,
+                onStop: stopCopilot,
+                busy: thinkIdx >= 0 || copilotMessages.some((m) => m.thinking || m.streaming),
+                onAttach: () => showHint('Attachments are coming soon.'),
+                onApplyProposal: applyProposal,
+                onDismissProposal: dismissProposal,
+                onUndoProposal: undoProposal,
+                onVerdict: setCopilotVerdict,
+                onMailboxAnswer: answerMailboxes,
+                onOpenEvaluation: () => setPanelTab('simulate'),
+                // The handoff line and the unprompted hint both read the LIVE
+                // scan, so Copilot can never contradict the Evaluation tab.
+                // Absent until a scan exists, and dropped once it is stale.
+                scanState:
+                  scan.state.mailboxId && scan.state.phase !== 'idle' && !scan.stale
+                    ? {
+                        scanning: scan.state.phase === 'scanning',
+                        count: scan.state.matches.length,
+                        mailbox: mailboxName(scan.state.mailboxId),
+                        fresh: scan.fresh,
+                      }
+                    : undefined,
+              }}
+              sim={{
+                hasScenarios: lineHasContent(doc.trigger),
+                hasTrigger: lineHasContent(doc.trigger),
+                onAddTrigger: () => requestFocus('trigger', false),
+                onRunRecorded,
+                onOpenCopilot: () => setPanelTab('copilot'),
+                trigger: triggerText,
+                mailboxes: doc.mailboxes,
+                scan,
+                matchingIsNew,
+                onMatchingSeen: () => setMatchingIsNew(false),
+              }}
+            />
+          )
+        ) : (
+          <SimulatePanel
+            open={simOpen}
+            onClose={() => setSimOpen(false)}
+            hasScenarios={lineHasContent(doc.trigger)}
+            hasTrigger={lineHasContent(doc.trigger)}
+            onAddTrigger={() => requestFocus('trigger', false)}
+            onRunRecorded={onRunRecorded}
+            trigger={triggerText}
+            mailboxes={doc.mailboxes}
+            scan={scan}
+            matchingIsNew={matchingIsNew}
+            onMatchingSeen={() => setMatchingIsNew(false)}
+          />
+        )}
         <div className={styles.area}>
           <div className={styles.docScroll}>
             <div className={styles.doc}>
@@ -1219,8 +1287,8 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
                 <div className={styles.row}>
                   <span className={styles.gutter} aria-hidden />
                   <div className={styles.content}>
-                    <h2 className={styles.label}>When should this run:</h2>
-                    <div className={styles.triggerField}>
+                    <h2 className={styles.label}>Trigger</h2>
+                    <div className={styles.triggerLine}>
                       <EditorLine
                         fragments={doc.trigger}
                         placeholder={TRIGGER_PLACEHOLDER}
@@ -1237,10 +1305,17 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
                 </div>
               </section>
 
-              {/* Describe Procedure - the steps list. No section heading or divider
-                 here (Figma 647:40010 goes straight from the trigger to row 1); the
-                 gap to row 1 is owned by .stepsBlock's top padding. */}
+              {/* Describe Procedure - a "Description" section label on the same
+                 content rail as the trigger's (Figma 3342:16871), then the steps.
+                 The label sits in a gutter row so it aligns with step TEXT, with
+                 the step numbers outside it. */}
               <section className={`${styles.block} ${styles.stepsBlock}`}>
+                <div className={styles.row}>
+                  <span className={styles.gutter} aria-hidden />
+                  <div className={styles.content}>
+                    <h2 className={styles.label}>Description</h2>
+                  </div>
+                </div>
                 <ol
                   className={styles.steps}
                   ref={stepsListRef}
@@ -1485,73 +1560,6 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
             </div>
           )}
         </div>
-        {/* /canvas: the docked side panel (Copilot | Simulate tabs), equal height
-            to the canvas window. Non-companion routes (/api-example) keep the
-            toolbar-toggled floating Simulate panel. */}
-        {companions ? (
-          // The dock is not rendered while the cold-start modal is open; once the
-          // modal fades out (coldPhase -> 'docked') it mounts and fades itself in.
-          coldPhase === 'docked' && (
-            <SidePanel
-              tab={panelTab}
-              onTab={setPanelTab}
-              copilot={{
-                messages: copilotMessages,
-                onSend: sendCopilot,
-                onRegenerate: regenerateCopilot,
-                onClear: clearCopilot,
-                introReady: true,
-                onStop: stopCopilot,
-                busy: thinkIdx >= 0 || copilotMessages.some((m) => m.thinking || m.streaming),
-                onAttach: () => showHint('Attachments are coming soon.'),
-                onApplyProposal: applyProposal,
-                onDismissProposal: dismissProposal,
-                onUndoProposal: undoProposal,
-                onVerdict: setCopilotVerdict,
-                onMailboxAnswer: answerMailboxes,
-                onOpenEvaluation: () => setPanelTab('simulate'),
-                // The handoff line and the unprompted hint both read the LIVE
-                // scan, so Copilot can never contradict the Evaluation tab.
-                // Absent until a scan exists, and dropped once it is stale.
-                scanState:
-                  scan.state.mailboxId && scan.state.phase !== 'idle' && !scan.stale
-                    ? {
-                        scanning: scan.state.phase === 'scanning',
-                        count: scan.state.matches.length,
-                        mailbox: mailboxName(scan.state.mailboxId),
-                        fresh: scan.fresh,
-                      }
-                    : undefined,
-              }}
-              sim={{
-                hasScenarios: lineHasContent(doc.trigger),
-                hasTrigger: lineHasContent(doc.trigger),
-                onAddTrigger: () => requestFocus('trigger', false),
-                onRunRecorded,
-                onOpenCopilot: () => setPanelTab('copilot'),
-                trigger: triggerText,
-                mailboxes: doc.mailboxes,
-                scan,
-                matchingIsNew,
-                onMatchingSeen: () => setMatchingIsNew(false),
-              }}
-            />
-          )
-        ) : (
-          <SimulatePanel
-            open={simOpen}
-            onClose={() => setSimOpen(false)}
-            hasScenarios={lineHasContent(doc.trigger)}
-            hasTrigger={lineHasContent(doc.trigger)}
-            onAddTrigger={() => requestFocus('trigger', false)}
-            onRunRecorded={onRunRecorded}
-            trigger={triggerText}
-            mailboxes={doc.mailboxes}
-            scan={scan}
-            matchingIsNew={matchingIsNew}
-            onMatchingSeen={() => setMatchingIsNew(false)}
-          />
-        )}
       </div>
 
       {palette && (
