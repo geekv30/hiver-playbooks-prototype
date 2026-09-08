@@ -109,15 +109,53 @@
   }
 }
 
-/* A fresh scan result fills the card for its news window, then it fades back to
-   a plain card (Figma 3344:20223 -> 3345:28443). Never a permanent highlight. */
-.card[data-fresh] {
-  background: var(--surface-card);
-  border-color: transparent;
-}
-/* The fade back out - the fill leaves, nothing moves. */
+/* A fresh scan result breathes its fill three times and then leaves the card
+   plain (Figma 3344:20223 -> 3345:28443). The fill is an overlay so the motion
+   is pure opacity, and the card's own content sits above it. */
 .card {
+  position: relative;
   transition:
     border-color var(--d-hover) var(--ease-snap),
-    background 600ms var(--ease-snap);
+    background var(--d-hover) var(--ease-snap);
 }
+.card[data-fresh]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--surface-card);
+  pointer-events: none;
+  z-index: 0;
+  animation: cardBreathe 2000ms var(--ease-snap) 3 both;
+}
+.card[data-fresh] {
+  border-color: transparent;
+}
+/* Keep the content above the overlay. */
+.card > * {
+  position: relative;
+  z-index: 1;
+}
+@keyframes cardBreathe {
+  0% {
+    opacity: 0;
+  }
+  35% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+/* No motion: the fill simply sits there for the same window. */
+@media (prefers-reduced-motion: reduce) {
+  .card[data-fresh]::before {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* Title row carries the one-time NEW tag beside the name. */

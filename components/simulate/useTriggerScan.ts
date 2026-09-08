@@ -56,13 +56,15 @@ const STEP_MS = 90;
 // A batch of 50 reads in about half a second, which is quick enough that the
 // "finding matching emails" row flashed past before anyone could read it. The
 // scan holds its reading state for at least this long so the work it is doing
-// is legible - it never makes a scan slower than this, only visible.
-const MIN_VISIBLE_MS = 1400;
+// is legible - it never makes a scan slower than this, only visible. Long
+// enough to read the sentence and notice it went away.
+const MIN_VISIBLE_MS = 2600;
 // How long a settled scan stays "fresh" - the window in which the result is
-// still news, so the Evaluate card carries a fill and Copilot's row a violet
-// mark. After it, both settle to their resting treatment (Figma 3344:20223 ->
-// 3345:28443, and 3345:25415 -> 3351:30202).
-const FRESH_MS = 8000;
+// still news, so the Evaluate card breathes its fill and Copilot's row carries
+// a violet mark. After it, both settle to their resting treatment (Figma
+// 3344:20223 -> 3345:28443, and 3345:25415 -> 3351:30202). Matched to the
+// card's three pulses so the highlight and the animation end together.
+const FRESH_MS = 6400;
 
 export interface TriggerScan {
   state: ScanState;
