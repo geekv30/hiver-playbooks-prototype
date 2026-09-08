@@ -37,7 +37,7 @@ interface Props {
   trigger?: string;
   /** The shared mailboxes this skill runs on (ids). */
   mailboxes?: string[];
-  /** The canvas-level trigger scan (shared with the tab badge + Copilot). */
+  /** The canvas-level trigger scan (shared with Copilot's matching row). */
   scan?: TriggerScan;
   /** Called the first time the user opens Matching emails (retires the New pill). */
   onMatchingSeen?: () => void;

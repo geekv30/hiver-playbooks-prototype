@@ -81,6 +81,7 @@ export default function CopilotScanNote({
       type="button"
       className={styles.row}
       data-fresh={(fresh && actionable) || undefined}
+      data-reading={scanning || undefined}
       disabled={!actionable}
       aria-live="polite"
       onClick={() => onOpenEvaluation?.()}

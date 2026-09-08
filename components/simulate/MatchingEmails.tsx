@@ -32,7 +32,7 @@ interface Props {
   trigger: string;
   /** The shared mailboxes this skill runs on (ids). Empty until it has any. */
   mailboxes: string[];
-  /** The canvas-level scan (shared with the tab badge and Copilot's handoff). */
+  /** The canvas-level scan (shared with Copilot's matching row). */
   scan: TriggerScan;
   /** Leave this flow back to the Evaluate menu. */
   onExit: () => void;
@@ -135,11 +135,52 @@ export default function MatchingEmails({
     [mailboxes],
   );
 
+  // ONE header for every state of the flow, so "How it works?" is there from the
+  // start - including before a mailbox is picked, which is exactly when someone
+  // is most likely to ask what matching even is.
+  const header = (
+    <EvalBackHeader
+      title={EVAL_TITLES.matching}
+      icon={EVAL_ICONS.matching}
+      onBack={back}
+      action={
+        running ? undefined : (
+          <span className={styles.howWrap}>
+            <button
+              type="button"
+              className={styles.howBtn}
+              aria-expanded={showIntro}
+              onClick={() => {
+                if (showIntro) {
+                  markMatchingIntroSeen();
+                  setIntroReopened(false);
+                } else {
+                  setIntroReopened(true);
+                }
+              }}
+            >
+              <RiQuestionLine aria-hidden />
+              How it works?
+            </button>
+            {showIntro && (
+              <MatchingHowTooltip
+                onDismiss={() => {
+                  markMatchingIntroSeen();
+                  setIntroReopened(false);
+                }}
+              />
+            )}
+          </span>
+        )
+      }
+    />
+  );
+
   // ---- no trigger: nothing can be matched yet -----------------------------
   if (!hasTrigger) {
     return (
       <div className={styles.flow}>
-        <EvalBackHeader title={EVAL_TITLES.matching} icon={EVAL_ICONS.matching} onBack={onExit} />
+        {header}
         <div className={styles.scroll}>
           <SimEmptyState
             ghosts={GHOSTS.map((e) => (
@@ -165,7 +206,7 @@ export default function MatchingEmails({
   if (!mailbox) {
     return (
       <div className={styles.flow}>
-        <EvalBackHeader title={EVAL_TITLES.matching} icon={EVAL_ICONS.matching} onBack={onExit} />
+        {header}
         <div className={styles.controls}>
           <Dropdown
             options={mailboxOptions}
@@ -190,41 +231,7 @@ export default function MatchingEmails({
 
   return (
     <div className={styles.flow}>
-      <EvalBackHeader
-        title={EVAL_TITLES.matching}
-        icon={EVAL_ICONS.matching}
-        onBack={back}
-        action={
-          running ? undefined : (
-            <span className={styles.howWrap}>
-              <button
-                type="button"
-                className={styles.howBtn}
-                aria-expanded={showIntro}
-                onClick={() => {
-                  if (showIntro) {
-                    markMatchingIntroSeen();
-                    setIntroReopened(false);
-                  } else {
-                    setIntroReopened(true);
-                  }
-                }}
-              >
-                <RiQuestionLine aria-hidden />
-                How it works?
-              </button>
-              {showIntro && (
-                <MatchingHowTooltip
-                  onDismiss={() => {
-                    markMatchingIntroSeen();
-                    setIntroReopened(false);
-                  }}
-                />
-              )}
-            </span>
-          )
-        }
-      />
+      {header}
 
       {!running && (
         <div className={styles.scope}>

@@ -294,11 +294,11 @@ function GlowAnimated() {
   );
 }
 
-function PanelTabsDemo({ initial, badge }: { initial: SideTab; badge?: number }) {
+function PanelTabsDemo({ initial }: { initial: SideTab }) {
   const [activeTab, setActiveTab] = useState<SideTab>(initial);
   return (
     <div style={{ width: 360 }}>
-      <PanelTabs active={activeTab} onChange={setActiveTab} badge={badge} />
+      <PanelTabs active={activeTab} onChange={setActiveTab} />
     </div>
   );
 }
@@ -682,7 +682,6 @@ export default function ComponentLibrary() {
             <Row>
               <Spec label="copilot active"><PanelTabsDemo initial="copilot" /></Spec>
               <Spec label="evaluation active"><PanelTabsDemo initial="simulate" /></Spec>
-              <Spec label="match count found"><PanelTabsDemo initial="copilot" badge={9} /></Spec>
             </Row>
           </Block>
 

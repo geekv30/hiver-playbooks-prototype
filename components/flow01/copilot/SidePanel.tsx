@@ -66,7 +66,7 @@ export default function SidePanel({ tab, onTab, copilot, sim }: Props) {
   // renders its own `‹` back-header as a row BELOW the tabs (Figma 1745:67909).
   return (
     <aside className={styles.panel} aria-label="Copilot and Evaluation">
-      <PanelTabs active={tab} onChange={onTab} badge={sim.scan?.badge ?? null} />
+      <PanelTabs active={tab} onChange={onTab} />
       <div className={styles.body}>
         <div
           className={styles.pane}

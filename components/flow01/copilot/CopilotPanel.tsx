@@ -536,10 +536,9 @@ export default function CopilotPanel({
                     </button>
                   </li>
                 ))}
-                {/* A skill that already exists is scanned on open, and the badge
-                    alone sits on the tab the user is not looking at. The scan
-                    speaks here as the last row of the list - unprompted, so it
-                    stays quiet unless it has something to offer (hideEmpty). */}
+                {/* A skill that already exists is scanned on open, and this
+                    row is the ONLY place that says so. Unprompted, so it stays
+                    quiet unless it has something to offer (hideEmpty). */}
                 {scanState && (
                   <li
                     className={styles.starterReveal}

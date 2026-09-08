@@ -12,8 +12,8 @@
 // offered after every scan, matches or not, until the ceiling.
 //
 // The hook lives at canvas level (not inside the flow) because two other
-// surfaces read it: the count badge on the Evaluation tab, and Copilot's
-// handoff message after it drafts a skill.
+// surfaces read it: Copilot's matching row, and the Evaluate menu card's
+// fresh-result fill.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SimEmail } from '@/data/simFixtures';
@@ -53,6 +53,11 @@ const IDLE: ScanState = {
 // slow enough that the progress readout is legible rather than decorative.
 const STEP = 10;
 const STEP_MS = 90;
+// A batch of 50 reads in about half a second, which is quick enough that the
+// "finding matching emails" row flashed past before anyone could read it. The
+// scan holds its reading state for at least this long so the work it is doing
+// is legible - it never makes a scan slower than this, only visible.
+const MIN_VISIBLE_MS = 1400;
 // How long a settled scan stays "fresh" - the window in which the result is
 // still news, so the Evaluate card carries a fill and Copilot's row a violet
 // mark. After it, both settle to their resting treatment (Figma 3344:20223 ->
@@ -63,8 +68,6 @@ export interface TriggerScan {
   state: ScanState;
   /** Whether the live trigger has moved on since the scan ran. */
   stale: boolean;
-  /** Matched-email count once a scan has settled, else null (for the badge). */
-  badge: number | null;
   /** True for a short window after a scan finds something: the result is still
    *  news. Drives the temporary fill and the violet mark, nothing else. */
   fresh: boolean;
@@ -90,6 +93,7 @@ export function useTriggerScan(trigger: string): TriggerScan {
   const [fresh, setFresh] = useState(false);
   const freshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const settleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pool = useRef<SimEmail[]>([]);
   const triggerRef = useRef(trigger);
   useEffect(() => {
@@ -102,6 +106,16 @@ export function useTriggerScan(trigger: string): TriggerScan {
       timer.current = null;
     }
   }, []);
+
+  // Cancel a held settle too - stopping or restarting must not let an old
+  // result land on the new scan.
+  const clearAll = useCallback(() => {
+    clear();
+    if (settleTimer.current) {
+      clearTimeout(settleTimer.current);
+      settleTimer.current = null;
+    }
+  }, [clear]);
 
   // Arm the fresh window when a scan settles on something worth noticing.
   const armFresh = useCallback((found: number) => {
@@ -119,7 +133,7 @@ export function useTriggerScan(trigger: string): TriggerScan {
     },
     [],
   );
-  useEffect(() => clear, [clear]);
+  useEffect(() => clearAll, [clearAll]);
 
   const reduced = () =>
     typeof window !== 'undefined' &&
@@ -133,7 +147,7 @@ export function useTriggerScan(trigger: string): TriggerScan {
 
   const run = useCallback(
     (mailboxId: string, from: number, until: number, keep: SimEmail[]) => {
-      clear();
+      clearAll();
       pool.current = poolForMailbox(mailboxId);
 
       if (reduced()) {
@@ -175,6 +189,7 @@ export function useTriggerScan(trigger: string): TriggerScan {
       let scanned = from;
       let matches = keep;
       let hitsThisBatch = 0;
+      const startedAt = Date.now();
 
       timer.current = setInterval(() => {
         const next = Math.min(scanned + STEP, until);
@@ -191,25 +206,37 @@ export function useTriggerScan(trigger: string): TriggerScan {
 
         const scannedNow = scanned;
         const matchesNow = matches;
-        setState((prev) =>
-          prev.phase !== 'scanning'
-            ? prev
-            : {
-                ...prev,
-                phase: settle ? 'settled' : 'scanning',
-                scanned: scannedNow,
-                matches: matchesNow,
-                exhausted: settle && scannedNow >= SCAN_CEILING,
-              },
-        );
 
-        if (settle) {
-          clear();
-          armFresh(matchesNow.length);
+        if (!settle) {
+          setState((prev) =>
+            prev.phase !== 'scanning'
+              ? prev
+              : { ...prev, scanned: scannedNow, matches: matchesNow },
+          );
+          return;
         }
+
+        // Settling: stop reading now, but let the reading state finish being
+        // seen before the result replaces it.
+        clear();
+        const wait = Math.max(0, MIN_VISIBLE_MS - (Date.now() - startedAt));
+        settleTimer.current = setTimeout(() => {
+          setState((prev) =>
+            prev.phase !== 'scanning'
+              ? prev
+              : {
+                  ...prev,
+                  phase: 'settled',
+                  scanned: scannedNow,
+                  matches: matchesNow,
+                  exhausted: scannedNow >= SCAN_CEILING,
+                },
+          );
+          armFresh(matchesNow.length);
+        }, wait);
       }, STEP_MS);
     },
-    [armFresh, clear, matchesIn],
+    [armFresh, clearAll, clear, matchesIn],
   );
 
   const start = useCallback(
@@ -230,22 +257,20 @@ export function useTriggerScan(trigger: string): TriggerScan {
   }, [run]);
 
   const cancel = useCallback(() => {
-    clear();
+    clearAll();
     setState((prev) =>
       prev.phase === 'scanning'
         ? { ...prev, phase: 'settled', exhausted: prev.scanned >= SCAN_CEILING }
         : prev,
     );
-  }, [clear]);
+  }, [clearAll]);
 
   const reset = useCallback(() => {
-    clear();
+    clearAll();
     setFresh(false);
     setState({ ...IDLE, cleared: true });
-  }, [clear]);
+  }, [clearAll]);
 
   const stale = state.phase === 'settled' && state.triggerAtScan.trim() !== trigger.trim();
-  const badge = state.phase === 'settled' && !stale ? state.matches.length : null;
-
-  return { state, stale, badge, fresh: fresh && !stale, start, more, cancel, reset };
+  return { state, stale, fresh: fresh && !stale, start, more, cancel, reset };
 }

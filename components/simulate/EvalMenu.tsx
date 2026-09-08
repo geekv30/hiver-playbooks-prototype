@@ -50,8 +50,8 @@ interface Props {
  * subtitle; opening one enters its flow (the tabs stay pinned above).
  *
  * The Matching emails card says the same thing whatever the scan found - the
- * count lives on the tab badge and in Copilot's row. What the scan changes here
- * is temporary: a fill while the result is still news, then plain again.
+ * count is Copilot's row to report. What the scan changes here is temporary: a
+ * fill while the result is still news, then plain again.
  */
 export default function EvalMenu({ onOpen, matchFresh, matchIsNew }: Props) {
   return (
