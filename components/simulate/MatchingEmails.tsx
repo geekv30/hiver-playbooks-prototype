@@ -8,6 +8,7 @@ import {
   RiInboxUnarchiveLine,
   RiRefreshLine,
   RiFlaskLine,
+  RiQuestionLine,
 } from 'react-icons/ri';
 import { MAILBOXES, mailboxName } from '@/data/mailboxes';
 import { SCAN_CEILING, poolForMailbox } from '@/data/matchPool';
@@ -79,8 +80,12 @@ export default function MatchingEmails({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [runId, setRunId] = useState<string | null>(null);
   const [reviewId, setReviewId] = useState<string | null>(null);
-  // Read once, remembered across reloads (a module store, not component state).
+  // The explainer auto-shows until it has been read once (remembered across
+  // reloads by a module store). Reading it never puts it out of reach: the
+  // header's "How it works" reopens it whenever someone wants it back.
   const introSeen = useMatchingIntroSeen();
+  const [introReopened, setIntroReopened] = useState(false);
+  const showIntro = !introSeen || introReopened;
 
   // Entering the flow with a mailbox but no scan yet: start one. (Journey B
   // starts it on open at canvas level; this covers entering from a cold panel.)
@@ -184,7 +189,31 @@ export default function MatchingEmails({
 
   return (
     <div className={styles.flow}>
-      <EvalBackHeader title={EVAL_TITLES.matching} icon={EVAL_ICONS.matching} onBack={back} />
+      <EvalBackHeader
+        title={EVAL_TITLES.matching}
+        icon={EVAL_ICONS.matching}
+        onBack={back}
+        action={
+          running ? undefined : (
+            <button
+              type="button"
+              className={styles.howBtn}
+              aria-expanded={showIntro}
+              onClick={() => {
+                if (showIntro) {
+                  markMatchingIntroSeen();
+                  setIntroReopened(false);
+                } else {
+                  setIntroReopened(true);
+                }
+              }}
+            >
+              <RiQuestionLine aria-hidden />
+              How it works
+            </button>
+          )
+        }
+      />
 
       {!running && (
         <div className={styles.scope}>
@@ -234,7 +263,7 @@ export default function MatchingEmails({
         </div>
       )}
 
-      {!introSeen && !running && (
+      {showIntro && !running && (
         <div className={styles.intro}>
           <p className={styles.introTitle}>How matching works</p>
           <ul className={styles.introList}>
@@ -242,7 +271,14 @@ export default function MatchingEmails({
             <li>Hiver AI keeps the ones your trigger would fire on, and stops at the first batch with matches.</li>
             <li>These are real customer emails. Evaluating one is a dry run - nothing is sent.</li>
           </ul>
-          <button type="button" className={styles.introBtn} onClick={markMatchingIntroSeen}>
+          <button
+            type="button"
+            className={styles.introBtn}
+            onClick={() => {
+              markMatchingIntroSeen();
+              setIntroReopened(false);
+            }}
+          >
             Got it
           </button>
         </div>
