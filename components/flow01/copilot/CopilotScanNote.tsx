@@ -1,7 +1,8 @@
 'use client';
 
-import { RiSearchEyeLine, RiPlayLine } from 'react-icons/ri';
 import Spinner from '@/components/atoms/Spinner';
+import { SearchAiIcon } from '@/components/icons/ui';
+import NewTag from '@/components/atoms/NewTag';
 import styles from './CopilotScanNote.module.css';
 
 export interface ScanNoteState {
@@ -11,49 +12,84 @@ export interface ScanNoteState {
   count: number;
   /** The mailbox being read (one at a time). */
   mailbox: string;
+  /** True while the result is still news: the mark is violet, then it settles
+   *  to the resting ink (Figma 3345:25415 -> 3351:30202). */
+  fresh?: boolean;
 }
 
 interface Props {
   state: ScanNoteState;
-  /** The note's one action. Omitted while scanning, or with nothing to show. */
+  /** Open the Evaluation tab on the matched list. */
   onOpenEvaluation?: () => void;
-  /** Suppress the "nothing matched" wording - used where the scan was never
-   *  asked for, so an empty result is not worth telling the user about. */
+  /** Row (the Copilot screen's list) or note (inside a reply). */
+  variant?: 'row' | 'note';
+  /** Row only: suppress a scan that found nothing - unprompted, so it speaks
+   *  only when it has something to offer. */
   hideEmpty?: boolean;
 }
 
 /**
  * CopilotScanNote - what trigger matching says inside Copilot, and the whole of
- * what it says: a status line while it reads, then one sentence and one button
- * pointing at the Evaluation tab. The matched emails themselves never render
- * here; Copilot points, the Evaluation tab holds the surface.
+ * what it says. The matched emails themselves never render here: Copilot points,
+ * the Evaluation tab holds the surface.
  *
- * One renderer for both placements: inside a reply (after Copilot asks which
- * mailboxes a new skill runs on) and on the empty Copilot screen (a skill that
- * already exists, scanned quietly on open).
+ * Two placements, one renderer. On the Copilot screen it is the last row of the
+ * starter list (Figma 3351:29653 while it reads, 3345:25415 once it has found
+ * something, 3351:30202 after that result stops being news). Inside a reply it
+ * is a note, because there it answers a question the user was asked.
  */
-export default function CopilotScanNote({ state, onOpenEvaluation, hideEmpty }: Props) {
-  const { scanning, count, mailbox } = state;
-  if (!scanning && count === 0 && hideEmpty) return null;
+export default function CopilotScanNote({
+  state,
+  onOpenEvaluation,
+  variant = 'row',
+  hideEmpty,
+}: Props) {
+  const { scanning, count, mailbox, fresh } = state;
+  const empty = !scanning && count === 0;
+  if (empty && hideEmpty) return null;
+
+  const label = scanning
+    ? 'Finding matching emails for you...'
+    : empty
+      ? `Nothing in ${mailbox} matches your trigger yet`
+      : `Evaluate on ${count} ${count === 1 ? 'email' : 'emails'} that match your trigger`;
+
+  const mark = scanning ? <Spinner size={16} /> : <SearchAiIcon width={16} height={16} />;
+
+  if (variant === 'note') {
+    return (
+      <div className={styles.note} aria-live="polite">
+        <span className={styles.noteIcon} aria-hidden>
+          {mark}
+        </span>
+        <span className={styles.noteText}>
+          {scanning
+            ? `Looking for emails that match your trigger in ${mailbox}`
+            : empty
+              ? `Nothing in ${mailbox} matches your trigger yet`
+              : `Found ${count} ${count === 1 ? 'email' : 'emails'} in ${mailbox} that match your trigger`}
+        </span>
+      </div>
+    );
+  }
+
+  // A row that does nothing yet is a status line, not a control.
+  const actionable = !scanning && count > 0 && !!onOpenEvaluation;
 
   return (
-    <div className={styles.note} data-found={!scanning || undefined} aria-live="polite">
-      <span className={styles.icon} aria-hidden>
-        {scanning ? <Spinner size={14} /> : <RiSearchEyeLine />}
+    <button
+      type="button"
+      className={styles.row}
+      data-fresh={(fresh && actionable) || undefined}
+      disabled={!actionable}
+      aria-live="polite"
+      onClick={() => onOpenEvaluation?.()}
+    >
+      <span className={styles.rowIcon} aria-hidden>
+        {mark}
       </span>
-      <span className={styles.text}>
-        {scanning
-          ? `Looking for emails that match your trigger in ${mailbox}`
-          : count === 0
-            ? `Nothing in ${mailbox} matches your trigger yet`
-            : `Found ${count} ${count === 1 ? 'email' : 'emails'} in ${mailbox} that match your trigger`}
-      </span>
-      {!scanning && count > 0 && onOpenEvaluation && (
-        <button type="button" className={styles.btn} onClick={onOpenEvaluation}>
-          <RiPlayLine aria-hidden />
-          Open Evaluation
-        </button>
-      )}
-    </div>
+      <span className={styles.rowText}>{label}</span>
+      {actionable && <NewTag />}
+    </button>
   );
 }

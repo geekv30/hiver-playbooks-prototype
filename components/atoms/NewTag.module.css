@@ -1,0 +1,18 @@
+/* NEW tag - Figma 3356:30386: violet-subtle pill, violet-intense label,
+   11px/14 medium, 6px side padding, fully rounded. */
+.tag {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  border-radius: 9999px;
+  background: var(--violet-subtle);
+  color: var(--violet-intense);
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 14px;
+  letter-spacing: 0;
+  white-space: nowrap;
+}

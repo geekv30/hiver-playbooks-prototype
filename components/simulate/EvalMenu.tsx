@@ -1,13 +1,9 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import {
-  RiArrowRightSLine,
-  RiTimeLine,
-  RiMailAiLine,
-  RiHashtag,
-  RiSearchEyeLine,
-} from 'react-icons/ri';
+import { RiArrowRightSLine, RiTimeLine, RiMailAiLine, RiHashtag } from 'react-icons/ri';
+import { SearchAiIcon } from '@/components/icons/ui';
+import NewTag from '@/components/atoms/NewTag';
 import styles from './EvalMenu.module.css';
 
 export type EvalView = 'menu' | 'matching' | 'recent' | 'scenarios' | 'custom';
@@ -33,7 +29,7 @@ export const EVAL_TITLES: Record<Exclude<EvalView, 'menu'>, string> = {
 // One icon per flow - shared by the entry card and the flow's back-header so the
 // two always match (Figma 1721:67361: time-line / mail-ai-line / hashtag).
 export const EVAL_ICONS: Record<Exclude<EvalView, 'menu'>, ReactNode> = {
-  matching: <RiSearchEyeLine />,
+  matching: <SearchAiIcon />,
   recent: <RiTimeLine />,
   scenarios: <RiMailAiLine />,
   custom: <RiHashtag />,
@@ -41,60 +37,48 @@ export const EVAL_ICONS: Record<Exclude<EvalView, 'menu'>, ReactNode> = {
 
 interface Props {
   onOpen: (view: Exclude<EvalView, 'menu'>) => void;
-  /** Matched-email count once a scan has settled - replaces that card's subtitle. */
-  matchCount?: number | null;
-  /** Where the scan looked, for the matched subtitle ("6 in Support"). */
-  matchMailbox?: string;
-  /** True until the user has opened Matching emails once (the New pill). */
+  /** True while a fresh scan result is still news: the card carries a fill for
+   *  that window and then settles back to plain (Figma 3344:20223 / 3345:28443). */
+  matchFresh?: boolean;
+  /** True until the user has opened Matching emails once (the NEW tag). */
   matchIsNew?: boolean;
 }
 
 /**
  * EvalMenu - the Evaluate root (Figma 1721:67361): "Evaluate your skill in one of
  * these ways" over the entry cards. Each card carries its icon, title and
- * subtitle; opening one enters its flow (the tabs stay pinned above). The
- * Matching emails card also carries what the scan found, so the offer is on the
- * card itself rather than in a banner.
+ * subtitle; opening one enters its flow (the tabs stay pinned above).
+ *
+ * The Matching emails card says the same thing whatever the scan found - the
+ * count lives on the tab badge and in Copilot's row. What the scan changes here
+ * is temporary: a fill while the result is still news, then plain again.
  */
-export default function EvalMenu({ onOpen, matchCount, matchMailbox, matchIsNew }: Props) {
-  const matchedSub =
-    matchCount != null && matchCount > 0
-      ? `${matchCount} ${matchCount === 1 ? 'email matches' : 'emails match'} your trigger${
-          matchMailbox ? ` in ${matchMailbox}` : ''
-        }`
-      : null;
-
+export default function EvalMenu({ onOpen, matchFresh, matchIsNew }: Props) {
   return (
     <div className={styles.menu}>
       <h3 className={styles.heading}>Evaluate your skill in one of these ways</h3>
       <div className={styles.cards}>
-        {EVAL_ENTRIES.map((e) => {
-          const sub = e.id === 'matching' && matchedSub ? matchedSub : e.sub;
-          const highlight = e.id === 'matching' && matchedSub != null;
-          return (
-            <button
-              key={e.id}
-              type="button"
-              className={styles.card}
-              data-highlight={highlight || undefined}
-              onClick={() => onOpen(e.id)}
-            >
-              <span className={styles.text}>
-                <span className={styles.icon} aria-hidden>
-                  {EVAL_ICONS[e.id]}
-                </span>
-                <span className={styles.titleSub}>
-                  <span className={styles.title}>
-                    {e.title}
-                    {e.id === 'matching' && matchIsNew && <span className={styles.new}>New</span>}
-                  </span>
-                  <span className={styles.sub}>{sub}</span>
-                </span>
+        {EVAL_ENTRIES.map((e) => (
+          <button
+            key={e.id}
+            type="button"
+            className={styles.card}
+            data-fresh={(e.id === 'matching' && matchFresh) || undefined}
+            onClick={() => onOpen(e.id)}
+          >
+            <span className={styles.text}>
+              <span className={styles.icon} aria-hidden>
+                {EVAL_ICONS[e.id]}
               </span>
-              <RiArrowRightSLine className={styles.chevron} aria-hidden />
-            </button>
-          );
-        })}
+              <span className={styles.titleSub}>
+                <span className={styles.title}>{e.title}</span>
+                <span className={styles.sub}>{e.sub}</span>
+              </span>
+            </span>
+            {e.id === 'matching' && matchIsNew && <NewTag />}
+            <RiArrowRightSLine className={styles.chevron} aria-hidden />
+          </button>
+        ))}
       </div>
     </div>
   );

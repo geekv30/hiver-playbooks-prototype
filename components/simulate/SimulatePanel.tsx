@@ -10,7 +10,6 @@ import RecentEmails from './RecentEmails';
 import AiScenarios from './AiScenarios';
 import CustomEval from './CustomEval';
 import type { TriggerScan } from './useTriggerScan';
-import { mailboxName } from '@/data/mailboxes';
 import styles from './SimulatePanel.module.css';
 
 interface Props {
@@ -115,12 +114,7 @@ export default function SimulatePanel({
 
         <div className={styles.viewWrap} data-dir={dir ?? undefined} key={view}>
           {view === 'menu' && (
-            <EvalMenu
-              onOpen={openFlow}
-              matchCount={scan?.badge ?? null}
-              matchMailbox={scan?.state.mailboxId ? mailboxName(scan.state.mailboxId) : undefined}
-              matchIsNew={matchingIsNew}
-            />
+            <EvalMenu onOpen={openFlow} matchFresh={scan?.fresh} matchIsNew={matchingIsNew} />
           )}
 
           {view === 'matching' && scan && (

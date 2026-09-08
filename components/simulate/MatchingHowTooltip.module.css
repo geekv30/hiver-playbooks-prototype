@@ -1,0 +1,68 @@
+/* MatchingHowTooltip - Figma 3345:22590. Dark bubble, 6px radius, an up-arrow
+   that points at the "How it works?" action, and a two-step numbered list. */
+
+.tip {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: -6px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  animation: tipIn var(--d-enter) var(--ease-snap);
+}
+
+.arrow {
+  width: 10px;
+  height: 5px;
+  margin-right: 34px;
+  margin-bottom: -1px;
+  background: var(--tooltip-bg);
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+.bubble {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 16px 10px 12px;
+  border-radius: 6px;
+  background: var(--tooltip-bg);
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.18);
+}
+
+.title {
+  margin: 0 0 0 4px;
+  font-size: var(--fs-small); /* 13px */
+  font-weight: 500;
+  line-height: 19px;
+  color: var(--tooltip-ink);
+}
+
+.list {
+  margin: 0;
+  padding-left: 18px;
+  width: 188px;
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  color: var(--tooltip-muted);
+}
+
+@keyframes tipIn {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tip {
+    animation: none;
+  }
+}

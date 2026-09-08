@@ -53,6 +53,11 @@ const IDLE: ScanState = {
 // slow enough that the progress readout is legible rather than decorative.
 const STEP = 10;
 const STEP_MS = 90;
+// How long a settled scan stays "fresh" - the window in which the result is
+// still news, so the Evaluate card carries a fill and Copilot's row a violet
+// mark. After it, both settle to their resting treatment (Figma 3344:20223 ->
+// 3345:28443, and 3345:25415 -> 3351:30202).
+const FRESH_MS = 8000;
 
 export interface TriggerScan {
   state: ScanState;
@@ -60,6 +65,9 @@ export interface TriggerScan {
   stale: boolean;
   /** Matched-email count once a scan has settled, else null (for the badge). */
   badge: number | null;
+  /** True for a short window after a scan finds something: the result is still
+   *  news. Drives the temporary fill and the violet mark, nothing else. */
+  fresh: boolean;
   /** Scan a mailbox from the top. Restarts any scan in flight. */
   start: (mailboxId: string) => void;
   /** Read one more batch of 50, up to the ceiling. */
@@ -79,11 +87,10 @@ export function useTriggerScan(trigger: string): TriggerScan {
     stateRef.current = state;
   }, [state]);
 
+  const [fresh, setFresh] = useState(false);
+  const freshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const pool = useRef<SimEmail[]>([]);
-  const endAt = useRef(0); // where this run must stop reading
-  const auto = useRef(true); // true = walk batches until a hit; false = one batch
-  const batchHits = useRef(0); // matches found in the batch being read
   const triggerRef = useRef(trigger);
   useEffect(() => {
     triggerRef.current = trigger;
@@ -95,6 +102,23 @@ export function useTriggerScan(trigger: string): TriggerScan {
       timer.current = null;
     }
   }, []);
+
+  // Arm the fresh window when a scan settles on something worth noticing.
+  const armFresh = useCallback((found: number) => {
+    if (freshTimer.current) clearTimeout(freshTimer.current);
+    if (found <= 0) {
+      setFresh(false);
+      return;
+    }
+    setFresh(true);
+    freshTimer.current = setTimeout(() => setFresh(false), FRESH_MS);
+  }, []);
+  useEffect(
+    () => () => {
+      if (freshTimer.current) clearTimeout(freshTimer.current);
+    },
+    [],
+  );
   useEffect(() => clear, [clear]);
 
   const reduced = () =>
@@ -108,12 +132,9 @@ export function useTriggerScan(trigger: string): TriggerScan {
   );
 
   const run = useCallback(
-    (mailboxId: string, from: number, until: number, keep: SimEmail[], continuous: boolean) => {
+    (mailboxId: string, from: number, until: number, keep: SimEmail[]) => {
       clear();
       pool.current = poolForMailbox(mailboxId);
-      endAt.current = until;
-      auto.current = continuous;
-      batchHits.current = 0;
 
       if (reduced()) {
         let scanned = from;
@@ -134,6 +155,7 @@ export function useTriggerScan(trigger: string): TriggerScan {
           exhausted: scanned >= SCAN_CEILING,
           cleared: false,
         });
+        armFresh(found.length);
         return;
       }
 
@@ -147,40 +169,55 @@ export function useTriggerScan(trigger: string): TriggerScan {
         cleared: false,
       });
 
+      // The loop owns its own cursor rather than reading it back out of state:
+      // a setState updater must stay pure, and arming the fresh window from
+      // inside one silently does nothing.
+      let scanned = from;
+      let matches = keep;
+      let hitsThisBatch = 0;
+
       timer.current = setInterval(() => {
-        setState((prev) => {
-          if (prev.phase !== 'scanning') return prev;
-          const next = Math.min(prev.scanned + STEP, endAt.current);
-          const hits = matchesIn(prev.scanned, next);
-          batchHits.current += hits.length;
-          const matches = hits.length > 0 ? [...prev.matches, ...hits] : prev.matches;
-          const atBatchEnd = next % SCAN_BATCH === 0 || next >= endAt.current;
-          // Settle when this run's window is done, or at the end of a batch
-          // that found something. Otherwise roll into the next batch.
-          const settle = next >= endAt.current || (atBatchEnd && batchHits.current > 0);
-          if (settle) {
-            clear();
-            return {
-              ...prev,
-              phase: 'settled',
-              scanned: next,
-              matches,
-              exhausted: next >= SCAN_CEILING,
-            };
-          }
-          if (atBatchEnd) batchHits.current = 0;
-          return { ...prev, scanned: next, matches };
-        });
+        const next = Math.min(scanned + STEP, until);
+        const hits = matchesIn(scanned, next);
+        hitsThisBatch += hits.length;
+        if (hits.length > 0) matches = [...matches, ...hits];
+        scanned = next;
+
+        const atBatchEnd = scanned % SCAN_BATCH === 0 || scanned >= until;
+        // Settle when this run's window is done, or at the end of a batch that
+        // found something. Otherwise roll into the next batch.
+        const settle = scanned >= until || (atBatchEnd && hitsThisBatch > 0);
+        if (atBatchEnd && !settle) hitsThisBatch = 0;
+
+        const scannedNow = scanned;
+        const matchesNow = matches;
+        setState((prev) =>
+          prev.phase !== 'scanning'
+            ? prev
+            : {
+                ...prev,
+                phase: settle ? 'settled' : 'scanning',
+                scanned: scannedNow,
+                matches: matchesNow,
+                exhausted: settle && scannedNow >= SCAN_CEILING,
+              },
+        );
+
+        if (settle) {
+          clear();
+          armFresh(matchesNow.length);
+        }
       }, STEP_MS);
     },
-    [clear, matchesIn],
+    [armFresh, clear, matchesIn],
   );
 
   const start = useCallback(
     (mailboxId: string) => {
       if (!mailboxId || !triggerRef.current.trim()) return;
+      setFresh(false);
       // Continuous: batch after batch until one produces matches, or the ceiling.
-      run(mailboxId, 0, SCAN_CEILING, [], true);
+      run(mailboxId, 0, SCAN_CEILING, []);
     },
     [run],
   );
@@ -189,7 +226,7 @@ export function useTriggerScan(trigger: string): TriggerScan {
     const s = stateRef.current;
     if (s.phase === 'scanning' || !s.mailboxId || s.scanned >= SCAN_CEILING) return;
     const until = Math.min(s.scanned + SCAN_BATCH, SCAN_CEILING);
-    run(s.mailboxId, s.scanned, until, s.matches, false);
+    run(s.mailboxId, s.scanned, until, s.matches);
   }, [run]);
 
   const cancel = useCallback(() => {
@@ -203,11 +240,12 @@ export function useTriggerScan(trigger: string): TriggerScan {
 
   const reset = useCallback(() => {
     clear();
+    setFresh(false);
     setState({ ...IDLE, cleared: true });
   }, [clear]);
 
   const stale = state.phase === 'settled' && state.triggerAtScan.trim() !== trigger.trim();
   const badge = state.phase === 'settled' && !stale ? state.matches.length : null;
 
-  return { state, stale, badge, start, more, cancel, reset };
+  return { state, stale, badge, fresh: fresh && !stale, start, more, cancel, reset };
 }

@@ -10,6 +10,7 @@ import {
   RiFlaskLine,
   RiQuestionLine,
 } from 'react-icons/ri';
+import MatchingHowTooltip from './MatchingHowTooltip';
 import { MAILBOXES, mailboxName } from '@/data/mailboxes';
 import { SCAN_CEILING, poolForMailbox } from '@/data/matchPool';
 import type { SimEmail, SimStatusKind } from '@/data/simFixtures';
@@ -195,22 +196,32 @@ export default function MatchingEmails({
         onBack={back}
         action={
           running ? undefined : (
-            <button
-              type="button"
-              className={styles.howBtn}
-              aria-expanded={showIntro}
-              onClick={() => {
-                if (showIntro) {
-                  markMatchingIntroSeen();
-                  setIntroReopened(false);
-                } else {
-                  setIntroReopened(true);
-                }
-              }}
-            >
-              <RiQuestionLine aria-hidden />
-              How it works
-            </button>
+            <span className={styles.howWrap}>
+              <button
+                type="button"
+                className={styles.howBtn}
+                aria-expanded={showIntro}
+                onClick={() => {
+                  if (showIntro) {
+                    markMatchingIntroSeen();
+                    setIntroReopened(false);
+                  } else {
+                    setIntroReopened(true);
+                  }
+                }}
+              >
+                <RiQuestionLine aria-hidden />
+                How it works?
+              </button>
+              {showIntro && (
+                <MatchingHowTooltip
+                  onDismiss={() => {
+                    markMatchingIntroSeen();
+                    setIntroReopened(false);
+                  }}
+                />
+              )}
+            </span>
           )
         }
       />
@@ -251,14 +262,6 @@ export default function MatchingEmails({
                 </>
               )}
             </p>
-            {/* Reading deeper belongs beside the depth it changes, not at the
-                foot of the list where a long list hides it and a one-row list
-                leaves it dangling. */}
-            {showScanMore && (
-              <button type="button" className={styles.moreBtn} onClick={scan.more}>
-                Scan 50 more
-              </button>
-            )}
           </div>
         </div>
       )}
@@ -269,27 +272,6 @@ export default function MatchingEmails({
           <button type="button" className={styles.staleBtn} onClick={() => scan.start(mailbox)}>
             <RiRefreshLine aria-hidden />
             Rematch
-          </button>
-        </div>
-      )}
-
-      {showIntro && !running && (
-        <div className={styles.intro}>
-          <p className={styles.introTitle}>How matching works</p>
-          <ul className={styles.introList}>
-            <li>We read the {SCAN_CEILING} most recent emails in one mailbox, 50 at a time.</li>
-            <li>Hiver AI keeps the ones your trigger would fire on, and stops at the first batch with matches.</li>
-            <li>These are real customer emails. Evaluating one is a dry run - nothing is sent.</li>
-          </ul>
-          <button
-            type="button"
-            className={styles.introBtn}
-            onClick={() => {
-              markMatchingIntroSeen();
-              setIntroReopened(false);
-            }}
-          >
-            Got it
           </button>
         </div>
       )}
@@ -316,7 +298,7 @@ export default function MatchingEmails({
           <div className={styles.zeroActions}>
             {showScanMore && (
               <Button variant="secondary" onClick={scan.more}>
-                Scan 50 more
+                Scan more
               </Button>
             )}
             {onTryScenarios && (
@@ -365,6 +347,12 @@ export default function MatchingEmails({
               />
             </div>
           ))}
+
+          {showScanMore && (
+            <button type="button" className={styles.moreBtn} onClick={scan.more}>
+              Scan more
+            </button>
+          )}
 
           {scanning && (
             <div className={styles.skeletons} aria-hidden>

@@ -27,7 +27,7 @@
 .card {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
   padding: 14px 18px;
   border: 1px solid var(--hairline-soft); /* Gray 6 #ECEFF6 */
@@ -76,9 +76,6 @@
   min-width: 0;
 }
 .title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
   font-size: var(--fs-small); /* 13px (Figma body/xs/medium) */
   font-weight: 500;
   line-height: 19px;
@@ -112,29 +109,15 @@
   }
 }
 
-/* The Matching-emails card once a scan has found something: a bg tint and a
-   hairline, never a heavier border - the offer lives on the card, not a banner. */
-.card[data-highlight] {
-  background: var(--accent-bg);
-  border-color: color-mix(in srgb, var(--accent) 22%, transparent);
+/* A fresh scan result fills the card for its news window, then it fades back to
+   a plain card (Figma 3344:20223 -> 3345:28443). Never a permanent highlight. */
+.card[data-fresh] {
+  background: var(--surface-card);
+  border-color: transparent;
 }
-.card[data-highlight]:hover {
-  border-color: color-mix(in srgb, var(--accent) 36%, transparent);
-}
-.card[data-highlight] .icon {
-  color: var(--accent);
-}
-
-/* Title row carries the one-time New pill beside the name. */
-.new {
-  flex: none;
-  padding: 1px 5px;
-  border-radius: 4px;
-  background: var(--accent);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 600;
-  line-height: 14px;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+/* The fade back out - the fill leaves, nothing moves. */
+.card {
+  transition:
+    border-color var(--d-hover) var(--ease-snap),
+    background 600ms var(--ease-snap);
 }

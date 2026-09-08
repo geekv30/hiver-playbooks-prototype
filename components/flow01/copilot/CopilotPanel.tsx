@@ -451,10 +451,7 @@ export default function CopilotPanel({
 
                             {settled && m.scan && scanState && (
                               <div className={styles.scanSlot}>
-                                <CopilotScanNote
-                                  state={scanState}
-                                  onOpenEvaluation={onOpenEvaluation}
-                                />
+                                <CopilotScanNote state={scanState} variant="note" />
                               </div>
                             )}
 
@@ -520,19 +517,6 @@ export default function CopilotPanel({
                   <h2 className={styles.heroTitle}>How can Copilot help you?</h2>
                 </div>
               </div>
-              {scanState && (
-                <div className={styles.scanSlot}>
-                  {/* A skill that already exists is scanned on open, and the
-                      badge alone sits on the tab the user is not looking at.
-                      Unprompted, so it stays quiet and only speaks when it has
-                      something to offer (hideEmpty). */}
-                  <CopilotScanNote
-                    state={scanState}
-                    onOpenEvaluation={onOpenEvaluation}
-                    hideEmpty
-                  />
-                </div>
-              )}
               <ul className={styles.starters}>
                 {STARTERS.map((s, i) => (
                   <li
@@ -552,6 +536,22 @@ export default function CopilotPanel({
                     </button>
                   </li>
                 ))}
+                {/* A skill that already exists is scanned on open, and the badge
+                    alone sits on the tab the user is not looking at. The scan
+                    speaks here as the last row of the list - unprompted, so it
+                    stays quiet unless it has something to offer (hideEmpty). */}
+                {scanState && (
+                  <li
+                    className={styles.starterReveal}
+                    style={{ '--i': STARTERS.length } as CSSProperties}
+                  >
+                    <CopilotScanNote
+                      state={scanState}
+                      onOpenEvaluation={onOpenEvaluation}
+                      hideEmpty
+                    />
+                  </li>
+                )}
               </ul>
               {composer}
             </div>

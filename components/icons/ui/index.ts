@@ -2,6 +2,7 @@
 export { DragIcon } from './Drag';
 export { KebabIcon } from './Kebab';
 export { SearchIcon } from './Search';
+export { SearchAiIcon } from './SearchAi';
 export { SettingsIcon } from './Settings';
 export { SparkleIcon } from './Sparkle';
 export { PlayIcon } from './Play';

@@ -1519,6 +1519,7 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
                         scanning: scan.state.phase === 'scanning',
                         count: scan.state.matches.length,
                         mailbox: mailboxName(scan.state.mailboxId),
+                        fresh: scan.fresh,
                       }
                     : undefined,
               }}

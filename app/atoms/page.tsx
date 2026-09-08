@@ -46,6 +46,8 @@ import CopilotSparkle from '@/components/flow01/copilot/CopilotSparkle';
 import PanelTabs, { type SideTab } from '@/components/flow01/copilot/PanelTabs';
 import CopilotMailboxAsk from '@/components/flow01/copilot/CopilotMailboxAsk';
 import CopilotScanNote from '@/components/flow01/copilot/CopilotScanNote';
+import NewTag from '@/components/atoms/NewTag';
+import MatchingHowTooltip from '@/components/simulate/MatchingHowTooltip';
 import CopilotProposal from '@/components/flow01/copilot/CopilotProposal';
 import CopilotPanel from '@/components/flow01/copilot/CopilotPanel';
 import SidePanel from '@/components/flow01/copilot/SidePanel';
@@ -311,10 +313,10 @@ const NOOP = () => {};
 // ----------------------------------------------------------------------------
 
 const NAV: { id: string; label: string; count: number }[] = [
-  { id: 'atoms', label: 'Atoms', count: 9 },
+  { id: 'atoms', label: 'Atoms', count: 10 },
   { id: 'editor', label: 'Editor', count: 9 },
   { id: 'copilot', label: 'Copilot', count: 7 },
-  { id: 'evaluate', label: 'Evaluate', count: 11 },
+  { id: 'evaluate', label: 'Evaluate', count: 12 },
   { id: 'modals', label: 'Modals', count: 4 },
   { id: 'icons', label: 'Icons', count: 2 },
 ];
@@ -413,6 +415,12 @@ export default function ComponentLibrary() {
           </div>
           <p className={styles.categoryNote}>The leaf primitives the journeys build on.</p>
           <div className={styles.categoryRule} />
+
+          <Block name="NewTag" imp="atoms/NewTag" desc="The NEW marker on a capability the user has not met yet - violet-subtle pill, violet-intense label. One renderer wherever it appears.">
+            <Row>
+              <Spec label="tag"><NewTag /></Spec>
+            </Row>
+          </Block>
 
           <Block name="Badge" imp="atoms/Badge" desc="A small count or status pill, intent-toned.">
             <Row>
@@ -693,21 +701,26 @@ export default function ComponentLibrary() {
             </Row>
           </Block>
 
-          <Block name="CopilotScanNote" imp="flow01/copilot/CopilotScanNote" desc="What trigger matching says inside Copilot, and all it says - a status line while it reads, then one sentence and one button pointing at the Evaluation tab. Same renderer in a reply and on the empty Copilot screen.">
+          <Block name="CopilotScanNote" imp="flow01/copilot/CopilotScanNote" desc="Trigger matching's voice inside Copilot: the last row of the starter list, reading then reporting. A found result is violet while it is still news, then settles to resting ink. Inside a reply it renders as a note instead.">
             <Row>
-              <Spec label="scanning">
+              <Spec label="reading">
                 <div style={{ width: 340 }}>
                   <CopilotScanNote state={{ scanning: true, count: 0, mailbox: 'Support' }} />
                 </div>
               </Spec>
-              <Spec label="matches found">
+              <Spec label="found · still news">
+                <div style={{ width: 340 }}>
+                  <CopilotScanNote state={{ scanning: false, count: 9, mailbox: 'Support', fresh: true }} onOpenEvaluation={() => {}} />
+                </div>
+              </Spec>
+              <Spec label="found · settled">
                 <div style={{ width: 340 }}>
                   <CopilotScanNote state={{ scanning: false, count: 9, mailbox: 'Support' }} onOpenEvaluation={() => {}} />
                 </div>
               </Spec>
-              <Spec label="nothing matched">
+              <Spec label="in a reply">
                 <div style={{ width: 340 }}>
-                  <CopilotScanNote state={{ scanning: false, count: 0, mailbox: 'Support' }} />
+                  <CopilotScanNote state={{ scanning: false, count: 9, mailbox: 'Support' }} variant="note" />
                 </div>
               </Spec>
             </Row>
@@ -826,17 +839,23 @@ export default function ComponentLibrary() {
 
           <Block name="EvalMenu" imp="simulate/EvalMenu" desc="The Evaluate root - four entry cards (Matching emails / Recent conversations / AI scenarios / Custom email).">
             <Row>
-              <Spec label="no scan yet">
+              <Spec label="settled">
                 <div style={{ width: 360 }}>
                   <EvalMenu onOpen={() => {}} />
                 </div>
               </Spec>
-              <Spec label="matches found">
+              <Spec label="fresh result">
                 <div style={{ width: 360 }}>
-                  <EvalMenu onOpen={() => {}} matchCount={9} matchMailbox="Support" matchIsNew />
+                  <EvalMenu onOpen={() => {}} matchFresh matchIsNew />
                 </div>
               </Spec>
             </Row>
+          </Block>
+
+          <Block name="MatchingHowTooltip" imp="simulate/MatchingHowTooltip" desc="How matching works, as a tooltip rather than a panel - it floats over the flow instead of pushing the list down, so asking costs no space and no scroll position.">
+            <div style={{ position: 'relative', width: 360, height: 150, display: 'flex', justifyContent: 'flex-end' }}>
+              <MatchingHowTooltip onDismiss={() => {}} />
+            </div>
           </Block>
 
           <Block name="ScenariosEmpty" imp="simulate/ScenariosEmpty" desc="The Scenarios empty state - faded ghost cards behind an icon and a light 'Add a trigger' action.">
