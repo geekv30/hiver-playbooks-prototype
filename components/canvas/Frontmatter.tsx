@@ -46,7 +46,7 @@ export default function Frontmatter({ fm, onChange }: Props) {
         className={styles.fmSummary}
         contentEditable
         suppressContentEditableWarning
-        data-placeholder="Add a short summary so the team knows what this AOP does..."
+        data-placeholder="Add a short summary so the team knows what this skill does..."
         onBlur={(e) => onChange({ summary: e.currentTarget.textContent ?? '' })}
       >
         {fm.summary}

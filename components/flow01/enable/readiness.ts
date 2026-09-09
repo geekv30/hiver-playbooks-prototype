@@ -9,7 +9,7 @@ import { isCondition, lineHasContent, type EditorDoc } from '../doc';
 
 /**
  * The Enable flow's readiness model. deriveReadinessInputs scans the doc once
- * (what the AOP depends on); computeChecks crosses that with the user's mailbox
+ * (what the skill depends on); computeChecks crosses that with the user's mailbox
  * selection + session state (connected / invited) into the review rows. All
  * pure - the review UI just renders the result. Frontend-only mock: "analysis"
  * here means walking the doc's chips, nothing else.
@@ -112,7 +112,7 @@ export function computeChecks(
 ): ReadinessCheck[] {
   const checks: ReadinessCheck[] = [];
 
-  // Connectors - doc-level; the AOP cannot run those steps until the connector
+  // Connectors - doc-level; the skill cannot run those steps until the connector
   // is healthy. Reads the shared health store, so a connector fixed in the
   // Connectors hub is already green here - never an enablement step.
   for (const { slug, steps } of inputs.connectors) {
@@ -195,7 +195,7 @@ export function computeChecks(
         kind: 'tags',
         tone: 'ok',
         title: 'Tags',
-        detail: 'are ready - every tag this AOP applies exists in the selected mailboxes.',
+        detail: 'are ready - every tag this skill applies exists in the selected mailboxes.',
       });
     } else {
       // Union of mailboxes that are missing at least one tag, phrased inline.

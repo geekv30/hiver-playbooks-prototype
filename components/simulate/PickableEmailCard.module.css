@@ -126,3 +126,13 @@
     opacity: 1;
   }
 }
+
+/* Trailing metadata on the sender row (arrival time on a scanned row) - quiet
+   enough that the sender and subject still lead. */
+.aside {
+  flex: none;
+  font-size: var(--fs-caption, 12px);
+  color: var(--muted-soft);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

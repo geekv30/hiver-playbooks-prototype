@@ -87,7 +87,7 @@ export default function DesignLanguage2Editor() {
   const [triggerOpen, setTriggerOpen] = useState(true);
   const [tab, setTab] = useState<RailTab>('test');
   const tabs: Array<{ id: RailTab; label: string }> = [
-    { id: 'playbook', label: 'AOP' },
+    { id: 'playbook', label: 'Skill' },
     { id: 'config',   label: 'Config' },
     { id: 'test',     label: 'Test' },
     { id: 'history',  label: 'History' },
@@ -125,7 +125,7 @@ export default function DesignLanguage2Editor() {
         <div className={styles.brand}>H</div>
         <button className={styles.back} title="Back"><RiArrowLeftLine /></button>
         <div className={styles.crumb}>
-          <Link href="/atoms">AOPs</Link>
+          <Link href="/atoms">Skills</Link>
           <span className={styles.csep}>/</span>
           <span className={styles.pname} contentEditable suppressContentEditableWarning>tour-inquiry</span>
         </div>
@@ -145,7 +145,7 @@ export default function DesignLanguage2Editor() {
 
       {/* ===== Left nav ===== */}
       <nav className={styles.nav}>
-        <button className={`${styles.navItem} ${styles.navItemActive}`} title="AOPs"><RiBookOpenLine /></button>
+        <button className={`${styles.navItem} ${styles.navItemActive}`} title="Skills"><RiBookOpenLine /></button>
         <button className={styles.navItem} title="Inbox"><RiInboxLine /></button>
         <button className={styles.navItem} title="History"><RiHistoryLine /></button>
         <button className={styles.navItem} title="Search"><RiSearchLine /></button>

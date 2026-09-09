@@ -25,7 +25,7 @@ type Phase = 'form' | 'enabling' | 'success';
 /** commit mode is a two-step flow: setup (name / surface / mailboxes) then
  *  review (readiness checks against that selection). manage stays single-step. */
 type Step = 'setup' | 'review';
-/** The go-live surface tabs (Figma 1854:14203): AI Agents = the AOP runs
+/** The go-live surface tabs (Figma 1854:14203): AI Agents = the skill runs
  *  autonomously; AI Copilot = it assists teammates. Directional - both tabs
  *  pick over the same shared-mailbox selection for now. */
 type Surface = 'agents' | 'copilot';
@@ -33,14 +33,14 @@ type Surface = 'agents' | 'copilot';
 interface Props {
   open: boolean;
   /** commit = the go-live flow (Enable button) -> review -> success moment;
-   *  manage = edit a live AOP's name + mailboxes (the settings gear) -> Save. */
+   *  manage = edit a live Skill's name + mailboxes (the settings gear) -> Save. */
   mode: 'commit' | 'manage';
   name: string;
   onNameChange: (s: string) => void;
   /** Selected mailbox ids. */
   selected: string[];
   onSelectedChange: (ids: string[]) => void;
-  /** What the AOP depends on (doc scan) - feeds the Review step's checks. */
+  /** What the skill depends on (doc scan) - feeds the Review step's checks. */
   readiness: ReadinessInputs;
   evalAgg: EvalAggregate;
   /** Connector health from the shared store (the Connectors hub). */
@@ -61,7 +61,7 @@ const SUCCESS_HOLD_MS = 1700;
 const prefersReduced = () =>
   typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-/** The go-live success moment: a check that draws in, the AOP name, and the
+/** The go-live success moment: a check that draws in, the skill name, and the
  *  mailbox chips it went live on (staggered). Motion is the transitions.dev
  *  success-check + texts-reveal on our tokens. */
 function SuccessView({ name, mailboxes }: { name: string; mailboxes: string[] }) {
@@ -100,7 +100,7 @@ function Verdict({ checks, settled }: { checks: ReadinessCheck[]; settled: boole
     return (
       <div className={styles.verdict} data-tone="checking">
         <Spinner size={15} />
-        <span>Reviewing this AOP against your selection…</span>
+        <span>Reviewing this skill against your selection…</span>
       </div>
     );
   }
@@ -111,7 +111,7 @@ function Verdict({ checks, settled }: { checks: ReadinessCheck[]; settled: boole
       <div className={styles.verdict} data-tone="warn">
         <RiErrorWarningFill aria-hidden />
         <span>
-          {warns === 1 ? '1 thing needs' : `${warns} things need`} attention before this AOP can
+          {warns === 1 ? '1 thing needs' : `${warns} things need`} attention before this skill can
           run cleanly.
         </span>
       </div>
@@ -128,7 +128,7 @@ function Verdict({ checks, settled }: { checks: ReadinessCheck[]; settled: boole
   return (
     <div className={styles.verdict} data-tone="ok">
       <RiCheckboxCircleFill aria-hidden />
-      <span>All checks passed - this AOP is ready to go live.</span>
+      <span>All checks passed - this skill is ready to go live.</span>
     </div>
   );
 }
@@ -223,7 +223,7 @@ export default function EnableModal({
   const warns = checks.filter((c) => c.tone === 'warn').length;
 
   const canContinue = name.trim().length > 0 && selected.length > 0;
-  const liveName = name.trim() || 'Untitled AOP';
+  const liveName = name.trim() || 'Untitled skill';
 
   const goReview = () => {
     if (!canContinue) return;
@@ -250,7 +250,7 @@ export default function EnableModal({
   if (!open) return null;
 
   const onReview = mode === 'commit' && step === 'review';
-  const title = mode === 'manage' ? 'AOP settings' : onReview ? 'Review & go live' : 'Enable AOP';
+  const title = mode === 'manage' ? 'Skill settings' : onReview ? 'Review & go live' : 'Enable skill';
   const goLiveLabel =
     warns > 0
       ? 'Go live anyway'
@@ -308,7 +308,7 @@ export default function EnableModal({
               >
                 <div className={styles.field}>
                   <label className={styles.label} htmlFor="aop-name">
-                    Name your AOP
+                    Name your skill
                   </label>
                   <input
                     id="aop-name"
@@ -365,8 +365,8 @@ export default function EnableModal({
 
                 <span className={styles.sublabel}>
                   {surface === 'agents'
-                    ? 'Select the shared mailboxes this AOP runs on'
-                    : 'Select the shared mailboxes where this AOP assists your team'}
+                    ? 'Select the shared mailboxes this skill runs on'
+                    : 'Select the shared mailboxes where this skill assists your team'}
                 </span>
 
                 <div className={styles.search}>

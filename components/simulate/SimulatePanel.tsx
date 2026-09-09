@@ -5,9 +5,11 @@ import { RiPlayFill, RiCloseLine } from 'react-icons/ri';
 import type { SimStatusKind } from '@/data/simFixtures';
 import EvalMenu, { type EvalView, EVAL_TITLES, EVAL_ICONS } from './EvalMenu';
 import EvalBackHeader from './EvalBackHeader';
+import MatchingEmails from './MatchingEmails';
 import RecentEmails from './RecentEmails';
 import AiScenarios from './AiScenarios';
 import CustomEval from './CustomEval';
+import type { TriggerScan } from './useTriggerScan';
 import styles from './SimulatePanel.module.css';
 
 interface Props {
@@ -15,9 +17,9 @@ interface Props {
   open: boolean;
   /** Close the panel (the floating header X; docked has no close). */
   onClose?: () => void;
-  /** Whether this AOP has generated scenarios; false shows the informative empty state. */
+  /** Whether this skill has generated scenarios; false shows the informative empty state. */
   hasScenarios?: boolean;
-  /** Whether the live AOP has a trigger (drives the empty-state action). */
+  /** Whether the live Skill has a trigger (drives the empty-state action). */
   hasTrigger?: boolean;
   /** Focus the trigger line in the editor (the empty-state action). */
   onAddTrigger?: () => void;
@@ -31,6 +33,16 @@ interface Props {
   onRunRecorded?: (statuses: SimStatusKind[]) => void;
   /** Open the Copilot tab (Fix with Copilot on a caught gap). */
   onOpenCopilot?: () => void;
+  /** The live trigger text - what Matching emails matches against. */
+  trigger?: string;
+  /** The shared mailboxes this skill runs on (ids). */
+  mailboxes?: string[];
+  /** The canvas-level trigger scan (shared with Copilot's matching row). */
+  scan?: TriggerScan;
+  /** Called the first time the user opens Matching emails (retires the New pill). */
+  onMatchingSeen?: () => void;
+  /** Whether the Matching emails card still carries its New pill. */
+  matchingIsNew?: boolean;
 }
 
 /**
@@ -52,12 +64,21 @@ export default function SimulatePanel({
   docked,
   onRunRecorded,
   onOpenCopilot,
+  trigger = '',
+  mailboxes = [],
+  scan,
+  onMatchingSeen,
+  matchingIsNew,
 }: Props) {
   const [view, setView] = useState<EvalView>('menu');
   // Drill direction for the slide (forward = into a flow, back = out to the menu).
   const [dir, setDir] = useState<'fwd' | 'back' | null>(null);
 
   const openFlow = (v: Exclude<EvalView, 'menu'>) => {
+    // Matching emails needs the canvas-level scan; without it the card would
+    // open an empty view, so it stays put instead.
+    if (v === 'matching' && !scan) return;
+    if (v === 'matching') onMatchingSeen?.();
     setDir('fwd');
     setView(v);
   };
@@ -92,7 +113,22 @@ export default function SimulatePanel({
         )}
 
         <div className={styles.viewWrap} data-dir={dir ?? undefined} key={view}>
-          {view === 'menu' && <EvalMenu onOpen={openFlow} />}
+          {view === 'menu' && (
+            <EvalMenu onOpen={openFlow} matchFresh={scan?.fresh} matchIsNew={matchingIsNew} />
+          )}
+
+          {view === 'matching' && scan && (
+            <MatchingEmails
+              trigger={trigger}
+              mailboxes={mailboxes}
+              scan={scan}
+              onExit={toMenu}
+              onRunRecorded={onRunRecorded}
+              onOpenCopilot={onOpenCopilot}
+              onAddTrigger={onAddTrigger}
+              onTryScenarios={() => openFlow('scenarios')}
+            />
+          )}
 
           {view === 'recent' && (
             <RecentEmails onExit={toMenu} onRunRecorded={onRunRecorded} onOpenCopilot={onOpenCopilot} />

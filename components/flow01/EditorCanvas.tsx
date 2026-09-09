@@ -12,6 +12,7 @@ import { RiDraggable, RiMore2Fill } from 'react-icons/ri';
 import type { Fragment, ConnectorSlug } from '@/types/playbook';
 import type { SimStatusKind } from '@/data/simFixtures';
 import { findAction } from '@/data/library';
+import { mailboxName } from '@/data/mailboxes';
 import { UnauthedConnectorsContext } from './connectorAuth';
 import ConnectorSetupModal from './setup/ConnectorSetupModal';
 import GutterMarker from '@/components/atoms/GutterMarker';
@@ -29,6 +30,7 @@ import { deriveReadinessInputs, inviteKey } from './enable/readiness';
 import { useConnectorHealth, setConnectorHealth } from './connectorHealth';
 import { useRouter } from 'next/navigation';
 import { useEvalState } from '@/components/simulate/useEvalState';
+import { useTriggerScan } from '@/components/simulate/useTriggerScan';
 import SimulatePanel from '@/components/simulate/SimulatePanel';
 import { type CopilotMessage, type CopilotProposalData } from './copilot/CopilotPanel';
 import SidePanel, { type SideTab } from './copilot/SidePanel';
@@ -45,6 +47,7 @@ import {
   normalizeLine,
   lineIsEmpty,
   lineHasContent,
+  lineToText,
   stepHasContent,
   isCondition,
   type EditorDoc,
@@ -74,17 +77,21 @@ const TRIGGER_PLACEHOLDER = 'e.g. when an email reports an API error';
 // hint pill is the no-keystroke path. Curly quotes around '@' per the Figma copy.
 const STEP_PLACEHOLDER = 'Write what to do. Type ‘@’ for actions';
 
-// Copilot cold-start handoff: the working steps shown while the AOP drafts,
+// Copilot cold-start handoff: the working steps shown while the skill drafts,
 // then a short generic acknowledgement (reusability rule: generic copy).
 const COPILOT_THINK_STEPS = [
   'Thinking through your request',
   'Referencing recent emails',
-  'Building your AOP',
+  'Building your skill',
 ];
 // Follow-up reasoning steps shown (deliberately, not instantly) before a reply
 // streams; afterwards they collapse into an expandable "Thought for Ns". Generic
 // copy (reusability rule). The pace is a tuned, deliberate value (was too fast).
-const FOLLOWUP_THINK_STEPS = ['Reading your AOP', 'Planning the change'];
+const FOLLOWUP_THINK_STEPS = ['Reading your skill', 'Planning the change'];
+// The one question Copilot asks after drafting: where this skill will run. The
+// answer is stored on the skill and starts trigger matching in the background.
+const COPILOT_MAILBOX_ASK =
+  'Which shared mailboxes will this skill run on? I will look there for real emails your trigger would fire on.';
 const COPILOT_PER_STEP = 820; // ms per thinking step (deliberate, not instant)
 const COPILOT_ACK =
   'Drafted a first version on the left - a trigger, the steps, and the reply. Tell me what to adjust and I will update it.';
@@ -126,7 +133,7 @@ const proposalFoolproof = (): CannedProposal => ({
   reply:
     "To make this sturdier I'd add an approval checkpoint before anything is sent, and a fallback branch so nothing slips through. Here is the change - apply it when you're ready:",
   data: {
-    title: 'Make your AOP foolproof',
+    title: 'Make your skill foolproof',
     summary: [
       'Add a fallback branch for anything unmatched',
       'Add an approval step before replies are sent',
@@ -179,7 +186,7 @@ function updateLastAssistant(
 }
 
 interface Props {
-  /** Optional starting document. Omit for a fresh empty AOP (/canvas);
+  /** Optional starting document. Omit for a fresh empty Skill (/canvas);
    *  /api-example passes the seeded example. */
   initialDoc?: EditorDoc;
   /** Mount the Copilot + Evaluate companions: the floating tool-switcher rail and
@@ -242,9 +249,9 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
   // The docked SidePanel's active tab (companions): Copilot or Simulate.
   const [panelTab, setPanelTab] = useState<SideTab>('copilot');
   // The Enable / settings modal: 'commit' = the go-live flow (Enable button) ->
-  // success moment; 'manage' = edit a live AOP's name + mailboxes (the gear). Name
+  // success moment; 'manage' = edit a live Skill's name + mailboxes (the gear). Name
   // + mailbox edits are held LOCALLY and committed to the doc only on confirm, so
-  // editing a live AOP and cancelling never mutates it.
+  // editing a live Skill and cancelling never mutates it.
   const [enableMode, setEnableMode] = useState<null | 'commit' | 'manage'>(null);
   const [enableName, setEnableName] = useState('');
   const [enableMailboxes, setEnableMailboxes] = useState<string[]>([]);
@@ -260,6 +267,30 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
     (statuses: SimStatusKind[]) => recordRun(statuses, docRef.current),
     [recordRun],
   );
+  // Trigger matching: the background scan behind the "Matching emails" evaluation
+  // type. It lives here, not in the flow, because the Evaluation tab's count badge
+  // and Copilot's handoff message both read it.
+  const triggerText = useMemo(() => lineToText(doc.trigger), [doc.trigger]);
+  const scan = useTriggerScan(triggerText);
+  // The New pill on the Matching emails card, retired once the user opens it.
+  // Session state on purpose: a reload is a fresh look at the new type.
+  const [matchingIsNew, setMatchingIsNew] = useState(true);
+  // Journey B: a skill we already know the mailboxes for scans on open, quietly -
+  // the badge is the only signal. Exactly ONCE per trigger version: a user who
+  // clears the scan to pick a different mailbox must not have this restart it
+  // on the skill's first mailbox underneath them.
+  const autoScanned = useRef<string | null>(null);
+  useEffect(() => {
+    if (scan.state.phase !== 'idle' || scan.state.cleared) return;
+    const trigger = triggerText.trim();
+    if (!trigger || autoScanned.current === trigger) return;
+    const first = doc.mailboxes[0];
+    if (!first) return;
+    autoScanned.current = trigger;
+    scan.start(first);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scan.state.phase, scan.state.cleared, triggerText, doc.mailboxes]);
+
   // The cold-start "draft with AI" modal shows on a fresh, empty canvas (no
   // initialDoc); the pre-seeded /api-example demo skips it. See ColdStartPhase above.
   const [coldPhase, setColdPhase] = useState<ColdStartPhase>(initialDoc ? 'docked' : 'hero');
@@ -355,7 +386,7 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
     else setSimOpen(true);
   }, [companions]);
   const confirmEnable = useCallback(() => {
-    api.setTitle(enableName.trim() || 'Untitled AOP');
+    api.setTitle(enableName.trim() || 'Untitled skill');
     api.setMailboxes(enableMailboxes);
     if (enableMode === 'commit') {
       api.enable(); // the modal's success moment already played; this flips status
@@ -366,11 +397,11 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
   }, [api, enableName, enableMailboxes, enableMode, showHint]);
   const pauseAop = useCallback(() => {
     api.pause();
-    showHint(`${doc.title || 'This AOP'} paused.`, { label: 'Undo', run: () => api.enable() });
+    showHint(`${doc.title || 'This skill'} paused.`, { label: 'Undo', run: () => api.enable() });
   }, [api, doc.title, showHint]);
   const resumeAop = useCallback(() => {
     api.enable();
-    showHint(`${doc.title || 'This AOP'} is live again.`);
+    showHint(`${doc.title || 'This skill'} is live again.`);
   }, [api, doc.title, showHint]);
 
   const focusFor = (key: string): { token: number; atStart: boolean } | null =>
@@ -378,7 +409,7 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
 
   // Cold-start -> Copilot continuity. Generate seeds the query as the user's first
   // Copilot message, opens Copilot, and runs a short "working" animation; when it
-  // finishes the drafted AOP loads on the left and Copilot posts an ack, so
+  // finishes the drafted Skill loads on the left and Copilot posts an ack, so
   // any follow-up continues in the Copilot thread. Skip lands on a blank canvas.
   const handleColdStartGenerate = useCallback((genDoc: EditorDoc, query: string) => {
     // Seed the dock (messages, pending doc, working animation), then dock it. The
@@ -427,10 +458,39 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
         steps: COPILOT_THINK_STEPS,
       })),
     );
+    // Beat 3 of the cold start: one question, in the thread. Only when the
+    // drafted skill has no mailboxes yet (a seeded skill already knows them).
+    if (docRef.current.mailboxes.length === 0) {
+      setCopilotMessages((prev) => [
+        ...prev,
+        { role: 'assistant', text: COPILOT_MAILBOX_ASK, mailboxAsk: true },
+      ]);
+    }
     setThinkIdx(-1);
     requestFocus('trigger', false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [thinkIdx]);
+
+  // Beat 4: the answer lands. Store the mailboxes on the skill (so Enable
+  // arrives pre-filled), then start matching in the background against the first
+  // one - one mailbox at a time - with a status line and no results in the thread.
+  const answerMailboxes = useCallback(
+    (index: number, ids: string[]) => {
+      api.setMailboxes(ids);
+      setCopilotMessages((prev) =>
+        prev.map((m, i) => (i === index ? { ...m, mailboxChosen: ids } : m)),
+      );
+      const first = ids[0];
+      if (!first || !lineHasContent(docRef.current.trigger)) return;
+      setCopilotMessages((prev) => [
+        ...prev,
+        { role: 'assistant', text: '', scan: { mailbox: mailboxName(first) } },
+      ]);
+      scan.start(first);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [api],
+  );
 
   // Stream a reply into the latest assistant message (used by send + regenerate):
   // a brief think, then word-by-word. An optional proposal is attached on the
@@ -1140,7 +1200,7 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
         onSimulate={toggleSimulate}
         simulating={simOpen}
         hideSimulate={companions}
-        // Enable is muted+disabled until the AOP has a trigger AND a step
+        // Enable is muted+disabled until the skill has a trigger AND a step
         // (Figma 647:39849); then it routes THROUGH the guardrails commit panel.
         canEnable={lineHasContent(doc.trigger) && doc.steps.some((s) => stepHasContent(s))}
         onEnable={requestEnable}
@@ -1170,7 +1230,7 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
                         // no command palette. '@' and '/' type literally (noActions).
                         noActions
                         autoFocus={focusFor('trigger')}
-                        ariaLabel="When should this AOP run"
+                        ariaLabel="When should this skill run"
                       />
                     </div>
                   </div>
@@ -1448,6 +1508,20 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
                 onDismissProposal: dismissProposal,
                 onUndoProposal: undoProposal,
                 onVerdict: setCopilotVerdict,
+                onMailboxAnswer: answerMailboxes,
+                onOpenEvaluation: () => setPanelTab('simulate'),
+                // The handoff line and the unprompted hint both read the LIVE
+                // scan, so Copilot can never contradict the Evaluation tab.
+                // Absent until a scan exists, and dropped once it is stale.
+                scanState:
+                  scan.state.mailboxId && scan.state.phase !== 'idle' && !scan.stale
+                    ? {
+                        scanning: scan.state.phase === 'scanning',
+                        count: scan.state.matches.length,
+                        mailbox: mailboxName(scan.state.mailboxId),
+                        fresh: scan.fresh,
+                      }
+                    : undefined,
               }}
               sim={{
                 hasScenarios: lineHasContent(doc.trigger),
@@ -1455,6 +1529,11 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
                 onAddTrigger: () => requestFocus('trigger', false),
                 onRunRecorded,
                 onOpenCopilot: () => setPanelTab('copilot'),
+                trigger: triggerText,
+                mailboxes: doc.mailboxes,
+                scan,
+                matchingIsNew,
+                onMatchingSeen: () => setMatchingIsNew(false),
               }}
             />
           )
@@ -1466,6 +1545,11 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
             hasTrigger={lineHasContent(doc.trigger)}
             onAddTrigger={() => requestFocus('trigger', false)}
             onRunRecorded={onRunRecorded}
+            trigger={triggerText}
+            mailboxes={doc.mailboxes}
+            scan={scan}
+            matchingIsNew={matchingIsNew}
+            onMatchingSeen={() => setMatchingIsNew(false)}
           />
         )}
       </div>

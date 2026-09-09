@@ -13,17 +13,17 @@ export interface DocStep {
 }
 
 // --- Deployment + guardrails state -----------------------------------------
-// An AOP's behavior config (guardrails) and its go-live state. Both live on
+// A skill's behavior config (guardrails) and its go-live state. Both live on
 // the doc so they undo/redo with the rest of the document. "Enable" flips status
 // to 'active'; "Pause" flips it to 'paused'. `mailboxes` = the shared mailboxes
-// the AOP is live on.
+// the skill is live on.
 export type Tone = 'professional' | 'friendly' | 'concise';
 export type DeployStatus = 'draft' | 'active' | 'paused';
-// How the AOP is triggered. Lives on the doc (with the "when should this run"
+// How the skill is triggered. Lives on the doc (with the "when should this run"
 // frontmatter); surfaced as a quiet control there and confirmed at enable.
 export type TriggerMode = 'automatic' | 'manual';
 // What the AI is allowed to do with replies. A GLOBAL guardrail (applies to every
-// reply in the AOP), not a per-chip setting. The highest-stakes choice.
+// reply in the skill), not a per-chip setting. The highest-stakes choice.
 export type ReplyAuthority = 'draft' | 'send';
 
 export interface Guardrails {
@@ -93,7 +93,7 @@ export function newId(prefix: string): string {
 
 export function emptyDoc(): EditorDoc {
   return {
-    title: 'Untitled AOP',
+    title: 'Untitled skill',
     trigger: [txt('')],
     steps: [{ id: 'step-seed-1', body: [txt('')] }],
     status: 'draft',
@@ -108,9 +108,9 @@ function exChip(id: string, actionId: string, meta?: string): Fragment {
   return { kind: 'chip', chip: { id, actionId, status: 'ok', config: meta ? { meta } : {} } };
 }
 
-// A complete, named, ready-to-simulate example AOP (the API-error triage
+// A complete, named, ready-to-simulate example Skill (the API-error triage
 // case that the Simulate scenarios are built around). Seeds /canvas so a
-// stakeholder lands on a real AOP to fiddle with - not a blank editor.
+// stakeholder lands on a real Skill to fiddle with - not a blank editor.
 // Fixed ids keep it hydration-stable. Conditions stay inline (the editor does
 // not nest IF/ELSE yet); the matched-branch detail lives in the simulate trace.
 export function exampleDoc(): EditorDoc {
@@ -118,7 +118,10 @@ export function exampleDoc(): EditorDoc {
     title: 'API error triage',
     status: 'draft',
     triggerMode: 'automatic',
-    mailboxes: [],
+    // The mailboxes this skill is meant for. Known up front (the Skills list row
+    // shows it mapped to Support and Sales), so the Enable flow arrives
+    // pre-filled and trigger matching has a mailbox to read from the start.
+    mailboxes: ['support', 'sales'],
     guardrails: defaultGuardrails(),
     // Handwritten NL trigger (no references/chips - the trigger box is plain text).
     trigger: normalizeLine([

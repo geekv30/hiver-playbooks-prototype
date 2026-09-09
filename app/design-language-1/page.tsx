@@ -113,7 +113,7 @@ export default function PreviewPage() {
       <header className={styles.docbar}>
         <div className={styles.brand}>P</div>
         <div className={styles.crumb}>
-          <Link href="/atoms">AOPs · tour-inquiry</Link>
+          <Link href="/atoms">Skills · tour-inquiry</Link>
           <span className={styles.csep}>›</span>
           <span className={styles.name}>Design Preview</span>
         </div>
@@ -400,7 +400,7 @@ export default function PreviewPage() {
             <div className={styles.groupBody}>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <button className={styles.btn} onClick={() => fireToast('default', 'Saved as draft')}>Default</button>
-                <button className={styles.btn} onClick={() => fireToast('success', 'AOP activated')}>Success</button>
+                <button className={styles.btn} onClick={() => fireToast('success', 'Skill activated')}>Success</button>
                 <button className={styles.btn} onClick={() => fireToast('warn', 'Connector needs auth')}>Warn</button>
               </div>
             </div>

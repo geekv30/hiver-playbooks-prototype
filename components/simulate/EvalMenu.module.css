@@ -27,7 +27,7 @@
 .card {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
   padding: 14px 18px;
   border: 1px solid var(--hairline-soft); /* Gray 6 #ECEFF6 */
@@ -108,3 +108,54 @@
     transition: none;
   }
 }
+
+/* A fresh scan result breathes its fill three times and then leaves the card
+   plain (Figma 3344:20223 -> 3345:28443). The fill is an overlay so the motion
+   is pure opacity, and the card's own content sits above it. */
+.card {
+  position: relative;
+  transition:
+    border-color var(--d-hover) var(--ease-snap),
+    background var(--d-hover) var(--ease-snap);
+}
+.card[data-fresh]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--surface-card);
+  pointer-events: none;
+  z-index: 0;
+  animation: cardBreathe 2000ms var(--ease-snap) 3 both;
+}
+.card[data-fresh] {
+  border-color: transparent;
+}
+/* Keep the content above the overlay. */
+.card > * {
+  position: relative;
+  z-index: 1;
+}
+@keyframes cardBreathe {
+  0% {
+    opacity: 0;
+  }
+  35% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+/* No motion: the fill simply sits there for the same window. */
+@media (prefers-reduced-motion: reduce) {
+  .card[data-fresh]::before {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* Title row carries the one-time NEW tag beside the name. */

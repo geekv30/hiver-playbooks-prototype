@@ -22,12 +22,12 @@ interface Props {
   onSimulate?: () => void;
   /** Open the Enable go-live modal (commit mode). */
   onEnable?: () => void;
-  /** False when the AOP has no trigger/steps yet - Enable renders muted+disabled
+  /** False when the skill has no trigger/steps yet - Enable renders muted+disabled
    *  (Figma 647:39849). */
   canEnable?: boolean;
-  /** Stop a live AOP - instant, no modal (a toast confirms + offers Undo). */
+  /** Stop a live Skill - instant, no modal (a toast confirms + offers Undo). */
   onPause?: () => void;
-  /** Restart a paused AOP - instant, no modal. */
+  /** Restart a paused Skill - instant, no modal. */
   onResume?: () => void;
   /** The gear (active/paused only): open the Enable modal in manage mode. */
   onSettings?: () => void;
@@ -36,12 +36,12 @@ interface Props {
   simulating?: boolean;
   /** Hide the top-bar Simulate button (the companion model moves "Evaluate" onto the canvas). */
   hideSimulate?: boolean;
-  /** Hide the title + status here (when the AOP identity moves onto a canvas
+  /** Hide the title + status here (when the skill identity moves onto a canvas
    *  header). The Back button stays. */
   hideIdentity?: boolean;
 }
 
-// Editor toolbar. Left = back + the AOP identity (title + status pill).
+// Editor toolbar. Left = back + the skill identity (title + status pill).
 // Right = an optional Simulate check + one state-driven primary control: "Enable"
 // (draft/paused) -> opens the Guardrails commit flow; "Pause" (active) -> instant
 // stop. Undo/redo are keyboard-only (Cmd+Z / Cmd+Shift+Z), so the bar stays clean.
@@ -90,7 +90,7 @@ export default function Toolbar({
           <Button
             variant="secondary"
             iconOnly={<RiSettings3Line />}
-            ariaLabel="AOP settings"
+            ariaLabel="Skill settings"
             onClick={onSettings}
           />
         )}

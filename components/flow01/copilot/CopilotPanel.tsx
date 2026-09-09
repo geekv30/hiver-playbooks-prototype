@@ -21,6 +21,8 @@ import Spinner from '@/components/atoms/Spinner';
 import ThumbsRating, { type Verdict } from '@/components/atoms/ThumbsRating';
 import CopilotSparkle from './CopilotSparkle';
 import CopilotProposal, { type ProposalState } from './CopilotProposal';
+import CopilotMailboxAsk from './CopilotMailboxAsk';
+import CopilotScanNote, { type ScanNoteState } from './CopilotScanNote';
 import type { DocPatch } from '../doc';
 import styles from './CopilotPanel.module.css';
 
@@ -36,7 +38,7 @@ const STARTERS: { label: string; prompt: string; icon: IconType }[] = [
   },
   { label: 'Refine the trigger', prompt: 'Refine the trigger so it ', icon: RiFlashlightLine },
   { label: 'Draft a reply', prompt: 'Draft a reply that ', icon: RiMailLine },
-  { label: 'Make it foolproof', prompt: 'Make this AOP foolproof', icon: RiShieldCheckLine },
+  { label: 'Make it foolproof', prompt: 'Make this skill foolproof', icon: RiShieldCheckLine },
 ];
 
 // Generic follow-up quick-replies shown under the latest settled reply - they
@@ -66,12 +68,21 @@ export interface CopilotMessage {
   pending?: boolean;
   /** The assistant reply is still streaming in. */
   streaming?: boolean;
-  /** A reviewable change the user can apply to the AOP. */
+  /** A reviewable change the user can apply to the skill. */
   proposal?: CopilotProposalData;
   /** Resolution of the proposal card (defaults to 'open' when a proposal exists). */
   proposalState?: ProposalState;
   /** The user's thumbs verdict on this reply. */
   verdict?: Verdict;
+  /** Asks which shared mailboxes the skill will run on (once, after drafting).
+   *  Answering stores them on the skill and starts trigger matching. */
+  mailboxAsk?: boolean;
+  /** Set once the ask is answered - the message becomes thread history. */
+  mailboxChosen?: string[];
+  /** Trigger matching was started for this mailbox. The line renders from the
+   *  LIVE scan (see `scanState`), so the thread never holds a stale copy of it;
+   *  the results themselves live in the Evaluation tab, this only points there. */
+  scan?: { mailbox: string };
 }
 
 interface Props {
@@ -104,6 +115,13 @@ interface Props {
   onUndoProposal: (index: number) => void;
   /** Thumbs verdict on an assistant reply. */
   onVerdict: (index: number, v: Verdict) => void;
+  /** The mailbox question was answered (index = its message index). */
+  onMailboxAnswer?: (index: number, mailboxIds: string[]) => void;
+  /** Open the Evaluation tab - the scan handoff's one action. */
+  onOpenEvaluation?: () => void;
+  /** The live trigger scan: drives the handoff line in the thread AND the
+   *  unprompted hint on the empty screen (a skill scanned quietly on open). */
+  scanState?: ScanNoteState;
 }
 
 /** Copy-to-clipboard affordance on an assistant message (icon swaps to a check). */
@@ -226,6 +244,9 @@ export default function CopilotPanel({
   onDismissProposal,
   onUndoProposal,
   onVerdict,
+  onMailboxAnswer,
+  onOpenEvaluation,
+  scanState,
 }: Props) {
   const [value, setValue] = useState('');
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -290,7 +311,7 @@ export default function CopilotPanel({
             submit();
           }
         }}
-        placeholder="Ask Copilot to build or change this AOP…"
+        placeholder="Ask Copilot to build or change this skill…"
         aria-label="Ask Copilot"
       />
       <div className={styles.composerRow}>
@@ -383,8 +404,16 @@ export default function CopilotPanel({
                   const settled = !thinking && !m.streaming;
                   const proposalState: ProposalState = m.proposalState ?? 'open';
                   const isLast = i === lastAssistantIdx;
+                  // A question waiting on its answer is not a finished reply:
+                  // no copy/regenerate/thumbs row, and no follow-up chips
+                  // competing with the answer we just asked for.
+                  const awaitingAnswer = !!m.mailboxAsk && !m.mailboxChosen?.length;
                   const showFollowups =
-                    isLast && settled && !!m.text && (!m.proposal || proposalState !== 'open');
+                    isLast &&
+                    settled &&
+                    !!m.text &&
+                    !awaitingAnswer &&
+                    (!m.proposal || proposalState !== 'open');
                   return (
                     <div key={i} className={`${styles.msg} ${styles.msgAssistant}`}>
                       <div className={styles.assistantWrap} data-last={isLast || undefined}>
@@ -413,7 +442,20 @@ export default function CopilotPanel({
                               />
                             )}
 
-                            {settled && m.text && (
+                            {settled && m.mailboxAsk && (
+                              <CopilotMailboxAsk
+                                chosen={m.mailboxChosen}
+                                onAnswer={(ids) => onMailboxAnswer?.(i, ids)}
+                              />
+                            )}
+
+                            {settled && m.scan && scanState && (
+                              <div className={styles.scanSlot}>
+                                <CopilotScanNote state={scanState} variant="note" />
+                              </div>
+                            )}
+
+                            {settled && m.text && !awaitingAnswer && (
                               <div
                                 className={styles.actionsRow}
                                 data-has-verdict={m.verdict || undefined}
@@ -494,6 +536,21 @@ export default function CopilotPanel({
                     </button>
                   </li>
                 ))}
+                {/* A skill that already exists is scanned on open, and this
+                    row is the ONLY place that says so. Unprompted, so it stays
+                    quiet unless it has something to offer (hideEmpty). */}
+                {scanState && (
+                  <li
+                    className={styles.starterReveal}
+                    style={{ '--i': STARTERS.length } as CSSProperties}
+                  >
+                    <CopilotScanNote
+                      state={scanState}
+                      onOpenEvaluation={onOpenEvaluation}
+                      hideEmpty
+                    />
+                  </li>
+                )}
               </ul>
               {composer}
             </div>

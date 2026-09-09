@@ -2,7 +2,7 @@
 
 import { useLayoutEffect, useRef } from 'react';
 
-// Editable AOP title - a content-sized span so the dotted underline hugs the
+// Editable Skill title - a content-sized span so the dotted underline hugs the
 // text exactly (an <input> sized by char-count overshoots a proportional font).
 // Uncontrolled DOM text (seeded/reconciled imperatively) so the caret never jumps.
 // One renderer; the caller supplies the className for its context (top bar / canvas
@@ -19,7 +19,7 @@ export default function TitleField({
   const ref = useRef<HTMLSpanElement>(null);
   // "Unnamed" until the user gives it a real title: subtle + underlined as a
   // "name me" affordance; once named, normal ink with no underline.
-  const unnamed = !value.trim() || value === 'Untitled AOP';
+  const unnamed = !value.trim() || value === 'Untitled skill';
   useLayoutEffect(() => {
     const el = ref.current;
     if (el && el.textContent !== value) el.textContent = value;
@@ -34,7 +34,7 @@ export default function TitleField({
       spellCheck={false}
       role="textbox"
       aria-multiline="false"
-      aria-label="AOP title"
+      aria-label="Skill title"
       onInput={(e) => onChange(e.currentTarget.textContent ?? '')}
       onKeyDown={(e) => {
         if (e.key === 'Enter') {

@@ -1,0 +1,365 @@
+/* MatchingEmails - the trigger-matched inbound flow. Same skeleton as the
+   Recent conversations flow (back-header, scroll body, one footer CTA) with a
+   scope row that states which mailbox was read and how deep. */
+
+.flow {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- mailbox pick: IDENTICAL to the Recent conversations flow. Shared-mailbox
+   selection is one pattern across the panel, so it is the same control in the
+   same place with the same copy, never a variant. ---- */
+.controls {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 18px 0;
+}
+
+/* ---- scope row: which mailbox, and how deep the scan went ---- */
+.scope {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px 0;
+}
+.scopeName {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-body);
+  font-weight: 500;
+  color: var(--ink);
+}
+.scopeName svg {
+  width: 16px;
+  height: 16px;
+  color: var(--muted-soft);
+}
+/* Depth and the control that changes it, on one line. */
+.depthRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.depth {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: var(--fs-small);
+  line-height: 18px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+/* The live figure sits behind a hairline dot separator, so the sentence reads
+   as scope first, number second. */
+.count {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-soft);
+}
+.count::before {
+  content: '';
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--hairline-strong);
+}
+
+/* ---- trigger moved on since the scan ---- */
+.stale {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 12px 18px 0;
+  padding: 8px 10px 8px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-sm);
+  background: var(--surface-card);
+  font-size: var(--fs-small);
+  color: var(--ink-soft);
+}
+.staleBtn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-sm);
+  background: var(--card);
+  font-family: var(--font);
+  font-size: var(--fs-small);
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color var(--d-hover) var(--ease-snap);
+}
+.staleBtn:hover {
+  border-color: var(--hairline-strong);
+}
+.staleBtn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* "How it works?" - Figma 3344:20661: Gray 4, 13/19 medium, a question glyph,
+   and no accent. It is a way to ask, not something to notice. Its wrapper is the
+   tooltip's anchor. */
+.howWrap {
+  position: relative;
+  display: inline-flex;
+}
+.howBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  margin-right: -6px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-family: var(--font);
+  font-size: var(--fs-small);
+  font-weight: 500;
+  line-height: 19px;
+  letter-spacing: var(--ls-small);
+  color: var(--muted-soft); /* Neutrals/Gray 4 */
+  cursor: pointer;
+  transition: color var(--d-hover) var(--ease-snap), background var(--d-hover) var(--ease-snap);
+}
+.howBtn svg {
+  width: 18px;
+  height: 18px;
+}
+.howBtn:hover,
+.howBtn[aria-expanded='true'] {
+  color: var(--body);
+}
+.howBtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---- the matched list ---- */
+.list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 18px;
+}
+/* Matched against a trigger that has since changed - readable, not actionable. */
+.list[data-stale] {
+  opacity: 0.45;
+}
+
+.cardReveal {
+  animation: matchCardIn var(--d-enter) var(--ease-snap) backwards;
+  animation-delay: calc(var(--i) * 45ms);
+}
+@keyframes matchCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Rows still being read - the shape of a card, not a spinner, so the list grows
+   into place instead of flashing. */
+.skeletons {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--hairline-soft);
+  border-radius: 8px;
+  opacity: calc(1 - var(--i) * 0.28);
+}
+.skLine {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--surface-card);
+  animation: skPulse 1.3s var(--ease-snap) infinite;
+}
+.skLine[data-w='short'] {
+  width: 32%;
+}
+.skLine[data-w='mid'] {
+  width: 64%;
+}
+.skLine[data-w='long'] {
+  width: 88%;
+}
+@keyframes skPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* Scan more - Figma 3344:20877: a full-width outlined button that follows the
+   last card, so reading deeper is the next thing after the results rather than
+   a control parked somewhere else. */
+.moreBtn {
+  flex: none;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: var(--card);
+  font-family: var(--font);
+  font-size: var(--fs-small);
+  font-weight: 500;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: border-color var(--d-hover) var(--ease-snap), color var(--d-hover) var(--ease-snap);
+}
+.moreBtn:hover {
+  border-color: var(--hairline-strong);
+  color: var(--ink);
+}
+.moreBtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---- nothing matched, ceiling reached ---- */
+.zero {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 24px 28px;
+  text-align: center;
+}
+.zeroIcon {
+  width: 26px;
+  height: 26px;
+  margin-bottom: 4px;
+  color: var(--muted-soft);
+}
+.zeroTitle {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+.zeroBody {
+  margin: 0;
+  max-width: 34ch;
+  font-size: var(--fs-small);
+  line-height: 1.45;
+  color: var(--muted);
+}
+.zeroActions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+/* ---- footer CTA (matches the Recent conversations flow) ---- */
+.footer {
+  flex: none;
+  padding: 16px 18px;
+  border-top: 1px solid var(--hairline-soft);
+}
+.evalBtn,
+.stopBtn {
+  width: 100%;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 12px;
+  border-radius: var(--r-sm);
+  font-family: var(--font);
+  font-size: var(--fs-body);
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: var(--ls-body);
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap), color var(--d-hover) var(--ease-snap),
+    border-color var(--d-hover) var(--ease-snap);
+}
+.evalBtn svg,
+.stopBtn svg {
+  width: 18px;
+  height: 18px;
+}
+.evalBtn {
+  border: none;
+  background: var(--surface-card);
+  color: var(--muted-soft);
+}
+.evalBtn[data-ready] {
+  background: var(--accent);
+  color: #fff;
+}
+.evalBtn[data-ready]:hover {
+  background: var(--accent-hover);
+}
+.evalBtn:disabled {
+  cursor: default;
+}
+.stopBtn {
+  border: 1px solid var(--hairline);
+  background: var(--card);
+  color: var(--ink-soft);
+}
+.stopBtn:hover {
+  border-color: var(--hairline-strong);
+}
+.evalBtn:focus-visible,
+.stopBtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cardReveal,
+  .skLine {
+    animation: none;
+  }
+}

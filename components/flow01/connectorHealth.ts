@@ -10,7 +10,7 @@ import type { ConnectorSlug } from '@/types/playbook';
  * lives in memory + localStorage so it holds across pages and reloads.
  *
  *   connected    - authenticated and working
- *   reauth       - token expired; needs re-authentication before AOPs can use it
+ *   reauth       - token expired; needs re-authentication before Skills can use it
  *   error        - connection is broken (API failing); needs to be fixed
  *   disconnected - never connected
  */
@@ -18,7 +18,7 @@ export type ConnectorHealth = 'connected' | 'reauth' | 'error' | 'disconnected';
 
 const STORAGE_KEY = 'hiver.playbooks.connectorHealth.v1';
 
-// Seeded so every state shows somewhere: the demo AOP uses HubSpot (reauth -
+// Seeded so every state shows somewhere: the demo Skill uses HubSpot (reauth -
 // the enablement story), Slack is broken, Salesforce was never connected.
 const DEFAULT_HEALTH: Record<ConnectorSlug, ConnectorHealth> = {
   shopify: 'connected',

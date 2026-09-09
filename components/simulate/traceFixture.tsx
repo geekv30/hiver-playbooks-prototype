@@ -26,7 +26,7 @@ export interface TraceStepDef {
   branch?: string;
 }
 
-// The trace template for the illustrative API AOP. Thinking steps are interleaved
+// The trace template for the illustrative API Skill. Thinking steps are interleaved
 // with the actions, mirroring how the agent reasons before it acts. The reply
 // step's body is injected at render time (the email's own draft), so the trace
 // shows the actual drafted reply.

@@ -100,7 +100,7 @@ function FrontmatterCard({
         className={styles.fmTitle}
         contentEditable={!readOnly}
         suppressContentEditableWarning
-        data-placeholder="Untitled AOP"
+        data-placeholder="Untitled skill"
         onKeyDown={handleTitleKey}
         onBlur={(e) => onChange({ name: e.currentTarget.textContent ?? '' })}
       >
@@ -119,7 +119,7 @@ function FrontmatterCard({
         className={styles.fmSummary}
         contentEditable={!readOnly}
         suppressContentEditableWarning
-        data-placeholder="Add a short summary so the team knows what this AOP does..."
+        data-placeholder="Add a short summary so the team knows what this skill does..."
         onBlur={(e) => onChange({ summary: e.currentTarget.textContent ?? '' })}
       >
         {state.summary}
@@ -187,7 +187,7 @@ function StateMock({ state }: { state: CatalogState }) {
             className={`${styles.miniTitle} ${state === 'focused' || state === 'typing' ? styles.miniFocused : ''} ${state === 'error' ? styles.miniError : ''}`}
           >
             {state === 'empty' || state === 'error'
-              ? <span className={styles.miniPlaceholder}>Untitled AOP</span>
+              ? <span className={styles.miniPlaceholder}>Untitled skill</span>
               : state === 'typing'
                 ? <>Tour inq<span className={styles.miniCaret} /></>
                 : 'Tour inquiry'}
@@ -343,7 +343,7 @@ export default function TriggerPage() {
       <header className={styles.docbar}>
         <div className={styles.brand}>P</div>
         <div className={styles.crumb}>
-          <Link href="/atoms">AOPs</Link>
+          <Link href="/atoms">Skills</Link>
           <span className={styles.csep}>/</span>
           <Link href="/component/inspector">Components</Link>
           <span className={styles.csep}>/</span>
@@ -362,9 +362,9 @@ export default function TriggerPage() {
       <div className={styles.wrap}>
         <div className={styles.hero}>
           <span className={styles.eyebrow}>Component · Trigger / Frontmatter · umbrella</span>
-          <h1 className={styles.h1}>The anchor row - AOP Name + WHEN trigger + Summary</h1>
+          <h1 className={styles.h1}>The anchor row - Skill name + WHEN trigger + Summary</h1>
           <p className={styles.lede}>
-            One Frontmatter per canvas. Always first, never deletable. Holds the AOP&apos;s identity (Name + Summary) and its entry condition (WHEN). The Trigger row is the load-bearing part: it&apos;s what makes the AOP an AOP. Type freely into any region; <code>Tab</code> cycles Name → Trigger → Summary; values commit on blur.
+            One Frontmatter per canvas. Always first, never deletable. Holds the skill&apos;s identity (Name + Summary) and its entry condition (WHEN). The Trigger row is the load-bearing part: it&apos;s what makes the skill a skill. Type freely into any region; <code>Tab</code> cycles Name → Trigger → Summary; values commit on blur.
           </p>
           <div className={styles.heroMeta}>
             <span><strong>Regions:</strong> 3 (Title · Trigger · Summary)</span>

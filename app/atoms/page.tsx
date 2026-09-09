@@ -44,6 +44,10 @@ import ConditionBlock from '@/components/flow01/condition/ConditionBlock';
 // Copilot
 import CopilotSparkle from '@/components/flow01/copilot/CopilotSparkle';
 import PanelTabs, { type SideTab } from '@/components/flow01/copilot/PanelTabs';
+import CopilotMailboxAsk from '@/components/flow01/copilot/CopilotMailboxAsk';
+import CopilotScanNote from '@/components/flow01/copilot/CopilotScanNote';
+import NewTag from '@/components/atoms/NewTag';
+import MatchingHowTooltip from '@/components/simulate/MatchingHowTooltip';
 import CopilotProposal from '@/components/flow01/copilot/CopilotProposal';
 import CopilotPanel from '@/components/flow01/copilot/CopilotPanel';
 import SidePanel from '@/components/flow01/copilot/SidePanel';
@@ -259,7 +263,7 @@ function GlowLit() {
   return (
     <div className={styles.glowLit}>
       <div className="ai-input-glow" style={glowFieldStyle}>
-        <span style={{ color: 'var(--muted)', fontSize: 'var(--fs-body)' }}>Describe what you want your AOP to do…</span>
+        <span style={{ color: 'var(--muted)', fontSize: 'var(--fs-body)' }}>Describe what you want your skill to do…</span>
       </div>
     </div>
   );
@@ -283,7 +287,7 @@ function GlowAnimated() {
   return (
     <div ref={ref} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div key={playId} className="ai-input-glow" style={glowFieldStyle}>
-        <span style={{ color: 'var(--muted)', fontSize: 'var(--fs-body)' }}>Describe what you want your AOP to do…</span>
+        <span style={{ color: 'var(--muted)', fontSize: 'var(--fs-body)' }}>Describe what you want your skill to do…</span>
       </div>
       <span><Button variant="secondary" onClick={() => setPlayId((p) => p + 1)}>Replay</Button></span>
     </div>
@@ -309,10 +313,10 @@ const NOOP = () => {};
 // ----------------------------------------------------------------------------
 
 const NAV: { id: string; label: string; count: number }[] = [
-  { id: 'atoms', label: 'Atoms', count: 9 },
+  { id: 'atoms', label: 'Atoms', count: 10 },
   { id: 'editor', label: 'Editor', count: 9 },
-  { id: 'copilot', label: 'Copilot', count: 5 },
-  { id: 'evaluate', label: 'Evaluate', count: 11 },
+  { id: 'copilot', label: 'Copilot', count: 7 },
+  { id: 'evaluate', label: 'Evaluate', count: 12 },
   { id: 'modals', label: 'Modals', count: 4 },
   { id: 'icons', label: 'Icons', count: 2 },
 ];
@@ -371,7 +375,7 @@ export default function ComponentLibrary() {
         <div className={styles.navBrand}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/hiver-mark.png" alt="" className={styles.navMark} />
-          AOP
+          Skill
         </div>
         <p className={styles.navSub}>Component library</p>
         <ul className={styles.navList}>
@@ -411,6 +415,12 @@ export default function ComponentLibrary() {
           </div>
           <p className={styles.categoryNote}>The leaf primitives the journeys build on.</p>
           <div className={styles.categoryRule} />
+
+          <Block name="NewTag" imp="atoms/NewTag" desc="The NEW marker on a capability the user has not met yet - violet-subtle pill, violet-intense label. One renderer wherever it appears.">
+            <Row>
+              <Spec label="tag"><NewTag /></Spec>
+            </Row>
+          </Block>
 
           <Block name="Badge" imp="atoms/Badge" desc="A small count or status pill, intent-toned.">
             <Row>
@@ -529,24 +539,24 @@ export default function ComponentLibrary() {
           <p className={styles.categoryNote}>The flow-01 authoring surface - chrome, the token line, the insert palette, and conditions.</p>
           <div className={styles.categoryRule} />
 
-          <Block name="TitleField" imp="flow01/TitleField" desc="The editable AOP title - a content-sized contentEditable with a 'name me' dotted underline while unnamed.">
+          <Block name="TitleField" imp="flow01/TitleField" desc="The editable skill title - a content-sized contentEditable with a 'name me' dotted underline while unnamed.">
             <Row>
               <Spec label="named"><TitleFieldDemo initial="Refund triage" /></Spec>
-              <Spec label="unnamed (name-me)"><TitleFieldDemo initial="Untitled AOP" /></Spec>
+              <Spec label="unnamed (name-me)"><TitleFieldDemo initial="Untitled skill" /></Spec>
             </Row>
           </Block>
 
           <Block name="Toolbar" imp="flow01/Toolbar" desc="The editor toolbar as the journeys show it - back + editable title + status pill, the settings gear, and one state-driven control (Enable / Pause / Resume). Simulate is hidden (the docked panel owns it).">
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 980 }}>
-              <ToolbarDemo title="Untitled AOP" status="draft" />
+              <ToolbarDemo title="Untitled skill" status="draft" />
               <ToolbarDemo title="Refund triage" status="draft" canEnable={false} />
               <ToolbarDemo title="Refund triage" status="active" />
               <ToolbarDemo title="Refund triage" status="paused" />
             </div>
           </Block>
 
-          <Block name="GmailBar" imp="flow01/GmailBar" desc="The host Gmail top-bar chrome (menu + logo) that wraps the AOP editor.">
+          <Block name="GmailBar" imp="flow01/GmailBar" desc="The host Gmail top-bar chrome (menu + logo) that wraps the skill editor.">
             <Row>
               <Spec label="default"><div style={{ width: 520 }}><GmailBar /></div></Spec>
             </Row>
@@ -562,7 +572,7 @@ export default function ComponentLibrary() {
             <Row>
               <Spec label="plain NL trigger">
                 <div style={{ width: 440 }}>
-                  <EditorLine fragments={[{ kind: 'text', text: 'When a refund is requested' }]} onChange={EDITABLE_NOOP} noActions ariaLabel="When should this AOP run" />
+                  <EditorLine fragments={[{ kind: 'text', text: 'When a refund is requested' }]} onChange={EDITABLE_NOOP} noActions ariaLabel="When should this skill run" />
                 </div>
               </Spec>
               <Spec label="text + ref token">
@@ -672,6 +682,46 @@ export default function ComponentLibrary() {
             <Row>
               <Spec label="copilot active"><PanelTabsDemo initial="copilot" /></Spec>
               <Spec label="evaluation active"><PanelTabsDemo initial="simulate" /></Spec>
+            </Row>
+          </Block>
+
+          <Block name="CopilotMailboxAsk" imp="flow01/copilot/CopilotMailboxAsk" desc="The one question Copilot asks after drafting a skill - which shared mailboxes it runs on. The answer starts trigger matching.">
+            <Row>
+              <Spec label="asking">
+                <div style={{ width: 340 }}>
+                  <CopilotMailboxAsk onAnswer={() => {}} />
+                </div>
+              </Spec>
+              <Spec label="answered">
+                <div style={{ width: 340 }}>
+                  <CopilotMailboxAsk chosen={['support', 'billing']} onAnswer={() => {}} />
+                </div>
+              </Spec>
+            </Row>
+          </Block>
+
+          <Block name="CopilotScanNote" imp="flow01/copilot/CopilotScanNote" desc="Trigger matching's voice inside Copilot: the last row of the starter list, reading then reporting. A found result is violet while it is still news, then settles to resting ink. Inside a reply it renders as a note instead.">
+            <Row>
+              <Spec label="reading">
+                <div style={{ width: 340 }}>
+                  <CopilotScanNote state={{ scanning: true, count: 0, mailbox: 'Support' }} />
+                </div>
+              </Spec>
+              <Spec label="found · still news">
+                <div style={{ width: 340 }}>
+                  <CopilotScanNote state={{ scanning: false, count: 9, mailbox: 'Support', fresh: true }} onOpenEvaluation={() => {}} />
+                </div>
+              </Spec>
+              <Spec label="found · settled">
+                <div style={{ width: 340 }}>
+                  <CopilotScanNote state={{ scanning: false, count: 9, mailbox: 'Support' }} onOpenEvaluation={() => {}} />
+                </div>
+              </Spec>
+              <Spec label="in a reply">
+                <div style={{ width: 340 }}>
+                  <CopilotScanNote state={{ scanning: false, count: 9, mailbox: 'Support' }} variant="note" />
+                </div>
+              </Spec>
             </Row>
           </Block>
 
@@ -786,9 +836,24 @@ export default function ComponentLibrary() {
             </div>
           </Block>
 
-          <Block name="EvalMenu" imp="simulate/EvalMenu" desc="The Evaluate root - three entry cards (Recent conversations / AI scenarios / Custom email).">
-            <div style={{ width: 360 }}>
-              <EvalMenu onOpen={() => {}} />
+          <Block name="EvalMenu" imp="simulate/EvalMenu" desc="The Evaluate root - four entry cards (Matching emails / Recent conversations / AI scenarios / Custom email).">
+            <Row>
+              <Spec label="settled">
+                <div style={{ width: 360 }}>
+                  <EvalMenu onOpen={() => {}} />
+                </div>
+              </Spec>
+              <Spec label="fresh result">
+                <div style={{ width: 360 }}>
+                  <EvalMenu onOpen={() => {}} matchFresh matchIsNew />
+                </div>
+              </Spec>
+            </Row>
+          </Block>
+
+          <Block name="MatchingHowTooltip" imp="simulate/MatchingHowTooltip" desc="How matching works, as a tooltip rather than a panel - it floats over the flow instead of pushing the list down, so asking costs no space and no scroll position.">
+            <div style={{ position: 'relative', width: 360, height: 150, display: 'flex', justifyContent: 'flex-end' }}>
+              <MatchingHowTooltip onDismiss={() => {}} />
             </div>
           </Block>
 
@@ -804,7 +869,7 @@ export default function ComponentLibrary() {
               <SimEmptyState
                 icon={RiFlaskLine}
                 title="No scenarios to test yet"
-                body="Once your AOP has a trigger, Hiver AI turns real past emails into scenarios you can test here."
+                body="Once your skill has a trigger, Hiver AI turns real past emails into scenarios you can test here."
                 ghosts={[
                   { id: 'g1', sender: 'Priya Nair', subject: 'Empty payload returns 200 instead of 400', preview: 'The API responds 200 OK rather than a validation error.' },
                   { id: 'g2', sender: 'Aisha Khan', subject: '500s spiking on checkout', preview: 'Intermittent 500 Internal Server Error on the checkout API.' },
@@ -832,13 +897,13 @@ export default function ComponentLibrary() {
             </Row>
           </Block>
 
-          <Block name="ColdStartModal" imp="flow01/ColdStartModal" desc="The /canvas entry - 'Draft your AOP with AI': the describe input with its AI glow, generic starters, and an SOP upload drop target.">
+          <Block name="ColdStartModal" imp="flow01/ColdStartModal" desc="The /canvas entry - 'Draft your skill with AI': the describe input with its AI glow, generic starters, and an SOP upload drop target.">
             <div className={styles.modalStage} style={{ height: 540 }}>
               <ColdStartModal onGenerate={() => {}} onDismiss={() => {}} />
             </div>
           </Block>
 
-          <Block name="EnableModal" imp="flow01/enable/EnableModal" desc="The /api-example go-live - name the AOP and pick the shared mailboxes (tag-owning ones pre-selected), then the success moment.">
+          <Block name="EnableModal" imp="flow01/enable/EnableModal" desc="The /api-example go-live - name the skill and pick the shared mailboxes (tag-owning ones pre-selected), then the success moment.">
             <EnableModalDemo />
           </Block>
 

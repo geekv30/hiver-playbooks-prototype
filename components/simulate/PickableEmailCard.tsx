@@ -12,6 +12,8 @@ interface Props {
   onSelect: () => void;
   /** When provided, a hover-revealed redirect opens the full conversation. */
   onOpen?: () => void;
+  /** Quiet trailing metadata on the sender row (a scanned row's arrival time). */
+  aside?: string;
 }
 
 /**
@@ -21,7 +23,7 @@ interface Props {
  * redirect button is a valid sibling rather than nested inside a radio. When
  * `onOpen` is set (recent conversations), the redirect reveals on hover.
  */
-export default function PickableEmailCard({ email, selected, onSelect, onOpen }: Props) {
+export default function PickableEmailCard({ email, selected, onSelect, onOpen, aside }: Props) {
   return (
     <article className={styles.card} data-selected={selected || undefined} onClick={onSelect}>
       <div className={styles.top}>
@@ -33,6 +35,7 @@ export default function PickableEmailCard({ email, selected, onSelect, onOpen }:
           />
           <span className={styles.name}>{email.sender}</span>
         </div>
+        {aside && <span className={styles.aside}>{aside}</span>}
         {onOpen && (
           <button
             type="button"

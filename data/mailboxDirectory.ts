@@ -11,7 +11,7 @@ export interface MailboxDirectoryEntry {
   members: string[];
 }
 
-/** People an AOP can assign work to (the readiness review treats an Assign
+/** People a skill can assign work to (the readiness review treats an Assign
  *  value that matches one of these names as a person - queues and rules are
  *  never membership-checked). */
 export const TEAM_MEMBERS = [
@@ -22,7 +22,7 @@ export const TEAM_MEMBERS = [
   'Tom Becker',
 ] as const;
 
-// Tags most teams share everywhere - AOP-authored tags like "api-error" or
+// Tags most teams share everywhere - Skill-authored tags like "api-error" or
 // "security" only exist where a directory entry says so.
 const COMMON_TAGS = ['urgent', 'follow-up', 'vip'];
 

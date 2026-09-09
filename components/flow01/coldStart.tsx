@@ -16,12 +16,12 @@ import {
 } from './doc';
 
 // ---------------------------------------------------------------------------
-// Cold-start "draft your AOP with AI" data + doc builders.
+// Cold-start "draft your skill with AI" data + doc builders.
 //
 // Everything here is GENERIC + reusable - universal support workflows any team
 // has (triage bug reports, billing, feature requests, KB replies). NO named
 // customer / person / company / one story's data (see feedback-reusability-
-// principle). All paths funnel through ONE builder so the generated AOP is
+// principle). All paths funnel through ONE builder so the generated Skill is
 // data-driven, never bespoke per starter.
 // ---------------------------------------------------------------------------
 
@@ -58,7 +58,7 @@ export interface StarterSpec {
   Icon: IconCmp;
   /** Prefill written into the prompt field on click (the user can edit before generating). */
   prompt: string;
-  /** Resulting AOP fields. */
+  /** Resulting Skill fields. */
   title: string;
   trigger: string;
   steps: StarterStep[];
@@ -187,7 +187,7 @@ function firstSentence(text: string): string {
 
 function titleFromFileName(name: string): string {
   const base = name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').trim();
-  if (!base) return 'Untitled AOP';
+  if (!base) return 'Untitled skill';
   return base.charAt(0).toUpperCase() + base.slice(1);
 }
 
@@ -198,7 +198,7 @@ function titleFromFileName(name: string): string {
 export function buildScaffoldDoc(opts: { text?: string; fileName?: string }): EditorDoc {
   const trigger =
     opts.text && opts.text.trim() ? firstSentence(opts.text) : 'When a matching email arrives.';
-  const title = opts.fileName ? titleFromFileName(opts.fileName) : 'Untitled AOP';
+  const title = opts.fileName ? titleFromFileName(opts.fileName) : 'Untitled skill';
   const steps: Step[] = [
     { id: newId('cs-step'), body: normalizeLine([txt('Pull out the key details from the email.')]) },
     { id: newId('cs-step'), body: normalizeLine([makeChip('kb_search', 'Help center'), txt(' for relevant context.')]) },

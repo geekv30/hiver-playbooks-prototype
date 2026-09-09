@@ -1,0 +1,106 @@
+/* CopilotScanNote - trigger matching's voice inside Copilot.
+
+   `row` is the last entry of the starter list, so it copies the starter row's
+   geometry exactly (28px icon square, 10px gap, 7/8 padding, 13/18 text) and
+   only the mark's colour carries state: a spinner while reading, then a violet
+   search-ai mark while the result is news, then resting ink.
+   `note` is the same content inside a reply, where it answers a question. */
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 8px;
+  margin: 0;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: var(--fs-small);
+  line-height: 18px;
+  letter-spacing: var(--ls-body);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap);
+}
+.row:hover:not(:disabled) {
+  background: var(--surface-soft);
+}
+.row:disabled {
+  cursor: default;
+}
+/* While it reads: the mark spins in an accent square, the label keeps full
+   contrast. It is work in progress, not a dead row. */
+.row[data-reading] .rowIcon {
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+.row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.rowIcon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border: 1px solid var(--hairline);
+  border-radius: 7px;
+  background: var(--card);
+  color: var(--ink-soft); /* Neutrals/Gray 1 - the resting mark */
+  transition: color 600ms var(--ease-snap);
+}
+/* Still news: the mark is violet (Figma 3345:25415), and it fades to resting
+   ink once the fresh window passes (3351:30202). */
+.row[data-fresh] .rowIcon {
+  color: var(--accent);
+}
+.rowIcon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.rowText {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--body);
+}
+.row:disabled .rowText {
+  color: var(--muted);
+}
+.row[data-reading] .rowText {
+  color: var(--body);
+}
+
+/* ---- note: the same thing inside a reply ---- */
+.note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 11px;
+  border: 1px solid var(--hairline-soft);
+  border-radius: 8px;
+  background: var(--surface-card);
+  font-size: var(--fs-small);
+  line-height: 18px;
+  color: var(--body);
+}
+.noteIcon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  color: var(--muted-soft);
+}
+.noteIcon svg {
+  width: 15px;
+  height: 15px;
+}
+.noteText {
+  flex: 1 1 auto;
+  min-width: 0;
+}

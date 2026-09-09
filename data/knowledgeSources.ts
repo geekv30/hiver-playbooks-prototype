@@ -3,7 +3,7 @@
 // Mirrors the SHAPE of Hiver's Knowledge Hub (the 7 source types + per-source
 // rows), but every entry is a GENERIC placeholder for a believable support team -
 // never a real account's sources/people (reusability rule). Swap for live Hub
-// data (scoped to the AOP's mailbox) when wired to a backend.
+// data (scoped to the skill's mailbox) when wired to a backend.
 
 export type SourceTypeId =
   | 'help'

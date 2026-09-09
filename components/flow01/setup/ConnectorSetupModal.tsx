@@ -175,7 +175,7 @@ export default function ConnectorSetupModal({ connector, onConnected, onClose }:
           <>
             <div className={styles.success}>
               {/* The connection success moment: the same drawing check + staggered
-                  reveal as the AOP go-live (EnableModal). */}
+                  reveal as the skill go-live (EnableModal). */}
               <svg className={styles.checkSvg} viewBox="0 0 52 52" aria-hidden>
                 <circle className={styles.checkCircle} cx="26" cy="26" r="24" />
                 <path className={styles.checkMark} d="M15 27 l7.5 7.5 L37 19" />

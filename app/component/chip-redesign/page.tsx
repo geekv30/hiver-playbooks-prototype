@@ -239,7 +239,7 @@ export default function ChipRedesignPage() {
       <header className={styles.docbar}>
         <Link href="/atoms" className={styles.brand}>P</Link>
         <div className={styles.crumb}>
-          <Link href="/component/canvas">AOPs</Link>
+          <Link href="/component/canvas">Skills</Link>
           <span className={styles.csep}>/</span>
           <span className={styles.name}>Chip redesign</span>
         </div>

@@ -12,7 +12,7 @@ import ComposeEval from './ComposeEval';
 import styles from './AiScenarios.module.css';
 
 interface Props {
-  /** False when the AOP has no trigger yet - shows the informative empty state. */
+  /** False when the skill has no trigger yet - shows the informative empty state. */
   hasScenarios?: boolean;
   hasTrigger?: boolean;
   onAddTrigger?: () => void;

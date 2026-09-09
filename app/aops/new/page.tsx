@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import EditorCanvas from '@/components/flow01/EditorCanvas';
 
 export const metadata: Metadata = {
-  title: 'New AOP · Hiver',
-  description: 'Create a new AI Operating Procedure.',
+  title: 'New skill · Hiver',
+  description: 'Create a new skill.',
 };
 
 // A fresh, empty canvas: no initialDoc, so the cold-start "draft with AI"

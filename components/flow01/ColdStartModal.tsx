@@ -10,7 +10,7 @@ import { STARTERS, buildStarterDoc, buildScaffoldDoc } from './coldStart';
 import styles from './ColdStartModal.module.css';
 
 interface Props {
-  /** Called with the generated AOP + the user's query when they finish a
+  /** Called with the generated Skill + the user's query when they finish a
    *  draft. The query carries into the Copilot thread, which runs the "working"
    *  animation and posts an acknowledgement (the handoff happens there now). */
   onGenerate: (doc: EditorDoc, query: string) => void;
@@ -31,13 +31,13 @@ function formatBytes(n: number): string {
 }
 
 /**
- * ColdStartModal - the "draft your AOP with AI" entry shown when a user
- * lands on an empty AOP canvas. Three paths converge on one generate:
+ * ColdStartModal - the "draft your skill with AI" entry shown when a user
+ * lands on an empty Skill canvas. Three paths converge on one generate:
  *   1. describe in plain English (the hero input, with the Hiver-AI focus ring),
  *   2. tap a generic starter example (prefills the input),
  *   3. upload an SOP to convert (the input card is also a drop target).
  * On Generate the query hands off to the Copilot panel (which runs the working
- * animation + drafts the AOP); Skip / dismiss lands on a blank canvas.
+ * animation + drafts the skill); Skip / dismiss lands on a blank canvas.
  *
  * Net-new surface (no Figma answer key); built from the existing atoms + the
  * ChatBar gradient idiom, grounded in 03-research/AI_DRAFT_COLDSTART_PATTERN.md.
@@ -124,7 +124,7 @@ export default function ColdStartModal({ onGenerate, onDismiss }: Props) {
     let query: string;
     if (file) {
       doc = buildScaffoldDoc({ text: text.trim() || undefined, fileName: file.name });
-      query = text.trim() || `Turn my SOP "${file.name}" into an AOP.`;
+      query = text.trim() || `Turn my SOP "${file.name}" into a skill.`;
     } else if (activeStarter) {
       const spec = STARTERS.find((s) => s.id === activeStarter)!;
       doc = buildStarterDoc(spec);
@@ -155,13 +155,13 @@ export default function ColdStartModal({ onGenerate, onDismiss }: Props) {
           <div className={styles.titleRow}>
             <SparkleIcon className={styles.titleIco} aria-hidden />
             <h2 id="cs-title" className={styles.title}>
-              Draft your AOP with AI
+              Draft your skill with AI
             </h2>
           </div>
         </header>
 
         <div className={styles.body}>
-          <p className={styles.label}>Describe what you want your AOP to do</p>
+          <p className={styles.label}>Describe what you want your skill to do</p>
           {/* Hero input - a static teal "AI" border (Figma 724:37478); the whole
               card is also a drop target for an SOP. */}
           <div
@@ -182,7 +182,7 @@ export default function ColdStartModal({ onGenerate, onDismiss }: Props) {
                 placeholder={PLACEHOLDER}
                 value={text}
                 spellCheck={false}
-                aria-label="Describe your AOP"
+                aria-label="Describe your skill"
                 onChange={(e) => onTextChange(e.target.value)}
               />
 
@@ -228,7 +228,7 @@ export default function ColdStartModal({ onGenerate, onDismiss }: Props) {
                 <button
                   type="button"
                   className={styles.sendBtn}
-                  aria-label="Generate AOP"
+                  aria-label="Generate skill"
                   disabled={!canGenerate}
                   onClick={startGenerate}
                 >
@@ -237,7 +237,7 @@ export default function ColdStartModal({ onGenerate, onDismiss }: Props) {
               </div>
 
               <div className={styles.dropHint} aria-hidden={!dragOver}>
-                Drop your SOP to convert it to an AOP
+                Drop your SOP to convert it to a skill
               </div>
             </div>
 
@@ -279,7 +279,7 @@ export default function ColdStartModal({ onGenerate, onDismiss }: Props) {
 
           {file && (
             <p className={styles.privacy}>
-              Your SOP is read by AI to draft the AOP. Avoid uploading sensitive customer data.
+              Your SOP is read by AI to draft the skill. Avoid uploading sensitive customer data.
             </p>
           )}
         </div>
@@ -294,7 +294,7 @@ export default function ColdStartModal({ onGenerate, onDismiss }: Props) {
             disabled={!canGenerate}
             onClick={startGenerate}
           >
-            Generate AOP
+            Generate skill
           </Button>
         </footer>
       </>

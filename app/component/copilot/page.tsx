@@ -6,13 +6,13 @@ import CopilotPanel, { type CopilotMessage } from '@/components/flow01/copilot/C
 // A seeded conversation (generic, no case-specific content) to verify the
 // message styling - user pill (right) + bubble-less assistant (left) + actions.
 const SEED: CopilotMessage[] = [
-  { role: 'user', text: 'Make this AOP foolproof' },
+  { role: 'user', text: 'Make this skill foolproof' },
   {
     role: 'assistant',
     text: "Here's how I'd make it more robust: add a condition that checks the request priority, then a fallback branch so nothing slips through unhandled. Want me to add that?",
     // a stored thought (collapsed "Thought for Ns", expandable)
     thought: { ms: 2460 },
-    steps: ['Reading your AOP', 'Planning the change'],
+    steps: ['Reading your skill', 'Planning the change'],
   },
 ];
 

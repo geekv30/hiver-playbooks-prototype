@@ -9,7 +9,7 @@
 // "can't log in" under "404 errors") - believability is part of the craft bar.
 
 // Email-level run outcome. 'errored' = the evaluation itself failed (retryable);
-// 'approval' = the AOP drafted a reply but an action requires human sign-off.
+// 'approval' = the skill drafted a reply but an action requires human sign-off.
 // 'failed' is retained for the /atoms gallery specimens only - the live flows use
 // 'errored'. (Distinct from the per-STEP StepStatus, which keeps its own 'failed'.)
 export type SimStatusKind =
@@ -35,6 +35,8 @@ export interface SimEmail {
   failAt?: number;
   /** Drafted reply shown on a passed run (coherent with this email). */
   draft?: string;
+  /** Relative arrival time ("2 hrs ago") - shown on scanned inbound rows. */
+  received?: string;
 }
 
 export interface SimTopic {
@@ -310,12 +312,12 @@ export function recentForMailbox(mailboxId: string, count = 10): SimEmail[] {
 export const SIM_COPY = {
   // Rendered with "ELSE" emphasised in RunOutcome (Figma 1769:20959).
   noBranchBody:
-    'This email did not match any branch in the AOP. Add an ELSE branch to handle cases like it.',
+    'This email did not match any branch in the skill. Add an ELSE branch to handle cases like it.',
   noBranchTrace: 'no matching branch for this email',
   stepError: 'Request failed, no response',
   // Errored (retryable evaluation error) - Figma 1769:20792, grammar-corrected.
   erroredBody: 'Something went wrong, please retry the evaluation.',
   // Approval-required (Figma 1839:33930 / trace 1839:34067).
   approvalTrace: 'Approval needed',
-  declinedBody: 'Reply declined. The AOP held this reply for sign-off.',
+  declinedBody: 'Reply declined. The skill held this reply for sign-off.',
 } as const;
