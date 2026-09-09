@@ -117,11 +117,11 @@
   padding: 0 0 4px;
 }
 
-/* The steps section sits straight under the trigger (no heading/divider between).
-   Its top padding restores the trigger-field -> row-1 gap (Figma 647:40011 pb-36):
-   4px (trigger block pad-bottom) + 32px = 36px. */
+/* Gap from the trigger line down to the "Description" label. The old 32px was
+   calibrated to the bordered trigger field's 72px box; with the box gone the two
+   sections need the breathing room back (Figma 3342:16871 reads ~64px). */
 .stepsBlock {
-  padding-top: 32px;
+  padding-top: 40px;
 }
 
 .row {
@@ -156,34 +156,26 @@
   min-width: 0;
 }
 
+/* Section label ("Trigger", "Description") - Figma 3342:16871 underlines both
+   with a dotted rule, which reads as "this names the field below it" rather than
+   as a heading floating over the page. */
 .label {
   margin: 0 0 12px;
-  font-size: var(--fs-h5); /* 16px (Figma) - was --fs-h4 18px */
+  font-size: var(--fs-h5); /* 16px (Figma) */
   font-weight: 500;
   color: var(--ink);
   letter-spacing: -0.011em;
+  text-decoration: underline dotted var(--hairline-strong);
+  text-underline-offset: 5px;
+  text-decoration-thickness: 1px;
 }
 
-/* Trigger field - the bordered NL container (Figma 647:40010). The field BORDER
-   left-aligns with the "When should this run :" heading (and the step rail), with
-   the placeholder/text indented by the field's own 16px padding - so the box and
-   the heading share a left edge. Native vertical resize shows the corner grip
-   (the diagonal "slash" handle) and lets the field be dragged taller/shorter. */
-.triggerField {
+/* Trigger - plain text on the content rail (Figma 3342:16871). The bordered,
+   resizable field is gone: the trigger now reads exactly like a step line, so
+   the only chrome in the doc is the text itself. No padding, so the placeholder
+   shares a left edge with its label. */
+.triggerLine {
   position: relative;
-  padding: 10px 16px;
-  background: var(--card);
-  border: 1px solid var(--hairline-soft);
-  border-radius: var(--r-lg);
-  overflow: auto;
-  resize: vertical;
-  /* Default tall enough for two lines of text (2 x 26px line + 20px padding);
-     still auto-grows beyond and is drag-resizable. */
-  min-height: 72px;
-  transition: border-color var(--d-hover) var(--ease-snap);
-}
-.triggerField:focus-within {
-  border-color: var(--hairline-strong);
 }
 
 .steps {
