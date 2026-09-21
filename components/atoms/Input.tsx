@@ -4,6 +4,9 @@ import styles from './Input.module.css';
 
 interface Props {
   defaultValue?: string;
+  /** Controlled value. Omit for the uncontrolled (defaultValue) form. */
+  value?: string;
+  onChange?: (v: string) => void;
   placeholder?: string;
   /** Leading icon (search, etc.). */
   prefixIcon?: ReactNode;
@@ -18,6 +21,8 @@ interface Props {
 // Input field - Figma 258:21645. Field chrome + optional prefix icon / suffix.
 export default function Input({
   defaultValue,
+  value,
+  onChange,
   placeholder,
   prefixIcon,
   suffix,
@@ -35,7 +40,8 @@ export default function Input({
       <input
         className={styles.input}
         type="text"
-        defaultValue={defaultValue}
+        {...(value === undefined ? { defaultValue } : { value })}
+        onChange={onChange ? (e) => onChange(e.target.value) : undefined}
         placeholder={placeholder}
         disabled={disabled}
         readOnly={readOnly}

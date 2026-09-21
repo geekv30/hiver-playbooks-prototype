@@ -141,6 +141,20 @@
   --status-green: #05a570; /* Status/Dark green - Passed */
   --status-green-bg: #e3fcf4; /* Green light */
 
+  /* ===== Run outcome palette (Skill runs) =====
+     One set, read by the pill, the outcome bar, the activity strip and the
+     trace, so a state looks identical everywhere it appears. `declined` is
+     deliberately neutral: a person turned the draft down, which is the system
+     working, not a failure. */
+  --run-completed: #05a570;
+  --run-completed-bg: #e3fcf4;
+  --run-awaiting: #f07530;
+  --run-awaiting-bg: #ffefe0;
+  --run-failed: #dc2626;
+  --run-failed-bg: #fee2e2;
+  --run-declined: #6f7c90;
+  --run-declined-bg: #eceff6;
+
   /* ===== Hiver tint (accent only - CTA, focus, active) ===== */
   --primary: #e15524;
   --primary-hover: #c8431c;

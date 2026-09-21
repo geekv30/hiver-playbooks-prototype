@@ -1,0 +1,220 @@
+/* The run list: grouped by day, newest first. Rows are dense on purpose -
+   this is scanned, not read, and the detail pane carries the depth. */
+.list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+/* With nothing to list, the message centres in the space rather than sitting at
+   the top of a tall blank column. */
+.list[data-empty] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.dayHead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 16px 7px;
+  background: var(--card);
+  border-bottom: 1px solid var(--hairline-soft);
+  font-size: var(--fs-micro);
+  line-height: var(--lh-micro);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.dayCount {
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--muted-soft);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A skill edit, shown where it happened in the timeline. This is the line that
+   answers "why did it start behaving differently on Tuesday" without anyone
+   having to ask - runs above it and below it ran on different definitions. */
+.revision {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 16px;
+  background: var(--violet-subtle);
+  border-bottom: 1px solid var(--hairline-soft);
+}
+.revIcon {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  color: var(--violet-intense);
+}
+.revText {
+  min-width: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  letter-spacing: var(--ls-caption);
+  color: var(--body);
+}
+.revLead {
+  font-weight: 500;
+  color: var(--violet-intense);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 11px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0 9px;
+  width: 100%;
+  padding: 10px 16px 11px;
+  border: 0;
+  border-bottom: 1px solid var(--hairline-soft);
+  border-left: 2px solid transparent;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap);
+}
+.row:hover { background: var(--surface-soft); }
+.row[data-on] {
+  background: var(--surface-soft);
+  border-left-color: var(--accent);
+}
+.row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.mark {
+  grid-row: 1;
+  padding-top: 5px;
+}
+
+.subject {
+  grid-column: 2;
+  font-size: var(--fs-small);
+  line-height: 1.4;
+  letter-spacing: var(--ls-small);
+  font-weight: 500;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.time {
+  grid-column: 3;
+  grid-row: 1;
+  font-size: var(--fs-micro);
+  line-height: 1.5;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  padding-top: 1px;
+}
+
+.meta {
+  grid-column: 2 / -1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  min-width: 0;
+  font-size: var(--fs-micro);
+  line-height: var(--lh-micro);
+  color: var(--muted);
+}
+.sender {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 0 1 auto;
+}
+.sep { color: var(--hairline-strong); flex: none; }
+.dur { font-variant-numeric: tabular-nums; flex: none; }
+.skill {
+  flex: none;
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--body);
+}
+
+/* What the skill actually did, on the row. The whole point of the surface is
+   that this is no longer invisible. */
+.chips {
+  grid-column: 2 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: var(--r-xs);
+  background: var(--surface-card);
+  font-size: var(--fs-micro);
+  line-height: 1;
+  color: var(--body);
+  white-space: nowrap;
+}
+.chip[data-tone='error'] {
+  background: var(--run-failed-bg);
+  color: var(--run-failed);
+  font-family: var(--mono);
+  font-size: 10px;
+}
+.chip[data-tone='wait'] {
+  background: var(--run-awaiting-bg);
+  color: var(--run-awaiting);
+}
+.chip[data-tone='none'] {
+  background: none;
+  padding-left: 0;
+  color: var(--muted-soft);
+  font-style: italic;
+}
+
+/* Empty + end states */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 24px;
+  text-align: center;
+}
+.emptyTitle {
+  font-size: var(--fs-small);
+  font-weight: 500;
+  color: var(--ink);
+}
+.emptyBody {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--muted);
+  max-width: 34ch;
+}
+.end {
+  padding: 14px 16px 22px;
+  text-align: center;
+  font-size: var(--fs-micro);
+  color: var(--muted-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row { transition: none; }
+}

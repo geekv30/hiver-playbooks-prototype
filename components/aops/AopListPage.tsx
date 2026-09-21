@@ -15,8 +15,12 @@ import {
   RiSettings3Line,
   RiArrowDownSLine,
   RiAddLine,
+  RiPulseLine,
 } from 'react-icons/ri';
 import GmailBar from '@/components/flow01/GmailBar';
+import OutcomeBar from '@/components/runs/OutcomeBar';
+import { countBy } from '@/components/runs/runsModel';
+import { NOW, runsForSkill } from '@/data/runFixtures';
 import Toggle from '@/components/atoms/Toggle';
 import { SparkleIcon } from '@/components/icons/ui';
 import styles from './AopListPage.module.css';
@@ -32,7 +36,6 @@ interface AopRow {
   mailboxes: string[] | null;
   /** How many more beyond the shown chips (the "+N" chip). */
   more?: number;
-  lastRun: string;
   lastUpdated: string;
   href: string;
 }
@@ -45,7 +48,6 @@ const SEED_ROWS: AopRow[] = [
     active: true,
     mailboxes: ['Support', 'Sales'],
     more: 9,
-    lastRun: '2 hrs ago',
     lastUpdated: 'Jul 3, 2026',
     href: '/api-example',
   },
@@ -55,7 +57,6 @@ const SEED_ROWS: AopRow[] = [
     desc: 'Checks order context before drafting refund replies',
     active: false,
     mailboxes: ['Billing'],
-    lastRun: '2 mins ago',
     lastUpdated: 'Jul 3, 2026',
     href: '/canvas',
   },
@@ -65,11 +66,21 @@ const SEED_ROWS: AopRow[] = [
     desc: 'Checks order context before drafting refund replies',
     active: false,
     mailboxes: null,
-    lastRun: '-',
     lastUpdated: 'Jul 3, 2026',
     href: '/connector-setup',
   },
 ];
+
+/** "2 hrs ago" for the newest run - read off the history rather than stored on
+ *  the row, so the count and the time can never disagree. */
+function sinceLabel(t: number): string {
+  const mins = Math.max(1, Math.round((NOW - t) / 60_000));
+  if (mins < 60) return `${mins} min${mins === 1 ? '' : 's'} ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs} hr${hrs === 1 ? '' : 's'} ago`;
+  const days = Math.round(hrs / 24);
+  return `${days} day${days === 1 ? '' : 's'} ago`;
+}
 
 const MAIN_NAV = [
   { label: 'Dashboard', icon: RiLayoutGridLine },
@@ -179,6 +190,13 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
                 </p>
               </div>
               <div className={styles.headerActions}>
+                {/* The cross-skill read. Sits beside New skill because it is the
+                    other thing you come to this page to do: make one, or check
+                    on the ones you already have. */}
+                <Link href="/aops/runs" className={styles.allRunsBtn}>
+                  <RiPulseLine aria-hidden />
+                  All skill runs
+                </Link>
                 <Link href="/aops/new" className={styles.newBtn}>
                   <RiAddLine aria-hidden />
                   New skill
@@ -231,7 +249,7 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
                 <div className={styles.tableHead}>
                   <span className={styles.colMain}>Skill</span>
                   <span className={styles.colMain}>Mapped to</span>
-                  <span className={styles.colEnd}>Last run</span>
+                  <span className={styles.colRuns}>Runs &middot; 30d</span>
                   <span className={styles.colEnd}>Last updated</span>
                 </div>
                 <div className={styles.emptyBody}>
@@ -252,7 +270,7 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
               <div className={styles.tableHead}>
                 <span className={styles.colMain}>Skill</span>
                 <span className={styles.colMain}>Mapped to</span>
-                <span className={styles.colEnd}>Last run</span>
+                <span className={styles.colRuns}>Runs &middot; 30d</span>
                 <span className={styles.colEnd}>Last updated</span>
               </div>
               <ul className={styles.rows}>
@@ -296,9 +314,31 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
                           <span className={styles.unassigned}>unassigned</span>
                         )}
                       </div>
-                      <span className={`${styles.colEnd} ${styles.cellTime}`} data-muted={row.lastRun === '-' || undefined}>
-                        {row.lastRun}
-                      </span>
+                      <div className={styles.colRuns}>
+                        {(() => {
+                          const runs = runsForSkill(row.id);
+                          if (runs.length === 0) {
+                            return <span className={styles.runsNone}>No runs yet</span>;
+                          }
+                          return (
+                            <button
+                              type="button"
+                              className={styles.runsCell}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(`${row.href}?runs=1`);
+                              }}
+                              aria-label={`${runs.length} runs for ${row.name}`}
+                            >
+                              <span className={styles.runsTop}>
+                                <span className={styles.runsN}>{runs.length}</span>
+                                <span className={styles.runsLast}>{sinceLabel(runs[0]!.startedAt)}</span>
+                              </span>
+                              <OutcomeBar counts={countBy(runs)} />
+                            </button>
+                          );
+                        })()}
+                      </div>
                       <span className={`${styles.colEnd} ${styles.cellTime}`}>{row.lastUpdated}</span>
                     </div>
                   </li>

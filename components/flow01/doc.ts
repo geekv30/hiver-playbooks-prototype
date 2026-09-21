@@ -116,7 +116,10 @@ function exChip(id: string, actionId: string, meta?: string): Fragment {
 export function exampleDoc(): EditorDoc {
   return {
     title: 'API error triage',
-    status: 'draft',
+    // Live, matching its row on the Skills list (active, last run 2 hrs ago) -
+    // this is the enabled-skill demo, and a draft cannot have run history.
+    // The draft -> Enable path is demoed on /canvas and /aops/new.
+    status: 'active',
     triggerMode: 'automatic',
     // The mailboxes this skill is meant for. Known up front (the Skills list row
     // shows it mapped to Support and Sales), so the Enable flow arrives

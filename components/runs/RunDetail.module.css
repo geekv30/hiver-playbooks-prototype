@@ -1,0 +1,209 @@
+/* One run, in full. Read-only by design: the only way out is the conversation,
+   where a person has the context - and the permission - to act. */
+.detail {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+}
+
+.scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+/* One measure for everything in the pane. Without it the trace and the state
+   sentence stretch to the full width of a 1400px page and stop being readable. */
+.measure {
+  max-width: 860px;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 22px 16px;
+  border-bottom: 1px solid var(--hairline-soft);
+}
+.headTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.subject {
+  margin: 0;
+  font-size: var(--fs-h5);
+  line-height: 1.35;
+  letter-spacing: var(--ls-h5);
+  font-weight: 600;
+  color: var(--ink);
+  text-wrap: balance;
+}
+.from {
+  margin: 3px 0 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  letter-spacing: var(--ls-caption);
+  color: var(--muted);
+}
+.fromName { color: var(--body); }
+
+.openBtn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--hairline);
+  background: var(--card);
+  font: inherit;
+  font-size: var(--fs-small);
+  font-weight: 500;
+  letter-spacing: var(--ls-small);
+  color: var(--ink);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--d-hover) var(--ease-snap),
+    border-color var(--d-hover) var(--ease-snap);
+}
+.openBtn:hover { background: var(--surface-soft); border-color: var(--hairline-strong); }
+.openBtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.openBtn svg { width: 14px; height: 14px; }
+
+/* Run facts, as a definition row rather than tiles - none of these numbers is
+   the point of the page, they are the provenance of the trace below. */
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  align-items: baseline;
+}
+.fact {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  letter-spacing: var(--ls-caption);
+}
+.factKey { color: var(--muted-soft); }
+.factVal { color: var(--body); font-variant-numeric: tabular-nums; }
+.mono { font-family: var(--mono); font-size: 11px; letter-spacing: 0; }
+
+/* The state card: what this outcome means, in a sentence, and what to do next.
+   Every state gets one - "Completed" without a summary of what changed is as
+   unhelpful as a silent failure. */
+.state {
+  margin: 16px 22px 0;
+  padding: 13px 15px;
+  border-radius: var(--r-lg);
+  background: var(--surface-soft);
+  border: 1px solid var(--hairline-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.state[data-state='failed'] {
+  background: var(--run-failed-bg);
+  border-color: transparent;
+}
+.state[data-state='awaiting'] {
+  background: var(--run-awaiting-bg);
+  border-color: transparent;
+}
+.stateBody {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: 1.5;
+  letter-spacing: var(--ls-caption);
+  color: var(--body);
+}
+.state[data-state='failed'] .stateBody { color: #97231e; }
+.state[data-state='awaiting'] .stateBody { color: #8a4515; }
+.stateStrong { font-weight: 500; }
+
+.section {
+  padding: 18px 22px 0;
+}
+.section:last-child { padding-bottom: 22px; }
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 9px;
+}
+.sectionTitle {
+  font-size: var(--fs-micro);
+  line-height: var(--lh-micro);
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.sectionNote {
+  font-size: var(--fs-micro);
+  color: var(--muted-soft);
+}
+
+/* What landed, split by where it landed: the conversation vs. another system.
+   Third-party writes are called out because they are the ones a person cannot
+   simply undo from Hiver. */
+.applied {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.appliedRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-small);
+  line-height: 1.4;
+  letter-spacing: var(--ls-small);
+  color: var(--body);
+}
+.tick {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  color: var(--run-completed);
+}
+.none {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--muted);
+}
+
+.empty {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 40px 24px;
+  text-align: center;
+}
+.emptyTitle {
+  font-size: var(--fs-small);
+  font-weight: 500;
+  color: var(--ink);
+}
+.emptyBody {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--muted);
+  max-width: 30ch;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .openBtn { transition: none; }
+}

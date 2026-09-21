@@ -1,0 +1,169 @@
+/* The trace: the steps this run actually walked, in order.
+   Mirrors the Evaluation trace (rail + dot + label + payload) so one execution
+   vocabulary covers both surfaces - with a duration bar added, because in a
+   live run "which step is slow" is a question worth answering. */
+.trace {
+  display: flex;
+  flex-direction: column;
+}
+
+.step { display: block; }
+
+.row {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  gap: 0 9px;
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 16px;
+}
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--hairline-strong);
+  margin-top: 6px;
+  flex: none;
+}
+.line {
+  width: 1px;
+  flex: 1;
+  min-height: 8px;
+  background: var(--hairline);
+}
+
+.step[data-status='done'] .dot { background: var(--run-completed); }
+.step[data-status='failed'] .dot { background: var(--run-failed); }
+.step[data-status='skipped'] .dot {
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--hairline-strong);
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 20px;
+  min-width: 0;
+}
+.iconBox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  flex: none;
+  color: var(--muted);
+}
+.iconBox svg { width: 14px; height: 14px; }
+.step[data-status='skipped'] .iconBox { color: var(--muted-soft); }
+
+.name {
+  font-size: var(--fs-small);
+  line-height: 1.4;
+  letter-spacing: var(--ls-small);
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.step[data-status='skipped'] .name { color: var(--muted-soft); font-weight: 400; }
+.medium {
+  font-size: var(--fs-micro);
+  color: var(--muted);
+}
+.sep { color: var(--hairline-strong); }
+
+/* Duration, and its share of the run, on one line. The bar is the fastest way
+   to see that one connector call cost more than everything else combined. */
+.timing {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+}
+.bar {
+  width: 54px;
+  height: 3px;
+  border-radius: var(--r-pill);
+  background: var(--hairline-soft);
+  overflow: hidden;
+}
+.barFill {
+  display: block;
+  height: 100%;
+  border-radius: var(--r-pill);
+  background: var(--hairline-strong);
+}
+.step[data-status='failed'] .barFill { background: var(--run-failed); }
+.ms {
+  font-size: var(--fs-micro);
+  line-height: 1;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 38px;
+  text-align: right;
+}
+
+.content {
+  padding: 2px 0 12px;
+  min-width: 0;
+}
+.step:last-child .content { padding-bottom: 0; }
+
+.reasoning {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: 1.5;
+  letter-spacing: var(--ls-caption);
+  color: var(--body);
+}
+.reasoning[data-warn] { color: var(--run-awaiting); }
+
+.box {
+  margin-top: 4px;
+  padding: 7px 9px;
+  border-radius: var(--r-sm);
+  background: var(--surface-soft);
+  border: 1px solid var(--hairline-soft);
+  font-size: var(--fs-caption);
+  line-height: 1.5;
+  letter-spacing: var(--ls-caption);
+  color: var(--body);
+  overflow-wrap: anywhere;
+}
+.errorBox {
+  margin-top: 4px;
+  padding: 7px 9px;
+  border-radius: var(--r-sm);
+  background: var(--run-failed-bg);
+  font-size: var(--fs-caption);
+  line-height: 1.5;
+  color: var(--run-failed);
+}
+.errorCode {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  opacity: 0.75;
+  margin-bottom: 1px;
+}
+
+.approvalNote {
+  margin: 4px 0 0;
+  font-size: var(--fs-micro);
+  line-height: var(--lh-micro);
+  font-weight: 500;
+  color: var(--run-awaiting);
+}
+.skippedNote {
+  margin: 0;
+  font-size: var(--fs-micro);
+  line-height: var(--lh-micro);
+  color: var(--muted-soft);
+}

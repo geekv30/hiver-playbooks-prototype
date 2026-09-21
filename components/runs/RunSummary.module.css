@@ -1,0 +1,155 @@
+/* The summary: what the window holds, before any row is read.
+   Deliberately not four cards - a lead figure, the activity shape beside it,
+   and the outcome breakdown as a quiet stat row underneath. */
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px 20px 16px;
+  border-bottom: 1px solid var(--hairline-soft);
+}
+
+.top {
+  display: flex;
+  align-items: flex-end;
+  gap: 32px;
+}
+
+.lead {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.count {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.figure {
+  font-size: var(--fs-h2);
+  line-height: 1;
+  letter-spacing: var(--ls-h2);
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.trend {
+  font-size: var(--fs-caption);
+  line-height: 1;
+  font-weight: 500;
+  letter-spacing: var(--ls-caption);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.trend[data-dir='up'] { color: var(--run-completed); }
+.trend[data-dir='down'] { color: var(--state-draft); }
+.period {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  letter-spacing: var(--ls-caption);
+  color: var(--muted);
+}
+
+.chart {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Outcome breakdown. Each stat is a button: it filters to its state, so the
+   summary is also the coarse navigation. */
+/* Capped columns, packed left. Stretched across a wide page these become four
+   numbers marooned in white space, and the group stops reading as one set. */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 190px));
+  justify-content: start;
+  gap: 4px;
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+  transition:
+    background var(--d-hover) var(--ease-snap),
+    border-color var(--d-hover) var(--ease-snap);
+}
+.stat:hover {
+  background: var(--surface-soft);
+}
+.stat[data-on] {
+  background: var(--surface-soft);
+  border-color: var(--hairline);
+}
+.stat:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.statHead {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+}
+.dot[data-state='completed'] { background: var(--run-completed); }
+.dot[data-state='awaiting'] { background: var(--run-awaiting); }
+.dot[data-state='failed'] { background: var(--run-failed); }
+.dot[data-state='declined'] { background: var(--run-declined); }
+
+.statN {
+  font-size: var(--fs-h5);
+  line-height: 1.2;
+  letter-spacing: var(--ls-h5);
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.statLabel {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  letter-spacing: var(--ls-caption);
+  color: var(--body);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* The one sentence that makes a count actionable: why the failures failed,
+   how long the oldest approval has waited. */
+.note {
+  font-size: var(--fs-micro);
+  line-height: var(--lh-micro);
+  color: var(--muted);
+  padding-left: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.code {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0;
+  color: var(--body);
+}
+
+@media (max-width: 1080px) {
+  .stats { grid-template-columns: repeat(2, minmax(120px, 190px)); }
+  .top { flex-direction: column; align-items: stretch; gap: 14px; }
+  .chart { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stat { transition: none; }
+}

@@ -1,0 +1,61 @@
+/* Runs - a mode of the skill page, not a panel beside it.
+   Copilot and Evaluation are authoring companions; this is observation, and it
+   needs the whole stage to hold a list and a trace side by side. */
+.view {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border: 1px solid var(--hairline-soft);
+  border-radius: 14px;
+  box-shadow:
+    0 1px 2px rgba(52, 60, 69, 0.04),
+    0 8px 24px rgba(52, 60, 69, 0.05);
+  overflow: hidden;
+}
+
+/* Standalone (the all-skills page) sits flush in the page instead of as a card. */
+.view[data-flush] {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.split {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
+
+/* The no-results state spans the whole surface rather than sitting in a 372px
+   column beside an equally empty pane. */
+.emptySplit {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.listCol {
+  flex: 0 0 372px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--hairline-soft);
+  background: var(--card);
+}
+
+@media (max-width: 1180px) {
+  /* The no-results state spans the whole surface rather than sitting in a 372px
+   column beside an equally empty pane. */
+.emptySplit {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.listCol { flex-basis: 320px; }
+}

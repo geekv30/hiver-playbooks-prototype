@@ -6,6 +6,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import { RiDraggable, RiMore2Fill } from 'react-icons/ri';
@@ -32,6 +33,8 @@ import { useRouter } from 'next/navigation';
 import { useEvalState } from '@/components/simulate/useEvalState';
 import { useTriggerScan } from '@/components/simulate/useTriggerScan';
 import SimulatePanel from '@/components/simulate/SimulatePanel';
+import RunsView from '@/components/runs/RunsView';
+import { revisionMarks, runsForSkill, sourceFor } from '@/data/runFixtures';
 import { type CopilotMessage, type CopilotProposalData } from './copilot/CopilotPanel';
 import SidePanel, { type SideTab } from './copilot/SidePanel';
 import type { Verdict } from '@/components/atoms/ThumbsRating';
@@ -186,6 +189,9 @@ function updateLastAssistant(
 }
 
 interface Props {
+  /** The live skill this canvas edits. When set, its execution history is
+   *  reachable from the toolbar. Absent on a brand-new skill, which has none. */
+  skillId?: string;
   /** Optional starting document. Omit for a fresh empty Skill (/canvas);
    *  /api-example passes the seeded example. */
   initialDoc?: EditorDoc;
@@ -206,7 +212,16 @@ type ColdStartPhase = 'hero' | 'docked';
 
 const ALL_CONNECTOR_SLUGS: ConnectorSlug[] = ['shopify', 'hubspot', 'slack', 'salesforce', 'clickup'];
 
-export default function EditorCanvas({ initialDoc, companions, connectorsStartUnauthed }: Props) {
+// The query string does not change under us, so the store has nothing to
+// subscribe to - module-level for a stable identity across renders.
+const NO_SUBSCRIBE = () => () => {};
+
+export default function EditorCanvas({
+  skillId,
+  initialDoc,
+  companions,
+  connectorsStartUnauthed,
+}: Props) {
   const router = useRouter();
   const api = useEditorDoc(initialDoc);
   const { doc, undo, redo } = api;
@@ -272,6 +287,25 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
   // and Copilot's handoff message both read it.
   const triggerText = useMemo(() => lineToText(doc.trigger), [doc.trigger]);
   const scan = useTriggerScan(triggerText);
+  // Runs - the skill's execution history. A MODE of this page rather than a
+  // third companion tab: Copilot and Evaluation are authoring tools that sit
+  // beside the document, while Runs replaces it and needs the whole stage.
+  const runSource = skillId ? sourceFor(skillId) : undefined;
+  const runs = useMemo(() => (skillId ? runsForSkill(skillId) : []), [skillId]);
+  const runMarks = useMemo(() => (runSource ? revisionMarks(runSource) : []), [runSource]);
+
+  // Arriving from the Skills list's Runs cell opens straight into the history.
+  // Read through useSyncExternalStore rather than an effect: the server has no
+  // URL to read, so it answers "closed" and the client corrects it on hydration
+  // without a setState cascade. The toolbar's own toggle takes over from there.
+  const deepLinkedToRuns = useSyncExternalStore(
+    NO_SUBSCRIBE,
+    () => new URLSearchParams(window.location.search).get('runs') === '1',
+    () => false,
+  );
+  const [runsToggled, setRunsToggled] = useState<boolean | null>(null);
+  const runsOpen = runsToggled ?? deepLinkedToRuns;
+
   // The New pill on the Matching emails card, retired once the user opens it.
   // Session state on purpose: a reload is a fresh look at the new type.
   const [matchingIsNew, setMatchingIsNew] = useState(true);
@@ -1208,9 +1242,20 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
         onPause={pauseAop}
         onResume={resumeAop}
         onBack={() => router.push('/aops')}
+        runCount={runs.length > 0 ? runs.length : undefined}
+        runsOpen={runsOpen}
+        onToggleRuns={runs.length > 0 ? () => setRunsToggled(!runsOpen) : undefined}
       />
 
-      <div className={styles.stage}>
+      <div className={styles.stage} data-runs={runsOpen || undefined}>
+        {runsOpen ? (
+          <RunsView
+            runs={runs}
+            marks={runMarks}
+            onOpenConversation={() => showHint('Opening the conversation is coming soon.')}
+          />
+        ) : (
+        <>
         {/* The companion panel leads the row: Copilot and Evaluation sit on the
             LEFT of the canvas window, equal height to it. Rendered first so the
             reading and tab order match what is on screen. Non-companion routes
@@ -1560,6 +1605,8 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
             </div>
           )}
         </div>
+        </>
+        )}
       </div>
 
       {palette && (
