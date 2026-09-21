@@ -1,5 +1,9 @@
-/* One run, in full. Read-only by design: the only way out is the conversation,
-   where a person has the context - and the permission - to act. */
+/* One run, in full. Read-only: the only way out is the conversation, where a
+   person has both the context and the permission to act.
+
+   Structure follows the mail clients this sits beside - the content (the trace)
+   is the hero, and the facts sit in a fixed grid above it rather than a
+   wrapping row of label/value pairs, which never aligns twice. */
 .detail {
   flex: 1 1 auto;
   min-width: 0;
@@ -15,50 +19,67 @@
   overflow-y: auto;
   overscroll-behavior: contain;
 }
-/* One measure for everything in the pane. Without it the trace and the state
-   sentence stretch to the full width of a 1400px page and stop being readable. */
-.measure {
-  max-width: 860px;
+
+/* Content and facts, side by side - the pattern every mail client this sits
+   beside uses. It keeps the trace at a readable measure without leaving the
+   right half of the pane empty, and gives the facts a column where a long
+   timestamp has room instead of being clipped by a grid cell. */
+.body {
+  display: flex;
+  align-items: flex-start;
+  gap: 32px;
+  padding: 0 28px;
+}
+.main {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 720px;
+}
+.rail {
+  flex: 0 0 216px;
+  min-width: 0;
+  position: sticky;
+  top: 0;
+  padding: 24px 0 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .head {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 18px 22px 16px;
-  border-bottom: 1px solid var(--hairline-soft);
+  padding: 24px 0 0;
 }
 .headTop {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: 20px;
 }
 .subject {
   margin: 0;
-  font-size: var(--fs-h5);
-  line-height: 1.35;
-  letter-spacing: var(--ls-h5);
+  font-size: var(--fs-h4);
+  line-height: 1.3;
+  letter-spacing: var(--ls-h4);
   font-weight: 600;
   color: var(--ink);
   text-wrap: balance;
 }
 .from {
-  margin: 3px 0 0;
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  letter-spacing: var(--ls-caption);
+  margin: 4px 0 0;
+  font-size: var(--fs-small);
+  line-height: 1.45;
+  letter-spacing: var(--ls-small);
   color: var(--muted);
 }
-.fromName { color: var(--body); }
+.fromName { color: var(--body); font-weight: 500; }
 
 .openBtn {
   flex: none;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 30px;
-  padding: 0 11px;
+  height: 32px;
+  padding: 0 12px;
   border-radius: var(--r-md);
   border: 1px solid var(--hairline);
   background: var(--card);
@@ -75,71 +96,105 @@
 }
 .openBtn:hover { background: var(--surface-soft); border-color: var(--hairline-strong); }
 .openBtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-.openBtn svg { width: 14px; height: 14px; }
+.openBtn svg { width: 14px; height: 14px; color: var(--muted); }
+.openBtn:hover svg { color: var(--ink); }
 
-/* Run facts, as a definition row rather than tiles - none of these numbers is
-   the point of the page, they are the provenance of the trace below. */
-.facts {
+/* What happened, in a sentence. Every outcome gets one: a state name on its own
+   explains nothing, and "Failed" with no cause reads as "the skill is broken". */
+.outcome {
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px 20px;
-  align-items: baseline;
-}
-.fact {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  letter-spacing: var(--ls-caption);
-}
-.factKey { color: var(--muted-soft); }
-.factVal { color: var(--body); font-variant-numeric: tabular-nums; }
-.mono { font-family: var(--mono); font-size: 11px; letter-spacing: 0; }
-
-/* The state card: what this outcome means, in a sentence, and what to do next.
-   Every state gets one - "Completed" without a summary of what changed is as
-   unhelpful as a silent failure. */
-.state {
-  margin: 16px 22px 0;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 16px;
   padding: 13px 15px;
   border-radius: var(--r-lg);
   background: var(--surface-soft);
-  border: 1px solid var(--hairline-soft);
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
 }
-.state[data-state='failed'] {
-  background: var(--run-failed-bg);
-  border-color: transparent;
+.outcome[data-state='failed'] { background: var(--run-failed-bg); }
+.outcome[data-state='awaiting'] { background: var(--run-awaiting-bg); }
+.outcomeIcon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  margin-top: 1px;
+  color: var(--muted);
 }
-.state[data-state='awaiting'] {
-  background: var(--run-awaiting-bg);
-  border-color: transparent;
-}
-.stateBody {
+.outcome[data-state='completed'] .outcomeIcon { color: var(--run-completed); }
+.outcome[data-state='failed'] .outcomeIcon { color: var(--run-failed); }
+.outcome[data-state='awaiting'] .outcomeIcon { color: var(--run-awaiting); }
+.outcome[data-state='declined'] .outcomeIcon { color: var(--run-declined); }
+
+.outcomeText { min-width: 0; }
+.outcomeTitle {
   margin: 0;
+  font-size: var(--fs-small);
+  line-height: 1.45;
+  letter-spacing: var(--ls-small);
+  font-weight: 600;
+  color: var(--ink);
+}
+.outcome[data-state='failed'] .outcomeTitle { color: var(--run-failed-ink); }
+.outcome[data-state='awaiting'] .outcomeTitle { color: var(--run-awaiting-ink); }
+.outcomeBody {
+  margin: 2px 0 0;
   font-size: var(--fs-caption);
   line-height: 1.5;
   letter-spacing: var(--ls-caption);
   color: var(--body);
 }
-.state[data-state='failed'] .stateBody { color: var(--run-failed-ink); }
-.state[data-state='awaiting'] .stateBody { color: var(--run-awaiting-ink); }
-.stateStrong { font-weight: 500; }
+.outcome[data-state='failed'] .outcomeBody { color: var(--run-failed-ink); }
+.outcome[data-state='awaiting'] .outcomeBody { color: var(--run-awaiting-ink); }
 
-.section {
-  padding: 18px 22px 0;
+/* The facts. One per row in the rail, label above value - nothing to line up
+   against a neighbor, so nothing re-rags when a value gets longer. */
+.facts {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  margin: 0;
 }
-.section:last-child { padding-bottom: 22px; }
+.fact {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.factKey {
+  font-size: var(--fs-micro);
+  line-height: var(--lh-micro);
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted-soft);
+}
+.factVal {
+  margin: 0;
+  font-size: var(--fs-small);
+  line-height: 1.4;
+  letter-spacing: var(--ls-small);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.mono { font-family: var(--mono); font-size: var(--fs-caption); letter-spacing: 0; }
+
+/* Trace. The steps ARE the record of what the skill did, so there is no
+   separate list of actions repeating them - the applied ones are marked here. */
+.section {
+  margin-top: 22px;
+  padding-bottom: 26px;
+}
 .sectionHead {
   display: flex;
   align-items: baseline;
-  gap: 8px;
-  margin: 0 0 9px;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid var(--hairline-soft);
 }
 .sectionTitle {
+  margin: 0;
   font-size: var(--fs-micro);
   line-height: var(--lh-micro);
   font-weight: 500;
@@ -150,37 +205,34 @@
 .sectionNote {
   font-size: var(--fs-micro);
   color: var(--muted-soft);
+  font-variant-numeric: tabular-nums;
 }
 
-/* What landed, split by where it landed: the conversation vs. another system.
-   Third-party writes are called out because they are the ones a person cannot
-   simply undo from Hiver. */
-.applied {
+/* The earlier-version note, when the skill has been edited since. */
+.stale {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 0 0 16px;
+  padding: 11px 13px;
+  border-radius: var(--r-md);
+  background: var(--violet-subtle);
 }
-.appliedRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: var(--fs-small);
-  line-height: 1.4;
-  letter-spacing: var(--ls-small);
-  color: var(--body);
-}
-.tick {
-  width: 14px;
-  height: 14px;
+.staleIcon {
+  width: 15px;
+  height: 15px;
   flex: none;
-  color: var(--run-completed);
+  margin-top: 1px;
+  color: var(--violet-intense);
 }
-.none {
+.staleText {
   margin: 0;
   font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  color: var(--muted);
+  line-height: 1.5;
+  letter-spacing: var(--ls-caption);
+  color: var(--body);
 }
+.staleLead { font-weight: 500; color: var(--violet-intense); }
 
 .empty {
   flex: 1 1 auto;
@@ -192,11 +244,7 @@
   padding: 40px 24px;
   text-align: center;
 }
-.emptyTitle {
-  font-size: var(--fs-small);
-  font-weight: 500;
-  color: var(--ink);
-}
+.emptyTitle { font-size: var(--fs-small); font-weight: 500; color: var(--ink); }
 .emptyBody {
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
@@ -204,6 +252,26 @@
   max-width: 30ch;
 }
 
+/* Too narrow for a rail: the facts fold under the content as a two-up grid. */
+@media (max-width: 1320px) {
+  .body { flex-direction: column; gap: 0; }
+  .main { max-width: none; width: 100%; }
+  .rail {
+    flex-basis: auto;
+    width: 100%;
+    position: static;
+    padding: 16px 0 0;
+    border-top: 1px solid var(--hairline-soft);
+  }
+  .facts {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px 20px;
+  }
+}
+@media (max-width: 860px) {
+  .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 @media (prefers-reduced-motion: reduce) {
   .openBtn { transition: none; }
 }

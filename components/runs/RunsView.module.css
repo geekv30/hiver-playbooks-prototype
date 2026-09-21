@@ -1,6 +1,6 @@
-/* Runs - a mode of the skill page, not a panel beside it.
-   Copilot and Evaluation are authoring companions; this is observation, and it
-   needs the whole stage to hold a list and a trace side by side. */
+/* Runs - a mode of the skill page. Flush to the stage, not a rounded card:
+   the editor is a card because a companion panel sits beside it, and a surface
+   with no neighbor floating on the canvas reads as an island. */
 .view {
   flex: 1 1 auto;
   min-height: 0;
@@ -8,20 +8,42 @@
   display: flex;
   flex-direction: column;
   background: var(--card);
-  border: 1px solid var(--hairline-soft);
-  border-radius: 14px;
-  box-shadow:
-    0 1px 2px rgba(52, 60, 69, 0.04),
-    0 8px 24px rgba(52, 60, 69, 0.05);
-  overflow: hidden;
+  border-top: 1px solid var(--hairline-soft);
 }
 
-/* Standalone (the all-skills page) sits flush in the page instead of as a card. */
-.view[data-flush] {
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
+/* The lead band: the verdict, with the shape of the period beside it. Both
+   answer "how is this skill doing", so they belong on the same row. */
+.lead {
+  display: flex;
+  align-items: flex-start;
+  gap: 28px;
+  border-bottom: 1px solid var(--hairline-soft);
 }
+/* The verdict takes the measure it needs to read; the chart takes the rest.
+   Letting the text grow instead left the chart pinned to the far edge with a
+   field of nothing between them. */
+.leadText {
+  flex: 0 1 580px;
+  min-width: 0;
+}
+.chart {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 20px 24px 16px 0;
+  align-self: center;
+}
+
+/* Controls: outcome on the left (the primary way through), search and range on
+   the right (secondary). One row, one baseline. */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--hairline-soft);
+  flex-wrap: wrap;
+}
+.spacer { flex: 1 1 auto; min-width: 12px; }
 
 .split {
   flex: 1 1 auto;
@@ -29,26 +51,8 @@
   display: flex;
 }
 
-/* The pre-hydration frame: the card, at the height it will occupy, with no
-   content that could disagree with the browser's clock. Blank rather than a
-   shimmer - it is on screen for a frame, and a skeleton would be the more
-   distracting of the two. */
-.pending {
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-/* The no-results state spans the whole surface rather than sitting in a 372px
-   column beside an equally empty pane. */
-.emptySplit {
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
 .listCol {
-  flex: 0 0 372px;
+  flex: 0 0 366px;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -56,18 +60,8 @@
   background: var(--card);
 }
 
-@media (max-width: 1180px) {
-  /* The pre-hydration frame: the card, at the height it will occupy, with no
-   content that could disagree with the browser's clock. Blank rather than a
-   shimmer - it is on screen for a frame, and a skeleton would be the more
-   distracting of the two. */
-.pending {
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-/* The no-results state spans the whole surface rather than sitting in a 372px
-   column beside an equally empty pane. */
+/* The no-results state spans the whole surface rather than sitting in a column
+   beside an equally empty pane. */
 .emptySplit {
   flex: 1 1 auto;
   min-height: 0;
@@ -75,5 +69,16 @@
   flex-direction: column;
 }
 
-.listCol { flex-basis: 320px; }
+.pending {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+@media (max-width: 1240px) {
+  .listCol { flex-basis: 320px; }
+  .chart { flex-basis: 380px; }
+}
+@media (max-width: 1040px) {
+  .lead { flex-direction: column; gap: 0; }
+  .chart { width: 100%; padding: 0 24px 16px; flex-basis: auto; }
 }

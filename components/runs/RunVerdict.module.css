@@ -1,0 +1,138 @@
+/* The verdict: the first thing on the page, because "is my skill behaving" is
+   the question people actually arrive with. A count cannot answer it. */
+.verdict {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 18px 24px 16px;
+}
+
+/* Healthy - one calm line. Nothing to act on, so nothing competes with it. */
+.clear {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.clearIcon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: var(--run-completed);
+  margin-top: 1px;
+}
+.clearText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.clearTitle {
+  margin: 0;
+  font-size: var(--fs-h5);
+  line-height: 1.35;
+  letter-spacing: var(--ls-h5);
+  font-weight: 600;
+  color: var(--ink);
+}
+.clearBody {
+  margin: 0;
+  font-size: var(--fs-small);
+  line-height: 1.45;
+  letter-spacing: var(--ls-small);
+  color: var(--muted);
+}
+
+/* Needs attention - a heading, then one row per thing blocking on a person.
+   Rows, not cards: they are a short list to read top to bottom, and boxing each
+   one would make three objects out of one message. */
+.head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 10px;
+}
+.headIcon {
+  width: 17px;
+  height: 17px;
+  flex: none;
+  color: var(--run-awaiting);
+}
+.headTitle {
+  margin: 0;
+  font-size: var(--fs-h5);
+  line-height: 1.35;
+  letter-spacing: var(--ls-h5);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: 7px minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0 11px;
+  width: 100%;
+  padding: 9px 10px 10px;
+  margin-left: -10px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: none;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap);
+}
+.item:hover { background: var(--surface-soft); }
+.item:focus-visible { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+.mark {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  align-self: start;
+  margin-top: 6px;
+}
+.item[data-kind='connector'] .mark { background: var(--run-failed); }
+.item[data-kind='approval'] .mark { background: var(--run-awaiting); }
+
+.itemTitle {
+  grid-column: 2;
+  font-size: var(--fs-small);
+  line-height: 1.45;
+  letter-spacing: var(--ls-small);
+  font-weight: 500;
+  color: var(--ink);
+}
+.itemDetail {
+  grid-column: 2;
+  font-size: var(--fs-caption);
+  line-height: 1.45;
+  letter-spacing: var(--ls-caption);
+  color: var(--muted);
+  margin-top: 1px;
+}
+.itemGo {
+  grid-column: 3;
+  grid-row: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: var(--fs-caption);
+  letter-spacing: var(--ls-caption);
+  color: var(--muted);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity var(--d-hover) var(--ease-snap);
+}
+.itemGo svg { width: 13px; height: 13px; }
+.item:hover .itemGo,
+.item:focus-visible .itemGo { opacity: 1; color: var(--accent); }
+
+@media (prefers-reduced-motion: reduce) {
+  .item, .itemGo { transition: none; }
+}

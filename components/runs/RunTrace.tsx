@@ -16,19 +16,22 @@ function StepIcon({ step }: { step: RunStep }) {
   return Icon ? <Icon /> : null;
 }
 
-function stepLabel(step: RunStep): string {
-  if (step.kind === 'thinking') {
-    // Whole seconds, matching the Evaluation trace. The duration bar is
-    // suppressed on these rows (see below) so the rounding cannot contradict a
-    // millisecond figure sitting next to it.
-    // A run is history, so the only non-done state here is skipped - and
-    // "Thinking" in the present tense reads as something still happening.
-    return step.status === 'done'
-      ? `Thought for ${Math.max(1, Math.round(step.ms / 1000))}s`
-      : 'Reasoning';
-  }
+/** The step's name, independent of its status - shared by the rows and by the
+ *  collapsed tail, so one step never has two names in the same trace. */
+function stepName(step: RunStep): string {
+  if (step.kind === 'thinking') return 'Reasoning';
   if (step.kind === 'condition') return 'Categorize';
   return step.label ?? 'Step';
+}
+
+/** The row label. A thinking step states its own duration, in whole seconds to
+ *  match the Evaluation trace - its duration bar is suppressed below so the
+ *  rounding cannot contradict a millisecond figure beside it. */
+function stepLabel(step: RunStep): string {
+  if (step.kind === 'thinking' && step.status === 'done') {
+    return `Thought for ${Math.max(1, Math.round(step.ms / 1000))}s`;
+  }
+  return stepName(step);
 }
 
 /**
@@ -42,12 +45,17 @@ function stepLabel(step: RunStep): string {
  */
 export default function RunTrace({ run }: { run: SkillRun }) {
   const slowest = Math.max(1, ...run.steps.filter((s) => s.status !== 'skipped').map((s) => s.ms));
-  const last = run.steps.length - 1;
+  // Once a run stops, every remaining step carries the same reason. Repeating
+  // that sentence per row turns the end of a failed trace into four identical
+  // lines, so the tail collapses into one.
+  const ran = run.steps.filter((s) => s.status !== 'skipped');
+  const skippedTail = run.steps.filter((s) => s.status === 'skipped');
+  const last = ran.length - 1;
 
   return (
     <div className={styles.trace}>
-      {run.steps.map((step, i) => {
-        const skipped = step.status === 'skipped';
+      {ran.map((step, i) => {
+        const skipped = false;
         return (
           <div key={step.id} className={styles.step} data-status={step.status}>
             <div className={styles.row}>
@@ -131,6 +139,27 @@ export default function RunTrace({ run }: { run: SkillRun }) {
           </div>
         );
       })}
+
+      {skippedTail.length > 0 && (
+        <div className={styles.step} data-status="skipped">
+          <div className={styles.row}>
+            <div className={styles.rail}>
+              <span className={styles.dot} aria-hidden />
+            </div>
+            <div className={styles.skippedTail}>
+              <span className={styles.skippedCount}>
+                {skippedTail.length} {skippedTail.length === 1 ? 'step' : 'steps'} did not run
+              </span>
+              <span className={styles.skippedNames}>
+                {/* Same naming as the rows above - reading the fallback
+                    "Step" here for a condition was the trace contradicting
+                    itself two lines apart. */}
+                {skippedTail.map((s) => stepName(s)).join(', ')}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -74,15 +74,12 @@
   min-height: 0;
 }
 
-/* Runs mode fills the stage: no companion panel, and no 888px cap - a run list
-   beside a trace needs the width the editor deliberately gives up. */
+/* Runs mode is a different kind of surface: no companion panel, no card, no
+   888px cap. It runs flush to the window like the page it is, rather than
+   floating as an object on the canvas. */
 .stage[data-runs] {
-  padding: 16px 24px;
-}
-.stage[data-runs] > * {
-  flex: 1 1 auto;
-  max-width: 1360px;
-  min-width: 0;
+  padding: 0;
+  display: block;
 }
 
 /* Canvas window - a fixed-height card; the content scrolls inside it (.docScroll),

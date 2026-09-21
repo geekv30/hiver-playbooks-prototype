@@ -26,19 +26,25 @@ export default function AllRunsPage() {
       <div className={styles.shell}>
         <main className={styles.main}>
           <header className={styles.header}>
-            <div>
-              <button type="button" className={styles.crumb} onClick={() => router.push('/aops')}>
+            <div className={styles.headRow}>
+              <button
+                type="button"
+                className={styles.back}
+                onClick={() => router.push('/aops')}
+                aria-label="Back to Skills"
+              >
                 <RiArrowLeftLine aria-hidden />
-                Skills
               </button>
-              <h1 className={styles.title}>All skill runs</h1>
-              <p className={styles.subtitle}>
-                Everything your skills did across the shared inboxes.
-              </p>
+              <div>
+                <h1 className={styles.title}>All skill runs</h1>
+                <p className={styles.subtitle}>
+                  Everything your skills did across the shared inboxes.
+                </p>
+              </div>
             </div>
           </header>
           <div className={styles.body}>
-            <RunsView runs={runs} allSkills flush />
+            <RunsView runs={runs} allSkills />
           </div>
         </main>
       </div>

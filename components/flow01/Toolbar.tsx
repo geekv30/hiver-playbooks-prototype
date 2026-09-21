@@ -73,45 +73,44 @@ export default function Toolbar({
   return (
     <div className={styles.bar}>
       <div className={styles.left}>
+        {/* ONE back affordance, always. In Runs the arrow steps back to the
+            editor rather than out of the skill, and the breadcrumb says where
+            you are - two arrows side by side meaning different things is not a
+            navigation model. */}
         <Button
           variant="secondary"
           iconOnly={<RiArrowLeftLine />}
-          ariaLabel="Back"
-          onClick={onBack}
+          ariaLabel={runsOpen ? 'Back to editing' : 'Back to skills'}
+          onClick={runsOpen ? onToggleRuns : onBack}
         />
         {!hideIdentity && (
-          <TitleField value={title} onChange={onTitleChange} className={styles.title} />
-        )}
-        {!hideIdentity && <Badge intent={status}>{STATUS_LABEL[status]}</Badge>}
-
-        {/* Runs sits with the skill's identity, not with the actions on the
-            right: it is the evidence behind "active", a fact rather than
-            something you do - and it stays well clear of Pause. */}
-        {runCount !== undefined && onToggleRuns && (
-          <button
-            type="button"
-            className={styles.runs}
-            data-open={runsOpen || undefined}
-            onClick={onToggleRuns}
-            aria-pressed={runsOpen}
-          >
+          <>
             {runsOpen ? (
-              <>
-                <RiArrowLeftLine className={styles.runsIcon} aria-hidden />
-                Back to editing
-              </>
+              <span className={styles.crumbs}>
+                <button type="button" className={styles.crumbLink} onClick={onToggleRuns}>
+                  {title || 'Untitled skill'}
+                </button>
+                <span className={styles.crumbSep} aria-hidden>
+                  /
+                </span>
+                <span className={styles.crumbHere}>Runs</span>
+              </span>
             ) : (
-              <>
-                <RiPulseLine className={styles.runsIcon} aria-hidden />
-                Runs
-                <span className={styles.runsN}>{runCount}</span>
-              </>
+              <TitleField value={title} onChange={onTitleChange} className={styles.title} />
             )}
-          </button>
+            <Badge intent={status}>{STATUS_LABEL[status]}</Badge>
+          </>
         )}
       </div>
 
       <div className={styles.right}>
+        {!runsOpen && runCount !== undefined && onToggleRuns && (
+          <button type="button" className={styles.runs} onClick={onToggleRuns}>
+            <RiPulseLine className={styles.runsIcon} aria-hidden />
+            Runs
+            <span className={styles.runsN}>{runCount}</span>
+          </button>
+        )}
         {!runsOpen && !hideSimulate && (
           <Button
             variant="secondary"

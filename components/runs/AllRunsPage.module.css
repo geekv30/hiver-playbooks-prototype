@@ -17,14 +17,35 @@
   background: var(--card);
   overflow: hidden;
 }
+.headRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  background: var(--card);
+  color: var(--body);
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap);
+}
+.back:hover { background: var(--surface-soft); color: var(--ink); }
+.back:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.back svg { width: 15px; height: 15px; }
 
 .header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 20px;
-  padding: 22px 28px 16px;
-  border-bottom: 1px solid var(--hairline-soft);
+  padding: 18px 24px 16px;
 }
 .crumb {
   display: inline-flex;

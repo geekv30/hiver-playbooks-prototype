@@ -53,16 +53,46 @@
   margin: 0 4px;
 }
 
-/* Runs entry. Reads as a fact about the skill, alongside its name and status -
-   not as an action, and deliberately far from Pause. */
+/* Breadcrumb, shown in place of the editable title while Runs is open - the
+   title is not editable from here, and the trail says where you are. */
+.crumbs {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  min-width: 0;
+}
+.crumbLink {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: var(--fs-body);
+  font-weight: 500;
+  letter-spacing: -0.006em;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.crumbLink:hover { color: var(--ink); }
+.crumbLink:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r-xs); }
+.crumbSep { color: var(--hairline-strong); font-size: var(--fs-body); }
+.crumbHere {
+  font-size: var(--fs-body);
+  font-weight: 500;
+  letter-spacing: -0.006em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+/* Runs entry. Sits with the other places you go from here, not with the
+   controls that change the skill. */
 .runs {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 26px;
-  padding: 0 9px;
-  margin-left: 2px;
-  border: 1px solid transparent;
+  height: 32px;
+  padding: 0 11px;
+  border: 1px solid var(--hairline);
   border-radius: var(--r-md);
   background: none;
   font: inherit;
@@ -79,11 +109,7 @@
 }
 .runs:hover {
   background: var(--surface-soft);
-  color: var(--ink);
-}
-.runs[data-open] {
-  background: var(--surface-soft);
-  border-color: var(--hairline);
+  border-color: var(--hairline-strong);
   color: var(--ink);
 }
 .runs:focus-visible {
@@ -96,16 +122,14 @@
   flex: none;
   color: var(--muted);
 }
-.runs:hover .runsIcon,
-.runs[data-open] .runsIcon { color: var(--ink); }
+.runs:hover .runsIcon { color: var(--ink); }
 
 .runsN {
   font-variant-numeric: tabular-nums;
   color: var(--muted);
   font-weight: 400;
 }
-.runs:hover .runsN,
-.runs[data-open] .runsN { color: var(--body); }
+.runs:hover .runsN { color: var(--body); }
 
 @media (prefers-reduced-motion: reduce) {
   .runs { transition: none; }

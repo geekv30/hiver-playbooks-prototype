@@ -227,3 +227,88 @@ export function formatDateTime(t: number): string {
     year: 'numeric',
   })} at ${formatTime(t)}`;
 }
+
+
+// --- What needs a person -----------------------------------------------------
+// The counts answer "how many". They do not answer the question someone
+// actually arrives with, which is "is my skill behaving, and if not, what do I
+// do about it". These derive that: a verdict, and the specific things blocking
+// on a human, phrased as the sentence a person would say.
+
+export type AttentionKind = 'connector' | 'approval' | 'errors';
+
+export interface AttentionItem {
+  kind: AttentionKind;
+  /** The headline, written as a fact: "10 runs failed because HubSpot..." */
+  title: string;
+  /** The one thing to do about it, or where it gets done. */
+  detail: string;
+  /** Filtering to these runs is the only action a read-only surface can offer. */
+  filter: Partial<RunFilter>;
+  /** How many runs this covers - drives the ordering. */
+  count: number;
+}
+
+/** Connector codes carry the fix in their name; map them to a human cause. */
+const CONNECTOR_CAUSE: Record<string, string> = {
+  HUBSPOT_401: 'HubSpot needs reconnecting',
+  CLICKUP_429: 'ClickUp is rate limiting us',
+  KB_TIMEOUT: 'Knowledge Hub timed out',
+  APPROVAL_EXPIRED: 'nobody signed the reply off in time',
+};
+
+export function attentionItems(runs: SkillRun[]): AttentionItem[] {
+  const out: AttentionItem[] = [];
+
+  // Failures, grouped by cause. One cause at a time: a list of every distinct
+  // error is a report, and what a person needs is the one worth fixing first.
+  const failed = runs.filter((r) => r.state === 'failed' && r.error);
+  if (failed.length > 0) {
+    const tally = new Map<string, number>();
+    for (const r of failed) tally.set(r.error!.code, (tally.get(r.error!.code) ?? 0) + 1);
+    const ranked = [...tally.entries()].sort((a, b) => b[1] - a[1]);
+    const [code, count] = ranked[0]!;
+    const cause = CONNECTOR_CAUSE[code];
+    const others = failed.length - count;
+    out.push({
+      kind: 'connector',
+      count: failed.length,
+      title: cause
+        ? `${count} ${count === 1 ? 'run' : 'runs'} failed because ${cause}`
+        : `${count} ${count === 1 ? 'run' : 'runs'} failed with ${code}`,
+      detail: others > 0
+        ? `${others} more failed for other reasons. Steps before the failure had already applied.`
+        : 'Steps before the failure had already applied, so those conversations are partly changed.',
+      filter: { state: 'failed' },
+    });
+  }
+
+  // Replies held for sign-off. These are not errors - they are people blocked,
+  // which is the more urgent of the two and easily the more invisible.
+  const waiting = runs.filter((r) => r.state === 'awaiting');
+  if (waiting.length > 0) {
+    const oldest = Math.min(...waiting.map((r) => r.startedAt));
+    const people = [...new Set(waiting.map((r) => r.assignee).filter(Boolean))] as string[];
+    const who =
+      people.length === 1
+        ? people[0]!
+        : people.length === 2
+          ? `${people[0]} and ${people[1]}`
+          : `${people.length} people`;
+    out.push({
+      kind: 'approval',
+      count: waiting.length,
+      title: `${waiting.length} ${waiting.length === 1 ? 'reply is' : 'replies are'} waiting on ${who}`,
+      detail: `The oldest has waited ${formatWait(NOW - oldest)}. Approving happens in the conversation, not here.`,
+      filter: { state: 'awaiting' },
+    });
+  }
+
+  return out;
+}
+
+/** The one-line verdict, when nothing needs a person. */
+export function healthyLine(counts: RunCounts, days: number): string {
+  if (counts.total === 0) return `No runs in the last ${days} days.`;
+  return `${counts.completed} of ${counts.total} runs completed cleanly over the last ${days} days.`;
+}

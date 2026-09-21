@@ -167,3 +167,24 @@
   line-height: var(--lh-micro);
   color: var(--muted-soft);
 }
+
+/* The tail of a stopped run. One row for all of it: every skipped step has the
+   same reason, and saying so once is the honest length. */
+.skippedTail {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding-top: 1px;
+  min-width: 0;
+}
+.skippedCount {
+  font-size: var(--fs-small);
+  line-height: 1.4;
+  letter-spacing: var(--ls-small);
+  color: var(--muted);
+}
+.skippedNames {
+  font-size: var(--fs-micro);
+  line-height: var(--lh-micro);
+  color: var(--muted-soft);
+}

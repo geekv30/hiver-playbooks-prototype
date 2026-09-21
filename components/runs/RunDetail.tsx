@@ -1,60 +1,73 @@
 'use client';
 
-import { RiExternalLinkLine, RiCheckLine, RiGitCommitLine } from 'react-icons/ri';
+import type { ReactNode } from 'react';
+import {
+  RiExternalLinkLine,
+  RiCheckboxCircleLine,
+  RiErrorWarningLine,
+  RiTimeLine,
+  RiCloseCircleLine,
+  RiGitCommitLine,
+} from 'react-icons/ri';
 import { NOW, type RevisionMark, type SkillRun } from '@/data/runFixtures';
 import { mailboxName } from '@/data/mailboxes';
-import RunStatePill from './RunStatePill';
 import RunTrace from './RunTrace';
 import { formatDateTime, formatDuration, formatWait } from './runsModel';
 import styles from './RunDetail.module.css';
 
 interface Props {
   run: SkillRun | null;
-  /** The revision this run pinned, when the skill has since been edited. */
   staleMark?: RevisionMark | null;
   onOpenConversation?: (run: SkillRun) => void;
   showSkill?: boolean;
 }
 
-/** What the outcome means, said plainly. A state name on its own explains
- *  nothing - "Errored" reading as "the skill is broken" is exactly the gap. */
-function stateBody(run: SkillRun): { body: React.ReactNode; strong?: string } {
+/** What happened, as a headline and a sentence. Every outcome gets one - a
+ *  state name alone explains nothing, and "Failed" with no cause reads as
+ *  "the skill is broken" rather than "one step could not reach HubSpot". */
+function outcome(run: SkillRun): { icon: ReactNode; title: string; body: string } {
   switch (run.state) {
     case 'completed':
       return {
+        icon: <RiCheckboxCircleLine />,
+        title: 'Ran through to the end',
         body:
           run.applied.length > 0
-            ? `The skill ran every step and applied ${run.applied.length} ${
+            ? `Every step ran, and ${run.applied.length} ${
                 run.applied.length === 1 ? 'action' : 'actions'
-              } to this conversation.`
-            : 'The skill ran every step. Nothing needed changing on this conversation.',
+              } applied to this conversation.`
+            : 'Every step ran. Nothing needed changing on this conversation.',
       };
     case 'awaiting':
       return {
-        strong: `Waiting on ${run.assignee ?? 'a teammate'}.`,
-        body: ` The skill drafted a reply and stopped, because this step needs a person to sign it off. The draft is on the conversation - approving or declining happens there, not here.`,
+        icon: <RiTimeLine />,
+        title: `Waiting on ${run.assignee ?? 'a teammate'}`,
+        body: `The reply is drafted and held for sign-off - it has waited ${formatWait(
+          NOW - run.startedAt,
+        )}. Approving or declining happens on the conversation, not here.`,
       };
     case 'failed':
       return {
-        strong: `${run.error?.step ?? 'A step'} failed.`,
-        body: ` ${run.error?.message ?? ''} Steps before it had already applied, so this conversation is partly changed.`,
+        icon: <RiErrorWarningLine />,
+        title: `${run.error?.step ?? 'A step'} failed`,
+        body: `${run.error?.message ?? ''} Steps before it had already applied, so this conversation is partly changed.`,
       };
     case 'declined':
       return {
-        strong: `${run.assignee ?? 'A teammate'} declined the draft.`,
-        body: ' The reply was never sent. Everything the skill did before that step still applied.',
+        icon: <RiCloseCircleLine />,
+        title: `${run.assignee ?? 'A teammate'} declined the draft`,
+        body: 'The reply never sent. Everything the skill did before that step still applied.',
       };
   }
 }
 
 /**
- * RunDetail - one run, in full: what it ran on, how it ended, what actually
- * landed, and the step-by-step trace.
+ * RunDetail - one run, in full.
  *
- * Read-only on purpose. The one way out is the conversation, because that is
- * where a person has both the context and the permission to act - approving a
- * draft from a list, without the thread in front of you, is the wrong place to
- * make that call.
+ * Reads top to bottom as a story: what it ran on, what happened, the facts,
+ * then the steps. There is deliberately no separate list of actions taken -
+ * the trace already is that list, and printing it twice made the pane repeat
+ * itself three times over.
  */
 export default function RunDetail({ run, staleMark, onOpenConversation, showSkill }: Props) {
   if (!run) {
@@ -62,129 +75,99 @@ export default function RunDetail({ run, staleMark, onOpenConversation, showSkil
       <div className={styles.detail}>
         <div className={styles.empty}>
           <p className={styles.emptyTitle}>Pick a run</p>
-          <p className={styles.emptyBody}>
-            Select a run to see what the skill did, step by step.
-          </p>
+          <p className={styles.emptyBody}>Select a run to see what the skill did, step by step.</p>
         </div>
       </div>
     );
   }
 
-  const { body, strong } = stateBody(run);
-  const waited = run.state === 'awaiting' ? NOW - run.startedAt : null;
+  const o = outcome(run);
+  const ran = run.steps.filter((s) => s.status !== 'skipped').length;
 
   return (
     <div className={styles.detail}>
       <div className={styles.scroll}>
-        <div className={styles.measure}>
-        <header className={styles.head}>
-          <div className={styles.headTop}>
-            <div>
-              <h2 className={styles.subject}>{run.subject}</h2>
-              <p className={styles.from}>
-                <span className={styles.fromName}>{run.sender}</span> &middot; {run.senderEmail}
-              </p>
+        <div className={styles.body}>
+          <div className={styles.main}>
+          <header className={styles.head}>
+            <div className={styles.headTop}>
+              <div>
+                <h2 className={styles.subject}>{run.subject}</h2>
+                <p className={styles.from}>
+                  <span className={styles.fromName}>{run.sender}</span> &middot; {run.senderEmail}
+                </p>
+              </div>
+              <button
+                type="button"
+                className={styles.openBtn}
+                onClick={() => onOpenConversation?.(run)}
+              >
+                <RiExternalLinkLine aria-hidden />
+                Open conversation
+              </button>
             </div>
-            <button
-              type="button"
-              className={styles.openBtn}
-              onClick={() => onOpenConversation?.(run)}
-            >
-              <RiExternalLinkLine aria-hidden />
-              Open conversation
-            </button>
-          </div>
 
-          <div className={styles.facts}>
-            <span className={styles.fact}>
-              <RunStatePill state={run.state} />
-            </span>
-            {showSkill && (
-              <span className={styles.fact}>
-                <span className={styles.factKey}>Skill</span>
-                <span className={styles.factVal}>{run.skillName}</span>
+            <div className={styles.outcome} data-state={run.state}>
+              <span className={styles.outcomeIcon} aria-hidden>
+                {o.icon}
               </span>
-            )}
-            <span className={styles.fact}>
-              <span className={styles.factKey}>Mailbox</span>
-              <span className={styles.factVal}>{mailboxName(run.mailboxId)}</span>
-            </span>
-            <span className={styles.fact}>
-              <span className={styles.factKey}>Ran</span>
-              <span className={styles.factVal}>{formatDateTime(run.startedAt)}</span>
-            </span>
-            <span className={styles.fact}>
-              <span className={styles.factKey}>Took</span>
-              <span className={styles.factVal}>{formatDuration(run.durationMs)}</span>
-            </span>
-            <span className={styles.fact}>
-              <span className={styles.factKey}>Conversation</span>
-              <span className={`${styles.factVal} ${styles.mono}`}>{run.conversationId}</span>
-            </span>
-          </div>
-        </header>
-
-        <div className={styles.state} data-state={run.state}>
-          <p className={styles.stateBody}>
-            {strong && <span className={styles.stateStrong}>{strong}</span>}
-            {body}
-          </p>
-          {waited !== null && (
-            <p className={styles.stateBody}>Waiting {formatWait(waited)} so far.</p>
-          )}
-        </div>
-
-        <section className={styles.section}>
-          <div className={styles.sectionHead}>
-            <h3 className={styles.sectionTitle}>What landed</h3>
-          </div>
-          {run.applied.length === 0 && run.external.length === 0 ? (
-            <p className={styles.none}>
-              Nothing was applied - the run ended before any step changed anything.
-            </p>
-          ) : (
-            <div className={styles.applied}>
-              {run.applied.map((a) => (
-                <p key={a} className={styles.appliedRow}>
-                  <RiCheckLine className={styles.tick} aria-hidden />
-                  {a} on this conversation
-                </p>
-              ))}
-              {run.external.map((e) => (
-                <p key={e} className={styles.appliedRow}>
-                  <RiCheckLine className={styles.tick} aria-hidden />
-                  {e}
-                </p>
-              ))}
+              <div className={styles.outcomeText}>
+                <p className={styles.outcomeTitle}>{o.title}</p>
+                <p className={styles.outcomeBody}>{o.body}</p>
+              </div>
             </div>
-          )}
-        </section>
 
-        <section className={styles.section}>
-          <div className={styles.sectionHead}>
-            <h3 className={styles.sectionTitle}>Trace</h3>
-            <span className={styles.sectionNote}>
-              {run.steps.filter((s) => s.status !== 'skipped').length} of {run.steps.length} steps ran
-            </span>
-          </div>
-          <RunTrace run={run} />
-        </section>
+          </header>
 
-        {staleMark && (
           <section className={styles.section}>
-            <div className={styles.state}>
-              <p className={styles.stateBody}>
-                <RiGitCommitLine
-                  style={{ verticalAlign: '-2px', marginRight: 6, color: 'var(--violet-intense)' }}
-                  aria-hidden
-                />
-                <span className={styles.stateStrong}>This ran on an earlier version.</span> The
-                skill was edited since - {staleMark.summary.toLowerCase()} - so the steps above
-                will not match the skill as it reads today.
-              </p>
+            <div className={styles.sectionHead}>
+              <h3 className={styles.sectionTitle}>What the skill did</h3>
+              <span className={styles.sectionNote}>
+                {ran} of {run.steps.length} steps ran
+              </span>
             </div>
+
+            {staleMark && (
+              <div className={styles.stale}>
+                <RiGitCommitLine className={styles.staleIcon} aria-hidden />
+                <p className={styles.staleText}>
+                  <span className={styles.staleLead}>This ran on an earlier version. </span>
+                  The skill was edited since - {staleMark.summary.toLowerCase()} - so these steps
+                  will not match the skill as it reads today.
+                </p>
+              </div>
+            )}
+
+            <RunTrace run={run} />
           </section>
-        )}
+          </div>
+
+          <aside className={styles.rail}>
+            <dl className={styles.facts}>
+              {showSkill && (
+                <div className={styles.fact}>
+                  <dt className={styles.factKey}>Skill</dt>
+                  <dd className={styles.factVal}>{run.skillName}</dd>
+                </div>
+              )}
+              <div className={styles.fact}>
+                <dt className={styles.factKey}>Mailbox</dt>
+                <dd className={styles.factVal}>{mailboxName(run.mailboxId)}</dd>
+              </div>
+              <div className={styles.fact}>
+                <dt className={styles.factKey}>Ran</dt>
+                <dd className={styles.factVal}>{formatDateTime(run.startedAt)}</dd>
+              </div>
+              <div className={styles.fact}>
+                <dt className={styles.factKey}>Took</dt>
+                <dd className={styles.factVal}>{formatDuration(run.durationMs)}</dd>
+              </div>
+              <div className={styles.fact}>
+                <dt className={styles.factKey}>Conversation</dt>
+                <dd className={`${styles.factVal} ${styles.mono}`}>{run.conversationId}</dd>
+              </div>
+            </dl>
+          </aside>
         </div>
       </div>
     </div>

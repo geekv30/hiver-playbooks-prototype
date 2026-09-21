@@ -1,53 +1,61 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import type { RevisionMark, SkillRun } from '@/data/runFixtures';
-import RunSummary from './RunSummary';
-import RunFilters from './RunFilters';
+import { RiSearchLine } from 'react-icons/ri';
+import Input from '@/components/atoms/Input';
+import SegmentedControl from '@/components/atoms/SegmentedControl';
+import Dropdown from '@/components/atoms/Dropdown';
+import { RUN_SOURCES, type RevisionMark, type SkillRun } from '@/data/runFixtures';
+import RunVerdict from './RunVerdict';
+import RunStateFilter from './RunStateFilter';
+import ActivityStrip from './ActivityStrip';
 import RunList from './RunList';
 import RunDetail from './RunDetail';
-import { DEFAULT_FILTER, applyFilter, startOfDay, type RunFilter } from './runsModel';
 import { useIsClient } from './useIsClient';
+import {
+  DEFAULT_FILTER,
+  applyFilter,
+  bucketByDay,
+  countBy,
+  startOfDay,
+  type RangeDays,
+  type RunFilter,
+} from './runsModel';
 import styles from './RunsView.module.css';
 
 interface Props {
   runs: SkillRun[];
-  /** Skill edits, folded into the list timeline. */
   marks?: RevisionMark[];
-  /** All-skills mode: rows and the detail name their skill, and the filter bar
-   *  offers a skill picker. */
   allSkills?: boolean;
-  /** Render flush in the page rather than as a card on the editor stage. */
-  flush?: boolean;
   onOpenConversation?: (run: SkillRun) => void;
 }
 
+const RANGES = [
+  { id: '7', label: '7d' },
+  { id: '30', label: '30d' },
+  { id: '90', label: '90d' },
+];
+
 /**
- * RunsView - the execution history of a skill: summary, filters, the run list,
- * and one run in full.
+ * RunsView - a skill's execution history.
  *
- * One component serves both the per-skill mode and the all-skills page; the
- * only difference is whether a row needs to name which skill it belongs to.
- * Everything here is read-only - the surface answers "what did it do", and
- * every way to act on the answer leads back to the conversation.
+ * Ordered by the question people arrive with, not by what the data contains:
+ * first whether the skill is behaving and what is blocking on a person, then
+ * the outcome filters, then the log. The list and the detail are the answer to
+ * "show me that one", which is the third reason someone comes here, not the
+ * first - so they sit below the fold of the verdict, not above it.
+ *
+ * Everything is read-only. Every route out leads to the conversation.
  */
-export default function RunsView({
-  runs,
-  marks = [],
-  allSkills,
-  flush,
-  onOpenConversation,
-}: Props) {
+export default function RunsView({ runs, marks = [], allSkills, onOpenConversation }: Props) {
   const [filter, setFilter] = useState<RunFilter>(DEFAULT_FILTER);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // Run history is clock-derived and these routes are prerendered, so the
-  // server has no honest answer here - it renders the frame and the browser
-  // fills it in. See useIsClient.
+  // server has no honest answer here. See useIsClient.
   const isClient = useIsClient();
 
-  // The window drives the summary and the chart; the finer filters (state, day,
-  // query) narrow only the list, so the summary never moves under the control
-  // that is being used to read it.
+  // The window drives the verdict and the chart; the finer filters narrow only
+  // the list, so the verdict never moves under the control being used to read it.
   const windowRuns = useMemo(
     () => applyFilter(runs, { ...DEFAULT_FILTER, days: filter.days, skillId: filter.skillId }),
     [runs, filter.days, filter.skillId],
@@ -56,40 +64,84 @@ export default function RunsView({
 
   const selected = listRuns.find((r) => r.id === selectedId) ?? listRuns[0] ?? null;
 
-  // A run is stale when the skill was edited after it ran - the newest mark
-  // that landed later than this run is the one that explains the difference.
   const staleMark = useMemo(() => {
     if (!selected) return null;
     const later = marks.filter((m) => m.at > selected.startedAt);
     return later.length > 0 ? later[later.length - 1]! : null;
   }, [selected, marks]);
 
-  const narrowed =
-    filter.state !== null || filter.day !== null || filter.query.trim() !== '';
+  const narrowed = filter.state !== null || filter.day !== null || filter.query.trim() !== '';
 
   if (!isClient) {
     return (
-      <div className={styles.view} data-flush={flush || undefined}>
+      <div className={styles.view}>
         <div className={styles.pending} aria-hidden />
       </div>
     );
   }
 
   return (
-    <div className={styles.view} data-flush={flush || undefined}>
-      <RunSummary
-        windowRuns={windowRuns}
-        days={filter.days}
-        state={filter.state}
-        onState={(state) => setFilter((f) => ({ ...f, state }))}
-        day={filter.day}
-        onDay={(day) => setFilter((f) => ({ ...f, day: day === null ? null : startOfDay(day) }))}
-      />
-      <RunFilters filter={filter} onChange={setFilter} allSkills={allSkills} />
+    <div className={styles.view}>
+      <div className={styles.lead}>
+        <div className={styles.leadText}>
+          <RunVerdict
+            windowRuns={windowRuns}
+            days={filter.days}
+            onFocus={(patch) => setFilter((f) => ({ ...f, day: null, query: '', ...patch }))}
+          />
+        </div>
+        <div className={styles.chart}>
+          <ActivityStrip
+            buckets={bucketByDay(windowRuns, filter.days)}
+            picked={filter.day}
+            onPick={(day) =>
+              setFilter((f) => ({ ...f, day: day === null ? null : startOfDay(day) }))
+            }
+          />
+        </div>
+      </div>
+
+      <div className={styles.controls}>
+        <RunStateFilter
+          counts={countBy(windowRuns)}
+          value={filter.state}
+          onChange={(state) => setFilter((f) => ({ ...f, state }))}
+        />
+        <span className={styles.spacer} />
+
+        {allSkills && (
+          <Dropdown
+            options={[
+              { id: 'all', label: 'All skills' },
+              ...RUN_SOURCES.map((s) => ({ id: s.skillId, label: s.skillName })),
+            ]}
+            value={filter.skillId ?? 'all'}
+            onChange={(id) => setFilter((f) => ({ ...f, skillId: id === 'all' ? null : id }))}
+            ariaLabel="Filter by skill"
+          />
+        )}
+
+        <div style={{ flex: '0 1 220px', minWidth: 160 }}>
+          <Input
+            value={filter.query}
+            onChange={(query) => setFilter((f) => ({ ...f, query }))}
+            placeholder="Search runs"
+            prefixIcon={<RiSearchLine />}
+            ariaLabel="Search runs"
+          />
+        </div>
+
+        <span style={{ flex: 'none', width: 132 }}>
+          <SegmentedControl
+            tabs={RANGES}
+            active={String(filter.days)}
+            onChange={(id) => setFilter((f) => ({ ...f, days: Number(id) as RangeDays, day: null }))}
+            ariaLabel="Time range"
+          />
+        </span>
+      </div>
 
       {listRuns.length === 0 ? (
-        // No runs means the detail pane has nothing to invite either - two empty
-        // states side by side would just be a void with a caption on each half.
         <div className={styles.emptySplit}>
           <RunList
             runs={listRuns}
