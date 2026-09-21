@@ -6,7 +6,7 @@
   overflow-y: auto;
   overscroll-behavior: contain;
 }
-/* With nothing to list, the message centres in the space rather than sitting at
+/* With nothing to list, the message centers in the space rather than sitting at
    the top of a tall blank column. */
 .list[data-empty] {
   display: flex;
@@ -79,15 +79,17 @@
   padding: 10px 16px 11px;
   border: 0;
   border-bottom: 1px solid var(--hairline-soft);
-  border-left: 2px solid transparent;
+  border-left: 1px solid transparent;
   background: none;
   text-align: left;
   cursor: pointer;
   transition: background var(--d-hover) var(--ease-snap);
 }
+/* Hover and selection are separated by tint depth, not by a heavier edge:
+   hover is the lighter surface, selection the next step down plus a 1px rule. */
 .row:hover { background: var(--surface-soft); }
 .row[data-on] {
-  background: var(--surface-soft);
+  background: var(--surface-card);
   border-left-color: var(--accent);
 }
 .row:focus-visible {

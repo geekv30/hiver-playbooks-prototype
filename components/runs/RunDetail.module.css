@@ -125,8 +125,8 @@
   letter-spacing: var(--ls-caption);
   color: var(--body);
 }
-.state[data-state='failed'] .stateBody { color: #97231e; }
-.state[data-state='awaiting'] .stateBody { color: #8a4515; }
+.state[data-state='failed'] .stateBody { color: var(--run-failed-ink); }
+.state[data-state='awaiting'] .stateBody { color: var(--run-awaiting-ink); }
 .stateStrong { font-weight: 500; }
 
 .section {

@@ -17,7 +17,7 @@
 .seg[data-state='failed'] { background: var(--run-failed); }
 .seg[data-state='declined'] { background: var(--run-declined); }
 
-/* Empty: a flat rule rather than a coloured bar, so "no runs" never reads as
+/* Empty: a flat rule rather than a colored bar, so "no runs" never reads as
    an outcome. */
 .bar[data-empty] {
   background: var(--hairline);

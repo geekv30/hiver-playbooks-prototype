@@ -154,6 +154,10 @@
   --run-failed-bg: #fee2e2;
   --run-declined: #6f7c90;
   --run-declined-bg: #eceff6;
+  /* Body ink ON the tinted state cards - the pill colors are tuned for a small
+     label and go muddy at paragraph length. */
+  --run-failed-ink: #97231e;
+  --run-awaiting-ink: #8a4515;
 
   /* ===== Hiver tint (accent only - CTA, focus, active) ===== */
   --primary: #e15524;
