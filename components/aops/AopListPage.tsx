@@ -21,6 +21,7 @@ import GmailBar from '@/components/flow01/GmailBar';
 import OutcomeBar from '@/components/runs/OutcomeBar';
 import { countBy } from '@/components/runs/runsModel';
 import { NOW, runsForSkill } from '@/data/runFixtures';
+import { useIsClient } from '@/components/runs/useIsClient';
 import Toggle from '@/components/atoms/Toggle';
 import { SparkleIcon } from '@/components/icons/ui';
 import styles from './AopListPage.module.css';
@@ -115,6 +116,9 @@ const AI_NAV = [
 export default function AopListPage({ empty }: { empty?: boolean }) {
   const router = useRouter();
   const [rows, setRows] = useState<AopRow[]>(empty ? [] : SEED_ROWS);
+  // "12 mins ago" is computed from the clock, and this page is prerendered -
+  // the server would bake a build-time answer the browser then contradicts.
+  const isClient = useIsClient();
 
   const activeCount = rows.filter((r) => r.active).length;
   const inactiveCount = rows.length - activeCount;
@@ -316,7 +320,8 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
                       </div>
                       <div className={styles.colRuns}>
                         {(() => {
-                          const runs = runsForSkill(row.id);
+                          const runs = isClient ? runsForSkill(row.id) : [];
+                          if (!isClient) return <span className={styles.runsNone} />;
                           if (runs.length === 0) {
                             return <span className={styles.runsNone}>No runs yet</span>;
                           }

@@ -7,6 +7,7 @@ import RunFilters from './RunFilters';
 import RunList from './RunList';
 import RunDetail from './RunDetail';
 import { DEFAULT_FILTER, applyFilter, startOfDay, type RunFilter } from './runsModel';
+import { useIsClient } from './useIsClient';
 import styles from './RunsView.module.css';
 
 interface Props {
@@ -39,6 +40,10 @@ export default function RunsView({
 }: Props) {
   const [filter, setFilter] = useState<RunFilter>(DEFAULT_FILTER);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Run history is clock-derived and these routes are prerendered, so the
+  // server has no honest answer here - it renders the frame and the browser
+  // fills it in. See useIsClient.
+  const isClient = useIsClient();
 
   // The window drives the summary and the chart; the finer filters (state, day,
   // query) narrow only the list, so the summary never moves under the control
@@ -61,6 +66,14 @@ export default function RunsView({
 
   const narrowed =
     filter.state !== null || filter.day !== null || filter.query.trim() !== '';
+
+  if (!isClient) {
+    return (
+      <div className={styles.view} data-flush={flush || undefined}>
+        <div className={styles.pending} aria-hidden />
+      </div>
+    );
+  }
 
   return (
     <div className={styles.view} data-flush={flush || undefined}>

@@ -29,6 +29,15 @@
   display: flex;
 }
 
+/* The pre-hydration frame: the card, at the height it will occupy, with no
+   content that could disagree with the browser's clock. Blank rather than a
+   shimmer - it is on screen for a frame, and a skeleton would be the more
+   distracting of the two. */
+.pending {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 /* The no-results state spans the whole surface rather than sitting in a 372px
    column beside an equally empty pane. */
 .emptySplit {
@@ -48,7 +57,16 @@
 }
 
 @media (max-width: 1180px) {
-  /* The no-results state spans the whole surface rather than sitting in a 372px
+  /* The pre-hydration frame: the card, at the height it will occupy, with no
+   content that could disagree with the browser's clock. Blank rather than a
+   shimmer - it is on screen for a frame, and a skeleton would be the more
+   distracting of the two. */
+.pending {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* The no-results state spans the whole surface rather than sitting in a 372px
    column beside an equally empty pane. */
 .emptySplit {
   flex: 1 1 auto;
