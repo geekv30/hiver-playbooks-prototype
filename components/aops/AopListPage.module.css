@@ -2,11 +2,16 @@
    main nav (240) + Hiver AI nav (240) + the procedures page. Colors and metrics
    follow the Figma frame; type stays on the app's Inter stack. */
 
+/* Height is divided by the global zoom for the same reason the editor canvas
+   does it: 100vh inside a zoomed element is 111% of the real viewport, which
+   left the page permanently taller than the screen. Bounded here, the main
+   column scrolls itself. */
 .page {
-  min-height: 100vh;
+  height: calc(100vh / var(--app-scale));
   display: flex;
   flex-direction: column;
   background: var(--card, #fff);
+  overflow: hidden;
 }
 .shell {
   flex: 1;
@@ -308,6 +313,8 @@
 }
 
 /* ---- Meet-AOP banner (empty state, Figma 1773:17947) ---- */
+.header { flex: none; }
+
 .banner {
   position: relative;
   overflow: hidden;
@@ -360,7 +367,12 @@
 }
 
 /* ---- Table (both states) ---- */
+/* `flex: none` matters: `overflow: hidden` (needed for the rounded corners)
+   resolves this flex item's min-height to 0, so without it the table shrinks
+   inside the scrolling column and clips its own rows instead of the column
+   scrolling. */
 .table {
+  flex: none;
   display: flex;
   flex-direction: column;
   border-radius: 8px;

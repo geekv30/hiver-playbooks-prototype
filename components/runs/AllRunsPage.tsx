@@ -23,9 +23,9 @@ export default function AllRunsPage() {
   // Arriving from a skill's Runs cell lands pre-filtered to it. Read after the
   // client takes over, like every other clock- or URL-derived value here.
   const isClient = useIsClient();
-  const skillId = isClient
-    ? new URLSearchParams(window.location.search).get('skill')
-    : null;
+  const params = isClient ? new URLSearchParams(window.location.search) : null;
+  const skillId = params?.get('skill') ?? null;
+  const reduced = params?.get('basic') === '1';
   const marks = useMemo(() => {
     const src = skillId ? sourceFor(skillId) : undefined;
     return src ? revisionMarks(src) : [];
@@ -55,7 +55,7 @@ export default function AllRunsPage() {
             </div>
           </header>
           <div className={styles.body}>
-            <RunsView key={skillId ?? 'all'} runs={runs} marks={marks} allSkills initialSkillId={skillId} />
+            <RunsView key={skillId ?? 'all'} runs={runs} marks={marks} allSkills initialSkillId={skillId} reduced={reduced} />
           </div>
         </main>
       </div>

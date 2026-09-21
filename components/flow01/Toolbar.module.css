@@ -84,53 +84,10 @@
   white-space: nowrap;
 }
 
-/* Runs entry. Sits with the other places you go from here, not with the
-   controls that change the skill. */
-.runs {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 32px;
-  padding: 0 11px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-md);
-  background: none;
-  font: inherit;
-  font-size: var(--fs-small);
-  font-weight: 500;
-  letter-spacing: var(--ls-small);
-  color: var(--body);
-  cursor: pointer;
-  white-space: nowrap;
-  transition:
-    background var(--d-hover) var(--ease-snap),
-    border-color var(--d-hover) var(--ease-snap),
-    color var(--d-hover) var(--ease-snap);
-}
-.runs:hover {
-  background: var(--surface-soft);
-  border-color: var(--hairline-strong);
-  color: var(--ink);
-}
-.runs:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-.runsIcon {
-  width: 14px;
-  height: 14px;
-  flex: none;
-  color: var(--muted);
-}
-.runs:hover .runsIcon { color: var(--ink); }
-
+/* The run count inside the Runs button - a fact, not part of the label. */
 .runsN {
   font-variant-numeric: tabular-nums;
   color: var(--muted);
   font-weight: 400;
-}
-.runs:hover .runsN { color: var(--body); }
-
-@media (prefers-reduced-motion: reduce) {
-  .runs { transition: none; }
+  margin-left: 2px;
 }

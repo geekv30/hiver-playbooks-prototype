@@ -29,6 +29,8 @@ interface Props {
   allSkills?: boolean;
   /** Pre-select a skill (arriving from that skill's Runs cell on the list). */
   initialSkillId?: string | null;
+  /** Render the phase-1 fallback verdict (counts only). */
+  reduced?: boolean;
   onOpenConversation?: (run: SkillRun) => void;
 }
 
@@ -54,6 +56,7 @@ export default function RunsView({
   marks = [],
   allSkills,
   initialSkillId = null,
+  reduced,
   onOpenConversation,
 }: Props) {
   const [filter, setFilter] = useState<RunFilter>({ ...DEFAULT_FILTER, skillId: initialSkillId });
@@ -95,6 +98,7 @@ export default function RunsView({
           <RunVerdict
             windowRuns={windowRuns}
             days={filter.days}
+            reduced={reduced}
             onFocus={(patch) => setFilter((f) => ({ ...f, day: null, query: '', ...patch }))}
           />
         </div>

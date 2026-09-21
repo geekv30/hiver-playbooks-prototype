@@ -303,6 +303,13 @@ export default function EditorCanvas({
     () => new URLSearchParams(window.location.search).get('runs') === '1',
     () => false,
   );
+  // ?basic=1 renders the phase-1 fallback verdict, for reviewing what the band
+  // looks like without cause grouping.
+  const reducedRuns = useSyncExternalStore(
+    NO_SUBSCRIBE,
+    () => new URLSearchParams(window.location.search).get('basic') === '1',
+    () => false,
+  );
   const [runsToggled, setRunsToggled] = useState<boolean | null>(null);
   const runsOpen = runsToggled ?? deepLinkedToRuns;
 
@@ -1252,6 +1259,7 @@ export default function EditorCanvas({
           <RunsView
             runs={runs}
             marks={runMarks}
+            reduced={reducedRuns}
             onOpenConversation={() => showHint('Opening the conversation is coming soon.')}
           />
         ) : (

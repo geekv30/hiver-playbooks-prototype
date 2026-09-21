@@ -76,7 +76,7 @@
   align-items: start;
   gap: 0 9px;
   width: 100%;
-  padding: 10px 14px 11px;
+  padding: 11px 14px 12px;
   border: 0;
   border-bottom: 1px solid var(--hairline-soft);
   border-left: 1px solid transparent;
@@ -151,44 +151,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--body);
-}
-
-/* What the skill actually did, on the row. The whole point of the surface is
-   that this is no longer invisible. */
-.chips {
-  grid-column: 2 / -1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 6px;
-}
-.chip {
-  display: inline-flex;
-  align-items: center;
-  height: 18px;
-  padding: 0 6px;
-  border-radius: var(--r-xs);
-  background: var(--surface-card);
-  font-size: var(--fs-micro);
-  line-height: 1;
-  color: var(--body);
-  white-space: nowrap;
-}
-.chip[data-tone='error'] {
-  background: var(--run-failed-bg);
-  color: var(--run-failed);
-  font-family: var(--mono);
-  font-size: 10px;
-}
-.chip[data-tone='wait'] {
-  background: var(--run-awaiting-bg);
-  color: var(--run-awaiting);
-}
-.chip[data-tone='none'] {
-  background: none;
-  padding-left: 0;
-  color: var(--muted-soft);
-  font-style: italic;
 }
 
 /* Empty + end states */

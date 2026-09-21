@@ -23,30 +23,16 @@ interface Props {
   filtered?: boolean;
 }
 
-/** The action chips for a row: what actually applied, or why nothing did. */
-function rowChips(run: SkillRun): { label: string; tone?: 'error' | 'wait' | 'none' }[] {
-  if (run.state === 'failed' && run.error) {
-    const partial = run.applied.map((a) => ({ label: a }));
-    return [...partial, { label: run.error.code, tone: 'error' as const }];
-  }
-  if (run.state === 'awaiting') {
-    return [
-      ...run.applied.map((a) => ({ label: a })),
-      { label: `Waiting on ${run.assignee ?? 'a teammate'}`, tone: 'wait' as const },
-    ];
-  }
-  if (run.applied.length === 0) return [{ label: 'No actions applied', tone: 'none' as const }];
-  return run.applied.map((a) => ({ label: a }));
-}
-
 /**
  * RunList - every run in the window, grouped by day, newest first.
  *
- * Each row carries what the skill actually did, because that is the thing the
- * product has never been able to show. A failed run names its error code
- * inline; a pending one names who is holding it. Skill edits appear in the
- * timeline where they happened, so a change in behavior has a visible cause
- * rather than being something a person has to remember.
+ * Two lines per run: what it ran on, and the facts that place it. What the
+ * skill DID stays in the detail - repeating it as chips on every row made the
+ * list harder to scan, not easier, and the outcome dot already carries the one
+ * thing worth seeing at this distance.
+ *
+ * Skill edits appear in the timeline where they happened, so a change in
+ * behavior has a visible cause rather than something a person has to remember.
  */
 export default function RunList({
   runs,
@@ -130,13 +116,6 @@ export default function RunList({
                   </span>
                 </span>
 
-                <span className={styles.chips}>
-                  {rowChips(run).map((c, i) => (
-                    <span key={`${c.label}-${i}`} className={styles.chip} data-tone={c.tone}>
-                      {c.label}
-                    </span>
-                  ))}
-                </span>
               </button>
             );
           })}

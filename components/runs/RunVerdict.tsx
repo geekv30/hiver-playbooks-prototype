@@ -18,6 +18,9 @@ import styles from './RunVerdict.module.css';
 interface Props {
   windowRuns: SkillRun[];
   days: number;
+  /** Phase-1 fallback: build the band from counts alone (no cause grouping, no
+   *  assignee). Same layout, less for the backend to provide. */
+  reduced?: boolean;
   onFocus: (patch: Partial<RunFilter>) => void;
 }
 
@@ -34,8 +37,8 @@ interface Props {
  * Read-only, so the only action on offer is to look: each row filters the list
  * to the runs it is talking about.
  */
-export default function RunVerdict({ windowRuns, days, onFocus }: Props) {
-  const items = attentionItems(windowRuns);
+export default function RunVerdict({ windowRuns, days, reduced, onFocus }: Props) {
+  const items = attentionItems(windowRuns, reduced);
   const counts = countBy(windowRuns);
 
   if (items.length === 0) {

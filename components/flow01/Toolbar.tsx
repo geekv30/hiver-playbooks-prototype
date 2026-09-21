@@ -105,11 +105,9 @@ export default function Toolbar({
 
       <div className={styles.right}>
         {!runsOpen && runCount !== undefined && onToggleRuns && (
-          <button type="button" className={styles.runs} onClick={onToggleRuns}>
-            <RiPulseLine className={styles.runsIcon} aria-hidden />
-            Runs
-            <span className={styles.runsN}>{runCount}</span>
-          </button>
+          <Button variant="secondary" iconLeft={<RiPulseLine />} onClick={onToggleRuns}>
+            Runs <span className={styles.runsN}>{runCount}</span>
+          </Button>
         )}
         {!runsOpen && !hideSimulate && (
           <Button

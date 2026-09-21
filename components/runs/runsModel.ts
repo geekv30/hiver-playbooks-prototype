@@ -257,7 +257,16 @@ const CONNECTOR_CAUSE: Record<string, string> = {
   APPROVAL_EXPIRED: 'nobody signed the reply off in time',
 };
 
-export function attentionItems(runs: SkillRun[]): AttentionItem[] {
+/**
+ * @param reduced Build the items from counts alone.
+ *
+ * The full version needs two things the backend may not have in phase 1:
+ * failures grouped by error code, and the assignee on a held reply. Without
+ * them the band still works - it just says "15 runs failed" instead of naming
+ * the cause. Same layout, same behavior, less to build. This is what degrades,
+ * not the whole surface.
+ */
+export function attentionItems(runs: SkillRun[], reduced = false): AttentionItem[] {
   const out: AttentionItem[] = [];
 
   // Failures, grouped by cause. One cause at a time: a list of every distinct
@@ -273,12 +282,15 @@ export function attentionItems(runs: SkillRun[]): AttentionItem[] {
     out.push({
       kind: 'connector',
       count: failed.length,
-      title: cause
-        ? `${count} ${count === 1 ? 'run' : 'runs'} failed because ${cause}`
-        : `${count} ${count === 1 ? 'run' : 'runs'} failed with ${code}`,
-      detail: others > 0
-        ? `${others} more failed for other reasons. Steps before the failure had already applied.`
-        : 'Steps before the failure had already applied, so those conversations are partly changed.',
+      title: reduced
+        ? `${failed.length} ${failed.length === 1 ? 'run' : 'runs'} failed`
+        : cause
+          ? `${count} ${count === 1 ? 'run' : 'runs'} failed because ${cause}`
+          : `${count} ${count === 1 ? 'run' : 'runs'} failed with ${code}`,
+      detail:
+        reduced || others === 0
+          ? 'Steps before the failure had already applied, so those conversations are partly changed.'
+          : `${others} more failed for other reasons. Steps before the failure had already applied.`,
       filter: { state: 'failed' },
     });
   }
@@ -298,7 +310,9 @@ export function attentionItems(runs: SkillRun[]): AttentionItem[] {
     out.push({
       kind: 'approval',
       count: waiting.length,
-      title: `${waiting.length} ${waiting.length === 1 ? 'reply is' : 'replies are'} waiting on ${who}`,
+      title: reduced
+        ? `${waiting.length} ${waiting.length === 1 ? 'reply is' : 'replies are'} waiting for approval`
+        : `${waiting.length} ${waiting.length === 1 ? 'reply is' : 'replies are'} waiting on ${who}`,
       detail: `The oldest has waited ${formatWait(NOW - oldest)}. Approving happens in the conversation, not here.`,
       filter: { state: 'awaiting' },
     });
