@@ -45,10 +45,14 @@
 }
 .spacer { flex: 1 1 auto; min-width: 12px; }
 
+/* The page gutter. One inset for the whole surface: the bands above already
+   sit at 24, and the list running flush to the window edge while they did not
+   was the frame contradicting itself. Flush is not the same as no margin. */
 .split {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
+  padding: 0 24px;
 }
 
 .listCol {
@@ -67,6 +71,7 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
+  padding: 0 24px;
 }
 
 .pending {

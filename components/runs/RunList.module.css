@@ -23,7 +23,7 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 10px;
-  padding: 9px 16px 7px;
+  padding: 10px 14px 8px 34px;
   background: var(--card);
   border-bottom: 1px solid var(--hairline-soft);
   font-size: var(--fs-micro);
@@ -48,7 +48,7 @@
   display: flex;
   align-items: center;
   gap: 9px;
-  padding: 9px 16px;
+  padding: 9px 14px 9px 34px;
   background: var(--violet-subtle);
   border-bottom: 1px solid var(--hairline-soft);
 }
@@ -76,7 +76,7 @@
   align-items: start;
   gap: 0 9px;
   width: 100%;
-  padding: 10px 16px 11px;
+  padding: 10px 14px 11px;
   border: 0;
   border-bottom: 1px solid var(--hairline-soft);
   border-left: 1px solid transparent;
