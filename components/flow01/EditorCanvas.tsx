@@ -6,7 +6,6 @@ import {
   useMemo,
   useRef,
   useState,
-  useSyncExternalStore,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import { RiDraggable, RiMore2Fill } from 'react-icons/ri';
@@ -29,7 +28,7 @@ import ActionHint from './ActionHint';
 import EnableModal from './enable/EnableModal';
 import { deriveReadinessInputs, inviteKey } from './enable/readiness';
 import { useConnectorHealth, setConnectorHealth } from './connectorHealth';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEvalState } from '@/components/simulate/useEvalState';
 import { useTriggerScan } from '@/components/simulate/useTriggerScan';
 import SimulatePanel from '@/components/simulate/SimulatePanel';
@@ -212,9 +211,6 @@ type ColdStartPhase = 'hero' | 'docked';
 
 const ALL_CONNECTOR_SLUGS: ConnectorSlug[] = ['shopify', 'hubspot', 'slack', 'salesforce', 'clickup'];
 
-// The query string does not change under us, so the store has nothing to
-// subscribe to - module-level for a stable identity across renders.
-const NO_SUBSCRIBE = () => () => {};
 
 export default function EditorCanvas({
   skillId,
@@ -294,24 +290,30 @@ export default function EditorCanvas({
   const runs = useMemo(() => (skillId ? runsForSkill(skillId) : []), [skillId]);
   const runMarks = useMemo(() => (runSource ? revisionMarks(runSource) : []), [runSource]);
 
-  // Arriving from the Skills list's Runs cell opens straight into the history.
-  // Read through useSyncExternalStore rather than an effect: the server has no
-  // URL to read, so it answers "closed" and the client corrects it on hydration
-  // without a setState cascade. The toolbar's own toggle takes over from there.
-  const deepLinkedToRuns = useSyncExternalStore(
-    NO_SUBSCRIBE,
-    () => new URLSearchParams(window.location.search).get('runs') === '1',
-    () => false,
-  );
+  // Which mode the page is in lives in the URL and NOWHERE else.
+  //
+  // It used to be URL-on-arrival plus a local toggle, and the two drifted:
+  // leaving Runs showed the editor while the address bar still said `?runs=1`.
+  // Anything that re-read the URL after that - a reload, a shared link, the
+  // back button, a soft navigation that reused this component - then
+  // contradicted what the person had just done and dropped them into Runs.
+  // One source of truth removes the whole class of bug, and makes back/forward
+  // and shared links behave for free.
+  const search = useSearchParams();
+  const pathname = usePathname();
+  const runsOpen = search.get('runs') === '1';
   // ?basic=1 renders the phase-1 fallback verdict, for reviewing what the band
   // looks like without cause grouping.
-  const reducedRuns = useSyncExternalStore(
-    NO_SUBSCRIBE,
-    () => new URLSearchParams(window.location.search).get('basic') === '1',
-    () => false,
-  );
-  const [runsToggled, setRunsToggled] = useState<boolean | null>(null);
-  const runsOpen = runsToggled ?? deepLinkedToRuns;
+  const reducedRuns = search.get('basic') === '1';
+  const toggleRuns = useCallback(() => {
+    const next = new URLSearchParams(search.toString());
+    if (runsOpen) next.delete('runs');
+    else next.set('runs', '1');
+    const q = next.toString();
+    // push, not replace: the browser's back button then does what the page's
+    // own "Back to editing" does, instead of skipping the editor entirely.
+    router.push(q ? `${pathname}?${q}` : pathname, { scroll: false });
+  }, [router, pathname, search, runsOpen]);
 
   // The New pill on the Matching emails card, retired once the user opens it.
   // Session state on purpose: a reload is a fresh look at the new type.
@@ -1251,7 +1253,7 @@ export default function EditorCanvas({
         onBack={() => router.push('/aops')}
         runCount={runs.length > 0 ? runs.length : undefined}
         runsOpen={runsOpen}
-        onToggleRuns={runs.length > 0 ? () => setRunsToggled(!runsOpen) : undefined}
+        onToggleRuns={runs.length > 0 ? toggleRuns : undefined}
       />
 
       <div className={styles.stage} data-runs={runsOpen || undefined}>

@@ -1,12 +1,11 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { RiArrowLeftLine } from 'react-icons/ri';
 import GmailBar from '@/components/flow01/GmailBar';
 import { allRuns, revisionMarks, sourceFor } from '@/data/runFixtures';
 import RunsView from './RunsView';
-import { useIsClient } from './useIsClient';
 import styles from './AllRunsPage.module.css';
 
 /**
@@ -20,12 +19,11 @@ import styles from './AllRunsPage.module.css';
 export default function AllRunsPage() {
   const router = useRouter();
   const runs = useMemo(() => allRuns(), []);
-  // Arriving from a skill's Runs cell lands pre-filtered to it. Read after the
-  // client takes over, like every other clock- or URL-derived value here.
-  const isClient = useIsClient();
-  const params = isClient ? new URLSearchParams(window.location.search) : null;
-  const skillId = params?.get('skill') ?? null;
-  const reduced = params?.get('basic') === '1';
+  // Arriving from a skill's Runs cell lands pre-filtered to it. Read from the
+  // URL, so back/forward and a shared link all land in the same place.
+  const params = useSearchParams();
+  const skillId = params.get('skill');
+  const reduced = params.get('basic') === '1';
   const marks = useMemo(() => {
     const src = skillId ? sourceFor(skillId) : undefined;
     return src ? revisionMarks(src) : [];
