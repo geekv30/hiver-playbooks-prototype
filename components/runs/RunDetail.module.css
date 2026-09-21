@@ -24,24 +24,22 @@
    beside uses. It keeps the trace at a readable measure without leaving the
    right half of the pane empty, and gives the facts a column where a long
    timestamp has room instead of being clipped by a grid cell. */
+/* Two columns with a FIXED gap, capped as a group. The rail used to be pushed
+   to the far edge with `margin-left: auto`, which on a wide pane opened a
+   400px hole between the trace and the facts. Capping the pair instead moves
+   that leftover to the outside, where it reads as a page margin. */
 .body {
-  display: flex;
-  align-items: flex-start;
-  gap: 36px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 208px;
+  gap: 44px;
+  max-width: 1160px;
   padding: 0 0 0 30px;
 }
 .main {
-  flex: 1 1 auto;
   min-width: 0;
-  max-width: 880px;
 }
-/* Pinned to the pane's right edge. Left adjacent to the content it sat mid-pane
-   with a field of nothing after it - the facts belong at the edge, the way every
-   mail client this sits beside places them. */
 .rail {
-  flex: 0 0 216px;
   min-width: 0;
-  margin-left: auto;
   position: sticky;
   top: 0;
   padding: 24px 0 26px;
@@ -258,8 +256,7 @@
 
 /* Too narrow for a rail: the facts fold under the content as a two-up grid. */
 @media (max-width: 1320px) {
-  .body { flex-direction: column; gap: 0; padding: 0 0 0 30px; }
-  .rail { margin-left: 0; }
+  .body { grid-template-columns: minmax(0, 1fr); gap: 0; }
   .main { max-width: none; width: 100%; }
   .rail {
     flex-basis: auto;

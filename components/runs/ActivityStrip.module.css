@@ -1,15 +1,64 @@
-/* The daily activity strip: one column per day, stacked by outcome.
-   Turns a list into a shape - a failure cluster or a quiet weekend reads
-   before a single row is scanned. Clicking a column filters to that day. */
-.strip {
+/* Runs per day, stacked by outcome.
+ *
+ * Rebuilt to the mark spec: bars capped well under their slot so the leftover
+ * is air, a 4px rounded data-end square at the baseline, a 2px surface gap
+ * between segments, and a hairline grid. The previous version filled every slot
+ * with a saturated block and had no scale at all, so thirty days of different
+ * numbers all read as the same mid-height wall.
+ */
+.wrap {
   display: flex;
-  align-items: flex-end;
-  gap: 2px;
-  height: 46px;
-  width: 100%;
+  flex-direction: column;
+  gap: 7px;
   min-width: 0;
 }
 
+.caption {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: var(--fs-micro);
+  line-height: var(--lh-micro);
+  color: var(--muted-soft);
+}
+.captionLabel {
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.peak { font-variant-numeric: tabular-nums; }
+
+.plot {
+  position: relative;
+  height: 72px;
+  min-width: 0;
+}
+
+/* One hairline at the peak and one at the baseline. Solid, one step off the
+   surface - enough to read magnitude against, quiet enough to stay behind. */
+.grid {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--hairline-soft);
+  pointer-events: none;
+}
+.gridTop { top: 0; }
+.gridBase { bottom: 0; background: var(--hairline); }
+
+.cols {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+}
+
+/* The column is the hit target; the bar inside it is the mark. Hovering
+   anywhere in the day's slot works, including above a short bar. */
 .col {
   flex: 1 1 0;
   min-width: 0;
@@ -18,58 +67,74 @@
   border: 0;
   background: none;
   display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  gap: 1px;
+  align-items: flex-end;
+  justify-content: center;
   cursor: pointer;
-  border-radius: 2px;
   position: relative;
-  transition: opacity var(--d-hover) var(--ease-snap);
+  border-radius: 3px;
+  transition: background var(--d-hover) var(--ease-snap);
 }
+.col:hover { background: var(--surface-soft); }
 .col:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline-offset: 1px;
 }
 
-/* Failures ride the top of the stack, where the eye lands first. */
+/* 60% of the slot, capped at the 24px mark ceiling: enough body to read as a
+   bar, never so wide that the band loses its air. */
+.bar {
+  width: 60%;
+  max-width: var(--bar-max, 22px);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 2px; /* the surface gap - white does the separating, never a stroke */
+}
 .seg {
   width: 100%;
-  border-radius: 1px;
-  min-height: 2px;
+  min-height: 3px;
+}
+/* 4px rounded data-end, square at the baseline: only the topmost segment. */
+.seg:first-child {
+  border-radius: 4px 4px 0 0;
+}
+.seg:last-child {
+  border-radius: 0;
+}
+.seg:only-child {
+  border-radius: 4px 4px 0 0;
 }
 .seg[data-state='completed'] { background: var(--run-completed); }
 .seg[data-state='awaiting'] { background: var(--run-awaiting); }
 .seg[data-state='failed'] { background: var(--run-failed); }
 .seg[data-state='declined'] { background: var(--run-declined); }
 
-/* A day with no runs still occupies its column - the gap is the information. */
-.empty {
-  width: 100%;
+/* A day with no runs is a gap in the row, not a 2px mark that reads as data. */
+.none {
+  width: 60%;
+  max-width: var(--bar-max, 22px);
   height: 2px;
   border-radius: 1px;
   background: var(--hairline);
 }
 
-/* While one day is selected the rest recede rather than disappear, so the
-   selection reads as a focus and the overall shape is still legible. */
-.strip[data-picked] .col { opacity: 0.42; }
-.strip[data-picked] .col[data-on] { opacity: 1; }
+/* While one day is picked the rest recede rather than vanish, so the shape of
+   the period is still readable behind the selection. */
+.cols[data-picked] .col { opacity: 0.35; }
+.cols[data-picked] .col[data-on] { opacity: 1; }
 .col:hover { opacity: 1; }
 
 .axis {
   display: flex;
   justify-content: space-between;
-  margin-top: 6px;
   font-size: var(--fs-micro);
   line-height: var(--lh-micro);
   color: var(--muted-soft);
   font-variant-numeric: tabular-nums;
 }
 
-/* Hover readout - a click-free fact, so it stays a tooltip and never hides
-   anything the row does not already say. */
-/* Below the columns, not above: the strip is the first thing in the card, and
-   anything drawn above it is clipped by the card's own overflow. */
+/* Hover readout. Below the plot, because the strip sits at the top of the page
+   and anything drawn above it is clipped by the card. */
 .tip {
   position: absolute;
   top: calc(100% + 8px);
@@ -78,29 +143,34 @@
   background: var(--tooltip-bg);
   color: var(--tooltip-ink);
   border-radius: var(--r-sm);
-  padding: 7px 9px;
+  padding: 8px 10px;
   font-size: var(--fs-caption);
-  line-height: 1.45;
+  line-height: 1.5;
   letter-spacing: var(--ls-caption);
   white-space: nowrap;
+  text-align: left;
   pointer-events: none;
   z-index: 3;
-  box-shadow: 0 6px 16px rgba(52, 60, 69, 0.18);
-  text-align: left;
+  box-shadow: 0 6px 18px rgba(52, 60, 69, 0.2);
 }
 .tipDay {
   display: block;
   color: var(--tooltip-muted);
-  margin-bottom: 2px;
+  margin-bottom: 3px;
 }
 .tipRow {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
+}
+.tipN {
+  font-variant-numeric: tabular-nums;
+  min-width: 18px;
+  text-align: right;
 }
 .tipDot {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   flex: none;
 }

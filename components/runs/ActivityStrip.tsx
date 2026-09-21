@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { NOW } from '@/data/runFixtures';
 import type { DayBucket } from './runsModel';
 import { RUN_STATES, RUN_STATE_SHORT, formatDayShort, formatDayLabel } from './runsModel';
@@ -14,77 +14,112 @@ interface Props {
   onPick: (day: number | null) => void;
 }
 
+// Failures ride the top of every stack, where the eye lands first; completed
+// sits on the baseline. Fixed order, so a day with no failures never repaints
+// the segments below it.
+const STACK: typeof RUN_STATES = ['failed', 'awaiting', 'declined', 'completed'];
+
 /**
- * ActivityStrip - run volume per day across the window, stacked by outcome.
+ * ActivityStrip - runs per day, stacked by outcome.
  *
  * The list answers "what happened"; this answers "when, and was it normal".
- * A run of failures, a quiet weekend, the day volume doubled - all read as
- * shape before a single row is scanned. Each column is a filter: pick a day to
- * narrow the list to it, pick it again to clear.
+ * A failure cluster or a quiet weekend reads as shape before a row is scanned,
+ * and each column is a filter: pick a day to narrow the list, pick it again to
+ * clear.
+ *
+ * The outcome colors are the STATUS palette, not a categorical one - these four
+ * mean good / waiting / broken / declined, so they carry the same meaning here
+ * that they carry on the pills and the filter chips. They never stand for
+ * "series 1..4".
  */
 export default function ActivityStrip({ buckets, picked, onPick }: Props) {
   const [hover, setHover] = useState<number | null>(null);
-  const max = Math.max(1, ...buckets.map((b) => b.counts.total));
+  const peak = Math.max(1, ...buckets.map((b) => b.counts.total));
+  const busiest = buckets.reduce((a, b) => (b.counts.total > a.counts.total ? b : a), buckets[0]!);
 
   return (
-    <div>
-      <div className={styles.strip} data-picked={picked !== null || undefined}>
-        {buckets.map((b) => {
-          const on = picked === b.day;
-          const tall = (b.counts.total / max) * 100;
-          return (
-            <button
-              key={b.day}
-              type="button"
-              className={styles.col}
-              data-on={on || undefined}
-              onClick={() => onPick(on ? null : b.day)}
-              onMouseEnter={() => setHover(b.day)}
-              onMouseLeave={() => setHover(null)}
-              onFocus={() => setHover(b.day)}
-              onBlur={() => setHover(null)}
-              aria-pressed={on}
-              aria-label={`${formatDayLabel(b.day)}: ${b.counts.total} ${
-                b.counts.total === 1 ? 'run' : 'runs'
-              }`}
-            >
-              {b.counts.total === 0 ? (
-                <span className={styles.empty} aria-hidden />
-              ) : (
-                // Failed first in DOM order = top of the column, where the eye lands.
-                ['failed', 'awaiting', 'declined', 'completed'].map((s) => {
-                  const n = b.counts[s as keyof typeof b.counts] as number;
-                  if (n === 0) return null;
-                  return (
-                    <span
-                      key={s}
-                      className={styles.seg}
-                      data-state={s}
-                      style={{ height: `${(n / b.counts.total) * tall}%` }}
-                    />
-                  );
-                })
-              )}
-
-              {hover === b.day && (
-                <span className={styles.tip} role="presentation">
-                  <span className={styles.tipDay}>{formatDayLabel(b.day)}</span>
-                  {b.counts.total === 0 ? (
-                    'No runs'
-                  ) : (
-                    RUN_STATES.filter((s) => b.counts[s] > 0).map((s) => (
-                      <span key={s} className={styles.tipRow}>
-                        <span className={styles.tipDot} data-state={s} />
-                        {b.counts[s]} {RUN_STATE_SHORT[s].toLowerCase()}
-                      </span>
-                    ))
-                  )}
-                </span>
-              )}
-            </button>
-          );
-        })}
+    <div className={styles.wrap}>
+      <div className={styles.caption}>
+        <span className={styles.captionLabel}>Runs per day</span>
+        {/* The one direct label the chart carries: without a peak value there is
+            no scale to read the bars against, and every day looks alike. */}
+        <span className={styles.peak}>
+          peak {peak} on {formatDayShort(busiest.day)}
+        </span>
       </div>
+
+      <div className={styles.plot}>
+        <span className={`${styles.grid} ${styles.gridTop}`} aria-hidden />
+        <span className={`${styles.grid} ${styles.gridBase}`} aria-hidden />
+
+        {/* The 24px ceiling is for a dense band. With a week's worth of columns
+            the slots are enormous, and a 22px bar in a 280px slot reads as
+            lonely rather than airy - so the cap opens up when there are few. */}
+        <div
+          className={styles.cols}
+          data-picked={picked !== null || undefined}
+          style={{ '--bar-max': buckets.length <= 10 ? '42px' : '22px' } as CSSProperties}
+        >
+          {buckets.map((b) => {
+            const on = picked === b.day;
+            const tall = (b.counts.total / peak) * 100;
+            return (
+              <button
+                key={b.day}
+                type="button"
+                className={styles.col}
+                data-on={on || undefined}
+                onClick={() => onPick(on ? null : b.day)}
+                onMouseEnter={() => setHover(b.day)}
+                onMouseLeave={() => setHover(null)}
+                onFocus={() => setHover(b.day)}
+                onBlur={() => setHover(null)}
+                aria-pressed={on}
+                aria-label={`${formatDayLabel(b.day)}: ${b.counts.total} ${
+                  b.counts.total === 1 ? 'run' : 'runs'
+                }`}
+              >
+                {b.counts.total === 0 ? (
+                  <span className={styles.none} aria-hidden />
+                ) : (
+                  <span className={styles.bar} style={{ height: `${tall}%` }} aria-hidden>
+                    {STACK.map((s) => {
+                      const n = b.counts[s];
+                      if (n === 0) return null;
+                      return (
+                        <span
+                          key={s}
+                          className={styles.seg}
+                          data-state={s}
+                          style={{ height: `${(n / b.counts.total) * 100}%` }}
+                        />
+                      );
+                    })}
+                  </span>
+                )}
+
+                {hover === b.day && (
+                  <span className={styles.tip} role="presentation">
+                    <span className={styles.tipDay}>{formatDayLabel(b.day)}</span>
+                    {b.counts.total === 0 ? (
+                      'No runs'
+                    ) : (
+                      RUN_STATES.filter((s) => b.counts[s] > 0).map((s) => (
+                        <span key={s} className={styles.tipRow}>
+                          <span className={styles.tipDot} data-state={s} />
+                          <span className={styles.tipN}>{b.counts[s]}</span>
+                          {RUN_STATE_SHORT[s].toLowerCase()}
+                        </span>
+                      ))
+                    )}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <div className={styles.axis}>
         <span>{formatDayShort(buckets[0]?.day ?? NOW)}</span>
         <span>{formatDayShort(buckets[buckets.length - 1]?.day ?? NOW)}</span>

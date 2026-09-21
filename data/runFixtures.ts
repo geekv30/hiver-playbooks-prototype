@@ -307,8 +307,14 @@ function hash(s: string): number {
   return h >>> 0;
 }
 
-/** The window every count and chart is computed over. Fixed at 30 days in v1. */
-export const RUN_WINDOW_DAYS = 30;
+/** How much history exists. The UI offers 7 / 30 / 90 day ranges, so the
+ *  fixtures have to cover the longest of them - generating only 30 left the
+ *  90-day view two-thirds empty, which read as a dead skill rather than as a
+ *  fixture that stopped short. */
+export const RUN_WINDOW_DAYS = 90;
+
+/** The period a skill's `volume` describes, when it has been live throughout. */
+const VOLUME_PERIOD_DAYS = 30;
 const DAY = 86_400_000;
 
 /**
@@ -465,7 +471,12 @@ export function generateRuns(src: SkillRunSource): SkillRun[] {
     const date = new Date(dayStart);
     const weekend = date.getDay() === 0 || date.getDay() === 6;
     // Weekends run thinner - support volume follows the working week.
-    const base = (src.volume / RUN_WINDOW_DAYS) * (weekend ? 0.25 : 1.25);
+    // `volume` is runs per 30 days for a settled skill; for one that has only
+    // been live a few days it is the total across those days. Dividing by the
+    // 90-day generation window instead would silently thin every skill to a
+    // third of its intended rate.
+    const span = src.liveForDays ?? VOLUME_PERIOD_DAYS;
+    const base = (src.volume / span) * (weekend ? 0.25 : 1.25);
     const count = Math.max(0, Math.round(base * (0.45 + rand() * 1.1)));
 
     for (let i = 0; i < count; i += 1) {
@@ -691,14 +702,30 @@ export const RUN_SOURCES: SkillRunSource[] = [
   },
 ];
 
-/** Every run across every skill, newest first. */
-export function allRuns(): SkillRun[] {
-  return RUN_SOURCES.flatMap(generateRuns).sort((a, b) => b.startedAt - a.startedAt);
-}
+// Generation is deterministic but not free, and the list calls it once per row
+// on every render. Cached per skill for the life of the module.
+const RUN_CACHE = new Map<string, SkillRun[]>();
 
 export function runsForSkill(skillId: string): SkillRun[] {
+  const hit = RUN_CACHE.get(skillId);
+  if (hit) return hit;
   const src = RUN_SOURCES.find((s) => s.skillId === skillId);
-  return src ? generateRuns(src) : [];
+  const out = src ? generateRuns(src) : [];
+  RUN_CACHE.set(skillId, out);
+  return out;
+}
+
+/** Every run across every skill, newest first. */
+export function allRuns(): SkillRun[] {
+  return RUN_SOURCES.flatMap((s) => runsForSkill(s.skillId)).sort(
+    (a, b) => b.startedAt - a.startedAt,
+  );
+}
+
+/** Runs in the last N days - what the Skills list column counts. */
+export function runsInLastDays(skillId: string, days: number): SkillRun[] {
+  const cutoff = NOW - days * DAY;
+  return runsForSkill(skillId).filter((r) => r.startedAt >= cutoff);
 }
 
 export function sourceFor(skillId: string): SkillRunSource | undefined {

@@ -20,7 +20,7 @@ import {
 import GmailBar from '@/components/flow01/GmailBar';
 import OutcomeBar from '@/components/runs/OutcomeBar';
 import { countBy } from '@/components/runs/runsModel';
-import { NOW, RUN_SOURCES, runsForSkill } from '@/data/runFixtures';
+import { NOW, RUN_SOURCES, runsInLastDays } from '@/data/runFixtures';
 import { mailboxName } from '@/data/mailboxes';
 import { useIsClient } from '@/components/runs/useIsClient';
 import Toggle from '@/components/atoms/Toggle';
@@ -302,7 +302,7 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
                       </div>
                       <div className={styles.colRuns}>
                         {(() => {
-                          const runs = isClient ? runsForSkill(row.id) : [];
+                          const runs = isClient ? runsInLastDays(row.id, 30) : [];
                           if (!isClient) return <span className={styles.runsNone} />;
                           if (runs.length === 0) {
                             return <span className={styles.runsNone}>No runs yet</span>;
