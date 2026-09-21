@@ -1,6 +1,11 @@
 'use client';
 
-import { RiCheckboxCircleLine, RiAlertLine, RiArrowRightLine } from 'react-icons/ri';
+import {
+  RiCheckboxCircleLine,
+  RiAlertLine,
+  RiArrowRightLine,
+  RiRadioButtonLine,
+} from 'react-icons/ri';
 import type { SkillRun } from '@/data/runFixtures';
 import {
   attentionItems,
@@ -36,8 +41,14 @@ export default function RunVerdict({ windowRuns, days, onFocus }: Props) {
   if (items.length === 0) {
     return (
       <div className={styles.verdict}>
-        <div className={styles.clear}>
-          <RiCheckboxCircleLine className={styles.clearIcon} aria-hidden />
+        <div className={styles.clear} data-idle={counts.total === 0 || undefined}>
+          {/* Nothing has happened yet is not a success - a green tick on an
+              empty history claims something the skill has not done. */}
+          {counts.total === 0 ? (
+            <RiRadioButtonLine className={styles.clearIcon} aria-hidden />
+          ) : (
+            <RiCheckboxCircleLine className={styles.clearIcon} aria-hidden />
+          )}
           <div className={styles.clearText}>
             <h2 className={styles.clearTitle}>
               {counts.total === 0 ? 'No runs yet' : 'Running normally'}

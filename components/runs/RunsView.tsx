@@ -27,6 +27,8 @@ interface Props {
   runs: SkillRun[];
   marks?: RevisionMark[];
   allSkills?: boolean;
+  /** Pre-select a skill (arriving from that skill's Runs cell on the list). */
+  initialSkillId?: string | null;
   onOpenConversation?: (run: SkillRun) => void;
 }
 
@@ -47,8 +49,14 @@ const RANGES = [
  *
  * Everything is read-only. Every route out leads to the conversation.
  */
-export default function RunsView({ runs, marks = [], allSkills, onOpenConversation }: Props) {
-  const [filter, setFilter] = useState<RunFilter>(DEFAULT_FILTER);
+export default function RunsView({
+  runs,
+  marks = [],
+  allSkills,
+  initialSkillId = null,
+  onOpenConversation,
+}: Props) {
+  const [filter, setFilter] = useState<RunFilter>({ ...DEFAULT_FILTER, skillId: initialSkillId });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // Run history is clock-derived and these routes are prerendered, so the
   // server has no honest answer here. See useIsClient.
@@ -141,7 +149,10 @@ export default function RunsView({ runs, marks = [], allSkills, onOpenConversati
         </span>
       </div>
 
-      {listRuns.length === 0 ? (
+      {/* Nothing in the window at all: the verdict has already said so, and
+          repeating it under a set of zeroed filters would be the page telling
+          you the same thing twice. The controls stay so the range can widen. */}
+      {windowRuns.length === 0 ? null : listRuns.length === 0 ? (
         <div className={styles.emptySplit}>
           <RunList
             runs={listRuns}

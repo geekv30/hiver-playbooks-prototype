@@ -20,57 +20,39 @@ import {
 import GmailBar from '@/components/flow01/GmailBar';
 import OutcomeBar from '@/components/runs/OutcomeBar';
 import { countBy } from '@/components/runs/runsModel';
-import { NOW, runsForSkill } from '@/data/runFixtures';
+import { NOW, RUN_SOURCES, runsForSkill } from '@/data/runFixtures';
+import { mailboxName } from '@/data/mailboxes';
 import { useIsClient } from '@/components/runs/useIsClient';
 import Toggle from '@/components/atoms/Toggle';
 import { SparkleIcon } from '@/components/icons/ui';
 import styles from './AopListPage.module.css';
 
-/** Seeded rows (Figma 1816:18620). Row 1 opens the full API-error journey;
- *  the others link to the remaining demo journeys. */
+/**
+ * The rows come from RUN_SOURCES - the same definitions the Runs surfaces read.
+ * They used to be a separate hardcoded list, which let this page claim mailboxes
+ * and last-run times that the run history disagreed with.
+ */
 interface AopRow {
   id: string;
   name: string;
   desc: string;
   active: boolean;
-  /** Mailbox chip labels; null = unassigned. */
-  mailboxes: string[] | null;
-  /** How many more beyond the shown chips (the "+N" chip). */
+  mailboxes: string[];
   more?: number;
   lastUpdated: string;
   href: string;
 }
 
-const SEED_ROWS: AopRow[] = [
-  {
-    id: 'api-error-triage',
-    name: 'API error triage',
-    desc: 'Runs when an API error is reported',
-    active: true,
-    mailboxes: ['Support', 'Sales'],
-    more: 9,
-    lastUpdated: 'Jul 3, 2026',
-    href: '/api-example',
-  },
-  {
-    id: 'refund-handling',
-    name: 'Refund handling',
-    desc: 'Checks order context before drafting refund replies',
-    active: false,
-    mailboxes: ['Billing'],
-    lastUpdated: 'Jul 3, 2026',
-    href: '/canvas',
-  },
-  {
-    id: 'refund-handling-draft',
-    name: 'Refund handling',
-    desc: 'Checks order context before drafting refund replies',
-    active: false,
-    mailboxes: null,
-    lastUpdated: 'Jul 3, 2026',
-    href: '/connector-setup',
-  },
-];
+const SEED_ROWS: AopRow[] = RUN_SOURCES.map((s) => ({
+  id: s.skillId,
+  name: s.skillName,
+  desc: s.description,
+  active: s.status === 'active',
+  mailboxes: s.mailboxes.map(mailboxName),
+  more: s.moreMailboxes,
+  lastUpdated: s.lastUpdated,
+  href: s.href,
+}));
 
 /** "2 hrs ago" for the newest run - read off the history rather than stored on
  *  the row, so the count and the time can never disagree. */
@@ -304,7 +286,7 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
                         </span>
                       </div>
                       <div className={`${styles.colMain} ${styles.cellMapped}`}>
-                        {row.mailboxes ? (
+                        {row.mailboxes.length > 0 ? (
                           <>
                             {row.mailboxes.map((mb) => (
                               <span key={mb} className={styles.mbChip}>
@@ -331,7 +313,11 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
                               className={styles.runsCell}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                router.push(`${row.href}?runs=1`);
+                                router.push(
+                                  row.id === 'api-error-triage'
+                                    ? `${row.href}?runs=1`
+                                    : `/aops/runs?skill=${row.id}`,
+                                );
                               }}
                               aria-label={`${runs.length} runs for ${row.name}`}
                             >

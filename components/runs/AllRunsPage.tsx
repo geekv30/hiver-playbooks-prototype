@@ -4,8 +4,9 @@ import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { RiArrowLeftLine } from 'react-icons/ri';
 import GmailBar from '@/components/flow01/GmailBar';
-import { allRuns } from '@/data/runFixtures';
+import { allRuns, revisionMarks, sourceFor } from '@/data/runFixtures';
 import RunsView from './RunsView';
+import { useIsClient } from './useIsClient';
 import styles from './AllRunsPage.module.css';
 
 /**
@@ -19,6 +20,16 @@ import styles from './AllRunsPage.module.css';
 export default function AllRunsPage() {
   const router = useRouter();
   const runs = useMemo(() => allRuns(), []);
+  // Arriving from a skill's Runs cell lands pre-filtered to it. Read after the
+  // client takes over, like every other clock- or URL-derived value here.
+  const isClient = useIsClient();
+  const skillId = isClient
+    ? new URLSearchParams(window.location.search).get('skill')
+    : null;
+  const marks = useMemo(() => {
+    const src = skillId ? sourceFor(skillId) : undefined;
+    return src ? revisionMarks(src) : [];
+  }, [skillId]);
 
   return (
     <div className={styles.page}>
@@ -44,7 +55,7 @@ export default function AllRunsPage() {
             </div>
           </header>
           <div className={styles.body}>
-            <RunsView runs={runs} allSkills />
+            <RunsView key={skillId ?? 'all'} runs={runs} marks={marks} allSkills initialSkillId={skillId} />
           </div>
         </main>
       </div>

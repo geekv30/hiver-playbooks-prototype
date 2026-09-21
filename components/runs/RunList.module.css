@@ -140,12 +140,13 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   flex: 0 1 auto;
+  min-width: 42px;
 }
 .sep { color: var(--hairline-strong); flex: none; }
 .dur { font-variant-numeric: tabular-nums; flex: none; }
 .skill {
-  flex: none;
-  max-width: 130px;
+  flex: 0 1 auto;
+  max-width: 180px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
