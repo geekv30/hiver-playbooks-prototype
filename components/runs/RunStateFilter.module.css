@@ -1,0 +1,82 @@
+/* State filter. Previously these were four stat blocks that happened to be
+   clickable - ragged, and giving no sign they were the main control. Now they
+   are chips: one baseline, a border, a real pressed state. */
+.group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 11px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  background: var(--card);
+  font: inherit;
+  font-size: var(--fs-small);
+  letter-spacing: var(--ls-small);
+  color: var(--body);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--d-hover) var(--ease-snap),
+    border-color var(--d-hover) var(--ease-snap),
+    color var(--d-hover) var(--ease-snap);
+}
+.chip:hover {
+  background: var(--surface-soft);
+  border-color: var(--hairline-strong);
+  color: var(--ink);
+}
+.chip[data-on] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--card);
+}
+.chip[data-on]:hover { background: var(--ink-soft); border-color: var(--ink-soft); }
+.chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* The state's color lives on the dot, so the chip itself can carry selection
+   without two color systems fighting over the same element. */
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+}
+.dot[data-state='completed'] { background: var(--run-completed); }
+.dot[data-state='awaiting'] { background: var(--run-awaiting); }
+.dot[data-state='failed'] { background: var(--run-failed); }
+.dot[data-state='declined'] { background: var(--run-declined); }
+
+.n {
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: var(--ink);
+}
+.chip[data-on] .n { color: var(--card); }
+.chip:hover .n { color: var(--ink); }
+
+/* A state with no runs is still shown - "0 failed" is the reassurance - but it
+   does not invite a click that would empty the list. */
+.chip[data-empty] {
+  color: var(--muted-soft);
+  cursor: default;
+}
+.chip[data-empty] .n { color: var(--muted-soft); font-weight: 400; }
+.chip[data-empty]:hover {
+  background: var(--card);
+  border-color: var(--hairline);
+  color: var(--muted-soft);
+}
+.chip[data-empty] .dot { opacity: 0.4; }
+
+@media (prefers-reduced-motion: reduce) {
+  .chip { transition: none; }
+}

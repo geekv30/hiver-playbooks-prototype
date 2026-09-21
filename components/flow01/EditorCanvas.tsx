@@ -28,10 +28,12 @@ import ActionHint from './ActionHint';
 import EnableModal from './enable/EnableModal';
 import { deriveReadinessInputs, inviteKey } from './enable/readiness';
 import { useConnectorHealth, setConnectorHealth } from './connectorHealth';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEvalState } from '@/components/simulate/useEvalState';
 import { useTriggerScan } from '@/components/simulate/useTriggerScan';
 import SimulatePanel from '@/components/simulate/SimulatePanel';
+import RunsView from '@/components/runs/RunsView';
+import { revisionMarks, runsForSkill, sourceFor } from '@/data/runFixtures';
 import { type CopilotMessage, type CopilotProposalData } from './copilot/CopilotPanel';
 import SidePanel, { type SideTab } from './copilot/SidePanel';
 import type { Verdict } from '@/components/atoms/ThumbsRating';
@@ -186,6 +188,12 @@ function updateLastAssistant(
 }
 
 interface Props {
+  /** The live skill this canvas edits. When set, its execution history is
+   *  reachable from the toolbar. Absent on a brand-new skill, which has none. */
+  skillId?: string;
+  /** True on the skill's /runs route. Runs is a distinct view with its own URL,
+   *  not a flag on this one. */
+  runsMode?: boolean;
   /** Optional starting document. Omit for a fresh empty Skill (/canvas);
    *  /api-example passes the seeded example. */
   initialDoc?: EditorDoc;
@@ -206,7 +214,14 @@ type ColdStartPhase = 'hero' | 'docked';
 
 const ALL_CONNECTOR_SLUGS: ConnectorSlug[] = ['shopify', 'hubspot', 'slack', 'salesforce', 'clickup'];
 
-export default function EditorCanvas({ initialDoc, companions, connectorsStartUnauthed }: Props) {
+
+export default function EditorCanvas({
+  skillId,
+  runsMode = false,
+  initialDoc,
+  companions,
+  connectorsStartUnauthed,
+}: Props) {
   const router = useRouter();
   const api = useEditorDoc(initialDoc);
   const { doc, undo, redo } = api;
@@ -272,6 +287,34 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
   // and Copilot's handoff message both read it.
   const triggerText = useMemo(() => lineToText(doc.trigger), [doc.trigger]);
   const scan = useTriggerScan(triggerText);
+  // Runs - the skill's execution history. A MODE of this page rather than a
+  // third companion tab: Copilot and Evaluation are authoring tools that sit
+  // beside the document, while Runs replaces it and needs the whole stage.
+  const runSource = skillId ? sourceFor(skillId) : undefined;
+  const runs = useMemo(() => (skillId ? runsForSkill(skillId) : []), [skillId]);
+  const runMarks = useMemo(() => (runSource ? revisionMarks(runSource) : []), [runSource]);
+
+  // Runs is its OWN ROUTE (/<skill>/runs), not a flag on the editor's.
+  //
+  // It was a `?runs=1` search param, held alongside a local toggle, and the two
+  // drifted the moment you left Runs - the editor showed while the address bar
+  // still said `?runs=1`. Moving the mode into the URL alone fixed that but hit
+  // a worse problem: `router.push('/api-example')` from a URL the router had
+  // cached as `/api-example?runs=1` is deduped, so clicking the skill's row
+  // landed you back in Runs. A distinct route cannot be confused with the
+  // editor's, so the row goes where it says it goes, and back/forward and
+  // shared links work without any of this bookkeeping.
+  const pathname = usePathname();
+  const search = useSearchParams();
+  const runsOpen = runsMode;
+  // ?basic=1 renders the phase-1 fallback verdict, for reviewing what the band
+  // looks like without cause grouping.
+  const reducedRuns = search.get('basic') === '1';
+  const toggleRuns = useCallback(() => {
+    const base = pathname.replace(/\/runs$/, '');
+    router.push(runsMode ? base : `${base}/runs`, { scroll: false });
+  }, [router, pathname, runsMode]);
+
   // The New pill on the Matching emails card, retired once the user opens it.
   // Session state on purpose: a reload is a fresh look at the new type.
   const [matchingIsNew, setMatchingIsNew] = useState(true);
@@ -1208,9 +1251,21 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
         onPause={pauseAop}
         onResume={resumeAop}
         onBack={() => router.push('/aops')}
+        runCount={runs.length > 0 ? runs.length : undefined}
+        runsOpen={runsOpen}
+        onToggleRuns={runs.length > 0 ? toggleRuns : undefined}
       />
 
-      <div className={styles.stage}>
+      <div className={styles.stage} data-runs={runsOpen || undefined}>
+        {runsOpen ? (
+          <RunsView
+            runs={runs}
+            marks={runMarks}
+            reduced={reducedRuns}
+            onOpenConversation={() => showHint('Opening the conversation is coming soon.')}
+          />
+        ) : (
+        <>
         {/* The companion panel leads the row: Copilot and Evaluation sit on the
             LEFT of the canvas window, equal height to it. Rendered first so the
             reading and tab order match what is on screen. Non-companion routes
@@ -1560,6 +1615,8 @@ export default function EditorCanvas({ initialDoc, companions, connectorsStartUn
             </div>
           )}
         </div>
+        </>
+        )}
       </div>
 
       {palette && (

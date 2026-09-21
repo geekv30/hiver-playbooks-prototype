@@ -74,6 +74,22 @@
   min-height: 0;
 }
 
+/* Runs mode is a different kind of surface: no companion panel, no card, no
+   888px cap. It runs flush to the window like the page it is, rather than
+   floating as an object on the canvas. */
+.stage[data-runs] {
+  padding: 0;
+  gap: 0;
+}
+/* The surface takes the whole stage. It must stay a FLEX child: switching the
+   stage to block left .view unbounded, so its inner scroll panes grew to fit
+   their content and nothing scrolled at all. */
+.stage[data-runs] > * {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
 /* Canvas window - a fixed-height card; the content scrolls inside it (.docScroll),
    the card itself never grows. Caps at 888 (Figma) and shrinks on narrow screens. */
 .area {

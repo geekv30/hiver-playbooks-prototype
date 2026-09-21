@@ -15,61 +15,55 @@ import {
   RiSettings3Line,
   RiArrowDownSLine,
   RiAddLine,
+  RiPulseLine,
 } from 'react-icons/ri';
 import GmailBar from '@/components/flow01/GmailBar';
+import OutcomeBar from '@/components/runs/OutcomeBar';
+import { countBy } from '@/components/runs/runsModel';
+import { NOW, RUN_SOURCES, runsInLastDays } from '@/data/runFixtures';
+import { mailboxName } from '@/data/mailboxes';
+import { useIsClient } from '@/components/runs/useIsClient';
 import Toggle from '@/components/atoms/Toggle';
 import { SparkleIcon } from '@/components/icons/ui';
 import styles from './AopListPage.module.css';
 
-/** Seeded rows (Figma 1816:18620). Row 1 opens the full API-error journey;
- *  the others link to the remaining demo journeys. */
+/**
+ * The rows come from RUN_SOURCES - the same definitions the Runs surfaces read.
+ * They used to be a separate hardcoded list, which let this page claim mailboxes
+ * and last-run times that the run history disagreed with.
+ */
 interface AopRow {
   id: string;
   name: string;
   desc: string;
   active: boolean;
-  /** Mailbox chip labels; null = unassigned. */
-  mailboxes: string[] | null;
-  /** How many more beyond the shown chips (the "+N" chip). */
+  mailboxes: string[];
   more?: number;
-  lastRun: string;
   lastUpdated: string;
   href: string;
 }
 
-const SEED_ROWS: AopRow[] = [
-  {
-    id: 'api-error-triage',
-    name: 'API error triage',
-    desc: 'Runs when an API error is reported',
-    active: true,
-    mailboxes: ['Support', 'Sales'],
-    more: 9,
-    lastRun: '2 hrs ago',
-    lastUpdated: 'Jul 3, 2026',
-    href: '/api-example',
-  },
-  {
-    id: 'refund-handling',
-    name: 'Refund handling',
-    desc: 'Checks order context before drafting refund replies',
-    active: false,
-    mailboxes: ['Billing'],
-    lastRun: '2 mins ago',
-    lastUpdated: 'Jul 3, 2026',
-    href: '/canvas',
-  },
-  {
-    id: 'refund-handling-draft',
-    name: 'Refund handling',
-    desc: 'Checks order context before drafting refund replies',
-    active: false,
-    mailboxes: null,
-    lastRun: '-',
-    lastUpdated: 'Jul 3, 2026',
-    href: '/connector-setup',
-  },
-];
+const SEED_ROWS: AopRow[] = RUN_SOURCES.map((s) => ({
+  id: s.skillId,
+  name: s.skillName,
+  desc: s.description,
+  active: s.status === 'active',
+  mailboxes: s.mailboxes.map(mailboxName),
+  more: s.moreMailboxes,
+  lastUpdated: s.lastUpdated,
+  href: s.href,
+}));
+
+/** "2 hrs ago" for the newest run - read off the history rather than stored on
+ *  the row, so the count and the time can never disagree. */
+function sinceLabel(t: number): string {
+  const mins = Math.max(1, Math.round((NOW - t) / 60_000));
+  if (mins < 60) return `${mins} min${mins === 1 ? '' : 's'} ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs} hr${hrs === 1 ? '' : 's'} ago`;
+  const days = Math.round(hrs / 24);
+  return `${days} day${days === 1 ? '' : 's'} ago`;
+}
 
 const MAIN_NAV = [
   { label: 'Dashboard', icon: RiLayoutGridLine },
@@ -104,6 +98,9 @@ const AI_NAV = [
 export default function AopListPage({ empty }: { empty?: boolean }) {
   const router = useRouter();
   const [rows, setRows] = useState<AopRow[]>(empty ? [] : SEED_ROWS);
+  // "12 mins ago" is computed from the clock, and this page is prerendered -
+  // the server would bake a build-time answer the browser then contradicts.
+  const isClient = useIsClient();
 
   const activeCount = rows.filter((r) => r.active).length;
   const inactiveCount = rows.length - activeCount;
@@ -179,6 +176,13 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
                 </p>
               </div>
               <div className={styles.headerActions}>
+                {/* The cross-skill read. Sits beside New skill because it is the
+                    other thing you come to this page to do: make one, or check
+                    on the ones you already have. */}
+                <Link href="/aops/runs" className={styles.allRunsBtn}>
+                  <RiPulseLine aria-hidden />
+                  All skill runs
+                </Link>
                 <Link href="/aops/new" className={styles.newBtn}>
                   <RiAddLine aria-hidden />
                   New skill
@@ -231,7 +235,7 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
                 <div className={styles.tableHead}>
                   <span className={styles.colMain}>Skill</span>
                   <span className={styles.colMain}>Mapped to</span>
-                  <span className={styles.colEnd}>Last run</span>
+                  <span className={styles.colRuns}>Runs &middot; 30d</span>
                   <span className={styles.colEnd}>Last updated</span>
                 </div>
                 <div className={styles.emptyBody}>
@@ -252,7 +256,7 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
               <div className={styles.tableHead}>
                 <span className={styles.colMain}>Skill</span>
                 <span className={styles.colMain}>Mapped to</span>
-                <span className={styles.colEnd}>Last run</span>
+                <span className={styles.colRuns}>Runs &middot; 30d</span>
                 <span className={styles.colEnd}>Last updated</span>
               </div>
               <ul className={styles.rows}>
@@ -282,7 +286,7 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
                         </span>
                       </div>
                       <div className={`${styles.colMain} ${styles.cellMapped}`}>
-                        {row.mailboxes ? (
+                        {row.mailboxes.length > 0 ? (
                           <>
                             {row.mailboxes.map((mb) => (
                               <span key={mb} className={styles.mbChip}>
@@ -296,9 +300,36 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
                           <span className={styles.unassigned}>unassigned</span>
                         )}
                       </div>
-                      <span className={`${styles.colEnd} ${styles.cellTime}`} data-muted={row.lastRun === '-' || undefined}>
-                        {row.lastRun}
-                      </span>
+                      <div className={styles.colRuns}>
+                        {(() => {
+                          const runs = isClient ? runsInLastDays(row.id, 30) : [];
+                          if (!isClient) return <span className={styles.runsNone} />;
+                          if (runs.length === 0) {
+                            return <span className={styles.runsNone}>No runs yet</span>;
+                          }
+                          return (
+                            <button
+                              type="button"
+                              className={styles.runsCell}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(
+                                  row.id === 'api-error-triage'
+                                    ? `${row.href}/runs`
+                                    : `/aops/runs?skill=${row.id}`,
+                                );
+                              }}
+                              aria-label={`${runs.length} runs for ${row.name}`}
+                            >
+                              <span className={styles.runsTop}>
+                                <span className={styles.runsN}>{runs.length}</span>
+                                <span className={styles.runsLast}>{sinceLabel(runs[0]!.startedAt)}</span>
+                              </span>
+                              <OutcomeBar counts={countBy(runs)} />
+                            </button>
+                          );
+                        })()}
+                      </div>
                       <span className={`${styles.colEnd} ${styles.cellTime}`}>{row.lastUpdated}</span>
                     </div>
                   </li>

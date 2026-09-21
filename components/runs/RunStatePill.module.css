@@ -1,0 +1,58 @@
+/* One pill, four outcomes. Colors come from the shared run palette in
+   globals.css so the pill, the outcome bar and the activity strip agree. */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 8px 0 7px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-caption);
+  line-height: 1;
+  font-weight: 500;
+  letter-spacing: var(--ls-caption);
+  white-space: nowrap;
+}
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: none;
+}
+.icon {
+  width: 13px;
+  height: 13px;
+  flex: none;
+}
+
+.pill[data-state='completed'] {
+  background: var(--run-completed-bg);
+  color: var(--run-completed);
+}
+.pill[data-state='awaiting'] {
+  background: var(--run-awaiting-bg);
+  color: var(--run-awaiting);
+}
+.pill[data-state='failed'] {
+  background: var(--run-failed-bg);
+  color: var(--run-failed);
+}
+.pill[data-state='declined'] {
+  background: var(--run-declined-bg);
+  color: var(--run-declined);
+}
+
+/* Bare variant: the list row, where a full pill on every line would stripe the
+   column. Just the mark, with the label carried by the row itself. */
+.bare {
+  display: inline-flex;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+}
+.bare[data-state='completed'] { background: var(--run-completed); }
+.bare[data-state='awaiting'] { background: var(--run-awaiting); }
+.bare[data-state='failed'] { background: var(--run-failed); }
+.bare[data-state='declined'] { background: var(--run-declined); }

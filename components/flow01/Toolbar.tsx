@@ -1,6 +1,6 @@
 'use client';
 
-import { RiArrowLeftLine, RiPlayLine, RiSettings3Line } from 'react-icons/ri';
+import { RiArrowLeftLine, RiPlayLine, RiSettings3Line, RiPulseLine } from 'react-icons/ri';
 import Button from '@/components/atoms/Button';
 import Badge from '@/components/atoms/Badge';
 import TitleField from './TitleField';
@@ -39,6 +39,13 @@ interface Props {
   /** Hide the title + status here (when the skill identity moves onto a canvas
    *  header). The Back button stays. */
   hideIdentity?: boolean;
+  /** Runs in the last 30 days. Undefined hides the control entirely (a skill
+   *  that has never been live has no history to offer). */
+  runCount?: number;
+  /** Whether the page is currently showing Runs instead of the editor. */
+  runsOpen?: boolean;
+  /** Toggle the Runs mode. */
+  onToggleRuns?: () => void;
 }
 
 // Editor toolbar. Left = back + the skill identity (title + status pill).
@@ -59,24 +66,50 @@ export default function Toolbar({
   simulating,
   hideSimulate,
   hideIdentity,
+  runCount,
+  runsOpen,
+  onToggleRuns,
 }: Props) {
   return (
     <div className={styles.bar}>
       <div className={styles.left}>
+        {/* ONE back affordance, always. In Runs the arrow steps back to the
+            editor rather than out of the skill, and the breadcrumb says where
+            you are - two arrows side by side meaning different things is not a
+            navigation model. */}
         <Button
           variant="secondary"
           iconOnly={<RiArrowLeftLine />}
-          ariaLabel="Back"
-          onClick={onBack}
+          ariaLabel={runsOpen ? 'Back to editing' : 'Back to skills'}
+          onClick={runsOpen ? onToggleRuns : onBack}
         />
         {!hideIdentity && (
-          <TitleField value={title} onChange={onTitleChange} className={styles.title} />
+          <>
+            {runsOpen ? (
+              <span className={styles.crumbs}>
+                <button type="button" className={styles.crumbLink} onClick={onToggleRuns}>
+                  {title || 'Untitled skill'}
+                </button>
+                <span className={styles.crumbSep} aria-hidden>
+                  /
+                </span>
+                <span className={styles.crumbHere}>Runs</span>
+              </span>
+            ) : (
+              <TitleField value={title} onChange={onTitleChange} className={styles.title} />
+            )}
+            <Badge intent={status}>{STATUS_LABEL[status]}</Badge>
+          </>
         )}
-        {!hideIdentity && <Badge intent={status}>{STATUS_LABEL[status]}</Badge>}
       </div>
 
       <div className={styles.right}>
-        {!hideSimulate && (
+        {!runsOpen && runCount !== undefined && onToggleRuns && (
+          <Button variant="secondary" iconLeft={<RiPulseLine />} onClick={onToggleRuns}>
+            Runs <span className={styles.runsN}>{runCount}</span>
+          </Button>
+        )}
+        {!runsOpen && !hideSimulate && (
           <Button
             variant="secondary"
             iconLeft={<RiPlayLine />}
@@ -86,7 +119,7 @@ export default function Toolbar({
             Simulate
           </Button>
         )}
-        {status !== 'draft' && (
+        {!runsOpen && status !== 'draft' && (
           <Button
             variant="secondary"
             iconOnly={<RiSettings3Line />}
@@ -94,7 +127,7 @@ export default function Toolbar({
             onClick={onSettings}
           />
         )}
-        {status === 'active' ? (
+        {runsOpen ? null : status === 'active' ? (
           <Button variant="secondary" onClick={onPause}>
             Pause
           </Button>
