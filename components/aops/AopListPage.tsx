@@ -315,7 +315,7 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
                                 e.stopPropagation();
                                 router.push(
                                   row.id === 'api-error-triage'
-                                    ? `${row.href}?runs=1`
+                                    ? `${row.href}/runs`
                                     : `/aops/runs?skill=${row.id}`,
                                 );
                               }}

@@ -191,6 +191,9 @@ interface Props {
   /** The live skill this canvas edits. When set, its execution history is
    *  reachable from the toolbar. Absent on a brand-new skill, which has none. */
   skillId?: string;
+  /** True on the skill's /runs route. Runs is a distinct view with its own URL,
+   *  not a flag on this one. */
+  runsMode?: boolean;
   /** Optional starting document. Omit for a fresh empty Skill (/canvas);
    *  /api-example passes the seeded example. */
   initialDoc?: EditorDoc;
@@ -214,6 +217,7 @@ const ALL_CONNECTOR_SLUGS: ConnectorSlug[] = ['shopify', 'hubspot', 'slack', 'sa
 
 export default function EditorCanvas({
   skillId,
+  runsMode = false,
   initialDoc,
   companions,
   connectorsStartUnauthed,
@@ -290,30 +294,26 @@ export default function EditorCanvas({
   const runs = useMemo(() => (skillId ? runsForSkill(skillId) : []), [skillId]);
   const runMarks = useMemo(() => (runSource ? revisionMarks(runSource) : []), [runSource]);
 
-  // Which mode the page is in lives in the URL and NOWHERE else.
+  // Runs is its OWN ROUTE (/<skill>/runs), not a flag on the editor's.
   //
-  // It used to be URL-on-arrival plus a local toggle, and the two drifted:
-  // leaving Runs showed the editor while the address bar still said `?runs=1`.
-  // Anything that re-read the URL after that - a reload, a shared link, the
-  // back button, a soft navigation that reused this component - then
-  // contradicted what the person had just done and dropped them into Runs.
-  // One source of truth removes the whole class of bug, and makes back/forward
-  // and shared links behave for free.
-  const search = useSearchParams();
+  // It was a `?runs=1` search param, held alongside a local toggle, and the two
+  // drifted the moment you left Runs - the editor showed while the address bar
+  // still said `?runs=1`. Moving the mode into the URL alone fixed that but hit
+  // a worse problem: `router.push('/api-example')` from a URL the router had
+  // cached as `/api-example?runs=1` is deduped, so clicking the skill's row
+  // landed you back in Runs. A distinct route cannot be confused with the
+  // editor's, so the row goes where it says it goes, and back/forward and
+  // shared links work without any of this bookkeeping.
   const pathname = usePathname();
-  const runsOpen = search.get('runs') === '1';
+  const search = useSearchParams();
+  const runsOpen = runsMode;
   // ?basic=1 renders the phase-1 fallback verdict, for reviewing what the band
   // looks like without cause grouping.
   const reducedRuns = search.get('basic') === '1';
   const toggleRuns = useCallback(() => {
-    const next = new URLSearchParams(search.toString());
-    if (runsOpen) next.delete('runs');
-    else next.set('runs', '1');
-    const q = next.toString();
-    // push, not replace: the browser's back button then does what the page's
-    // own "Back to editing" does, instead of skipping the editor entirely.
-    router.push(q ? `${pathname}?${q}` : pathname, { scroll: false });
-  }, [router, pathname, search, runsOpen]);
+    const base = pathname.replace(/\/runs$/, '');
+    router.push(runsMode ? base : `${base}/runs`, { scroll: false });
+  }, [router, pathname, runsMode]);
 
   // The New pill on the Matching emails card, retired once the user opens it.
   // Session state on purpose: a reload is a fresh look at the new type.
