@@ -15,7 +15,7 @@
 
 .caption {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
   font-size: var(--fs-micro);
@@ -33,6 +33,13 @@
 .peak {
   margin-left: auto;
   font-variant-numeric: tabular-nums;
+}
+
+/* The period control sits at the end of the row, after the peak. Fixed width so
+   the peak label never shifts as the label text changes length. */
+.range {
+  flex: none;
+  width: 132px;
 }
 
 .plot {

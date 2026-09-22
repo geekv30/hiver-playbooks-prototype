@@ -47,6 +47,10 @@ const RANGES = [
  * list and the detail are the answer to "show me that one", which is the third
  * reason someone comes here, not the first, so they sit below the lead band.
  *
+ * The period control sits with the chart in the lead band, not down here with
+ * the outcome filters: it is the one control that changes what the plot draws.
+ * It still governs the list and the counts, so this surface keeps the state.
+ *
  * Everything is read-only. Every route out leads to the conversation.
  */
 export default function RunsView({
@@ -95,6 +99,16 @@ export default function RunsView({
           buckets={bucketByDay(windowRuns, filter.days)}
           picked={filter.day}
           onPick={(day) => setFilter((f) => ({ ...f, day: day === null ? null : startOfDay(day) }))}
+          range={
+            <SegmentedControl
+              tabs={RANGES}
+              active={String(filter.days)}
+              onChange={(id) =>
+                setFilter((f) => ({ ...f, days: Number(id) as RangeDays, day: null }))
+              }
+              ariaLabel="Time range"
+            />
+          }
         />
         <RunLead windowRuns={windowRuns} days={filter.days} />
       </div>
@@ -119,7 +133,7 @@ export default function RunsView({
           />
         )}
 
-        <div style={{ flex: '0 1 220px', minWidth: 160 }}>
+        <div className={styles.search}>
           <Input
             value={filter.query}
             onChange={(query) => setFilter((f) => ({ ...f, query }))}
@@ -128,15 +142,6 @@ export default function RunsView({
             ariaLabel="Search runs"
           />
         </div>
-
-        <span style={{ flex: 'none', width: 132 }}>
-          <SegmentedControl
-            tabs={RANGES}
-            active={String(filter.days)}
-            onChange={(id) => setFilter((f) => ({ ...f, days: Number(id) as RangeDays, day: null }))}
-            ariaLabel="Time range"
-          />
-        </span>
       </div>
 
       {/* Nothing in the window at all: the lead band has already said so, and

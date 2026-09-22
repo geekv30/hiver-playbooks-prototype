@@ -22,8 +22,9 @@
   border-bottom: 1px solid var(--hairline-soft);
 }
 
-/* Controls: outcome on the left (the primary way through), search and range on
-   the right (secondary). One row, one baseline. */
+/* Controls: outcome on the left (the primary way through), search on the right.
+   One row, one baseline. The period control is not here - it sits with the plot
+   it changes, in the band above. */
 .controls {
   display: flex;
   align-items: center;
@@ -33,6 +34,14 @@
   flex-wrap: wrap;
 }
 .spacer { flex: 1 1 auto; min-width: 12px; }
+
+/* The search holds the right end of the row - the end the period control used
+   to hold - so the row still reads left group against right, and it keeps the
+   Input's own shape rather than the chips' pill. */
+.search {
+  flex: 0 1 320px;
+  min-width: 200px;
+}
 
 /* The page gutter. One inset for the whole surface: the bands above already
    sit at 24, and the list running flush to the window edge while they did not

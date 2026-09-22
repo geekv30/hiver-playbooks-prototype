@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type CSSProperties } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 import { NOW } from '@/data/runFixtures';
 import type { DayBucket } from './runsModel';
 import { RUN_STATES, RUN_STATE_SHORT, formatDayShort, formatDayLabel } from './runsModel';
@@ -20,6 +20,15 @@ interface Props {
    * scale. 'none' when that surface carries the peak too.
    */
   caption?: 'full' | 'peak' | 'none';
+  /**
+   * The period control, rendered at the end of the caption row.
+   *
+   * It belongs beside the plot it changes rather than down among the outcome
+   * filters - but the strip only holds the slot, it does not own the control:
+   * the range governs the list and the counts too, so the state stays with the
+   * surface that owns the filter.
+   */
+  range?: ReactNode;
 }
 
 /** The tallest day in the window - the scale every bar is read against. */
@@ -47,20 +56,23 @@ const STACK: typeof RUN_STATES = ['failed', 'awaiting', 'declined', 'completed']
  * that they carry on the pills and the filter chips. They never stand for
  * "series 1..4".
  */
-export default function ActivityStrip({ buckets, picked, onPick, caption = 'full' }: Props) {
+export default function ActivityStrip({ buckets, picked, onPick, caption = 'full', range }: Props) {
   const [hover, setHover] = useState<number | null>(null);
   const { peak, day: busiestDay } = peakOf(buckets);
 
   return (
     <div className={styles.wrap}>
-      {caption !== 'none' && (
+      {(caption !== 'none' || range) && (
         <div className={styles.caption}>
           {caption === 'full' && <span className={styles.captionLabel}>Runs per day</span>}
           {/* The one direct label the chart carries: without a peak value there
               is no scale to read the bars against, and every day looks alike. */}
-          <span className={styles.peak}>
-            peak {peak} on {formatDayShort(busiestDay)}
-          </span>
+          {caption !== 'none' && (
+            <span className={styles.peak}>
+              peak {peak} on {formatDayShort(busiestDay)}
+            </span>
+          )}
+          {range && <span className={styles.range}>{range}</span>}
         </div>
       )}
 
