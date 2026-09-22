@@ -42,10 +42,10 @@ const RANGES = [
  * RunsView - a skill's execution history.
  *
  * Ordered by the question people arrive with, not by what the data contains:
- * first how the skill is doing over the window, then the outcome filters, then
- * the log. The list and the detail are the answer to "show me that one", which
- * is the third reason someone comes here, not the first - so they sit below the
- * lead band, not above it.
+ * first how the skill is doing over the window - the shape of the period, then
+ * one line on what it amounts to - then the outcome filters, then the log. The
+ * list and the detail are the answer to "show me that one", which is the third
+ * reason someone comes here, not the first, so they sit below the lead band.
  *
  * Everything is read-only. Every route out leads to the conversation.
  */
@@ -91,18 +91,12 @@ export default function RunsView({
   return (
     <div className={styles.view}>
       <div className={styles.lead}>
-        <div className={styles.leadText}>
-          <RunLead windowRuns={windowRuns} days={filter.days} />
-        </div>
-        <div className={styles.chart}>
-          <ActivityStrip
-            buckets={bucketByDay(windowRuns, filter.days)}
-            picked={filter.day}
-            onPick={(day) =>
-              setFilter((f) => ({ ...f, day: day === null ? null : startOfDay(day) }))
-            }
-          />
-        </div>
+        <ActivityStrip
+          buckets={bucketByDay(windowRuns, filter.days)}
+          picked={filter.day}
+          onPick={(day) => setFilter((f) => ({ ...f, day: day === null ? null : startOfDay(day) }))}
+        />
+        <RunLead windowRuns={windowRuns} days={filter.days} />
       </div>
 
       <div className={styles.controls}>

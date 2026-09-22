@@ -85,11 +85,11 @@
   outline-offset: 1px;
 }
 
-/* 60% of the slot, capped at the 24px mark ceiling: enough body to read as a
-   bar, never so wide that the band loses its air. */
+/* 60% of the slot, capped by --bar-max: enough body to read as a bar, never so
+   wide that the band loses its air. */
 .bar {
   width: 60%;
-  max-width: var(--bar-max, 22px);
+  max-width: var(--bar-max, 28px);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -117,7 +117,7 @@
 /* A day with no runs is a gap in the row, not a 2px mark that reads as data. */
 .none {
   width: 60%;
-  max-width: var(--bar-max, 22px);
+  max-width: var(--bar-max, 28px);
   height: 2px;
   border-radius: 1px;
   background: var(--hairline);

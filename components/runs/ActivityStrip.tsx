@@ -68,13 +68,16 @@ export default function ActivityStrip({ buckets, picked, onPick, caption = 'full
         <span className={`${styles.grid} ${styles.gridTop}`} aria-hidden />
         <span className={`${styles.grid} ${styles.gridBase}`} aria-hidden />
 
-        {/* The 24px ceiling is for a dense band. With a week's worth of columns
-            the slots are enormous, and a 22px bar in a 280px slot reads as
-            lonely rather than airy - so the cap opens up when there are few. */}
+        {/* The bar is 60% of its slot; these are the ceilings that keep it thin.
+            With a week's worth of columns the slots are enormous, so the cap
+            opens up - a 28px bar in a 280px slot reads as lonely, not airy. The
+            28px was 22 while the plot shared the band with a text column; now
+            that it spans the width, 22 clamped the bars to 43% of the slot and
+            the 60% rule stopped governing. */}
         <div
           className={styles.cols}
           data-picked={picked !== null || undefined}
-          style={{ '--bar-max': buckets.length <= 10 ? '42px' : '22px' } as CSSProperties}
+          style={{ '--bar-max': buckets.length <= 10 ? '42px' : '28px' } as CSSProperties}
         >
           {buckets.map((b) => {
             const on = picked === b.day;
