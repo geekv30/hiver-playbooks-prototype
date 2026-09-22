@@ -132,8 +132,8 @@ const VARIANTS = [
   {
     id: 'v1',
     name: 'One statement, three tiers',
-    verdict: 'Recommended',
-    note: 'State, then detail, then shape, all on one content rail with the mark hanging in the gutter. The RUNS PER DAY eyebrow goes, because the sentence above it already says what is being counted; the peak stays on the gridline it labels. Band is 181px against the shipped 137, and 18 of those 44 are the peak row - say the word and it moves down beside the dates, which brings it to about 163. One thing I would tune if you pick this: the bar cap, since the slot is 1.6x wider here than in the shipped band and 22px bars read thinner than they did.',
+    verdict: 'Text-led',
+    note: 'State, then detail, then shape, all on one content rail with the mark hanging in the gutter. The RUNS PER DAY eyebrow goes, because the sentence above it already says what is being counted; the peak stays on the gridline it labels. Tallest of the three at 181px, and 18 of those are the peak row on its own line.',
     Render: V1,
   },
   {
@@ -146,8 +146,8 @@ const VARIANTS = [
   {
     id: 'v3',
     name: 'Chart-led, sentence as the footer',
-    verdict: 'Tightest',
-    note: 'The shape leads with its own caption and the sentence closes the band, 159px against the shipped 137. Tight and genuinely one object, but there is no bold state line left to scan - you have to read the sentence to learn the skill is not clean, which gives back what you kept last round.',
+    verdict: 'Live',
+    note: 'The shape leads with its own caption and the sentence closes the band. Tight and genuinely one object: one column, one left edge, and the chart owns the labels it needs. The trade taken knowingly is the headline - there is no bold state line to scan, so the mark carries the state on its own and a tick appears only for a genuinely clean window. This is what ships.',
     Render: V3,
   },
 ];
@@ -161,10 +161,11 @@ export default function RunsLeadIterations() {
         <p className={styles.eyebrow}>Runs · lead band</p>
         <h1 className={styles.h1}>Three ways to make the state and the chart one system</h1>
         <p className={styles.lede}>
-          Today the band is a sentence in a left column and a chart in a right one, each with its
-          own label, separated by a gap: two widgets sharing a border. Same window, same copy, same
-          chart in all three below, with the outcome chips underneath so each arrangement is judged
-          against its neighbor.
+          The band used to be a sentence in a left column and a chart in a right one, each with its
+          own label, separated by a gap: two widgets sharing a border. These are the three ways out
+          that were considered, on the same window, the same copy and the same chart, with the
+          outcome chips underneath so each arrangement is judged against its neighbor.{' '}
+          <strong>03 is live</strong> - the record of the other two is kept here on purpose.
         </p>
       </header>
 
@@ -178,7 +179,7 @@ export default function RunsLeadIterations() {
                 <span className={styles.num}>{String(i + 1).padStart(2, '0')}</span>
                 {name}
               </h2>
-              <span className={styles.tag} data-lead={verdict === 'Recommended' || undefined}>
+              <span className={styles.tag} data-live={verdict === 'Live' || undefined}>
                 {verdict}
               </span>
             </div>
