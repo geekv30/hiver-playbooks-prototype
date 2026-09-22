@@ -11,11 +11,13 @@
   border-top: 1px solid var(--hairline-soft);
 }
 
-/* The lead band: the verdict, with the shape of the period beside it. Both
-   answer "how is this skill doing", so they belong on the same row. */
+/* The lead band: the state line, with the shape of the period beside it. Both
+   answer "how is this skill doing", so they belong on the same row - and both
+   centre on it, so a one-line state cannot leave a void under itself while the
+   chart sets the height. */
 .lead {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 28px;
   border-bottom: 1px solid var(--hairline-soft);
 }
@@ -30,7 +32,6 @@
   flex: 1 1 auto;
   min-width: 0;
   padding: 18px 24px 18px 0;
-  align-self: center;
 }
 
 /* Controls: outcome on the left (the primary way through), search and range on

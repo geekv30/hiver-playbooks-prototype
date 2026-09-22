@@ -6,7 +6,7 @@ import Input from '@/components/atoms/Input';
 import SegmentedControl from '@/components/atoms/SegmentedControl';
 import Dropdown from '@/components/atoms/Dropdown';
 import { RUN_SOURCES, type RevisionMark, type SkillRun } from '@/data/runFixtures';
-import RunVerdict from './RunVerdict';
+import RunLead from './RunLead';
 import RunStateFilter from './RunStateFilter';
 import ActivityStrip from './ActivityStrip';
 import RunList from './RunList';
@@ -29,8 +29,6 @@ interface Props {
   allSkills?: boolean;
   /** Pre-select a skill (arriving from that skill's Runs cell on the list). */
   initialSkillId?: string | null;
-  /** Render the phase-1 fallback verdict (counts only). */
-  reduced?: boolean;
   onOpenConversation?: (run: SkillRun) => void;
 }
 
@@ -44,10 +42,10 @@ const RANGES = [
  * RunsView - a skill's execution history.
  *
  * Ordered by the question people arrive with, not by what the data contains:
- * first whether the skill is behaving and what is blocking on a person, then
- * the outcome filters, then the log. The list and the detail are the answer to
- * "show me that one", which is the third reason someone comes here, not the
- * first - so they sit below the fold of the verdict, not above it.
+ * first how the skill is doing over the window, then the outcome filters, then
+ * the log. The list and the detail are the answer to "show me that one", which
+ * is the third reason someone comes here, not the first - so they sit below the
+ * lead band, not above it.
  *
  * Everything is read-only. Every route out leads to the conversation.
  */
@@ -56,7 +54,6 @@ export default function RunsView({
   marks = [],
   allSkills,
   initialSkillId = null,
-  reduced,
   onOpenConversation,
 }: Props) {
   const [filter, setFilter] = useState<RunFilter>({ ...DEFAULT_FILTER, skillId: initialSkillId });
@@ -65,8 +62,8 @@ export default function RunsView({
   // server has no honest answer here. See useIsClient.
   const isClient = useIsClient();
 
-  // The window drives the verdict and the chart; the finer filters narrow only
-  // the list, so the verdict never moves under the control being used to read it.
+  // The window drives the lead band and the chart; the finer filters narrow
+  // only the list, so the band never moves under the control used to read it.
   const windowRuns = useMemo(
     () => applyFilter(runs, { ...DEFAULT_FILTER, days: filter.days, skillId: filter.skillId }),
     [runs, filter.days, filter.skillId],
@@ -95,12 +92,7 @@ export default function RunsView({
     <div className={styles.view}>
       <div className={styles.lead}>
         <div className={styles.leadText}>
-          <RunVerdict
-            windowRuns={windowRuns}
-            days={filter.days}
-            reduced={reduced}
-            onFocus={(patch) => setFilter((f) => ({ ...f, day: null, query: '', ...patch }))}
-          />
+          <RunLead windowRuns={windowRuns} days={filter.days} />
         </div>
         <div className={styles.chart}>
           <ActivityStrip
@@ -153,7 +145,7 @@ export default function RunsView({
         </span>
       </div>
 
-      {/* Nothing in the window at all: the verdict has already said so, and
+      {/* Nothing in the window at all: the lead band has already said so, and
           repeating it under a set of zeroed filters would be the page telling
           you the same thing twice. The controls stay so the range can widen. */}
       {windowRuns.length === 0 ? null : listRuns.length === 0 ? (

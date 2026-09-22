@@ -23,7 +23,6 @@ export default function AllRunsPage() {
   // URL, so back/forward and a shared link all land in the same place.
   const params = useSearchParams();
   const skillId = params.get('skill');
-  const reduced = params.get('basic') === '1';
   const marks = useMemo(() => {
     const src = skillId ? sourceFor(skillId) : undefined;
     return src ? revisionMarks(src) : [];
@@ -53,7 +52,7 @@ export default function AllRunsPage() {
             </div>
           </header>
           <div className={styles.body}>
-            <RunsView key={skillId ?? 'all'} runs={runs} marks={marks} allSkills initialSkillId={skillId} reduced={reduced} />
+            <RunsView key={skillId ?? 'all'} runs={runs} marks={marks} allSkills initialSkillId={skillId} />
           </div>
         </main>
       </div>
