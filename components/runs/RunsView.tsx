@@ -6,7 +6,6 @@ import Input from '@/components/atoms/Input';
 import SegmentedControl from '@/components/atoms/SegmentedControl';
 import Dropdown from '@/components/atoms/Dropdown';
 import { RUN_SOURCES, type RevisionMark, type SkillRun } from '@/data/runFixtures';
-import RunLead from './RunLead';
 import RunStateFilter from './RunStateFilter';
 import ActivityStrip from './ActivityStrip';
 import RunList from './RunList';
@@ -42,10 +41,12 @@ const RANGES = [
  * RunsView - a skill's execution history.
  *
  * Ordered by the question people arrive with, not by what the data contains:
- * first how the skill is doing over the window - the shape of the period, then
- * one line on what it amounts to - then the outcome filters, then the log. The
+ * first the shape of the period, then the outcome filters, then the log. The
  * list and the detail are the answer to "show me that one", which is the third
  * reason someone comes here, not the first, so they sit below the lead band.
+ *
+ * The band carries no sentence: landing on a screen that states the period in
+ * words, again in counts, and again as a shape was three readings of one fact.
  *
  * The period control sits with the chart in the lead band, not down here with
  * the outcome filters: it is the one control that changes what the plot draws.
@@ -110,7 +111,6 @@ export default function RunsView({
             />
           }
         />
-        <RunLead windowRuns={windowRuns} days={filter.days} />
       </div>
 
       <div className={styles.controls}>
@@ -144,10 +144,11 @@ export default function RunsView({
         </div>
       </div>
 
-      {/* Nothing in the window at all: the lead band has already said so, and
-          repeating it under a set of zeroed filters would be the page telling
-          you the same thing twice. The controls stay so the range can widen. */}
-      {windowRuns.length === 0 ? null : listRuns.length === 0 ? (
+      {/* Nothing in the window, or nothing through the filters: either way the
+          list says so in its own words. The band used to carry that sentence
+          and no longer does, so this is the only place a person is told why the
+          screen is empty. The controls stay so the range can widen. */}
+      {listRuns.length === 0 ? (
         <div className={styles.emptySplit}>
           <RunList
             runs={listRuns}

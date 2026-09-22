@@ -59,6 +59,10 @@ const STACK: typeof RUN_STATES = ['failed', 'awaiting', 'declined', 'completed']
 export default function ActivityStrip({ buckets, picked, onPick, caption = 'full', range }: Props) {
   const [hover, setHover] = useState<number | null>(null);
   const { peak, day: busiestDay } = peakOf(buckets);
+  // peakOf floors at 1 so the bars always have a scale to divide by, but an
+  // empty window has no peak to name - "peak 1" would claim a run that never
+  // happened.
+  const hasRuns = buckets.some((b) => b.counts.total > 0);
 
   return (
     <div className={styles.wrap}>
@@ -67,7 +71,7 @@ export default function ActivityStrip({ buckets, picked, onPick, caption = 'full
           {caption === 'full' && <span className={styles.captionLabel}>Runs per day</span>}
           {/* The one direct label the chart carries: without a peak value there
               is no scale to read the bars against, and every day looks alike. */}
-          {caption !== 'none' && (
+          {caption !== 'none' && hasRuns && (
             <span className={styles.peak}>
               peak {peak} on {formatDayShort(busiestDay)}
             </span>

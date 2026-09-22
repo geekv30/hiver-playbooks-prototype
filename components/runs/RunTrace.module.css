@@ -110,7 +110,7 @@
 }
 
 .content {
-  padding: 2px 0 12px;
+  padding: 2px 0 18px;
   min-width: 0;
 }
 .step:last-child .content { padding-bottom: 0; }
@@ -126,7 +126,7 @@
 
 .box {
   margin-top: 4px;
-  padding: 7px 9px;
+  padding: 9px 11px;
   border-radius: var(--r-sm);
   background: var(--surface-soft);
   border: 1px solid var(--hairline-soft);
@@ -138,7 +138,7 @@
 }
 .errorBox {
   margin-top: 4px;
-  padding: 7px 9px;
+  padding: 9px 11px;
   border-radius: var(--r-sm);
   background: var(--run-failed-bg);
   font-size: var(--fs-caption);

@@ -13,11 +13,15 @@
   min-width: 0;
 }
 
+/* margin-bottom, not the wrap's gap: the axis labels the baseline and belongs
+   tight under the plot, while the caption carries a 36px control and needs air
+   between it and the bars. */
 .caption {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  margin-bottom: 6px;
   font-size: var(--fs-micro);
   line-height: var(--lh-micro);
   color: var(--muted-soft);

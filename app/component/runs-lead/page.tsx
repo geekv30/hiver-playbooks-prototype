@@ -13,7 +13,7 @@ import {
   bucketByDay,
   countBy,
   formatDayShort,
-  leadState,
+  type RunCounts,
 } from '@/components/runs/runsModel';
 import styles from './page.module.css';
 
@@ -26,6 +26,39 @@ import styles from './page.module.css';
  * Everything here renders the REAL components (ActivityStrip, RunStateFilter)
  * and the REAL copy (runsModel.leadState) - only the arrangement differs, so
  * the comparison cannot be a comparison of two different sentences. */
+
+/* The band's copy, kept here rather than in runsModel: the product's band is
+   the chart alone now, so these sentences exist only to make this comparison
+   read the way it read on the day the arrangement was chosen. */
+
+function summaryLine(counts: RunCounts, days: number): string {
+  if (counts.total === 0) return `No runs in the last ${days} days.`;
+  const ran = `${counts.completed} of ${counts.total} runs completed cleanly over the last ${days} days.`;
+  const rest: string[] = [];
+  if (counts.failed > 0) rest.push(`${counts.failed} failed`);
+  if (counts.awaiting > 0) {
+    rest.push(
+      `${counts.awaiting} ${counts.awaiting === 1 ? 'reply is' : 'replies are'} waiting for approval`,
+    );
+  }
+  return rest.length === 0 ? ran : `${ran} ${rest.join(', and ')}.`;
+}
+
+function leadState(counts: RunCounts, days: number): { title: string; body: string } {
+  if (counts.total === 0) {
+    return {
+      title: 'No runs yet',
+      body: 'Runs appear here as soon as this skill fires on an email in one of its mailboxes.',
+    };
+  }
+  if (counts.failed === 0 && counts.awaiting === 0) {
+    return {
+      title: 'Running normally',
+      body: `${summaryLine(counts, days)} Nothing needs your attention.`,
+    };
+  }
+  return { title: 'Not everything ran cleanly', body: summaryLine(counts, days) };
+}
 
 const DAYS = 30;
 
@@ -146,8 +179,8 @@ const VARIANTS = [
   {
     id: 'v3',
     name: 'Chart-led, sentence as the footer',
-    verdict: 'Live',
-    note: 'The shape leads with its own caption and the sentence closes the band. Tight and genuinely one object: one column, one left edge, and the chart owns the labels it needs. The trade taken knowingly is the headline - there is no bold state line to scan, so the mark carries the state on its own and a tick appears only for a genuinely clean window. This is what ships.',
+    verdict: 'Superseded',
+    note: 'The shape leads with its own caption and the sentence closes the band. Tight and genuinely one object: one column, one left edge, and the chart owns the labels it needs. The trade taken knowingly is the headline - there is no bold state line to scan, so the mark carries the state on its own and a tick appears only for a genuinely clean window. It shipped, and then the sentence came out of it entirely: the band is the chart alone now, because stating the period in words, again in counts and again as a shape was one fact read three times.',
     Render: V3,
   },
 ];
@@ -165,7 +198,8 @@ export default function RunsLeadIterations() {
           own label, separated by a gap: two widgets sharing a border. These are the three ways out
           that were considered, on the same window, the same copy and the same chart, with the
           outcome chips underneath so each arrangement is judged against its neighbor.{' '}
-          <strong>03 is live</strong> - the record of the other two is kept here on purpose.
+          <strong>03 shipped</strong>, and its sentence has since come out too - the band is the
+          chart alone. The record is kept on purpose.
         </p>
       </header>
 
@@ -179,7 +213,7 @@ export default function RunsLeadIterations() {
                 <span className={styles.num}>{String(i + 1).padStart(2, '0')}</span>
                 {name}
               </h2>
-              <span className={styles.tag} data-live={verdict === 'Live' || undefined}>
+              <span className={styles.tag} data-live={verdict === 'Superseded' || undefined}>
                 {verdict}
               </span>
             </div>

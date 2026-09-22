@@ -11,14 +11,13 @@
   border-top: 1px solid var(--hairline-soft);
 }
 
-/* The lead band: the shape of the period, then one line on what it amounts to.
-   Stacked, not side by side - a sentence in one column facing a chart in the
-   other read as two widgets sharing a border, which is what they were. */
+/* The lead band: the shape of the period, and nothing else. The sentence that
+   used to close it said in words what the chips say in counts and the chart
+   says in shape, so landing here meant reading one fact three times. */
 .lead {
   display: flex;
   flex-direction: column;
-  gap: 13px;
-  padding: 14px 24px 16px;
+  padding: 22px 24px 24px;
   border-bottom: 1px solid var(--hairline-soft);
 }
 
@@ -29,7 +28,7 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 12px 24px;
+  padding: 16px 24px;
   border-bottom: 1px solid var(--hairline-soft);
   flex-wrap: wrap;
 }
@@ -50,7 +49,7 @@
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
-  padding: 0 24px;
+  padding: 10px 24px 0;
 }
 
 .listCol {
@@ -69,7 +68,7 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 0 24px;
+  padding: 10px 24px 0;
 }
 
 .pending {
