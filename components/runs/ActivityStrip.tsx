@@ -12,6 +12,21 @@ interface Props {
   picked: number | null;
   /** Clicking a column filters to that day; clicking it again clears. */
   onPick: (day: number | null) => void;
+  /**
+   * How much of the caption row the strip carries.
+   *
+   * 'peak' when the surface above already says what is counted (the band's
+   * sentence does), leaving the one label the plot cannot do without - the
+   * scale. 'none' when that surface carries the peak too.
+   */
+  caption?: 'full' | 'peak' | 'none';
+}
+
+/** The tallest day in the window - the scale every bar is read against. */
+export function peakOf(buckets: DayBucket[]): { peak: number; day: number } {
+  const peak = Math.max(1, ...buckets.map((b) => b.counts.total));
+  const busiest = buckets.reduce((a, b) => (b.counts.total > a.counts.total ? b : a), buckets[0]!);
+  return { peak, day: busiest.day };
 }
 
 // Failures ride the top of every stack, where the eye lands first; completed
@@ -32,21 +47,22 @@ const STACK: typeof RUN_STATES = ['failed', 'awaiting', 'declined', 'completed']
  * that they carry on the pills and the filter chips. They never stand for
  * "series 1..4".
  */
-export default function ActivityStrip({ buckets, picked, onPick }: Props) {
+export default function ActivityStrip({ buckets, picked, onPick, caption = 'full' }: Props) {
   const [hover, setHover] = useState<number | null>(null);
-  const peak = Math.max(1, ...buckets.map((b) => b.counts.total));
-  const busiest = buckets.reduce((a, b) => (b.counts.total > a.counts.total ? b : a), buckets[0]!);
+  const { peak, day: busiestDay } = peakOf(buckets);
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.caption}>
-        <span className={styles.captionLabel}>Runs per day</span>
-        {/* The one direct label the chart carries: without a peak value there is
-            no scale to read the bars against, and every day looks alike. */}
-        <span className={styles.peak}>
-          peak {peak} on {formatDayShort(busiest.day)}
-        </span>
-      </div>
+      {caption !== 'none' && (
+        <div className={styles.caption}>
+          {caption === 'full' && <span className={styles.captionLabel}>Runs per day</span>}
+          {/* The one direct label the chart carries: without a peak value there
+              is no scale to read the bars against, and every day looks alike. */}
+          <span className={styles.peak}>
+            peak {peak} on {formatDayShort(busiestDay)}
+          </span>
+        </div>
+      )}
 
       <div className={styles.plot}>
         <span className={`${styles.grid} ${styles.gridTop}`} aria-hidden />
