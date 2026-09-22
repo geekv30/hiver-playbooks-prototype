@@ -1,43 +1,24 @@
-/* The lead band: one line on the window, sitting beside the activity chart.
-   It reports; it does not rank, alert, or ask to be clicked. */
-.lead {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 16px 24px;
-}
-
-/* One calm line, the same shape in every state: a mark, a title, a sentence. */
-.state {
+/* The band's closing line. The chart above says what the period looked like;
+   this says what it amounts to. It reports - it does not rank, alert, or ask to
+   be clicked. */
+.summary {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-}
-.stateIcon {
-  width: 18px;
-  height: 18px;
-  flex: none;
-  color: var(--run-completed);
-  margin-top: 1px;
-}
-.state[data-quiet] .stateIcon { color: var(--muted-soft); }
-.stateText {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-.stateTitle {
-  margin: 0;
-  font-size: var(--fs-h5);
-  line-height: 1.35;
-  letter-spacing: var(--ls-h5);
-  font-weight: 600;
-  color: var(--ink);
-}
-.stateBody {
   margin: 0;
   font-size: var(--fs-small);
   line-height: 1.45;
   letter-spacing: var(--ls-small);
   color: var(--muted);
 }
+
+/* With no headline in the band, the mark is the whole state signal: the tick is
+   earned only by a clean window. */
+.mark {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  margin-top: 1px;
+  color: var(--run-completed);
+}
+.summary[data-quiet] .mark { color: var(--muted-soft); }

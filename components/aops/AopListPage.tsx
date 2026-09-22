@@ -15,7 +15,6 @@ import {
   RiSettings3Line,
   RiArrowDownSLine,
   RiAddLine,
-  RiPulseLine,
 } from 'react-icons/ri';
 import GmailBar from '@/components/flow01/GmailBar';
 import OutcomeBar from '@/components/runs/OutcomeBar';
@@ -176,13 +175,6 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
                 </p>
               </div>
               <div className={styles.headerActions}>
-                {/* The cross-skill read. Sits beside New skill because it is the
-                    other thing you come to this page to do: make one, or check
-                    on the ones you already have. */}
-                <Link href="/aops/runs" className={styles.allRunsBtn}>
-                  <RiPulseLine aria-hidden />
-                  All skill runs
-                </Link>
                 <Link href="/aops/new" className={styles.newBtn}>
                   <RiAddLine aria-hidden />
                   New skill

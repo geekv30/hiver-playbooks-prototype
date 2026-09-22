@@ -234,6 +234,39 @@ export function formatDateTime(t: number): string {
 // the outcome filters below carry the counts, and the run that matters is found
 // by filtering to it, not by being named up here.
 
+export interface LeadState {
+  kind: 'idle' | 'clean' | 'unclean';
+  title: string;
+  body: string;
+}
+
+/**
+ * The band's copy, in one place.
+ *
+ * The renderer and the design gallery read the same strings from here, so a
+ * comparison of arrangements can never be a comparison of two different
+ * sentences.
+ */
+export function leadState(counts: RunCounts, days: number): LeadState {
+  if (counts.total === 0) {
+    return {
+      kind: 'idle',
+      title: 'No runs yet',
+      body: 'Runs appear here as soon as this skill fires on an email in one of its mailboxes.',
+    };
+  }
+  if (counts.failed === 0 && counts.awaiting === 0) {
+    return {
+      kind: 'clean',
+      title: 'Running normally',
+      body: `${summaryLine(counts, days)} Nothing needs your attention.`,
+    };
+  }
+  // A green tick over "Running normally" on a window with failures in it would
+  // claim something the skill has not done.
+  return { kind: 'unclean', title: 'Not everything ran cleanly', body: summaryLine(counts, days) };
+}
+
 /** The one-line summary of the window - what ran, and what did not land cleanly. */
 export function summaryLine(counts: RunCounts, days: number): string {
   if (counts.total === 0) return `No runs in the last ${days} days.`;

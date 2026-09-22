@@ -263,37 +263,6 @@
   width: 16px;
   height: 16px;
 }
-/* Secondary to New skill: same shape, no fill - the cross-skill read is a place
-   you go, not the primary thing this page is for. */
-.allRunsBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: 1px solid var(--hairline);
-  background: var(--card);
-  font-size: var(--fs-small);
-  font-weight: 500;
-  line-height: 19px;
-  letter-spacing: -0.065px;
-  color: var(--ink);
-  text-decoration: none;
-  transition:
-    background var(--d-hover) var(--ease-snap),
-    border-color var(--d-hover) var(--ease-snap);
-}
-.allRunsBtn:hover {
-  background: var(--surface-soft);
-  border-color: var(--hairline-strong);
-}
-.allRunsBtn svg {
-  width: 16px;
-  height: 16px;
-  color: var(--muted);
-}
-.allRunsBtn:hover svg { color: var(--ink); }
-
 .countLine {
   display: flex;
   align-items: center;
