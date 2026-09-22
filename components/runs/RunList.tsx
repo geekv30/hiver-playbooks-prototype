@@ -4,12 +4,7 @@ import { RiGitCommitLine } from 'react-icons/ri';
 import type { RevisionMark, SkillRun } from '@/data/runFixtures';
 import { mailboxName } from '@/data/mailboxes';
 import { RunStateDot } from './RunStatePill';
-import {
-  formatDayLabel,
-  formatDuration,
-  formatTime,
-  groupByDay,
-} from './runsModel';
+import { formatDayLabel, formatTime, groupByDay } from './runsModel';
 import styles from './RunList.module.css';
 
 interface Props {
@@ -26,10 +21,10 @@ interface Props {
 /**
  * RunList - every run in the window, grouped by day, newest first.
  *
- * Two lines per run: what it ran on, and the facts that place it. What the
- * skill DID stays in the detail - repeating it as chips on every row made the
- * list harder to scan, not easier, and the outcome dot already carries the one
- * thing worth seeing at this distance.
+ * Two lines per run: what it ran on, and where it ran. What the skill DID, who
+ * wrote in and how long it took all stay in the detail - repeating them on
+ * every row made the list harder to scan, not easier, and the outcome dot
+ * already carries the one thing worth seeing at this distance.
  *
  * Skill edits appear in the timeline where they happened, so a change in
  * behavior has a visible cause rather than something a person has to remember.
@@ -103,19 +98,10 @@ export default function RunList({
                 <span className={styles.time}>{formatTime(run.startedAt)}</span>
 
                 <span className={styles.meta}>
-                  <span className={styles.sender}>{run.sender}</span>
-                  <span className={styles.sep} aria-hidden>
-                    &middot;
-                  </span>
-                  <span className={styles.dur}>{formatDuration(run.durationMs)}</span>
-                  <span className={styles.sep} aria-hidden>
-                    &middot;
-                  </span>
                   <span className={styles.skill}>
                     {showSkill ? run.skillName : mailboxName(run.mailboxId)}
                   </span>
                 </span>
-
               </button>
             );
           })}

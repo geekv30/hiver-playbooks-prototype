@@ -28,7 +28,7 @@ import ActionHint from './ActionHint';
 import EnableModal from './enable/EnableModal';
 import { deriveReadinessInputs, inviteKey } from './enable/readiness';
 import { useConnectorHealth, setConnectorHealth } from './connectorHealth';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEvalState } from '@/components/simulate/useEvalState';
 import { useTriggerScan } from '@/components/simulate/useTriggerScan';
 import SimulatePanel from '@/components/simulate/SimulatePanel';
@@ -305,11 +305,7 @@ export default function EditorCanvas({
   // editor's, so the row goes where it says it goes, and back/forward and
   // shared links work without any of this bookkeeping.
   const pathname = usePathname();
-  const search = useSearchParams();
   const runsOpen = runsMode;
-  // ?basic=1 renders the phase-1 fallback verdict, for reviewing what the band
-  // looks like without cause grouping.
-  const reducedRuns = search.get('basic') === '1';
   const toggleRuns = useCallback(() => {
     const base = pathname.replace(/\/runs$/, '');
     router.push(runsMode ? base : `${base}/runs`, { scroll: false });
@@ -1261,7 +1257,6 @@ export default function EditorCanvas({
           <RunsView
             runs={runs}
             marks={runMarks}
-            reduced={reducedRuns}
             onOpenConversation={() => showHint('Opening the conversation is coming soon.')}
           />
         ) : (

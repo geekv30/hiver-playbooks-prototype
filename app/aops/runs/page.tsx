@@ -9,8 +9,8 @@ export const metadata: Metadata = {
 
 // Every skill's execution history in one place - the ops view, for someone who
 // thinks in terms of the inbox rather than skill by skill.
-// Reads ?skill= and ?basic= from the URL, so it needs a Suspense boundary to
-// stay statically prerendered.
+// Reads ?skill= from the URL, so it needs a Suspense boundary to stay
+// statically prerendered.
 export default function Page() {
   return (
     <Suspense fallback={null}>
