@@ -28,7 +28,12 @@
   text-transform: uppercase;
   color: var(--muted);
 }
-.peak { font-variant-numeric: tabular-nums; }
+/* margin-left keeps it at the right edge when it is the caption's only
+   child (the surface above already says what is being counted). */
+.peak {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
 
 .plot {
   position: relative;
