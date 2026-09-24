@@ -1,4 +1,7 @@
-import { RiBrain2Line } from 'react-icons/ri';
+'use client';
+
+import { useLayoutEffect, useRef, useState } from 'react';
+import { RiBrain2Line, RiInformationLine } from 'react-icons/ri';
 import { ACTION_ICON } from '@/components/icons/ui/action-icon-map';
 import { HubSpotIcon, ClickUpIcon } from '@/components/icons/connectors';
 import type { RunStep, SkillRun } from '@/data/runFixtures';
@@ -25,6 +28,32 @@ function stepName(step: RunStep): string {
 
 
 
+/** A payload clamped to two lines, with "Show more" only when it actually
+ *  overflows - a long tag list or a drafted reply stays one glance tall until
+ *  someone asks for the rest. */
+function Clamp({ children, className }: { children: string; className?: string }) {
+  const ref = useRef<HTMLParagraphElement>(null);
+  const [open, setOpen] = useState(false);
+  const [over, setOver] = useState(false);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || open) return;
+    setOver(el.scrollHeight > el.clientHeight + 1);
+  }, [children, open]);
+  return (
+    <div className={className}>
+      <p ref={ref} className={styles.clampText} data-open={open || undefined}>
+        {children}
+      </p>
+      {(over || open) && (
+        <button type="button" className={styles.more} onClick={() => setOpen((o) => !o)}>
+          {open ? 'Show less' : 'Show more'}
+        </button>
+      )}
+    </div>
+  );
+}
+
 /**
  * RunTrace - the ordered steps this run walked, with what each one produced.
  *
@@ -49,7 +78,12 @@ export default function RunTrace({ run }: { run: SkillRun }) {
       {ran.map((step, i) => {
         const skipped = false;
         return (
-          <div key={step.id} className={styles.step} data-status={step.status}>
+          <div
+            key={step.id}
+            className={styles.step}
+            data-status={step.status}
+            data-kind={step.kind}
+          >
             <div className={styles.row}>
               <div className={styles.rail}>
                 <span className={styles.dot} aria-hidden />
@@ -86,7 +120,7 @@ export default function RunTrace({ run }: { run: SkillRun }) {
                     )}
 
                     {step.kind === 'action' && step.status === 'done' && step.output && (
-                      <div className={styles.box}>{step.output}</div>
+                      <Clamp className={styles.box}>{step.output}</Clamp>
                     )}
 
                     {step.status === 'failed' && (
@@ -97,19 +131,24 @@ export default function RunTrace({ run }: { run: SkillRun }) {
                     )}
 
                     {step.kind === 'reply' && step.status === 'done' && (
-                      <>
+                      <div className={styles.reply}>
+                        {/* Who holds it is in the outcome card above; here the
+                            step only says what state the draft is in. Acting on
+                            it happens on the conversation. */}
                         {run.state === 'awaiting' && (
-                          <p className={styles.approvalNote}>
-                            Held for approval by {run.assignee ?? 'a teammate'}
-                          </p>
+                          <span className={styles.chip} data-tone="awaiting">
+                            <RiInformationLine aria-hidden />
+                            Approval required
+                          </span>
                         )}
                         {run.state === 'declined' && (
-                          <p className={styles.approvalNote}>
-                            Declined by {run.assignee ?? 'a teammate'} - this reply never sent
-                          </p>
+                          <span className={styles.chip} data-tone="declined">
+                            <RiInformationLine aria-hidden />
+                            Declined - this reply never sent
+                          </span>
                         )}
-                        <div className={styles.box}>{step.draft}</div>
-                      </>
+                        {step.draft && <Clamp className={styles.box}>{step.draft}</Clamp>}
+                      </div>
                     )}
                   </>
                 )}

@@ -97,10 +97,17 @@ export default function RunList({
                 <span className={styles.subject}>{run.subject}</span>
                 <span className={styles.time}>{formatTime(run.startedAt)}</span>
 
+                {/* Across all skills the row names its skill too - with the
+                    facts rail gone, the row is the only place a run's mailbox
+                    is written, so it never gives that up. */}
                 <span className={styles.meta}>
-                  <span className={styles.skill}>
-                    {showSkill ? run.skillName : mailboxName(run.mailboxId)}
-                  </span>
+                  {showSkill && (
+                    <>
+                      <span className={styles.skill}>{run.skillName}</span>
+                      <span aria-hidden>&middot;</span>
+                    </>
+                  )}
+                  <span className={styles.skill}>{mailboxName(run.mailboxId)}</span>
                 </span>
               </button>
             );

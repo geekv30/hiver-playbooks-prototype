@@ -71,3 +71,21 @@
     transition: none;
   }
 }
+
+/* sm - the Tab Bar (Figma 3588:20389): a 32px track at radius 6 with 4px
+   chips, sized to its labels (min 50 each) rather than stretching to fill. */
+.track[data-size='sm'] {
+  width: auto;
+  border-radius: 6px;
+  background: var(--seg-sm-track, #f5f5f5);
+}
+.track[data-size='sm'] .chip {
+  border-radius: 4px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.06);
+}
+.track[data-size='sm'] .seg {
+  flex: 1 0 50px;
+  height: 24px;
+  padding: 0 12px;
+  border-radius: 4px;
+}

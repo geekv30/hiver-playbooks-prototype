@@ -1,74 +1,92 @@
-/* Runs - a mode of the skill page. Flush to the stage, not a rounded card:
-   the editor is a card because a companion panel sits beside it, and a surface
-   with no neighbor floating on the canvas reads as an island. */
+/* Runs - a mode of the skill page, drawn as the same islands the editor sits
+   in (Figma 3588:21139): white cards on the stage, one radius, one border, one
+   lift, one gap, one outer width. Switching between editing a skill and
+   reading its runs changes what is in the cards, never the cards. */
 .view {
   flex: 1 1 auto;
   min-height: 0;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  background: var(--card);
-  border-top: 1px solid var(--hairline-soft);
+  align-items: center;
+  /* 16, not the editor's 14: it must at least match the top inset, or the
+     chart island's bottom edge stays in view once the page scrolls to the log. */
+  gap: 16px;
+  padding: 16px 24px; /* the editor stage's inset */
+  overflow-y: auto;
+  /* The log island is sized off this box (100cqh) - a query container
+     measures the real scroll viewport, where 100vh would need the app's
+     zoom divided back out and still include the bars above. */
+  container-type: size;
 }
 
-/* The lead band: the shape of the period, and nothing else. The sentence that
-   used to close it said in words what the chips say in counts and the chart
-   says in shape, so landing here meant reading one fact three times. */
-.lead {
+/* One island, shared by both cards. The outer width is the editor group's -
+   companion panel + gap + canvas window - so the edges line up exactly when
+   switching between the two modes. */
+.island {
+  flex: none;
+  width: 100%;
+  max-width: calc(432px + 14px + 888px);
+  background: var(--card);
+  border: 1px solid var(--hairline-soft);
+  border-radius: 14px;
+  box-shadow:
+    0 1px 2px rgba(52, 60, 69, 0.04),
+    0 4px 14px rgba(52, 60, 69, 0.05);
+}
+
+.chartIsland {
+  padding: 32px 34px 24px;
+}
+
+/* The log island: exactly one stage tall, so once the chart scrolls away the
+   list and the detail fill the view and scroll on their own. The floor keeps
+   a short window usable. */
+.logIsland {
+  height: 100cqh;
+  min-height: 560px;
   display: flex;
   flex-direction: column;
-  padding: 22px 24px 24px;
-  border-bottom: 1px solid var(--hairline-soft);
+  gap: 28px;
+  padding: 32px 34px 0;
+  overflow: hidden;
 }
 
-/* Controls: outcome on the left (the primary way through), search on the right.
-   One row, one baseline. The period control is not here - it sits with the plot
-   it changes, in the band above. */
+/* Filters: the mailbox pick, then the outcomes. One row, one baseline, one
+   pill shape for all of them. */
 .controls {
+  flex: none;
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--hairline-soft);
+  gap: 8px;
   flex-wrap: wrap;
 }
-.spacer { flex: 1 1 auto; min-width: 12px; }
 
-/* The search holds the right end of the row - the end the period control used
-   to hold - so the row still reads left group against right, and it keeps the
-   Input's own shape rather than the chips' pill. */
-.search {
-  flex: 0 1 320px;
-  min-width: 200px;
-}
-
-/* The page gutter. One inset for the whole surface: the bands above already
-   sit at 24, and the list running flush to the window edge while they did not
-   was the frame contradicting itself. Flush is not the same as no margin. */
+/* The log and the run, split by a hairline under the filters and one between
+   them - two rules, not two boxes. */
 .split {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
-  padding: 10px 24px 0;
+  border-top: 1px solid var(--log-rule, #eceff6);
 }
 
 .listCol {
-  flex: 0 0 366px;
+  flex: 0 0 395px;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid var(--hairline-soft);
-  background: var(--card);
+  border-right: 1px solid var(--log-rule, #eceff6);
 }
 
-/* The no-results state spans the whole surface rather than sitting in a column
+/* The no-results state spans the whole island rather than sitting in a column
    beside an equally empty pane. */
 .emptySplit {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 10px 24px 0;
+  border-top: 1px solid var(--log-rule, #eceff6);
 }
 
 .pending {
@@ -77,10 +95,5 @@
 }
 
 @media (max-width: 1240px) {
-  .listCol { flex-basis: 320px; }
-  .chart { flex-basis: 380px; }
-}
-@media (max-width: 1040px) {
-  .lead { flex-direction: column; gap: 0; }
-  .chart { width: 100%; padding: 0 24px 16px; flex-basis: auto; }
+  .listCol { flex-basis: 340px; }
 }

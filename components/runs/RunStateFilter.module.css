@@ -1,10 +1,11 @@
-/* State filter. Previously these were four stat blocks that happened to be
-   clickable - ragged, and giving no sign they were the main control. Now they
-   are chips: one baseline, a border, a real pressed state. */
+/* State filter - the filter row's pills (Figma 3593:22315). One shape for
+   every filter on the row, the mailbox picker included: a 32px pill, the count
+   joined to its label by a middle dot. Selection fills the pill; the outcome's
+   color lives on the dot, so the two never compete for one surface. */
 .group {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
   min-width: 0;
 }
@@ -12,16 +13,18 @@
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  height: 30px;
-  padding: 0 11px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-md);
-  background: var(--card);
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--pill-border, #d4d4d4);
+  border-radius: var(--r-pill);
+  background: var(--pill-bg, #fafafa);
   font: inherit;
   font-size: var(--fs-small);
+  line-height: 19px;
+  font-weight: 500;
   letter-spacing: var(--ls-small);
-  color: var(--body);
+  color: var(--pill-ink, #171717);
   cursor: pointer;
   white-space: nowrap;
   transition:
@@ -32,48 +35,61 @@
 .chip:hover {
   background: var(--surface-soft);
   border-color: var(--hairline-strong);
-  color: var(--ink);
 }
 .chip[data-on] {
-  background: var(--ink);
-  border-color: var(--ink);
-  color: var(--card);
+  background: var(--pill-on, #262626);
+  border-color: var(--pill-on, #262626);
+  color: #fff;
 }
 .chip[data-on]:hover { background: var(--ink-soft); border-color: var(--ink-soft); }
 .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
-/* The state's color lives on the dot, so the chip itself can carry selection
-   without two color systems fighting over the same element. */
-.dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
+/* 16px slot, 6px mark - the icon footprint the pill was drawn with. */
+.dotBox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
   flex: none;
 }
-.dot[data-state='completed'] { background: var(--run-completed); }
-.dot[data-state='awaiting'] { background: var(--run-awaiting); }
-.dot[data-state='failed'] { background: var(--run-failed); }
-.dot[data-state='declined'] { background: var(--run-declined); }
-
-.n {
-  font-variant-numeric: tabular-nums;
-  font-weight: 500;
-  color: var(--ink);
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
 }
-.chip[data-on] .n { color: var(--card); }
-.chip:hover .n { color: var(--ink); }
+.dot[data-state='completed'] { background: var(--run-mark-completed); }
+.dot[data-state='awaiting'] { background: var(--run-mark-awaiting); }
+.dot[data-state='failed'] { background: var(--run-mark-failed); }
+.dot[data-state='declined'] { background: var(--run-mark-declined); }
+.chip[data-on] .dot { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.9); }
 
-/* A state with no runs is still shown - "0 failed" is the reassurance - but it
-   does not invite a click that would empty the list. */
+/* The label is the quiet half and the count the loud one (Figma 3593:22278):
+   a person scans this row for numbers, and the words only say which is which.
+   The label takes the soft gray of the period tabs' inactive labels. */
+.label {
+  font-weight: 400;
+  color: var(--pill-label, #737373);
+}
+.n {
+  font-weight: 600;
+  color: var(--pill-ink, #171717);
+  font-variant-numeric: tabular-nums;
+}
+.chip[data-on] .label { color: rgba(255, 255, 255, 0.72); }
+.chip[data-on] .n { color: #fff; }
+
+/* A state with no runs is still shown - "Failed · 0" is the reassurance - but
+   it does not invite a click that would empty the list. */
 .chip[data-empty] {
   color: var(--muted-soft);
   cursor: default;
 }
+.chip[data-empty] .label,
 .chip[data-empty] .n { color: var(--muted-soft); font-weight: 400; }
 .chip[data-empty]:hover {
-  background: var(--card);
-  border-color: var(--hairline);
-  color: var(--muted-soft);
+  background: var(--pill-bg, #fafafa);
+  border-color: var(--pill-border, #d4d4d4);
 }
 .chip[data-empty] .dot { opacity: 0.4; }
 

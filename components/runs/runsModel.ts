@@ -32,6 +32,8 @@ export interface RunFilter {
   day: number | null;
   /** All-skills mode: narrow to one skill. */
   skillId: string | null;
+  /** Narrow to the runs in one shared mailbox. */
+  mailboxId: string | null;
 }
 
 export const DEFAULT_FILTER: RunFilter = {
@@ -40,6 +42,7 @@ export const DEFAULT_FILTER: RunFilter = {
   query: '',
   day: null,
   skillId: null,
+  mailboxId: null,
 };
 
 const DAY = 86_400_000;
@@ -56,6 +59,7 @@ export function applyFilter(runs: SkillRun[], f: RunFilter): SkillRun[] {
   return runs.filter((r) => {
     if (r.startedAt < cutoff) return false;
     if (f.skillId && r.skillId !== f.skillId) return false;
+    if (f.mailboxId && r.mailboxId !== f.mailboxId) return false;
     if (f.state && r.state !== f.state) return false;
     if (f.day !== null && startOfDay(r.startedAt) !== f.day) return false;
     if (q) {

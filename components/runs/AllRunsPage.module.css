@@ -89,4 +89,7 @@
   flex: 1;
   min-height: 0;
   display: flex;
+  /* The stage the two run islands sit on - the skill page's own. */
+  background: var(--canvas-soft);
+  border-top: 1px solid var(--hairline-soft);
 }
