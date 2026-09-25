@@ -85,20 +85,26 @@ export default function Toolbar({
         />
         {!hideIdentity && (
           <>
+            {/* In Runs the status stays with the skill it describes - name,
+                status, then where you are - rather than trailing "Runs" as if
+                the page had a status of its own. */}
             {runsOpen ? (
               <span className={styles.crumbs}>
                 <button type="button" className={styles.crumbLink} onClick={onToggleRuns}>
                   {title || 'Untitled skill'}
                 </button>
+                <Badge intent={status}>{STATUS_LABEL[status]}</Badge>
                 <span className={styles.crumbSep} aria-hidden>
                   /
                 </span>
                 <span className={styles.crumbHere}>Runs</span>
               </span>
             ) : (
-              <TitleField value={title} onChange={onTitleChange} className={styles.title} />
+              <>
+                <TitleField value={title} onChange={onTitleChange} className={styles.title} />
+                <Badge intent={status}>{STATUS_LABEL[status]}</Badge>
+              </>
             )}
-            <Badge intent={status}>{STATUS_LABEL[status]}</Badge>
           </>
         )}
       </div>

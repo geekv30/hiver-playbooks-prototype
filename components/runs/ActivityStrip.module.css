@@ -1,58 +1,106 @@
-/* Runs per day, stacked by outcome.
+/* Runs per day, stacked by outcome (Figma 3588:21166).
  *
- * Rebuilt to the mark spec: bars capped well under their slot so the leftover
- * is air, a 4px rounded data-end square at the baseline, a 2px surface gap
- * between segments, and a hairline grid. The previous version filled every slot
- * with a saturated block and had no scale at all, so thirty days of different
- * numbers all read as the same mid-height wall.
+ * Header (title + period), legend, then the plot: a y-axis on round numbers
+ * with a hairline at every tick, capped bars with a 1px surface gap between
+ * segments and a 3px rounded data-end, the day's total over each bar and its
+ * date under it. A month or a quarter thins the dates and drops the totals
+ * into the hover readout - see LABEL_EVERY_UP_TO.
  */
 .wrap {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 28px;
   min-width: 0;
 }
 
-.caption {
+.head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  font-size: var(--fs-micro);
-  line-height: var(--lh-micro);
-  color: var(--muted-soft);
+  gap: 8px;
+  min-height: 32px;
 }
-.captionLabel {
+.title {
+  margin: 0;
+  font-size: var(--fs-small);
+  line-height: 19px;
   font-weight: 500;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--muted);
+  letter-spacing: var(--ls-small);
+  color: var(--chart-ink, #171717);
 }
-/* margin-left keeps it at the right edge when it is the caption's only
-   child (the surface above already says what is being counted). */
-.peak {
+/* margin-left keeps the control at the right edge when the header carries no
+   title (the lead-band exhibit's arrangements). */
+.range {
+  flex: none;
   margin-left: auto;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin: 0;
+  padding: 0 2px;
+  list-style: none;
+}
+.key {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-small);
+  line-height: 19px;
+  letter-spacing: var(--ls-small);
+  color: var(--chart-legend, #334155);
+  white-space: nowrap;
+}
+.swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex: none;
+}
+
+/* Two columns (axis, plot), two rows (plot, dates). The dates share the plot's
+   column so each one sits under its own bar. 8px of headroom above the top
+   gridline keeps the top tick label inside the card. */
+.chart {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  grid-template-rows: 128px auto;
+  row-gap: 15px;
+  padding-top: 8px;
+  min-width: 0;
+}
+
+.yAxis {
+  position: relative;
+  grid-column: 1;
+  grid-row: 1;
+}
+.tick {
+  position: absolute;
+  left: 0;
+  transform: translateY(-50%);
+  font-size: var(--fs-micro);
+  line-height: 18px;
+  color: var(--chart-muted, #64758b);
   font-variant-numeric: tabular-nums;
 }
 
 .plot {
   position: relative;
-  height: 72px;
+  grid-column: 2;
+  grid-row: 1;
   min-width: 0;
 }
-
-/* One hairline at the peak and one at the baseline. Solid, one step off the
-   surface - enough to read magnitude against, quiet enough to stay behind. */
 .grid {
   position: absolute;
   left: 0;
   right: 0;
   height: 1px;
-  background: var(--hairline-soft);
+  background: var(--run-grid);
   pointer-events: none;
 }
-.gridTop { top: 0; }
-.gridBase { bottom: 0; background: var(--hairline); }
 
 .cols {
   position: absolute;
@@ -77,7 +125,9 @@
   cursor: pointer;
   position: relative;
   border-radius: 3px;
-  transition: background var(--d-hover) var(--ease-snap);
+  transition:
+    background var(--d-hover) var(--ease-snap),
+    opacity var(--d-hover) var(--ease-snap);
 }
 .col:hover { background: var(--surface-soft); }
 .col:focus-visible {
@@ -85,39 +135,46 @@
   outline-offset: 1px;
 }
 
-/* 60% of the slot, capped by --bar-max: enough body to read as a bar, never so
-   wide that the band loses its air. */
+/* 18px, or 60% of a slot too narrow for that: a quarter's columns are thin,
+   a week's are not stretched to fill their slot. */
 .bar {
-  width: 60%;
-  max-width: var(--bar-max, 28px);
+  position: relative;
+  width: min(18px, 60%);
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  gap: 2px; /* the surface gap - white does the separating, never a stroke */
+  gap: 1px; /* the surface gap - white does the separating, never a stroke */
 }
 .seg {
-  width: 100%;
-  min-height: 3px;
+  flex: 1 1 0;
+  min-height: 2px;
 }
-/* 4px rounded data-end, square at the baseline: only the topmost segment. */
-.seg:first-child {
-  border-radius: 4px 4px 0 0;
-}
-.seg:last-child {
-  border-radius: 0;
-}
-.seg:only-child {
-  border-radius: 4px 4px 0 0;
-}
-.seg[data-state='completed'] { background: var(--run-completed); }
-.seg[data-state='awaiting'] { background: var(--run-awaiting); }
-.seg[data-state='failed'] { background: var(--run-failed); }
-.seg[data-state='declined'] { background: var(--run-declined); }
+.seg:first-child { border-radius: 3px 3px 0 0; }
 
-/* A day with no runs is a gap in the row, not a 2px mark that reads as data. */
+.swatch[data-state='completed'],
+.seg[data-state='completed'] { background: var(--run-bar-completed); }
+.swatch[data-state='awaiting'],
+.seg[data-state='awaiting'] { background: var(--run-bar-awaiting); }
+.swatch[data-state='failed'],
+.seg[data-state='failed'] { background: var(--run-bar-failed); }
+.swatch[data-state='declined'],
+.seg[data-state='declined'] { background: var(--run-bar-declined); }
+
+/* The day's total, 3px over its bar. */
+.value {
+  position: absolute;
+  bottom: calc(100% + 3px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: var(--fs-small);
+  line-height: 19px;
+  color: var(--chart-value, #404040);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* A day with no runs is a gap in the row, not a mark that reads as data. */
 .none {
-  width: 60%;
-  max-width: var(--bar-max, 28px);
+  width: min(18px, 60%);
   height: 2px;
   border-radius: 1px;
   background: var(--hairline);
@@ -129,17 +186,27 @@
 .cols[data-picked] .col[data-on] { opacity: 1; }
 .col:hover { opacity: 1; }
 
-.axis {
+.xAxis {
+  grid-column: 2;
+  grid-row: 2;
   display: flex;
-  justify-content: space-between;
+  gap: 1px;
+  min-width: 0;
+}
+.date {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+  overflow: visible;
   font-size: var(--fs-micro);
-  line-height: var(--lh-micro);
-  color: var(--muted-soft);
-  font-variant-numeric: tabular-nums;
+  line-height: 18px;
+  font-weight: 500;
+  color: var(--chart-value, #404040);
+  white-space: nowrap;
 }
 
-/* Hover readout. Below the plot, because the strip sits at the top of the page
-   and anything drawn above it is clipped by the card. */
+/* Hover readout, under the plot: over the dates, never clipped by the card. */
 .tip {
   position: absolute;
   top: calc(100% + 8px);
@@ -179,10 +246,10 @@
   border-radius: 50%;
   flex: none;
 }
-.tipDot[data-state='completed'] { background: var(--run-completed); }
-.tipDot[data-state='awaiting'] { background: var(--run-awaiting); }
-.tipDot[data-state='failed'] { background: var(--run-failed); }
-.tipDot[data-state='declined'] { background: var(--run-declined); }
+.tipDot[data-state='completed'] { background: var(--run-bar-completed); }
+.tipDot[data-state='awaiting'] { background: var(--run-bar-awaiting); }
+.tipDot[data-state='failed'] { background: var(--run-bar-failed); }
+.tipDot[data-state='declined'] { background: var(--run-mark-declined); }
 
 @media (prefers-reduced-motion: reduce) {
   .col { transition: none; }

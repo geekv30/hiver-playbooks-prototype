@@ -1,12 +1,10 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { RiSearchLine } from 'react-icons/ri';
-import Input from '@/components/atoms/Input';
 import SegmentedControl from '@/components/atoms/SegmentedControl';
 import Dropdown from '@/components/atoms/Dropdown';
 import { RUN_SOURCES, type RevisionMark, type SkillRun } from '@/data/runFixtures';
-import RunLead from './RunLead';
+import { mailboxName } from '@/data/mailboxes';
 import RunStateFilter from './RunStateFilter';
 import ActivityStrip from './ActivityStrip';
 import RunList from './RunList';
@@ -41,11 +39,17 @@ const RANGES = [
 /**
  * RunsView - a skill's execution history.
  *
- * Ordered by the question people arrive with, not by what the data contains:
- * first how the skill is doing over the window - the shape of the period, then
- * one line on what it amounts to - then the outcome filters, then the log. The
- * list and the detail are the answer to "show me that one", which is the third
- * reason someone comes here, not the first, so they sit below the lead band.
+ * Two islands on the stage, the same cards the skill editor sits in, so moving
+ * from editing a skill to reading its runs never feels like leaving the page
+ * (Figma 3588:21139). The first holds the shape of the period; the second the
+ * filters, the log and the one run picked from it. The page scrolls as a whole
+ * and the log island is exactly one stage tall, so scrolling past the chart
+ * hands over to a list and a detail that each scroll on their own.
+ *
+ * The period control sits with the chart: it is the one control that changes
+ * what the plot draws. It still governs the list and the counts, so this
+ * surface keeps the state. The mailbox and outcome filters narrow the log only,
+ * so the chart never moves under the controls used to read it.
  *
  * Everything is read-only. Every route out leads to the conversation.
  */
@@ -56,7 +60,12 @@ export default function RunsView({
   initialSkillId = null,
   onOpenConversation,
 }: Props) {
-  const [filter, setFilter] = useState<RunFilter>({ ...DEFAULT_FILTER, skillId: initialSkillId });
+  // A week opens the page: every day then has room for its date and its total.
+  const [filter, setFilter] = useState<RunFilter>({
+    ...DEFAULT_FILTER,
+    days: 7,
+    skillId: initialSkillId,
+  });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // Run history is clock-derived and these routes are prerendered, so the
   // server has no honest answer here. See useIsClient.
@@ -68,7 +77,25 @@ export default function RunsView({
     () => applyFilter(runs, { ...DEFAULT_FILTER, days: filter.days, skillId: filter.skillId }),
     [runs, filter.days, filter.skillId],
   );
+  // What the filter row counts: the window, through the mailbox pick. The
+  // outcome chips must agree with the list they narrow.
+  const scopeRuns = useMemo(
+    () => applyFilter(runs, { ...DEFAULT_FILTER, days: filter.days, skillId: filter.skillId, mailboxId: filter.mailboxId }),
+    [runs, filter.days, filter.skillId, filter.mailboxId],
+  );
   const listRuns = useMemo(() => applyFilter(runs, filter), [runs, filter]);
+
+  // Only the mailboxes this window actually ran in: a mailbox with no runs
+  // would be a pick that empties the list.
+  // The current pick always stays listed, so narrowing the range under it
+  // leaves the pill naming what it filters rather than falling to a placeholder.
+  const mailboxes = useMemo(() => {
+    const ids = Array.from(new Set(windowRuns.map((r) => r.mailboxId)));
+    if (filter.mailboxId && !ids.includes(filter.mailboxId)) ids.push(filter.mailboxId);
+    return ids
+      .map((id) => ({ id, label: mailboxName(id) }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [windowRuns, filter.mailboxId]);
 
   const selected = listRuns.find((r) => r.id === selectedId) ?? listRuns[0] ?? null;
 
@@ -78,7 +105,11 @@ export default function RunsView({
     return later.length > 0 ? later[later.length - 1]! : null;
   }, [selected, marks]);
 
-  const narrowed = filter.state !== null || filter.day !== null || filter.query.trim() !== '';
+  const narrowed =
+    filter.state !== null ||
+    filter.day !== null ||
+    filter.mailboxId !== null ||
+    filter.query.trim() !== '';
 
   if (!isClient) {
     return (
@@ -90,89 +121,92 @@ export default function RunsView({
 
   return (
     <div className={styles.view}>
-      <div className={styles.lead}>
+      <section className={`${styles.island} ${styles.chartIsland}`} aria-label="Runs per day">
         <ActivityStrip
           buckets={bucketByDay(windowRuns, filter.days)}
           picked={filter.day}
           onPick={(day) => setFilter((f) => ({ ...f, day: day === null ? null : startOfDay(day) }))}
+          range={
+            <SegmentedControl
+              size="sm"
+              tabs={RANGES}
+              active={String(filter.days)}
+              onChange={(id) =>
+                setFilter((f) => ({ ...f, days: Number(id) as RangeDays, day: null }))
+              }
+              ariaLabel="Time range"
+            />
+          }
         />
-        <RunLead windowRuns={windowRuns} days={filter.days} />
-      </div>
+      </section>
 
-      <div className={styles.controls}>
-        <RunStateFilter
-          counts={countBy(windowRuns)}
-          value={filter.state}
-          onChange={(state) => setFilter((f) => ({ ...f, state }))}
-        />
-        <span className={styles.spacer} />
-
-        {allSkills && (
+      <section className={`${styles.island} ${styles.logIsland}`} aria-label="Runs">
+        <div className={styles.controls}>
+          {allSkills && (
+            <Dropdown
+              variant="pill"
+              prefix="Skill"
+              options={[
+                { id: 'all', label: 'All' },
+                ...RUN_SOURCES.map((s) => ({ id: s.skillId, label: s.skillName })),
+              ]}
+              value={filter.skillId ?? 'all'}
+              onChange={(id) =>
+                setFilter((f) => ({ ...f, skillId: id === 'all' ? null : id, mailboxId: null }))
+              }
+              ariaLabel="Filter by skill"
+            />
+          )}
           <Dropdown
-            options={[
-              { id: 'all', label: 'All skills' },
-              ...RUN_SOURCES.map((s) => ({ id: s.skillId, label: s.skillName })),
-            ]}
-            value={filter.skillId ?? 'all'}
-            onChange={(id) => setFilter((f) => ({ ...f, skillId: id === 'all' ? null : id }))}
-            ariaLabel="Filter by skill"
+            variant="pill"
+            prefix="Mailbox"
+            options={[{ id: 'all', label: 'All' }, ...mailboxes]}
+            value={filter.mailboxId ?? 'all'}
+            onChange={(id) => setFilter((f) => ({ ...f, mailboxId: id === 'all' ? null : id }))}
+            ariaLabel="Filter by mailbox"
           />
-        )}
-
-        <div style={{ flex: '0 1 220px', minWidth: 160 }}>
-          <Input
-            value={filter.query}
-            onChange={(query) => setFilter((f) => ({ ...f, query }))}
-            placeholder="Search runs"
-            prefixIcon={<RiSearchLine />}
-            ariaLabel="Search runs"
+          <RunStateFilter
+            counts={countBy(scopeRuns)}
+            value={filter.state}
+            onChange={(state) => setFilter((f) => ({ ...f, state }))}
           />
         </div>
 
-        <span style={{ flex: 'none', width: 132 }}>
-          <SegmentedControl
-            tabs={RANGES}
-            active={String(filter.days)}
-            onChange={(id) => setFilter((f) => ({ ...f, days: Number(id) as RangeDays, day: null }))}
-            ariaLabel="Time range"
-          />
-        </span>
-      </div>
-
-      {/* Nothing in the window at all: the lead band has already said so, and
-          repeating it under a set of zeroed filters would be the page telling
-          you the same thing twice. The controls stay so the range can widen. */}
-      {windowRuns.length === 0 ? null : listRuns.length === 0 ? (
-        <div className={styles.emptySplit}>
-          <RunList
-            runs={listRuns}
-            marks={marks}
-            selectedId={null}
-            onSelect={setSelectedId}
-            showSkill={allSkills}
-            filtered={narrowed}
-          />
-        </div>
-      ) : (
-        <div className={styles.split}>
-          <div className={styles.listCol}>
+        {/* Nothing in the window, or nothing through the filters: either way the
+            list says so in its own words, across the whole island rather than
+            in a column beside an equally empty pane. */}
+        {listRuns.length === 0 ? (
+          <div className={styles.emptySplit}>
             <RunList
               runs={listRuns}
               marks={marks}
-              selectedId={selected?.id ?? null}
+              selectedId={null}
               onSelect={setSelectedId}
               showSkill={allSkills}
               filtered={narrowed}
             />
           </div>
-          <RunDetail
-            run={selected}
-            staleMark={staleMark}
-            onOpenConversation={onOpenConversation}
-            showSkill={allSkills}
-          />
-        </div>
-      )}
+        ) : (
+          <div className={styles.split}>
+            <div className={styles.listCol}>
+              <RunList
+                runs={listRuns}
+                marks={marks}
+                selectedId={selected?.id ?? null}
+                onSelect={setSelectedId}
+                showSkill={allSkills}
+                filtered={narrowed}
+              />
+            </div>
+            <RunDetail
+              run={selected}
+              staleMark={staleMark}
+              onOpenConversation={onOpenConversation}
+              showSkill={allSkills}
+            />
+          </div>
+        )}
+      </section>
     </div>
   );
 }

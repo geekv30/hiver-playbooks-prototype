@@ -47,12 +47,12 @@
    column. Just the mark, with the label carried by the row itself. */
 .bare {
   display: inline-flex;
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   flex: none;
 }
-.bare[data-state='completed'] { background: var(--run-completed); }
-.bare[data-state='awaiting'] { background: var(--run-awaiting); }
-.bare[data-state='failed'] { background: var(--run-failed); }
-.bare[data-state='declined'] { background: var(--run-declined); }
+.bare[data-state='completed'] { background: var(--run-mark-completed); }
+.bare[data-state='awaiting'] { background: var(--run-mark-awaiting); }
+.bare[data-state='failed'] { background: var(--run-mark-failed); }
+.bare[data-state='declined'] { background: var(--run-mark-declined); }

@@ -15,6 +15,11 @@ interface Props {
   onChange: (id: string) => void;
   placeholder?: string;
   ariaLabel?: string;
+  /** 'pill' is the filter-row trigger (Figma 3593:22242): a 32px rounded chip
+   *  that names what it filters, "Mailbox · All", and sizes to its label. */
+  variant?: 'field' | 'pill';
+  /** Pill only: the dimension being filtered, shown ahead of the value. */
+  prefix?: string;
 }
 
 /**
@@ -22,7 +27,7 @@ interface Props {
  * selected label or a placeholder; the menu grows from the trigger, closes on
  * outside-click / Esc, and supports arrow + Enter keyboard selection.
  */
-export default function Dropdown({ options, value, onChange, placeholder = 'Select', ariaLabel }: Props) {
+export default function Dropdown({ options, value, onChange, placeholder = 'Select', ariaLabel, variant = 'field', prefix }: Props) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -82,7 +87,7 @@ export default function Dropdown({ options, value, onChange, placeholder = 'Sele
   };
 
   return (
-    <div className={styles.root} ref={rootRef}>
+    <div className={styles.root} data-variant={variant} ref={rootRef}>
       <button
         type="button"
         className={styles.trigger}
@@ -94,7 +99,16 @@ export default function Dropdown({ options, value, onChange, placeholder = 'Sele
         onClick={() => setOpen((o) => !o)}
         onKeyDown={onKey}
       >
-        <span className={styles.value}>{selected ? selected.label : placeholder}</span>
+        <span className={styles.value}>
+          {prefix && <span className={styles.prefix}>{prefix} </span>}
+          {prefix ? (
+            <span className={styles.picked}>&middot; {selected ? selected.label : placeholder}</span>
+          ) : selected ? (
+            selected.label
+          ) : (
+            placeholder
+          )}
+        </span>
         <RiArrowDownSLine className={styles.chevron} aria-hidden />
       </button>
       {open && (

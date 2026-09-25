@@ -13,6 +13,9 @@ interface Props<T extends string> {
   active: T;
   onChange: (id: T) => void;
   ariaLabel?: string;
+  /** 'sm' is the 32px Tab Bar (Figma 3588:20389) that sits in a card header
+   *  beside a title; the default is the 40px control that heads a panel. */
+  size?: 'md' | 'sm';
 }
 
 /**
@@ -26,6 +29,7 @@ export default function SegmentedControl<T extends string>({
   active,
   onChange,
   ariaLabel,
+  size = 'md',
 }: Props<T>) {
   const activeIndex = Math.max(0, tabs.findIndex((t) => t.id === active));
   const ref = useRef<HTMLDivElement>(null);
@@ -47,6 +51,7 @@ export default function SegmentedControl<T extends string>({
   return (
     <div
       className={styles.track}
+      data-size={size}
       role="tablist"
       aria-label={ariaLabel}
       ref={ref}

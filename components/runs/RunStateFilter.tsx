@@ -28,8 +28,10 @@ export default function RunStateFilter({ counts, value, onChange }: Props) {
         aria-pressed={value === null}
         onClick={() => onChange(null)}
       >
-        All
-        <span className={styles.n}>{counts.total}</span>
+        <span>
+          <span className={styles.label}>All</span>{' '}
+          <span className={styles.n}>&middot; {counts.total}</span>
+        </span>
       </button>
 
       {RUN_STATES.map((s) => {
@@ -46,9 +48,13 @@ export default function RunStateFilter({ counts, value, onChange }: Props) {
             disabled={n === 0}
             onClick={() => onChange(on ? null : s)}
           >
-            <span className={styles.dot} data-state={s} aria-hidden />
-            {RUN_STATE_SHORT[s]}
-            <span className={styles.n}>{n}</span>
+            <span className={styles.dotBox} aria-hidden>
+              <span className={styles.dot} data-state={s} />
+            </span>
+            <span>
+              <span className={styles.label}>{RUN_STATE_SHORT[s]}</span>{' '}
+              <span className={styles.n}>&middot; {n}</span>
+            </span>
           </button>
         );
       })}

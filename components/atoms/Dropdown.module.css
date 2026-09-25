@@ -131,3 +131,55 @@
     transition: none;
   }
 }
+
+/* Pill - the filter-row trigger (Figma 3593:22242). Same chip as the outcome
+   filters beside it, so the row reads as one set of filters. The menu opens
+   at least as wide as its longest option rather than clamping to the pill. */
+.root[data-variant='pill'] {
+  flex: none;
+}
+.root[data-variant='pill'] .trigger {
+  width: auto;
+  height: 32px;
+  padding: 0 10px 0 12px;
+  gap: 6px;
+  border-color: var(--pill-border, #d4d4d4);
+  border-radius: var(--r-pill);
+  background: var(--pill-bg, #fafafa);
+  color: var(--pill-ink, #171717);
+  font-size: var(--fs-small);
+  font-weight: 500;
+  line-height: 19px;
+  letter-spacing: var(--ls-small);
+}
+.root[data-variant='pill'] .trigger:hover {
+  background: var(--surface-soft);
+  border-color: var(--hairline-strong);
+}
+.root[data-variant='pill'] .trigger[data-open],
+.root[data-variant='pill'] .trigger:focus-visible {
+  border-color: var(--accent);
+}
+.root[data-variant='pill'] .chevron {
+  color: var(--pill-ink, #171717);
+}
+.root[data-variant='pill'] .menu {
+  right: auto;
+  min-width: 100%;
+  width: max-content;
+  max-width: 280px;
+}
+.root[data-variant='pill'] .option {
+  font-size: var(--fs-small);
+  line-height: 19px;
+}
+/* Same split as the outcome pills beside it: what is filtered in the quiet
+   gray, what it is set to in ink. */
+.prefix {
+  font-weight: 400;
+  color: var(--pill-label, #737373);
+}
+.picked {
+  font-weight: 600;
+  color: var(--pill-ink, #171717);
+}

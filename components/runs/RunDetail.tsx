@@ -1,18 +1,10 @@
 'use client';
 
-import type { ReactNode } from 'react';
-import {
-  RiExternalLinkLine,
-  RiCheckboxCircleLine,
-  RiErrorWarningLine,
-  RiTimeLine,
-  RiCloseCircleLine,
-  RiGitCommitLine,
-} from 'react-icons/ri';
+import { useEffect, useRef, useState } from 'react';
+import { RiExternalLinkLine, RiFileCopyLine, RiCheckLine, RiGitCommitLine } from 'react-icons/ri';
 import { NOW, type RevisionMark, type SkillRun } from '@/data/runFixtures';
-import { mailboxName } from '@/data/mailboxes';
 import RunTrace from './RunTrace';
-import { formatDateTime, formatDuration, formatWait } from './runsModel';
+import { formatWait } from './runsModel';
 import styles from './RunDetail.module.css';
 
 interface Props {
@@ -25,11 +17,10 @@ interface Props {
 /** What happened, as a headline and a sentence. Every outcome gets one - a
  *  state name alone explains nothing, and "Failed" with no cause reads as
  *  "the skill is broken" rather than "one step could not reach HubSpot". */
-function outcome(run: SkillRun): { icon: ReactNode; title: string; body: string } {
+function outcome(run: SkillRun): { title: string; body: string } {
   switch (run.state) {
     case 'completed':
       return {
-        icon: <RiCheckboxCircleLine />,
         title: 'Ran through to the end',
         body:
           run.applied.length > 0
@@ -40,7 +31,6 @@ function outcome(run: SkillRun): { icon: ReactNode; title: string; body: string 
       };
     case 'awaiting':
       return {
-        icon: <RiTimeLine />,
         title: `Waiting on ${run.assignee ?? 'a teammate'}`,
         body: `The reply is drafted and held for sign-off - it has waited ${formatWait(
           NOW - run.startedAt,
@@ -48,28 +38,53 @@ function outcome(run: SkillRun): { icon: ReactNode; title: string; body: string 
       };
     case 'failed':
       return {
-        icon: <RiErrorWarningLine />,
         title: `${run.error?.step ?? 'A step'} failed`,
         body: `${run.error?.message ?? ''} Steps before it had already applied, so this conversation is partly changed.`,
       };
     case 'declined':
       return {
-        icon: <RiCloseCircleLine />,
         title: `${run.assignee ?? 'A teammate'} declined the draft`,
         body: 'The reply never sent. Everything the skill did before that step still applied.',
       };
   }
 }
 
+/** The sender's address, copyable in place - the one fact from this pane that
+ *  a person most often needs somewhere else (a CRM, a search, a reply). */
+function CopyEmail({ email }: { email: string }) {
+  const [copied, setCopied] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (timer.current) clearTimeout(timer.current);
+  }, []);
+  const copy = () => {
+    void navigator.clipboard?.writeText(email).catch(() => {});
+    setCopied(true);
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => setCopied(false), 1400);
+  };
+  return (
+    <button
+      type="button"
+      className={styles.copy}
+      onClick={copy}
+      aria-label={copied ? 'Email copied' : `Copy ${email}`}
+      title={copied ? 'Copied' : 'Copy email'}
+    >
+      {copied ? <RiCheckLine aria-hidden /> : <RiFileCopyLine aria-hidden />}
+    </button>
+  );
+}
+
 /**
- * RunDetail - one run, in full.
+ * RunDetail - one run, in full (Figma 3593:24686).
  *
- * Reads top to bottom as a story: what it ran on, what happened, the facts,
- * then the steps. There is deliberately no separate list of actions taken -
- * the trace already is that list, and printing it twice made the pane repeat
- * itself three times over.
+ * Reads top to bottom as a story: what it ran on, what happened, then the
+ * steps. When and where it ran are on the run's own row beside this pane, so
+ * the pane does not repeat them in a facts rail. There is deliberately no
+ * separate list of actions taken - the trace already is that list.
  */
-export default function RunDetail({ run, staleMark, onOpenConversation, showSkill }: Props) {
+export default function RunDetail({ run, staleMark, onOpenConversation }: Props) {
   if (!run) {
     return (
       <div className={styles.detail}>
@@ -82,93 +97,58 @@ export default function RunDetail({ run, staleMark, onOpenConversation, showSkil
   }
 
   const o = outcome(run);
-  const ran = run.steps.filter((s) => s.status !== 'skipped').length;
 
   return (
     <div className={styles.detail}>
       <div className={styles.scroll}>
-        <div className={styles.body}>
-          <div className={styles.main}>
-          <header className={styles.head}>
-            <div className={styles.headTop}>
-              <div>
-                <h2 className={styles.subject}>{run.subject}</h2>
-                <p className={styles.from}>
-                  <span className={styles.fromName}>{run.sender}</span> &middot; {run.senderEmail}
-                </p>
-              </div>
-              <button
-                type="button"
-                className={styles.openBtn}
-                onClick={() => onOpenConversation?.(run)}
-              >
-                <RiExternalLinkLine aria-hidden />
-                Open conversation
-              </button>
-            </div>
-
-            <div className={styles.outcome} data-state={run.state}>
-              <span className={styles.outcomeIcon} aria-hidden>
-                {o.icon}
+        <header className={styles.head}>
+          <div className={styles.headText}>
+            <h2 className={styles.subject}>{run.subject}</h2>
+            <p className={styles.from}>
+              <span>{run.sender}</span>
+              <span className={styles.fromSep} aria-hidden>
+                &middot;
               </span>
-              <div className={styles.outcomeText}>
-                <p className={styles.outcomeTitle}>{o.title}</p>
-                <p className={styles.outcomeBody}>{o.body}</p>
-              </div>
-            </div>
-
-          </header>
-
-          <section className={styles.section}>
-            <div className={styles.sectionHead}>
-              <h3 className={styles.sectionTitle}>What the skill did</h3>
-              <span className={styles.sectionNote}>
-                {ran} of {run.steps.length} steps ran
-              </span>
-            </div>
-
-            {staleMark && (
-              <div className={styles.stale}>
-                <RiGitCommitLine className={styles.staleIcon} aria-hidden />
-                <p className={styles.staleText}>
-                  <span className={styles.staleLead}>This ran on an earlier version. </span>
-                  The skill was edited since - {staleMark.summary.toLowerCase()} - so these steps
-                  will not match the skill as it reads today.
-                </p>
-              </div>
-            )}
-
-            <RunTrace run={run} />
-          </section>
+              <span>{run.senderEmail}</span>
+              <CopyEmail email={run.senderEmail} />
+            </p>
           </div>
+          <button
+            type="button"
+            className={styles.openBtn}
+            onClick={() => onOpenConversation?.(run)}
+          >
+            <RiExternalLinkLine aria-hidden />
+            Go to conversation
+          </button>
+        </header>
 
-          <aside className={styles.rail}>
-            <dl className={styles.facts}>
-              {showSkill && (
-                <div className={styles.fact}>
-                  <dt className={styles.factKey}>Skill</dt>
-                  <dd className={styles.factVal}>{run.skillName}</dd>
-                </div>
-              )}
-              <div className={styles.fact}>
-                <dt className={styles.factKey}>Mailbox</dt>
-                <dd className={styles.factVal}>{mailboxName(run.mailboxId)}</dd>
-              </div>
-              <div className={styles.fact}>
-                <dt className={styles.factKey}>Ran</dt>
-                <dd className={styles.factVal}>{formatDateTime(run.startedAt)}</dd>
-              </div>
-              <div className={styles.fact}>
-                <dt className={styles.factKey}>Took</dt>
-                <dd className={styles.factVal}>{formatDuration(run.durationMs)}</dd>
-              </div>
-              <div className={styles.fact}>
-                <dt className={styles.factKey}>Conversation</dt>
-                <dd className={`${styles.factVal} ${styles.mono}`}>{run.conversationId}</dd>
-              </div>
-            </dl>
-          </aside>
+        <div className={styles.outcome} data-state={run.state}>
+          <span className={styles.outcomeMark} aria-hidden>
+            <span className={styles.outcomeDot} />
+          </span>
+          <div className={styles.outcomeText}>
+            <p className={styles.outcomeTitle}>{o.title}</p>
+            <p className={styles.outcomeBody}>{o.body}</p>
+          </div>
         </div>
+
+        <section className={styles.section}>
+          <h3 className={styles.sectionTitle}>Skill execution</h3>
+
+          {staleMark && (
+            <div className={styles.stale}>
+              <RiGitCommitLine className={styles.staleIcon} aria-hidden />
+              <p className={styles.staleText}>
+                <span className={styles.staleLead}>This ran on an earlier version. </span>
+                The skill was edited since - {staleMark.summary.toLowerCase()} - so these steps
+                will not match the skill as it reads today.
+              </p>
+            </div>
+          )}
+
+          <RunTrace run={run} />
+        </section>
       </div>
     </div>
   );

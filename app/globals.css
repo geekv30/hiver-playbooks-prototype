@@ -158,6 +158,20 @@
      label and go muddy at paragraph length. */
   --run-failed-ink: #97231e;
   --run-awaiting-ink: #8a4515;
+  /* The Runs page's own two readings of the same four states (Figma
+     3588:21139). MARK = the 6px dot on a list row, a filter chip and the
+     outcome banner; BAR = a segment of the runs-per-day chart, where declined
+     drops to a pale fill so the three states that need reading carry the
+     weight of every stack. */
+  --run-mark-completed: #166534;
+  --run-mark-awaiting: #f97316;
+  --run-mark-failed: #b91c1c;
+  --run-mark-declined: #a3a3a3;
+  --run-bar-completed: #15803d;
+  --run-bar-awaiting: #f97316;
+  --run-bar-failed: #dc2626;
+  --run-bar-declined: #e2e8f0;
+  --run-grid: #edf1f6;
 
   /* ===== Hiver tint (accent only - CTA, focus, active) ===== */
   --primary: #e15524;

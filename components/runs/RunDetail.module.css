@@ -1,80 +1,75 @@
-/* One run, in full. Read-only: the only way out is the conversation, where a
-   person has both the context and the permission to act.
-
-   Structure follows the mail clients this sits beside - the content (the trace)
-   is the hero, and the facts sit in a fixed grid above it rather than a
-   wrapping row of label/value pairs, which never aligns twice. */
+/* One run, in full (Figma 3593:24686). Read-only: the only way out is the
+   conversation, where a person has both the context and the permission to act.
+   Header, what happened, then the steps - one column at a readable measure. */
 .detail {
   flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  background: var(--card);
 }
 
 .scroll {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  overscroll-behavior: contain;
-}
-
-/* Content and facts, side by side - the pattern every mail client this sits
-   beside uses. It keeps the trace at a readable measure without leaving the
-   right half of the pane empty, and gives the facts a column where a long
-   timestamp has room instead of being clipped by a grid cell. */
-/* Two columns with a FIXED gap, capped as a group. The rail used to be pushed
-   to the far edge with `margin-left: auto`, which on a wide pane opened a
-   400px hole between the trace and the facts. Capping the pair instead moves
-   that leftover to the outside, where it reads as a page margin. */
-.body {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 208px;
-  gap: 44px;
-  max-width: 1160px;
-  padding: 0 0 0 30px;
-}
-.main {
-  min-width: 0;
-}
-.rail {
-  min-width: 0;
-  position: sticky;
-  top: 0;
-  padding: 24px 0 26px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  padding: 16px 0 32px 32px;
 }
 
 .head {
-  padding: 24px 0 0;
-}
-.headTop {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 20px;
 }
+.headText {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 .subject {
   margin: 0;
-  font-size: var(--fs-h4);
-  line-height: 1.3;
-  letter-spacing: var(--ls-h4);
-  font-weight: 600;
-  color: var(--ink);
+  font-size: 15px;
+  line-height: 22px;
+  letter-spacing: -0.006em;
+  font-weight: 500;
+  color: var(--detail-ink, #404040);
   text-wrap: balance;
 }
 .from {
-  margin: 4px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
   font-size: var(--fs-small);
-  line-height: 1.45;
+  line-height: 19px;
   letter-spacing: var(--ls-small);
-  color: var(--muted);
+  color: var(--detail-muted, #6f7c90);
 }
-.fromName { color: var(--body); font-weight: 500; }
+.fromSep { color: var(--log-soft, #97a3b7); }
 
+.copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-xs);
+  background: none;
+  color: var(--detail-muted, #6f7c90);
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap), color var(--d-hover) var(--ease-snap);
+}
+.copy svg { width: 14px; height: 14px; }
+.copy:hover { background: var(--surface-soft); color: var(--ink); }
+.copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* Button / Secondary / sm (Figma 3598:25429). */
 .openBtn {
   flex: none;
   display: inline-flex;
@@ -82,14 +77,15 @@
   gap: 6px;
   height: 32px;
   padding: 0 12px;
-  border-radius: var(--r-md);
-  border: 1px solid var(--hairline);
-  background: var(--card);
+  border-radius: 6px;
+  border: 1px solid var(--pill-border, #d4d4d4);
+  background: var(--pill-bg, #fafafa);
   font: inherit;
   font-size: var(--fs-small);
+  line-height: 19px;
   font-weight: 500;
   letter-spacing: var(--ls-small);
-  color: var(--ink);
+  color: var(--pill-ink, #171717);
   cursor: pointer;
   white-space: nowrap;
   transition:
@@ -98,116 +94,83 @@
 }
 .openBtn:hover { background: var(--surface-soft); border-color: var(--hairline-strong); }
 .openBtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-.openBtn svg { width: 14px; height: 14px; color: var(--muted); }
-.openBtn:hover svg { color: var(--ink); }
+.openBtn svg { width: 16px; height: 16px; }
 
-/* What happened, in a sentence. Every outcome gets one: a state name on its own
-   explains nothing, and "Failed" with no cause reads as "the skill is broken". */
+/* What happened, in a sentence (Figma 3593:24697): a tinted card per outcome,
+   the state's mark leading, the headline in ink and the reason under it. */
 .outcome {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
-  margin-top: 16px;
-  padding: 13px 15px;
-  border-radius: var(--r-lg);
-  background: var(--surface-soft);
+  margin-top: 28px;
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid var(--outcome-rule, #eceff6);
+  background: var(--outcome-bg, #fafafa);
 }
-.outcome[data-state='failed'] { background: var(--run-failed-bg); }
-.outcome[data-state='awaiting'] { background: var(--run-awaiting-bg); }
-.outcomeIcon {
+.outcome[data-state='completed'] { --outcome-bg: #f0fdf4; --outcome-rule: #dcfce7; }
+.outcome[data-state='awaiting'] { --outcome-bg: #fff7ed; --outcome-rule: #ffedd5; }
+.outcome[data-state='failed'] { --outcome-bg: #fef2f2; --outcome-rule: #fee2e2; }
+.outcome[data-state='declined'] { --outcome-bg: #fafafa; --outcome-rule: #f0f0f0; }
+
+.outcomeMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 16px;
   height: 16px;
   flex: none;
-  margin-top: 1px;
-  color: var(--muted);
 }
-.outcome[data-state='completed'] .outcomeIcon { color: var(--run-completed); }
-.outcome[data-state='failed'] .outcomeIcon { color: var(--run-failed); }
-.outcome[data-state='awaiting'] .outcomeIcon { color: var(--run-awaiting); }
-.outcome[data-state='declined'] .outcomeIcon { color: var(--run-declined); }
+.outcomeDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--run-mark-declined);
+}
+.outcome[data-state='completed'] .outcomeDot { background: var(--run-mark-completed); }
+.outcome[data-state='awaiting'] .outcomeDot { background: var(--run-mark-awaiting); }
+.outcome[data-state='failed'] .outcomeDot { background: var(--run-mark-failed); }
 
-.outcomeText { min-width: 0; }
+.outcomeText {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 .outcomeTitle {
   margin: 0;
   font-size: var(--fs-small);
-  line-height: 1.45;
+  line-height: 19px;
   letter-spacing: var(--ls-small);
-  font-weight: 600;
-  color: var(--ink);
-}
-.outcome[data-state='failed'] .outcomeTitle { color: var(--run-failed-ink); }
-.outcome[data-state='awaiting'] .outcomeTitle { color: var(--run-awaiting-ink); }
-.outcomeBody {
-  margin: 2px 0 0;
-  font-size: var(--fs-caption);
-  line-height: 1.5;
-  letter-spacing: var(--ls-caption);
-  color: var(--body);
-}
-.outcome[data-state='failed'] .outcomeBody { color: var(--run-failed-ink); }
-.outcome[data-state='awaiting'] .outcomeBody { color: var(--run-awaiting-ink); }
-
-/* The facts. One per row in the rail, label above value - nothing to line up
-   against a neighbor, so nothing re-rags when a value gets longer. */
-.facts {
-  display: flex;
-  flex-direction: column;
-  gap: 13px;
-  margin: 0;
-}
-.fact {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-.factKey {
-  font-size: var(--fs-micro);
-  line-height: var(--lh-micro);
   font-weight: 500;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--muted-soft);
+  color: var(--log-ink, #3e4c5a);
 }
-.factVal {
+.outcomeBody {
   margin: 0;
   font-size: var(--fs-small);
-  line-height: 1.4;
+  line-height: 19px;
   letter-spacing: var(--ls-small);
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-  overflow-wrap: anywhere;
+  color: var(--detail-muted, #6f7c90);
 }
-.mono { font-family: var(--mono); font-size: var(--fs-caption); letter-spacing: 0; }
 
-/* Trace. The steps ARE the record of what the skill did, so there is no
-   separate list of actions repeating them - the applied ones are marked here. */
+/* The steps (Figma 3593:24937): a caption-size title over a hairline, then the
+   trace. How many steps ran is not repeated here - a stopped run says so at
+   the end of its own trace. */
 .section {
-  margin-top: 22px;
-  padding-bottom: 26px;
-}
-.sectionHead {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-  margin: 0 0 12px;
-  padding-bottom: 9px;
-  border-bottom: 1px solid var(--hairline-soft);
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 32px;
+  padding: 0 4px;
 }
 .sectionTitle {
   margin: 0;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--log-rule, #eceff6);
   font-size: var(--fs-micro);
-  line-height: var(--lh-micro);
+  line-height: 14px;
   font-weight: 500;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-.sectionNote {
-  font-size: var(--fs-micro);
-  color: var(--muted-soft);
-  font-variant-numeric: tabular-nums;
+  color: var(--log-head, #a3a3a3);
 }
 
 /* The earlier-version note, when the skill has been edited since. */
@@ -215,7 +178,6 @@
   display: flex;
   align-items: flex-start;
   gap: 9px;
-  margin: 0 0 16px;
   padding: 11px 13px;
   border-radius: var(--r-md);
   background: var(--violet-subtle);
@@ -254,26 +216,7 @@
   max-width: 30ch;
 }
 
-/* Too narrow for a rail: the facts fold under the content as a two-up grid. */
-@media (max-width: 1320px) {
-  .body { grid-template-columns: minmax(0, 1fr); gap: 0; }
-  .main { max-width: none; width: 100%; }
-  .rail {
-    flex-basis: auto;
-    width: 100%;
-    position: static;
-    padding: 16px 0 0;
-    border-top: 1px solid var(--hairline-soft);
-  }
-  .facts {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 14px 20px;
-  }
-}
-@media (max-width: 860px) {
-  .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
 @media (prefers-reduced-motion: reduce) {
-  .openBtn { transition: none; }
+  .openBtn,
+  .copy { transition: none; }
 }
