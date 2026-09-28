@@ -178,8 +178,8 @@ const VARIANTS = [
   {
     id: 'v1',
     name: 'Channel switch',
-    tag: 'Alternative',
-    note: 'One control above the cards picks Email or Chat. Email is the default, so the tab opens on exactly what ships today and the email options are untouched. Kept as the alternative: it works for two channels, but it puts a second row of tabs under the panel tabs, and a third channel such as voice would crowd the control.',
+    tag: 'Chosen',
+    note: 'One control above the cards picks Email or Chat. Email is the default, so the tab opens on exactly what ships today and the email options are untouched. Chosen with the PM: the switch says plainly that a skill can be evaluated on email or chat. The watch-out: it puts a second row of tabs under the panel tabs, and a third channel such as voice would crowd it - that is when 03 takes over.',
     Render: V1,
   },
   {
@@ -192,8 +192,8 @@ const VARIANTS = [
   {
     id: 'v3',
     name: 'Channel first',
-    tag: 'Chosen',
-    note: 'The first screen asks one question, email or chat, and each answer opens that channel’s ways behind the back-header the flows already use. Chosen: both channels get equal weight on the first screen, so a new user sees that a skill runs on either; a new channel is one more card, not a crowded control; and it is the direction agreed with the PM. The cost is one click before every evaluation.',
+    tag: 'Alternative',
+    note: 'The first screen asks one question, email or chat, and each answer opens that channel’s ways behind the back-header the flows already use. Kept ready for when a third channel lands: a new channel is one more card, not a crowded control. The cost is one click before every evaluation.',
     Render: V3,
   },
 ];
@@ -223,8 +223,8 @@ export default function EvalChannelsExhibit() {
           The chat ways are Past chats, AI scenarios and Chat as a customer. Each panel is the real
           side panel at its real size in a 1440 &times; 900 window, built from the shipped pieces,
           so only the arrangement differs. The fit line under each one is measured live.{' '}
-          <strong>03 is the one going forward</strong>, with 01 kept beside it as the
-          alternative.
+          <strong>01 is the one that shipped</strong>, with 03 kept beside it for when a third
+          channel arrives.
         </p>
       </header>
 

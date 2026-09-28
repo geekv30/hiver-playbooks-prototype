@@ -12,14 +12,18 @@ import {
 } from 'react-icons/ri';
 import { SearchAiIcon } from '@/components/icons/ui';
 import NewTag from '@/components/atoms/NewTag';
+import SegmentedControl from '@/components/atoms/SegmentedControl';
 import styles from './EvalMenu.module.css';
 
-export type EvalView = 'menu' | 'matching' | 'recent' | 'scenarios' | 'custom';
+export type EvalView = 'menu' | 'matching' | 'recent' | 'scenarios' | 'custom' | ChatEvalView;
+
+/** The channel a skill is being evaluated on. A skill runs on both. */
+export type EvalChannel = 'email' | 'chat';
 
 // The ways to evaluate. Generic, reusable entries - copy is the only per-entry
 // content, and the names double as the back-header titles. Matching emails leads:
 // it is the only type that tests the skill against mail it would really fire on.
-export const EVAL_ENTRIES: { id: Exclude<EvalView, 'menu'>; title: string; sub: string }[] = [
+export const EVAL_ENTRIES: { id: EmailEvalView; title: string; sub: string }[] = [
   { id: 'matching', title: 'Matching emails', sub: 'Real emails your trigger would fire on' },
   { id: 'recent', title: 'Recent conversations', sub: 'Recent emails from your shared inbox' },
   { id: 'scenarios', title: 'AI scenarios', sub: 'Tailor-made AI test scenarios' },
@@ -27,7 +31,9 @@ export const EVAL_ENTRIES: { id: Exclude<EvalView, 'menu'>; title: string; sub: 
 ];
 
 // Back-header titles for each flow (sentence case throughout).
-export const EVAL_TITLES: Record<Exclude<EvalView, 'menu'>, string> = {
+export type EmailEvalView = 'matching' | 'recent' | 'scenarios' | 'custom';
+
+export const EVAL_TITLES: Record<EmailEvalView, string> = {
   matching: 'Matching emails',
   recent: 'Recent conversations',
   scenarios: 'AI scenarios',
@@ -36,7 +42,7 @@ export const EVAL_TITLES: Record<Exclude<EvalView, 'menu'>, string> = {
 
 // One icon per flow - shared by the entry card and the flow's back-header so the
 // two always match (Figma 1721:67361: time-line / mail-ai-line / hashtag).
-export const EVAL_ICONS: Record<Exclude<EvalView, 'menu'>, ReactNode> = {
+export const EVAL_ICONS: Record<EmailEvalView, ReactNode> = {
   matching: <SearchAiIcon />,
   recent: <RiTimeLine />,
   scenarios: <RiMailAiLine />,
@@ -44,9 +50,8 @@ export const EVAL_ICONS: Record<Exclude<EvalView, 'menu'>, ReactNode> = {
 };
 
 // The chat ways to evaluate. A skill is written once and runs on email and on
-// chat, so the channel belongs to the test, not to the skill. Not wired into
-// the menu yet - the exhibit at /component/eval-channels compares the ways to
-// offer the two channels side by side before one ships.
+// chat, so the channel belongs to the test, not to the skill: the menu's
+// Email | Chat switch picks which set of cards it shows.
 export type ChatEvalView = 'pastChats' | 'chatScenarios' | 'chatLive';
 
 export const CHAT_EVAL_ENTRIES: { id: ChatEvalView; title: string; sub: string }[] = [
@@ -95,8 +100,16 @@ export function EvalCard({ icon, title, sub, onClick, isNew, fresh }: CardProps)
 /** The menu's layout pieces, so a composition of cards spaces them as the menu does. */
 export const evalMenuStyles = styles;
 
+const CHANNEL_TABS: { id: EvalChannel; label: string }[] = [
+  { id: 'email', label: 'Email' },
+  { id: 'chat', label: 'Chat' },
+];
+
 interface Props {
   onOpen: (view: Exclude<EvalView, 'menu'>) => void;
+  /** Which channel's ways the menu shows. */
+  channel: EvalChannel;
+  onChannel: (c: EvalChannel) => void;
   /** True while a fresh scan result is still news: the card carries a fill for
    *  that window and then settles back to plain (Figma 3344:20223 / 3345:28443). */
   matchFresh?: boolean;
@@ -113,22 +126,27 @@ interface Props {
  * count is Copilot's row to report. What the scan changes here is temporary: a
  * fill while the result is still news, then plain again.
  */
-export default function EvalMenu({ onOpen, matchFresh, matchIsNew }: Props) {
+export default function EvalMenu({ onOpen, channel, onChannel, matchFresh, matchIsNew }: Props) {
   return (
     <div className={styles.menu}>
       <h3 className={styles.heading}>Evaluate your skill in one of these ways</h3>
-      <div className={styles.cards}>
-        {EVAL_ENTRIES.map((e) => (
-          <EvalCard
-            key={e.id}
-            icon={EVAL_ICONS[e.id]}
-            title={e.title}
-            sub={e.sub}
-            onClick={() => onOpen(e.id)}
-            isNew={e.id === 'matching' && matchIsNew}
-            fresh={e.id === 'matching' && matchFresh}
-          />
-        ))}
+      <SegmentedControl tabs={CHANNEL_TABS} active={channel} onChange={onChannel} ariaLabel="Channel to evaluate on" />
+      <div className={styles.cards} key={channel} data-channel={channel}>
+        {channel === 'email'
+          ? EVAL_ENTRIES.map((e) => (
+              <EvalCard
+                key={e.id}
+                icon={EVAL_ICONS[e.id]}
+                title={e.title}
+                sub={e.sub}
+                onClick={() => onOpen(e.id)}
+                isNew={e.id === 'matching' && matchIsNew}
+                fresh={e.id === 'matching' && matchFresh}
+              />
+            ))
+          : CHAT_EVAL_ENTRIES.map((e) => (
+              <EvalCard key={e.id} icon={CHAT_EVAL_ICONS[e.id]} title={e.title} sub={e.sub} onClick={() => onOpen(e.id)} />
+            ))}
       </div>
     </div>
   );

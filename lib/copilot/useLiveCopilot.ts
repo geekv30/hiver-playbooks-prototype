@@ -32,6 +32,9 @@ export interface LiveCopilot {
   needsPasscode: boolean;
   unlock: (passcode: string) => Promise<'ok' | 'wrong' | 'error'>;
   lock: () => void;
+  /** One JSON call to another live route (the chat evaluation), with the
+   *  passcode attached and the same errors as a Copilot turn. */
+  post: <T>(path: string, body: unknown, signal?: AbortSignal) => Promise<T>;
   turn: (args: {
     doc: EditorDoc;
     history: { role: 'user' | 'assistant'; text: string }[];
@@ -173,5 +176,29 @@ export function useLiveCopilot(): LiveCopilot {
     [passcode],
   );
 
-  return { mode, model: status?.model ?? null, needsPasscode, unlock, lock, turn };
+  const post = useCallback(
+    async <T,>(path: string, body: unknown, signal?: AbortSignal): Promise<T> => {
+      const r = await fetch(path, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          ...(passcode ? { 'x-copilot-passcode': passcode } : {}),
+        },
+        body: JSON.stringify(body),
+        signal,
+      });
+      const data = (await r.json().catch(() => ({}))) as T & { error?: string; message?: string };
+      if (r.ok) return data;
+      if (r.status === 401) {
+        writeStored(null);
+        throw new LiveCopilotError('The passcode is no longer valid.', 'passcode');
+      }
+      if (r.status === 429) throw new LiveCopilotError('Too many requests. Wait a few minutes.', 'rate_limited');
+      if (r.status === 503) throw new LiveCopilotError('Live AI is not set up here.', 'unavailable');
+      throw new LiveCopilotError(data.message ?? `The request failed (${r.status}).`, 'failed');
+    },
+    [passcode],
+  );
+
+  return { mode, model: status?.model ?? null, needsPasscode, unlock, lock, post, turn };
 }

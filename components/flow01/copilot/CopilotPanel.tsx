@@ -139,7 +139,7 @@ interface Props {
 /** The line under the composer. It always says replies need checking, and it
  *  says which Copilot is answering: the scripted demo, or the live model once
  *  this browser is unlocked. The passcode opens in place, on the same line. */
-function AiNote({ live }: { live?: Props['live'] }) {
+export function AiNote({ live }: { live?: Props['live'] }) {
   const [asking, setAsking] = useState(false);
   const [code, setCode] = useState('');
   const [state, setState] = useState<'idle' | 'checking' | 'wrong' | 'error'>('idle');

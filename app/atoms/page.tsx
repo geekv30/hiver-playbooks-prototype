@@ -836,16 +836,21 @@ export default function ComponentLibrary() {
             </div>
           </Block>
 
-          <Block name="EvalMenu" imp="simulate/EvalMenu" desc="The Evaluate root - four entry cards (Matching emails / Recent conversations / AI scenarios / Custom email).">
+          <Block name="EvalMenu" imp="simulate/EvalMenu" desc="The Evaluate root - an Email | Chat switch over that channel's entry cards (Email: Matching emails / Recent conversations / AI scenarios / Custom email; Chat: Past chats / AI scenarios / Chat as a customer).">
             <Row>
-              <Spec label="settled">
+              <Spec label="email">
                 <div style={{ width: 360 }}>
-                  <EvalMenu onOpen={() => {}} />
+                  <EvalMenu onOpen={() => {}} channel="email" onChannel={() => {}} />
+                </div>
+              </Spec>
+              <Spec label="chat">
+                <div style={{ width: 360 }}>
+                  <EvalMenu onOpen={() => {}} channel="chat" onChannel={() => {}} />
                 </div>
               </Spec>
               <Spec label="fresh result">
                 <div style={{ width: 360 }}>
-                  <EvalMenu onOpen={() => {}} matchFresh matchIsNew />
+                  <EvalMenu onOpen={() => {}} channel="email" onChannel={() => {}} matchFresh matchIsNew />
                 </div>
               </Spec>
             </Row>

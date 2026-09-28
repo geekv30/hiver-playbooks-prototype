@@ -1,0 +1,39 @@
+/* The chat's lines, under ConversationModal's header, on its rhythm: 18px to
+   a hairline, 16px to the content (its .subjectRow + .body). The dialog's
+   .inner already pads the sides. One column: who wrote it, then what they
+   wrote - a transcript to read, not a widget to use. */
+.lines {
+  flex: 1;
+  min-height: 0;
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 16px 0 0;
+  border-top: 1px solid var(--hairline-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+}
+.line {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.who {
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: var(--ls-caption);
+  color: var(--muted);
+}
+.line[data-from='customer'] .who {
+  color: var(--ink-soft);
+}
+.text {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: 22px;
+  letter-spacing: var(--ls-body);
+  color: var(--ink-soft);
+  white-space: pre-wrap;
+}

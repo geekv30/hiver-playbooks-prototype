@@ -1,0 +1,257 @@
+/* ChatSession - one chat evaluation. The flow's panel column: a scrolling
+   transcript, then the composer (manual) or the engine note (auto), then the
+   footer. Spacing follows the email flows: px-18, the list's 20px top pad. */
+
+.session {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 18px; /* Copilot's thread rhythm */
+  padding: 20px 18px 16px;
+}
+
+/* Before the first message: one quiet line, centred in the space. */
+.empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 12px;
+  text-align: center;
+}
+.emptyText {
+  margin: 0;
+  max-width: 300px;
+  font-size: var(--fs-small);
+  line-height: 1.5;
+  letter-spacing: var(--ls-small);
+  color: var(--muted);
+}
+
+/* The customer: right-aligned, as the person typing is in Copilot. */
+.customer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  animation: turnIn var(--d-enter) var(--ease-snap) backwards;
+}
+.customerName {
+  padding: 0 4px;
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  letter-spacing: var(--ls-caption);
+  color: var(--muted);
+}
+
+/* The AI customer is writing: three dots in the customer's own bubble. */
+.typing {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 36px;
+}
+.typing span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--muted-soft);
+  animation: typingDot 1.2s var(--ease-snap) infinite;
+}
+.typing span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.typing span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes typingDot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+  }
+  30% {
+    opacity: 1;
+  }
+}
+
+/* The skill's turn: name, reply, outcome, trace - one column. */
+.skill {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  animation: turnIn var(--d-enter) var(--ease-snap) backwards;
+}
+.skill > * {
+  width: 100%;
+}
+.pillRow {
+  display: flex;
+}
+.skillHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+.skillMark {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: var(--accent);
+}
+.skillName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: var(--ls-caption);
+  color: var(--body);
+}
+
+.replyWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+/* The reply reads as Copilot's does: no bubble, full width. */
+.replyText {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: 22px;
+  letter-spacing: var(--ls-body);
+  color: var(--ink-soft);
+  white-space: pre-wrap;
+}
+.replyMeta {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  letter-spacing: var(--ls-caption);
+  color: var(--muted);
+}
+
+/* A held reply: the customer has not seen it. Quiet fill, the reason first,
+   then the reply, then the one decision. */
+.held {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px 14px;
+  border-radius: 10px;
+  background: var(--surface-soft);
+}
+.heldNote {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: 17px;
+  letter-spacing: var(--ls-caption);
+  color: var(--muted);
+}
+.held .replyText {
+  font-size: var(--fs-small);
+  line-height: 20px;
+}
+
+.declined {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.declinedNote {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  letter-spacing: var(--ls-caption);
+  color: var(--muted);
+}
+.declinedText {
+  margin: 0;
+  font-size: var(--fs-small);
+  line-height: 20px;
+  letter-spacing: var(--ls-small);
+  color: var(--muted-soft);
+  text-decoration: line-through;
+  text-decoration-color: var(--hairline-strong);
+}
+
+/* The conversation's result, once it ends. */
+.summary {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--hairline-soft);
+  border-radius: 10px;
+  background: var(--card);
+  animation: turnIn var(--d-enter) var(--ease-snap) backwards;
+}
+.summaryHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.summaryTitle {
+  font-size: var(--fs-small);
+  line-height: 19px;
+  font-weight: 500;
+  letter-spacing: var(--ls-small);
+  color: var(--ink);
+}
+.summaryMeta {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  letter-spacing: var(--ls-caption);
+  color: var(--muted);
+}
+
+/* Composer: Copilot's, with its note under it. */
+.composerWrap {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 18px 14px;
+}
+.autoNote {
+  flex: none;
+  padding: 0 18px 14px;
+}
+
+@keyframes turnIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .customer,
+  .skill,
+  .summary {
+    animation: none;
+  }
+  .typing span {
+    animation: none;
+    opacity: 0.6;
+  }
+}

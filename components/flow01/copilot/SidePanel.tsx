@@ -49,6 +49,10 @@ interface SimProps {
   scan?: TriggerScan;
   onMatchingSeen?: () => void;
   matchingIsNew?: boolean;
+  doc?: ComponentProps<typeof SimulatePanel>['doc'];
+  live?: ComponentProps<typeof SimulatePanel>['live'];
+  channel?: ComponentProps<typeof SimulatePanel>['channel'];
+  onChannel?: ComponentProps<typeof SimulatePanel>['onChannel'];
 }
 
 interface Props {

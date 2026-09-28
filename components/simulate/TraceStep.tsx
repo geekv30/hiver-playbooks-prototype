@@ -3,6 +3,7 @@
 import { motion, useReducedMotion } from 'motion/react';
 import { RiBrain2Line, RiContactsLine } from 'react-icons/ri';
 import { ACTION_ICON } from '@/components/icons/ui/action-icon-map';
+import { CONNECTOR_ICON } from '@/components/icons/connectors';
 import { SIM_COPY } from '@/data/simFixtures';
 import type { TraceStepDef, StepStatus } from './traceFixture';
 import styles from './TraceStep.module.css';
@@ -23,6 +24,10 @@ interface Props {
 
 function StepIcon({ step }: { step: TraceStepDef }) {
   if (step.kind === 'thinking') return <RiBrain2Line />;
+  if (step.connector) {
+    const Brand = CONNECTOR_ICON[step.connector];
+    return <Brand />;
+  }
   if (step.iconKey === 'contact') return <RiContactsLine />;
   const key = step.kind === 'condition' ? 'condition' : step.iconKey;
   const Icon = key ? ACTION_ICON[key] : undefined;
@@ -50,12 +55,12 @@ export default function TraceStep({ step, status, isLast, runMs, draft, approval
 
   // A thinking step reads "Thinking" while in flight, "Thought for Ns" once done.
   const thoughtSec = Math.max(1, Math.round((runMs ?? step.ms) / 1000));
+  // A step that brings its own label (a live trace) keeps it; the scripted
+  // trace's thinking steps time themselves and its condition reads Categorize.
   const label = isThinking
-    ? status === 'done'
-      ? `Thought for ${thoughtSec}s`
-      : 'Thinking'
+    ? (step.label ?? (status === 'done' ? `Thought for ${thoughtSec}s` : 'Thinking'))
     : isCond
-      ? 'Categorize'
+      ? (step.label ?? 'Categorize')
       : step.label;
 
   return (
@@ -109,7 +114,7 @@ export default function TraceStep({ step, status, isLast, runMs, draft, approval
           )}
           {step.kind === 'action' && status === 'failed' && (
             <motion.div className={styles.errorBox} initial={enter} animate={{ opacity: 1, y: 0 }} transition={spring}>
-              {SIM_COPY.stepError}
+              {step.error ?? SIM_COPY.stepError}
             </motion.div>
           )}
 
