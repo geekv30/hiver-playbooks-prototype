@@ -136,13 +136,16 @@
   background: #ddd6fe;
   color: var(--state-running);
 }
-/* designed tooltip - centered under the button, short open delay */
+/* designed tooltip - under the button, short open delay. Anchored to the
+   button's RIGHT edge so it opens leftward, back over the chip: centered, its
+   hidden nowrap text reached ~130px past a chip near the line's end and gave
+   the whole canvas a sideways scroll, even while invisible. */
 .chipApprove::after {
   content: attr(data-tip);
   position: absolute;
   top: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%) translateY(2px);
+  right: 0;
+  transform: translateY(2px);
   background: var(--ink);
   color: #fff;
   font-size: 11px;
@@ -160,5 +163,5 @@
 }
 .chipApprove:hover::after {
   opacity: 1;
-  transform: translateX(-50%) translateY(0);
+  transform: translateY(0);
 }
