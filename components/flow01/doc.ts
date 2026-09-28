@@ -359,44 +359,111 @@ export function cloneStep(step: Step): Step {
   return { id: newId('step'), body: step.body.map(cloneFrag) };
 }
 
-// --- Copilot apply: generic, append-only document patches -------------------
-// The Copilot can PROPOSE a concrete change; the user reviews it and applies it.
-// A patch is a small list of append-only ops. Append-only on purpose: it is then
-// robust on ANY document state (it never depends on an existing step/branch id),
-// and one patch maps to exactly one undo entry. The ops carry only generic
-// placeholder content (same reusability class as the canned Copilot replies) -
-// no case-specific story is baked into the model.
+// --- Copilot apply: document patches ---------------------------------------
+// The Copilot PROPOSES a concrete change; the user reviews it and applies it,
+// and one patch is exactly one undo entry. The append ops are robust on any
+// document state (they reference nothing). The targeted ops reference an
+// existing step by id - the live Copilot is shown every id and the server
+// rejects a patch naming one that does not exist, and applyDocPatch skips any
+// op whose target has gone (the doc can change between proposal and Apply).
+export interface PatchBranch {
+  type: BranchType;
+  condition?: Fragment[];
+  /** One action line. Kept for the scripted proposals. */
+  body?: Fragment[];
+  /** Several action lines; wins over `body` when both are set. */
+  lines?: Fragment[][];
+}
+
 export type DocPatchOp =
   | { op: 'appendStep'; body: Fragment[] }
-  | {
-      op: 'appendCondition';
-      branches: Array<{ type: BranchType; condition?: Fragment[]; body: Fragment[] }>;
-    };
+  | { op: 'appendCondition'; branches: PatchBranch[] }
+  /** afterId null = before the first step. */
+  | { op: 'insertStep'; afterId: string | null; body: Fragment[] }
+  | { op: 'insertCondition'; afterId: string | null; branches: PatchBranch[] }
+  | { op: 'replaceStep'; id: string; body: Fragment[] }
+  | { op: 'replaceCondition'; id: string; branches: PatchBranch[] }
+  | { op: 'removeStep'; id: string }
+  | { op: 'setTrigger'; body: Fragment[] }
+  | { op: 'setTitle'; title: string };
 
 export type DocPatch = DocPatchOp[];
 
-// Apply a patch, returning a NEW doc. A trailing empty line is dropped before
-// appending so the inserted steps land in order; the reducer's withTrailingEmpty
-// then re-adds an empty line only if the patch ends in a condition block. Meant to
-// be committed through useEditorDoc.applyPatch (one history entry per patch).
-export function applyDocPatch(doc: EditorDoc, patch: DocPatch): EditorDoc {
-  const steps: Step[] = [...doc.steps];
-  const last = steps[steps.length - 1];
-  if (last && !isCondition(last) && lineIsEmpty(last.body)) steps.pop();
-  for (const op of patch) {
-    if (op.op === 'appendStep') {
-      steps.push({ id: newId('step'), body: normalizeLine(op.body) });
-    } else {
-      const branches: Branch[] = op.branches.map((b) => ({
+function buildCondition(branches: PatchBranch[], id = newId('cond')): ConditionStep {
+  return {
+    id,
+    kind: 'condition',
+    branches: branches.map((b) => {
+      const bodies = b.lines && b.lines.length > 0 ? b.lines : [b.body ?? [txt('')]];
+      return {
         id: newId('branch'),
         type: b.type,
         condition: b.type === 'else' ? undefined : normalizeLine(b.condition ?? [txt('')]),
-        lines: [{ id: newId('bline'), body: normalizeLine(b.body) }],
-      }));
-      steps.push({ id: newId('cond'), kind: 'condition', branches });
+        lines: bodies.map((body) => ({ id: newId('bline'), body: normalizeLine(body) })),
+      };
+    }),
+  };
+}
+
+// Apply a patch, returning a NEW doc. A trailing empty line is dropped first so
+// appended steps land in order; the reducer's withTrailingEmpty re-adds it.
+// Meant to be committed through useEditorDoc.applyPatch (one history entry).
+export function applyDocPatch(doc: EditorDoc, patch: DocPatch): EditorDoc {
+  let steps: Step[] = [...doc.steps];
+  let trigger = doc.trigger;
+  let title = doc.title;
+  const last = steps[steps.length - 1];
+  const hadTrailing = !!last && !isCondition(last) && lineIsEmpty(last.body);
+  if (hadTrailing) steps.pop();
+  const at = (id: string) => steps.findIndex((s) => s.id === id);
+  const insertAt = (afterId: string | null) => {
+    if (afterId === null) return 0;
+    const i = at(afterId);
+    return i < 0 ? steps.length : i + 1;
+  };
+  for (const op of patch) {
+    switch (op.op) {
+      case 'appendStep':
+        steps.push({ id: newId('step'), body: normalizeLine(op.body) });
+        break;
+      case 'appendCondition':
+        steps.push(buildCondition(op.branches));
+        break;
+      case 'insertStep':
+        steps.splice(insertAt(op.afterId), 0, { id: newId('step'), body: normalizeLine(op.body) });
+        break;
+      case 'insertCondition':
+        steps.splice(insertAt(op.afterId), 0, buildCondition(op.branches));
+        break;
+      case 'replaceStep': {
+        const i = at(op.id);
+        if (i >= 0) steps[i] = { id: op.id, body: normalizeLine(op.body) };
+        break;
+      }
+      case 'replaceCondition': {
+        const i = at(op.id);
+        if (i >= 0) steps[i] = buildCondition(op.branches, op.id);
+        break;
+      }
+      case 'removeStep':
+        steps = steps.filter((s) => s.id !== op.id);
+        break;
+      case 'setTrigger':
+        trigger = normalizeLine(op.body);
+        break;
+      case 'setTitle':
+        if (op.title.trim()) title = op.title.trim();
+        break;
     }
   }
-  return { ...doc, steps };
+  // Keep the always-present "write the next step" line where it was, and never
+  // leave a skill with no line at all to type into.
+  const tail = steps[steps.length - 1];
+  if (hadTrailing && !(tail && !isCondition(tail) && lineIsEmpty(tail.body))) {
+    steps.push({ id: newId('step'), body: [txt('')] });
+  }
+  if (steps.length === 0) steps.push({ id: newId('step'), body: [txt('')] });
+  return { ...doc, title, trigger, steps };
 }
 
 // Built AFTER the fragment helpers above are initialized (the helpers are

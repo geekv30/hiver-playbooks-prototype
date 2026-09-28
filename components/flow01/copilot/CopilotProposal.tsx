@@ -1,6 +1,6 @@
 'use client';
 
-import { RiAddLine, RiCheckLine, RiArrowGoBackLine } from 'react-icons/ri';
+import { RiAddLine, RiCheckLine, RiArrowGoBackLine, RiSubtractLine } from 'react-icons/ri';
 import Button from '@/components/atoms/Button';
 import styles from './CopilotProposal.module.css';
 
@@ -10,6 +10,9 @@ interface Props {
   title: string;
   /** One line per change the proposal will make (generic, no case-specific prose). */
   summary: string[];
+  /** Steps this change deletes, written by the editor from the patch itself
+   *  rather than trusted to the summary - a deletion is never applied unseen. */
+  removals?: string[];
   state: ProposalState;
   onApply: () => void;
   onDismiss: () => void;
@@ -24,7 +27,7 @@ interface Props {
  * settles to a compact confirmation (Applied + Undo, or Dismissed) - never a dead
  * card. One renderer for every Copilot proposal.
  */
-export default function CopilotProposal({ title, summary, state, onApply, onDismiss, onUndo }: Props) {
+export default function CopilotProposal({ title, summary, removals = [], state, onApply, onDismiss, onUndo }: Props) {
   if (state === 'applied') {
     return (
       <div className={styles.settled} role="status">
@@ -61,6 +64,14 @@ export default function CopilotProposal({ title, summary, state, onApply, onDism
               <RiAddLine />
             </span>
             <span className={styles.itemText}>{line}</span>
+          </li>
+        ))}
+        {removals.map((line) => (
+          <li key={`rm-${line}`} className={styles.item} data-remove>
+            <span className={styles.bullet} aria-hidden>
+              <RiSubtractLine />
+            </span>
+            <span className={styles.itemText}>Removes &ldquo;{line}&rdquo;</span>
           </li>
         ))}
       </ul>

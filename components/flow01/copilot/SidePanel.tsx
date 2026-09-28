@@ -1,5 +1,6 @@
 'use client';
 
+import type { ComponentProps } from 'react';
 import PanelTabs, { type SideTab } from './PanelTabs';
 import CopilotPanel, { type CopilotMessage } from './CopilotPanel';
 import SimulatePanel from '@/components/simulate/SimulatePanel';
@@ -13,6 +14,8 @@ export type { SideTab };
 
 interface CopilotProps {
   messages: CopilotMessage[];
+  /** The live model's state and its unlock / turn-off actions. */
+  live?: ComponentProps<typeof CopilotPanel>['live'];
   onSend: (text: string) => void;
   onRegenerate?: () => void;
   onClear?: () => void;

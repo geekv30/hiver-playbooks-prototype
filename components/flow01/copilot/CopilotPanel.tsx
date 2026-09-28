@@ -50,6 +50,8 @@ const FOLLOWUPS = ['Make it foolproof', 'Add a fallback branch', 'Explain this s
 export interface CopilotProposalData {
   title: string;
   summary: string[];
+  /** Steps the patch deletes, as short excerpts (see CopilotProposal). */
+  removals?: string[];
   patch: DocPatch;
 }
 
@@ -122,6 +124,122 @@ interface Props {
   /** The live trigger scan: drives the handoff line in the thread AND the
    *  unprompted hint on the empty screen (a skill scanned quietly on open). */
   scanState?: ScanNoteState;
+  /** The live model: whether this deploy has one and this browser is unlocked.
+   *  Absent or 'unavailable' keeps the plain disclaimer. */
+  live?: {
+    mode: 'unavailable' | 'locked' | 'live';
+    model: string | null;
+    onUnlock: (passcode: string) => Promise<'ok' | 'wrong' | 'error'>;
+    onLock: () => void;
+  };
+}
+
+/** The line under the composer. It always says replies need checking, and it
+ *  says which Copilot is answering: the scripted demo, or the live model once
+ *  this browser is unlocked. The passcode opens in place, on the same line. */
+function AiNote({ live }: { live?: Props['live'] }) {
+  const [asking, setAsking] = useState(false);
+  const [code, setCode] = useState('');
+  const [state, setState] = useState<'idle' | 'checking' | 'wrong' | 'error'>('idle');
+  const fieldRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (asking) fieldRef.current?.focus();
+  }, [asking]);
+
+  if (!live || live.mode === 'unavailable') {
+    return <p className={styles.aiNote}>Uses AI, please verify results</p>;
+  }
+  if (live.mode === 'live') {
+    return (
+      <p className={styles.aiNote}>
+        <span className={styles.liveDot} aria-hidden />
+        Live AI, please verify results
+        <span className={styles.noteSep} aria-hidden>
+          &middot;
+        </span>
+        <button type="button" className={styles.noteLink} onClick={live.onLock}>
+          Turn off
+        </button>
+      </p>
+    );
+  }
+  if (!asking) {
+    return (
+      <p className={styles.aiNote}>
+        Scripted demo replies
+        <span className={styles.noteSep} aria-hidden>
+          &middot;
+        </span>
+        <button type="button" className={styles.noteLink} onClick={() => setAsking(true)}>
+          Use live AI
+        </button>
+      </p>
+    );
+  }
+  const submit = async () => {
+    if (!code.trim() || state === 'checking') return;
+    setState('checking');
+    const r = await live.onUnlock(code.trim());
+    if (r === 'ok') {
+      setAsking(false);
+      setCode('');
+      setState('idle');
+    } else {
+      setState(r);
+      fieldRef.current?.select();
+    }
+  };
+  return (
+    <form
+      className={styles.unlock}
+      onSubmit={(e) => {
+        e.preventDefault();
+        void submit();
+      }}
+    >
+      <input
+        ref={fieldRef}
+        className={styles.unlockField}
+        type="password"
+        autoComplete="off"
+        placeholder="Passcode"
+        aria-label="Live AI passcode"
+        value={code}
+        data-wrong={state === 'wrong' || undefined}
+        onChange={(e) => {
+          setCode(e.target.value);
+          if (state !== 'checking') setState('idle');
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') {
+            setAsking(false);
+            setCode('');
+            setState('idle');
+          }
+        }}
+      />
+      <button type="submit" className={styles.unlockGo} disabled={!code.trim() || state === 'checking'}>
+        {state === 'checking' ? 'Checking' : 'Unlock'}
+      </button>
+      <button
+        type="button"
+        className={styles.unlockX}
+        aria-label="Cancel"
+        onClick={() => {
+          setAsking(false);
+          setCode('');
+          setState('idle');
+        }}
+      >
+        <RiCloseLine />
+      </button>
+      {state !== 'idle' && state !== 'checking' && (
+        <span className={styles.unlockMsg} role="alert">
+          {state === 'wrong' ? 'That passcode did not match.' : 'Could not check it. Try again.'}
+        </span>
+      )}
+    </form>
+  );
 }
 
 /** Copy-to-clipboard affordance on an assistant message (icon swaps to a check). */
@@ -247,6 +365,7 @@ export default function CopilotPanel({
   onMailboxAnswer,
   onOpenEvaluation,
   scanState,
+  live,
 }: Props) {
   const [value, setValue] = useState('');
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -339,7 +458,7 @@ export default function CopilotPanel({
   const composer = (
     <div className={styles.composerWrap}>
       {field}
-      <p className={styles.aiNote}>Uses AI, please verify results</p>
+      <AiNote live={live} />
     </div>
   );
 
@@ -435,6 +554,7 @@ export default function CopilotPanel({
                               <CopilotProposal
                                 title={m.proposal.title}
                                 summary={m.proposal.summary}
+                                removals={m.proposal.removals}
                                 state={proposalState}
                                 onApply={() => onApplyProposal(i)}
                                 onDismiss={() => onDismissProposal(i)}
