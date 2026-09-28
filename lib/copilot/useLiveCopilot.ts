@@ -13,6 +13,9 @@ import type { EditorDoc } from '@/components/flow01/doc';
 import type { WireProposal } from './wire';
 
 const KEY = 'hiver.copilot.passcode';
+// "Turn off", remembered per browser - separate from the passcode, so it works
+// where no passcode is needed and turning back on never re-asks for one.
+const OFF_KEY = 'hiver.copilot.off';
 
 export type LiveMode = 'unavailable' | 'locked' | 'live';
 
@@ -25,6 +28,8 @@ export interface LiveTurnResult {
 export interface LiveCopilot {
   mode: LiveMode;
   model: string | null;
+  /** Turning live on needs the passcode field (none needed, or already held: no). */
+  needsPasscode: boolean;
   unlock: (passcode: string) => Promise<'ok' | 'wrong' | 'error'>;
   lock: () => void;
   turn: (args: {
@@ -49,20 +54,24 @@ export class LiveCopilotError extends Error {
 // hydration (the server snapshot is null), and every hook instance sees a
 // change the moment one of them locks or unlocks.
 const listeners = new Set<() => void>();
-function readStored(): string | null {
+function read(key: string): string | null {
   try {
-    return window.localStorage.getItem(KEY);
+    return window.localStorage.getItem(key);
   } catch {
     return null;
   }
 }
-function writeStored(v: string | null) {
+function write(key: string, v: string | null) {
   try {
-    if (v === null) window.localStorage.removeItem(KEY);
-    else window.localStorage.setItem(KEY, v);
+    if (v === null) window.localStorage.removeItem(key);
+    else window.localStorage.setItem(key, v);
   } catch {}
   listeners.forEach((l) => l());
 }
+const readStored = () => read(KEY);
+const writeStored = (v: string | null) => write(KEY, v);
+const readOff = () => read(OFF_KEY) === '1';
+const writeOff = (off: boolean) => write(OFF_KEY, off ? '1' : null);
 function subscribe(l: () => void) {
   listeners.add(l);
   return () => listeners.delete(l);
@@ -71,6 +80,7 @@ function subscribe(l: () => void) {
 export function useLiveCopilot(): LiveCopilot {
   const [status, setStatus] = useState<{ configured: boolean; passcodeRequired: boolean; model: string | null } | null>(null);
   const passcode = useSyncExternalStore(subscribe, readStored, () => null);
+  const off = useSyncExternalStore(subscribe, readOff, () => false);
 
   useEffect(() => {
     let alive = true;
@@ -85,13 +95,16 @@ export function useLiveCopilot(): LiveCopilot {
     };
   }, []);
 
-  const mode: LiveMode = !status?.configured
-    ? 'unavailable'
-    : status.passcodeRequired && !passcode
-      ? 'locked'
-      : 'live';
+  const needsPasscode = !!status?.passcodeRequired && !passcode;
+  const mode: LiveMode = !status?.configured ? 'unavailable' : off || needsPasscode ? 'locked' : 'live';
 
+  // Turning live on: straight back on when no passcode is needed or this
+  // browser already holds one; otherwise check the code first.
   const unlock = useCallback(async (code: string) => {
+    if (!needsPasscode) {
+      writeOff(false);
+      return 'ok' as const;
+    }
     try {
       const r = await fetch('/api/copilot/unlock', {
         method: 'POST',
@@ -100,15 +113,17 @@ export function useLiveCopilot(): LiveCopilot {
       });
       if (r.ok) {
         writeStored(code);
+        writeOff(false);
         return 'ok';
       }
       return r.status === 401 ? 'wrong' : 'error';
     } catch {
       return 'error';
     }
-  }, []);
+  }, [needsPasscode]);
 
-  const lock = useCallback(() => writeStored(null), []);
+  // "Turn off" keeps the passcode, so turning back on is one click.
+  const lock = useCallback(() => writeOff(true), []);
 
   const turn = useCallback<LiveCopilot['turn']>(
     async ({ doc, history, message, signal, onText }) => {
@@ -158,5 +173,5 @@ export function useLiveCopilot(): LiveCopilot {
     [passcode],
   );
 
-  return { mode, model: status?.model ?? null, unlock, lock, turn };
+  return { mode, model: status?.model ?? null, needsPasscode, unlock, lock, turn };
 }
