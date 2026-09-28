@@ -39,8 +39,9 @@ interface Props {
   /** Hide the title + status here (when the skill identity moves onto a canvas
    *  header). The Back button stays. */
   hideIdentity?: boolean;
-  /** Runs in the last 30 days. Undefined hides the control entirely (a skill
-   *  that has never been live has no history to offer). */
+  /** How many runs the history holds. It is read off the clock, so it is only
+   *  known in the browser: undefined renders the control without a number
+   *  (the prerendered page), and the control itself follows onToggleRuns. */
   runCount?: number;
   /** Whether the page is currently showing Runs instead of the editor. */
   runsOpen?: boolean;
@@ -110,9 +111,9 @@ export default function Toolbar({
       </div>
 
       <div className={styles.right}>
-        {!runsOpen && runCount !== undefined && onToggleRuns && (
+        {!runsOpen && onToggleRuns && (
           <Button variant="secondary" iconLeft={<RiPulseLine />} onClick={onToggleRuns}>
-            Runs <span className={styles.runsN}>{runCount}</span>
+            Runs {runCount !== undefined && <span className={styles.runsN}>{runCount}</span>}
           </Button>
         )}
         {!runsOpen && !hideSimulate && (
