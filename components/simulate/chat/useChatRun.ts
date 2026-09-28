@@ -317,7 +317,13 @@ export function useChatRun({ doc, live, onRunRecorded }: Options) {
         if (ctrl.signal.aborted) return;
         commit([
           ...itemsRef.current,
-          { kind: 'agent', id: nid('agent'), status: 'error', error: e instanceof LiveCopilotError ? e.message : 'The AI customer could not reply.' },
+          {
+            kind: 'agent',
+            id: nid('agent'),
+            status: 'error',
+            error: e instanceof LiveCopilotError ? e.message : 'The AI customer could not reply.',
+            quota: e instanceof LiveCopilotError && e.kind === 'quota',
+          },
         ]);
         void finish();
       }
