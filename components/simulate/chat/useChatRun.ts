@@ -215,6 +215,10 @@ export function useChatRun({ doc, live, onRunRecorded }: Options) {
   const finish = useCallback(async () => {
     abort.current?.abort();
     abort.current = null;
+    // A turn cut off by Stop never answered: drop it, or its typing dots stay
+    // on under "Chat ended".
+    const pending = itemsRef.current.filter((it) => it.kind === 'agent' && it.status === 'running');
+    if (pending.length) commit(itemsRef.current.filter((it) => !pending.includes(it)));
     if (recorded.current) {
       setPhase('ended');
       return;
@@ -247,7 +251,7 @@ export function useChatRun({ doc, live, onRunRecorded }: Options) {
     setPhase('ended');
     if (judged?.verdict === 'unresolved') outcomes.push('attention');
     if (outcomes.length > 0) ctx.current.onRunRecorded?.([worstOutcome(outcomes)]);
-  }, []);
+  }, [commit]);
 
   /** The AI customer's next message, and whether they are done. */
   const customerTurn = useCallback(async (sc: ChatScenario, signal: AbortSignal): Promise<CustomerTurnWire> => {
