@@ -173,6 +173,24 @@
   --run-bar-declined: #e2e8f0;
   --run-grid: #edf1f6;
 
+  /* ===== Skills-ai DLS neutrals + accents (Figma CDekAHIDQiVgcfZjKR2yck,
+     Table 3535:86229). The newer screens are drawn on a warm neutral scale,
+     not the cool Gray ramp above; these carry the exact variable values. */
+  --text-strong: #171717; /* text/neutral/strong */
+  --text-default: #404040; /* text/neutral/default */
+  --text-soft: #737373; /* text/neutral/soft */
+  --border-subtle: #eeeeee; /* border/neutral/subtle */
+  --bg-subtle: #fafafa; /* background/neutral/subtle */
+  --badge-gray-bg: #eeeeee; /* background/accents/gray/soft */
+  --badge-gray-border: #d4d4d4; /* border/accents/gray/default */
+  --badge-gray-ink: #404040; /* text/accents/gray/default */
+  --badge-green-bg: #f0fdf4; /* background/accents/green/subtle */
+  --badge-green-border: #86efac; /* border/accents/green/default */
+  --badge-green-ink: #166534; /* text/accents/green/intense */
+  --tag-blue-bg: #eff6ff; /* background/accents/blue/subtle */
+  --tag-blue-border: #bfdbfe; /* border/accents/blue/soft */
+  --tag-blue-ink: #1e40af; /* text/accents/blue/intense */
+
   /* ===== Hiver tint (accent only - CTA, focus, active) ===== */
   --primary: #e15524;
   --primary-hover: #c8431c;

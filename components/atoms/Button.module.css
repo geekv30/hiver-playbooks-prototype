@@ -76,6 +76,17 @@
   background: var(--accent-hover);
 }
 
+/* Danger — the confirm step of a destructive action (Delete skill). Same
+   footprint as accent so it can sit in the same modal footer. */
+.danger {
+  background: var(--state-error);
+  color: #fff;
+}
+.danger:hover,
+.danger:active {
+  background: #b91c1c;
+}
+
 /* Tertiary — ghost. */
 .tertiary {
   background: transparent;

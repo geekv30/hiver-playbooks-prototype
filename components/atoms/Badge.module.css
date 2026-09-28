@@ -63,3 +63,29 @@
   line-height: 19px;
   padding: 2px 7px;
 }
+
+/* Skills-ai DLS Badge (Figma 5785:9659) - the outlined pill the Skills table
+   uses for deployment status and the "+N more" count. 22px tall, 1px border,
+   12/18 medium. Longhand borders: the `border:` shorthand with a var() colour
+   mis-compiles under Turbopack (see ModalShell.module.css). */
+.gray,
+.green {
+  height: 22px;
+  min-height: 22px;
+  padding: 0 8px;
+  border-width: 1px;
+  border-style: solid;
+  font-size: var(--fs-caption); /* 12px */
+  line-height: 18px;
+  letter-spacing: 0;
+}
+.gray {
+  background: var(--badge-gray-bg);
+  border-color: var(--badge-gray-border);
+  color: var(--badge-gray-ink);
+}
+.green {
+  background: var(--badge-green-bg);
+  border-color: var(--badge-green-border);
+  color: var(--badge-green-ink);
+}

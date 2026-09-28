@@ -335,94 +335,6 @@
   display: block;
 }
 
-/* ---- Table (both states) ---- */
-/* `flex: none` matters: `overflow: hidden` (needed for the rounded corners)
-   resolves this flex item's min-height to 0, so without it the table shrinks
-   inside the scrolling column and clips its own rows instead of the column
-   scrolling. */
-.table {
-  flex: none;
-  display: flex;
-  flex-direction: column;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid var(--hairline-soft); /* #eceff6 */
-}
-.tableHead {
-  display: flex;
-  gap: 20px;
-  padding: 16px 28px;
-  background: var(--surface-soft); /* #f6f8fc */
-  border-bottom: 1px solid var(--hairline-soft);
-  font-size: 12px;
-  line-height: 14px;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-  color: #4d596c;
-}
-.colMain {
-  flex: 1;
-  min-width: 0;
-}
-.colEnd {
-  flex: none;
-  width: 120px;
-  text-align: right;
-}
-
-/* Runs cell. The column that used to say "Last run" and never could - now the
-   entry point into a skill's execution history. Count and outcome mix in one
-   glance; the last-run time keeps its place beside the count. */
-.colRuns {
-  flex: none;
-  width: 152px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  align-items: stretch;
-}
-.runsCell {
-  border: 0;
-  background: none;
-  padding: 4px 6px;
-  margin: -4px -6px;
-  border-radius: var(--r-md);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  transition: background var(--d-hover) var(--ease-snap);
-}
-.runsCell:hover { background: var(--surface-card); }
-.runsCell:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; }
-
-.runsTop {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-}
-.runsN {
-  font-size: var(--fs-small);
-  line-height: 19px;
-  font-weight: 500;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-}
-.runsLast {
-  font-size: var(--fs-micro);
-  line-height: 1.3;
-  color: var(--muted-soft);
-  white-space: nowrap;
-}
-.runsNone {
-  font-size: var(--fs-small);
-  line-height: 19px;
-  color: var(--muted-soft);
-}
-
 /* Empty state body (Figma 1773:18290) */
 .emptyBody {
   display: flex;
@@ -454,117 +366,116 @@
   color: var(--ink);
 }
 
-/* Rows (Figma h76, border #eceff6) */
-.rows {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-}
-.row {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  height: 76px;
-  padding: 0 28px;
-  border-bottom: 1px solid var(--hairline-soft);
-  cursor: pointer;
-  transition: background var(--d-hover) var(--ease-snap);
-}
-.rows li:last-child .row {
-  border-bottom: none;
-}
-.row:hover {
-  background: var(--surface-soft);
-}
-.row:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
-.cellAop {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-}
-.aopText {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.aopName {
-  font-size: var(--fs-small); /* 13px */
+/* ---- Skills table cells (Figma 3535:86229) - the frame, header and rows
+   are the shared Table atom; these are only what goes inside a cell. ---- */
+.skillName {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
   font-weight: 500;
-  line-height: 19px;
-  letter-spacing: -0.065px;
-  color: var(--body); /* #3e4c5a */
+  color: var(--text-strong);
+  text-decoration: none;
 }
-.aopDesc {
-  font-size: var(--fs-small); /* 13px */
-  line-height: 19px;
-  letter-spacing: -0.065px;
-  color: #4d596c;
+.skillName:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.soft {
+  color: var(--text-soft);
+}
+.default {
+  color: var(--text-default);
+}
+
+/* Mailbox tags (DLS Tags 5785:8943): blue subtle, 6px radius, capped at 96px
+   so three mailboxes never push the column wide. */
+.tags {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.tag {
+  display: inline-flex;
+  align-items: center;
+  max-width: 96px;
+  max-height: 22px;
+  padding: 1px 6px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--tag-blue-border);
+  border-radius: 6px;
+  background: var(--tag-blue-bg);
+  font-weight: 500;
+  color: var(--tag-blue-ink);
+}
+.tagText {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.cellMapped {
+
+/* Skill history: count over the outcome rule, 103px wide (Figma 3567:17849).
+   A button - it opens this skill's runs. */
+.history {
   display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-/* Mailbox chip (Figma: #f0f3ff bg, #196fe0 13 medium, 20px avatar) */
-.mbChip {
-  display: inline-flex;
-  align-items: center;
+  flex-direction: column;
   gap: 6px;
-  padding: 2px 8px 2px 4px;
-  border-radius: 6px;
-  background: #f0f3ff;
-  font-size: var(--fs-small); /* 13px */
-  font-weight: 500;
-  line-height: 19px;
-  letter-spacing: -0.065px;
-  color: #196fe0;
+  width: 103px;
 }
-.mbChipAvatar {
+.historyBtn {
+  padding: 4px 6px;
+  margin: -4px -6px;
+  box-sizing: content-box;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap);
+}
+.historyBtn:hover {
+  background: var(--border-subtle);
+}
+.historyBtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+}
+.historyN {
+  font-weight: 500;
+  color: var(--text-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Row delete (DLS IconButton 32, 16px glyph, foreground/neutral-bold/soft). */
+.iconBtn {
   display: grid;
   place-items: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--accent-bg);
-  color: var(--accent);
-  font-size: 11px;
-  font-weight: 600;
-}
-.mbChipMore {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
   border-radius: 6px;
-  background: #f0f3ff;
-  font-size: var(--fs-small);
-  font-weight: 500;
-  line-height: 19px;
-  letter-spacing: -0.065px;
-  color: #196fe0;
+  background: none;
+  color: var(--text-default);
+  cursor: pointer;
+  transition:
+    background var(--d-hover) var(--ease-snap),
+    color var(--d-hover) var(--ease-snap);
 }
-.unassigned {
-  font-size: var(--fs-small); /* 13px */
-  line-height: 19px;
-  letter-spacing: -0.065px;
-  color: var(--muted-soft); /* #97a3b7 */
+.iconBtn svg {
+  width: 16px;
+  height: 16px;
 }
-.cellTime {
-  font-size: var(--fs-small); /* 13px */
-  line-height: 19px;
-  letter-spacing: -0.065px;
-  color: var(--body);
+.iconBtn:hover {
+  background: var(--border-subtle);
+  color: var(--state-error);
 }
-.cellTime[data-muted] {
-  color: var(--muted-soft);
+.iconBtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
 }

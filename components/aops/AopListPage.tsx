@@ -15,14 +15,17 @@ import {
   RiSettings3Line,
   RiArrowDownSLine,
   RiAddLine,
+  RiDeleteBinLine,
 } from 'react-icons/ri';
 import GmailBar from '@/components/flow01/GmailBar';
 import OutcomeBar from '@/components/runs/OutcomeBar';
 import { countBy } from '@/components/runs/runsModel';
-import { NOW, RUN_SOURCES, runsInLastDays } from '@/data/runFixtures';
+import { NOW, RUN_SOURCES, runsForSkill, runsInLastDays } from '@/data/runFixtures';
 import { mailboxName } from '@/data/mailboxes';
 import { useIsClient } from '@/components/runs/useIsClient';
-import Toggle from '@/components/atoms/Toggle';
+import Badge from '@/components/atoms/Badge';
+import Table, { type TableColumn } from '@/components/atoms/Table';
+import DeleteSkillModal from './DeleteSkillModal';
 import { SparkleIcon } from '@/components/icons/ui';
 import styles from './AopListPage.module.css';
 
@@ -34,7 +37,6 @@ import styles from './AopListPage.module.css';
 interface AopRow {
   id: string;
   name: string;
-  desc: string;
   active: boolean;
   mailboxes: string[];
   more?: number;
@@ -45,7 +47,6 @@ interface AopRow {
 const SEED_ROWS: AopRow[] = RUN_SOURCES.map((s) => ({
   id: s.skillId,
   name: s.skillName,
-  desc: s.description,
   active: s.status === 'active',
   mailboxes: s.mailboxes.map(mailboxName),
   more: s.moreMailboxes,
@@ -105,8 +106,98 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
   const inactiveCount = rows.length - activeCount;
   const showEmpty = rows.length === 0;
 
-  const toggleRow = (id: string, next: boolean) =>
-    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, active: next } : r)));
+  const [pendingDelete, setPendingDelete] = useState<AopRow | null>(null);
+  const deleteRow = (id: string) => setRows((prev) => prev.filter((r) => r.id !== id));
+
+  const columns: TableColumn<AopRow>[] = [
+    {
+      id: 'skill',
+      header: 'Skills',
+      grow: true,
+      cell: (row) => (
+        <Link href={row.href} className={styles.skillName}>
+          {row.name}
+        </Link>
+      ),
+    },
+    {
+      id: 'status',
+      header: 'Deployment status',
+      cell: (row) =>
+        row.active ? <Badge intent="green">Active</Badge> : <Badge intent="gray">Inactive</Badge>,
+    },
+    {
+      id: 'mapped',
+      header: 'Mapped to',
+      cell: (row) =>
+        row.mailboxes.length > 0 ? (
+          <span className={styles.tags}>
+            {row.mailboxes.map((mb) => (
+              <span key={mb} className={styles.tag} title={mb}>
+                <span className={styles.tagText}>{mb}</span>
+              </span>
+            ))}
+            {row.more ? <Badge intent="gray">+{row.more}</Badge> : null}
+          </span>
+        ) : (
+          <span className={styles.soft}>Unassigned</span>
+        ),
+    },
+    {
+      id: 'history',
+      header: 'Skill history · 30d',
+      cell: (row) => {
+        // Client-only: the counts are read off the clock (see isClient).
+        if (!isClient) return <span className={styles.history} />;
+        // "No runs yet" only for a skill that has never run; one that went quiet
+        // this month shows 0 over an empty rule, beside its real last run.
+        if (runsForSkill(row.id).length === 0) return <span className={styles.soft}>No runs yet</span>;
+        const runs = runsInLastDays(row.id, 30);
+        return (
+          <button
+            type="button"
+            className={`${styles.history} ${styles.historyBtn}`}
+            onClick={() =>
+              router.push(row.id === 'api-error-triage' ? `${row.href}/runs` : `/aops/runs?skill=${row.id}`)
+            }
+            aria-label={`${runs.length} runs in the last 30 days for ${row.name}`}
+          >
+            <span className={styles.historyN}>{runs.length}</span>
+            <OutcomeBar counts={countBy(runs)} />
+          </button>
+        );
+      },
+    },
+    {
+      id: 'lastRun',
+      header: 'Last run',
+      cell: (row) => {
+        if (!isClient) return null;
+        const last = runsForSkill(row.id)[0];
+        return last ? (
+          <span className={styles.default}>{sinceLabel(last.startedAt)}</span>
+        ) : (
+          <span className={styles.soft}>Never</span>
+        );
+      },
+    },
+    { id: 'updated', header: 'Last updated', cell: (row) => row.lastUpdated },
+    {
+      id: 'actions',
+      srHeader: 'Actions',
+      actions: true,
+      cell: (row) => (
+        <button
+          type="button"
+          className={styles.iconBtn}
+          onClick={() => setPendingDelete(row)}
+          aria-label={`Delete ${row.name}`}
+        >
+          <RiDeleteBinLine aria-hidden />
+        </button>
+      ),
+    },
+  ];
 
   return (
     <div className={styles.page}>
@@ -223,115 +314,45 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
                 </span>
               </section>
 
-              <section className={styles.table}>
-                <div className={styles.tableHead}>
-                  <span className={styles.colMain}>Skill</span>
-                  <span className={styles.colMain}>Mapped to</span>
-                  <span className={styles.colRuns}>Runs &middot; 30d</span>
-                  <span className={styles.colEnd}>Last updated</span>
-                </div>
-                <div className={styles.emptyBody}>
-                  <span className={styles.emptyArt} aria-hidden>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/aop-empty-illustration.png" alt="" />
-                  </span>
-                  <p className={styles.emptyTitle}>Create your first skill</p>
-                  <Link href="/aops/new" className={styles.newBtn}>
-                    <RiAddLine aria-hidden />
-                    Create New
-                  </Link>
-                </div>
-              </section>
+              <Table
+                ariaLabel="Skills"
+                columns={columns}
+                rows={rows}
+                rowKey={(r) => r.id}
+                empty={
+                  <div className={styles.emptyBody}>
+                    <span className={styles.emptyArt} aria-hidden>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/aop-empty-illustration.png" alt="" />
+                    </span>
+                    <p className={styles.emptyTitle}>Create your first skill</p>
+                    <Link href="/aops/new" className={styles.newBtn}>
+                      <RiAddLine aria-hidden />
+                      Create New
+                    </Link>
+                  </div>
+                }
+              />
             </>
           ) : (
-            <section className={styles.table}>
-              <div className={styles.tableHead}>
-                <span className={styles.colMain}>Skill</span>
-                <span className={styles.colMain}>Mapped to</span>
-                <span className={styles.colRuns}>Runs &middot; 30d</span>
-                <span className={styles.colEnd}>Last updated</span>
-              </div>
-              <ul className={styles.rows}>
-                {rows.map((row) => (
-                  <li key={row.id}>
-                    <div
-                      className={styles.row}
-                      role="link"
-                      tabIndex={0}
-                      onClick={() => router.push(row.href)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          router.push(row.href);
-                        }
-                      }}
-                    >
-                      <div className={`${styles.colMain} ${styles.cellAop}`}>
-                        <Toggle
-                          checked={row.active}
-                          onChange={(next) => toggleRow(row.id, next)}
-                          ariaLabel={`${row.active ? 'Deactivate' : 'Activate'} ${row.name}`}
-                        />
-                        <span className={styles.aopText}>
-                          <span className={styles.aopName}>{row.name}</span>
-                          <span className={styles.aopDesc}>{row.desc}</span>
-                        </span>
-                      </div>
-                      <div className={`${styles.colMain} ${styles.cellMapped}`}>
-                        {row.mailboxes.length > 0 ? (
-                          <>
-                            {row.mailboxes.map((mb) => (
-                              <span key={mb} className={styles.mbChip}>
-                                <span className={styles.mbChipAvatar}>{mb.slice(0, 1)}</span>
-                                {mb}
-                              </span>
-                            ))}
-                            {row.more ? <span className={styles.mbChipMore}>+{row.more}</span> : null}
-                          </>
-                        ) : (
-                          <span className={styles.unassigned}>unassigned</span>
-                        )}
-                      </div>
-                      <div className={styles.colRuns}>
-                        {(() => {
-                          const runs = isClient ? runsInLastDays(row.id, 30) : [];
-                          if (!isClient) return <span className={styles.runsNone} />;
-                          if (runs.length === 0) {
-                            return <span className={styles.runsNone}>No runs yet</span>;
-                          }
-                          return (
-                            <button
-                              type="button"
-                              className={styles.runsCell}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                router.push(
-                                  row.id === 'api-error-triage'
-                                    ? `${row.href}/runs`
-                                    : `/aops/runs?skill=${row.id}`,
-                                );
-                              }}
-                              aria-label={`${runs.length} runs for ${row.name}`}
-                            >
-                              <span className={styles.runsTop}>
-                                <span className={styles.runsN}>{runs.length}</span>
-                                <span className={styles.runsLast}>{sinceLabel(runs[0]!.startedAt)}</span>
-                              </span>
-                              <OutcomeBar counts={countBy(runs)} />
-                            </button>
-                          );
-                        })()}
-                      </div>
-                      <span className={`${styles.colEnd} ${styles.cellTime}`}>{row.lastUpdated}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </section>
+            <Table
+              ariaLabel="Skills"
+              columns={columns}
+              rows={rows}
+              rowKey={(r) => r.id}
+              onRowClick={(r) => router.push(r.href)}
+            />
           )}
         </main>
       </div>
 
+      {pendingDelete && (
+        <DeleteSkillModal
+          name={pendingDelete.name}
+          onConfirm={() => deleteRow(pendingDelete.id)}
+          onClose={() => setPendingDelete(null)}
+        />
+      )}
     </div>
   );
 }

@@ -2,7 +2,7 @@
 import type { ReactNode } from 'react';
 import styles from './Button.module.css';
 
-type Variant = 'primary' | 'secondary' | 'tertiary' | 'text' | 'accent';
+type Variant = 'primary' | 'secondary' | 'tertiary' | 'text' | 'accent' | 'danger';
 type Size = 'md' | 'sm';
 
 interface Props {
