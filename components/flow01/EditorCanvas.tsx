@@ -36,6 +36,8 @@ import RunsView from '@/components/runs/RunsView';
 import { revisionMarks, runsForSkill, sourceFor } from '@/data/runFixtures';
 import { type CopilotMessage, type CopilotProposalData } from './copilot/CopilotPanel';
 import SidePanel, { type SideTab } from './copilot/SidePanel';
+import { LiveCopilotError, useLiveCopilot } from '@/lib/copilot/useLiveCopilot';
+import { wireToPatch } from '@/lib/copilot/wire';
 import type { Verdict } from '@/components/atoms/ThumbsRating';
 import { REFERENCE_ID, actionBehavior, connectorVerbs } from './paletteCatalog';
 import { useEditorDoc } from './useEditorDoc';
@@ -52,6 +54,8 @@ import {
   lineToText,
   stepHasContent,
   isCondition,
+  applyDocPatch,
+  emptyDoc,
   type EditorDoc,
   type DocPatchOp,
 } from './doc';
@@ -173,6 +177,20 @@ function matchProposal(text: string): CannedProposal | null {
 }
 
 // Update the most recent assistant message in place (cold-start steps + streaming).
+// The thread as the live model reads it: every settled message with text, and
+// for a reply that carried a proposal, what became of it - so "undo that" or
+// "do the same for the else branch" has something to refer to.
+function toHistory(msgs: CopilotMessage[]): { role: 'user' | 'assistant'; text: string }[] {
+  return msgs
+    .filter((m) => m.text && !m.thinking && !m.streaming)
+    .map((m) => ({
+      role: m.role,
+      text: m.proposal
+        ? `${m.text}\n\n[Proposed change "${m.proposal.title}": ${m.proposalState ?? 'not yet reviewed'}]`
+        : m.text,
+    }));
+}
+
 function updateLastAssistant(
   msgs: CopilotMessage[],
   fn: (m: CopilotMessage) => CopilotMessage,
@@ -358,6 +376,10 @@ export default function EditorCanvas({
   // so Stop can cancel it during that window too).
   const thinkDelayTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const replyCount = useRef(0);
+  // The live Copilot (a real model behind /api/copilot) when this deploy has
+  // one and this browser is unlocked; otherwise the scripted replies below.
+  const live = useLiveCopilot();
+  const liveAbort = useRef<AbortController | null>(null);
   const [hint, setHint] = useState<{
     msg: string;
     action?: { label: string; run: () => void };
@@ -446,11 +468,79 @@ export default function EditorCanvas({
   const focusFor = (key: string): { token: number; atStart: boolean } | null =>
     focusReq && focusReq.key === key ? { token: focusReq.token, atStart: focusReq.atStart } : null;
 
+  // Cold start, live: draft the whole skill from the description, check it,
+  // and load it. The draft is the user's own request, so it lands without an
+  // Apply step - as the scripted draft always did - and Copilot says what it
+  // built. If the model cannot produce a draft that checks out, nothing loads
+  // and the thread says so; the next message can ask again.
+  const draftLive = async (query: string) => {
+    liveAbort.current?.abort();
+    const ctrl = new AbortController();
+    liveAbort.current = ctrl;
+    const started = performance.now();
+    const base = emptyDoc();
+    const say = (text: string, steps: string[]) =>
+      setCopilotMessages((prev) =>
+        updateLastAssistant(prev, (m) => ({
+          ...m,
+          role: 'assistant',
+          text,
+          thinking: false,
+          streaming: false,
+          thought: { ms: performance.now() - started },
+          steps,
+        })),
+      );
+    try {
+      const res = await live.turn({
+        doc: base,
+        history: [],
+        message:
+          'Draft this new skill from scratch from my description below. Return a proposal that sets the title, sets the trigger, and adds every step in order.\n\nMy description:\n' +
+          query,
+        signal: ctrl.signal,
+        onText: () => {},
+      });
+      if (ctrl.signal.aborted) return;
+      if (!res.proposal) {
+        say(
+          `${res.reply}\n\nI could not turn that into a draft that checks out, so nothing was added yet. Tell me a little more, or ask me to try again.`,
+          ['Read your description'],
+        );
+        return;
+      }
+      const drafted = applyDocPatch(base, wireToPatch(res.proposal.ops));
+      api.loadDoc(drafted);
+      const n = drafted.steps.filter((st) => stepHasContent(st)).length;
+      say(res.reply, ['Read your description', `Drafted the trigger and ${n} ${n === 1 ? 'step' : 'steps'}`]);
+      setCopilotMessages((prev) => [...prev, { role: 'assistant', text: COPILOT_MAILBOX_ASK, mailboxAsk: true }]);
+      requestFocus('trigger', false);
+    } catch (e) {
+      if (ctrl.signal.aborted) return;
+      const why = e instanceof LiveCopilotError ? e.message : 'Something went wrong reaching the model.';
+      say(`I could not draft that. ${why}`, ['Read your description']);
+    } finally {
+      if (liveAbort.current === ctrl) liveAbort.current = null;
+    }
+  };
+
   // Cold-start -> Copilot continuity. Generate seeds the query as the user's first
   // Copilot message, opens Copilot, and runs a short "working" animation; when it
   // finishes the drafted Skill loads on the left and Copilot posts an ack, so
   // any follow-up continues in the Copilot thread. Skip lands on a blank canvas.
   const handleColdStartGenerate = useCallback((genDoc: EditorDoc, query: string) => {
+    // Live: the model drafts the whole skill from the description. The scripted
+    // template below only ever ran the first sentence into the trigger.
+    if (live.mode === 'live') {
+      setPanelTab('copilot');
+      setCopilotMessages([
+        { role: 'user', text: query },
+        { role: 'assistant', text: '', thinking: true, steps: ['Reading your description'], stepIdx: 0 },
+      ]);
+      setColdPhase('docked');
+      void draftLive(query);
+      return;
+    }
     // Seed the dock (messages, pending doc, working animation), then dock it. The
     // modal has already faded itself out; the dock fades in as the Copilot.
     setPanelTab('copilot');
@@ -461,7 +551,8 @@ export default function EditorCanvas({
     pendingDoc.current = genDoc;
     setThinkIdx(0);
     setColdPhase('docked');
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [live.mode]);
   const handleColdStartDismiss = useCallback(() => {
     setColdPhase('docked');
     requestFocus('trigger', false);
@@ -625,8 +716,128 @@ export default function EditorCanvas({
   // Follow-up sends: append the user message + a streamed assistant reply. If the
   // message reads as a hardening request, the reply carries a concrete, applyable
   // proposal (matched generically); otherwise a generic helpful reply.
+  // One live turn into the latest (empty) assistant message. The thinking beat
+  // is real: it lasts until the first words arrive, and the stored thought
+  // says only what actually happened.
+  const runLive = useCallback(
+    async (message: string, before: CopilotMessage[]) => {
+      liveAbort.current?.abort();
+      const ctrl = new AbortController();
+      liveAbort.current = ctrl;
+      const started = performance.now();
+      let firstAt = 0;
+      const doc = docRef.current;
+      const n = doc.steps.filter((st) => stepHasContent(st)).length;
+      const read = `Read the skill: ${n} ${n === 1 ? 'step' : 'steps'}`;
+      setCopilotMessages((prev) =>
+        updateLastAssistant(prev, (m) => ({
+          ...m,
+          role: 'assistant',
+          text: '',
+          thinking: true,
+          steps: ['Reading your skill'],
+          stepIdx: 0,
+        })),
+      );
+      try {
+        const res = await live.turn({
+          doc,
+          history: toHistory(before),
+          message,
+          signal: ctrl.signal,
+          onText: (t) => {
+            if (!firstAt) firstAt = performance.now();
+            setCopilotMessages((prev) =>
+              updateLastAssistant(prev, (m) => ({
+                ...m,
+                thinking: false,
+                streaming: true,
+                text: t,
+                thought: { ms: firstAt - started },
+                steps: [read],
+              })),
+            );
+          },
+        });
+        if (ctrl.signal.aborted) return;
+        // Deletions are listed from the patch, not from the model's summary.
+        const excerpt = (id: string) => {
+          const st = doc.steps.find((x) => x.id === id);
+          if (!st) return 'a step';
+          // A chip reads as its label ("Varun"), not its action name ("Assign").
+          const plain = (f: Parameters<typeof lineToText>[0]) =>
+            f
+              .map((x) =>
+                x.kind === 'chip'
+                  ? typeof x.chip.config.meta === 'string' && x.chip.config.meta
+                    ? x.chip.config.meta
+                    : lineToText([x])
+                  : lineToText([x]),
+              )
+              .join('')
+              .trim();
+          const t = isCondition(st) ? `If ${plain(st.branches[0]?.condition ?? [])}` : plain(st.body);
+          return t.length > 80 ? `${t.slice(0, 79).trimEnd()}...` : t;
+        };
+        const removals = (res.proposal?.ops ?? [])
+          .filter((o) => o.op === 'removeStep' && o.id)
+          .map((o) => excerpt(o.id!));
+        const proposal: CopilotProposalData | undefined = res.proposal
+          ? {
+              title: res.proposal.title,
+              // The card writes each removal itself, so the model's own
+              // "Removes ..." lines would only say it twice.
+              summary: removals.length
+                ? res.proposal.summary.filter((l) => !/^\s*remov/i.test(l))
+                : res.proposal.summary,
+              removals,
+              patch: wireToPatch(res.proposal.ops),
+            }
+          : undefined;
+        // A change the server could not check against this skill is dropped,
+        // and the reply says so rather than going quiet about it.
+        const note = res.proposalError
+          ? "\n\nI started drafting a change, but it did not fit the skill as it reads now, so I left it out. Ask again and I will redo it."
+          : '';
+        setCopilotMessages((prev) =>
+          updateLastAssistant(prev, (m) => ({
+            ...m,
+            role: 'assistant',
+            text: res.reply + note,
+            thinking: false,
+            streaming: false,
+            thought: { ms: (firstAt || performance.now()) - started },
+            steps: proposal ? [read, 'Drafted a change for you to review'] : [read],
+            ...(proposal ? { proposal } : {}),
+          })),
+        );
+      } catch (e) {
+        if (ctrl.signal.aborted) return;
+        const why = e instanceof LiveCopilotError ? e.message : 'Something went wrong reaching the model.';
+        setCopilotMessages((prev) =>
+          updateLastAssistant(prev, (m) => ({
+            ...m,
+            role: 'assistant',
+            text: m.text ? `${m.text}\n\n${why}` : `I could not answer that. ${why}`,
+            thinking: false,
+            streaming: false,
+          })),
+        );
+      } finally {
+        if (liveAbort.current === ctrl) liveAbort.current = null;
+      }
+    },
+    [live],
+  );
+
   const sendCopilot = useCallback(
     (text: string) => {
+      if (live.mode === 'live') {
+        const before = copilotMessagesRef.current;
+        setCopilotMessages((prev) => [...prev, { role: 'user', text }, { role: 'assistant', text: '' }]);
+        void runLive(text, before);
+        return;
+      }
       const matched = matchProposal(text);
       let reply: string;
       if (matched) {
@@ -642,24 +853,37 @@ export default function EditorCanvas({
       ]);
       streamReply(reply, matched?.data);
     },
-    [streamReply],
+    [streamReply, live.mode, runLive],
   );
 
   // Regenerate: re-stream the last assistant reply with a fresh take. Preserve the
   // message via ...m (NOT a bare replace) so its proposal AND proposalState ride
   // along - an already-applied/dismissed card stays settled and can't be re-applied.
   const regenerateCopilot = useCallback(() => {
+    if (live.mode === 'live') {
+      // Ask the same question again, from the same point in the thread.
+      const msgs = copilotMessagesRef.current;
+      let u = msgs.length - 1;
+      while (u >= 0 && msgs[u]!.role !== 'user') u -= 1;
+      if (u >= 0) {
+        setCopilotMessages([...msgs.slice(0, u + 1), { role: 'assistant', text: '' }]);
+        void runLive(msgs[u]!.text, msgs.slice(0, u));
+        return;
+      }
+    }
     const reply = COPILOT_REPLIES[replyCount.current % COPILOT_REPLIES.length]!;
     replyCount.current += 1;
     setCopilotMessages((prev) =>
       updateLastAssistant(prev, (m) => ({ ...m, role: 'assistant', text: '' })),
     );
     streamReply(reply);
-  }, [streamReply]);
+  }, [streamReply, live.mode, runLive]);
 
   // Stop: interrupt an in-flight reply (cancel the stream / think delay, freeze
   // any partial text) or abort the cold-start build (drop the pending draft).
   const stopCopilot = useCallback(() => {
+    liveAbort.current?.abort();
+    liveAbort.current = null;
     if (streamTimer.current) {
       clearInterval(streamTimer.current);
       streamTimer.current = null;
@@ -685,6 +909,8 @@ export default function EditorCanvas({
 
   // New chat: cancel any in-flight reply/build and wipe the thread.
   const clearCopilot = useCallback(() => {
+    liveAbort.current?.abort();
+    liveAbort.current = null;
     if (streamTimer.current) {
       clearInterval(streamTimer.current);
       streamTimer.current = null;
@@ -1277,6 +1503,12 @@ export default function EditorCanvas({
                 onSend: sendCopilot,
                 onRegenerate: regenerateCopilot,
                 onClear: clearCopilot,
+                live: {
+                  mode: live.mode,
+                  model: live.model,
+                  onUnlock: live.unlock,
+                  onLock: live.lock,
+                },
                 introReady: true,
                 onStop: stopCopilot,
                 busy: thinkIdx >= 0 || copilotMessages.some((m) => m.thinking || m.streaming),

@@ -180,3 +180,7 @@
     animation: none;
   }
 }
+
+/* A deletion reads as one: the minus in the failure red, so it is never taken
+   for another addition in a list of plus signs. */
+.item[data-remove] .bullet { color: var(--run-failed); }

@@ -113,6 +113,9 @@
 .docScroll {
   flex: 1;
   overflow-y: auto;
+  /* The document wraps; it never scrolls sideways. Hover controls that hang
+     off a chip must not be able to widen the scroll area. */
+  overflow-x: hidden;
   padding: 0 24px;
   scrollbar-width: none; /* Firefox */
 }
