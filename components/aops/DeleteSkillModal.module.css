@@ -1,0 +1,36 @@
+/* DeleteSkillModal - chrome on ModalShell; this only sizes the dialog. */
+.dialog {
+  width: 100%;
+  max-width: 420px;
+}
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px;
+}
+.title {
+  margin: 0;
+  font-size: var(--fs-h5); /* 16 */
+  font-weight: 600;
+  line-height: 24px;
+  letter-spacing: var(--ls-h5);
+  color: var(--text-strong);
+}
+.body {
+  margin: 0;
+  font-size: var(--fs-body); /* 14 */
+  line-height: 20px;
+  letter-spacing: var(--ls-body);
+  color: var(--text-default);
+}
+.name {
+  font-weight: 500;
+  color: var(--text-strong);
+}
+.foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
