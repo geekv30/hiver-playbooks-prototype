@@ -1506,6 +1506,7 @@ export default function EditorCanvas({
                 live: {
                   mode: live.mode,
                   model: live.model,
+                  needsPasscode: live.needsPasscode,
                   onUnlock: live.unlock,
                   onLock: live.lock,
                 },

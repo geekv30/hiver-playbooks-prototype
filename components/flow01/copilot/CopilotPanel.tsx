@@ -129,6 +129,8 @@ interface Props {
   live?: {
     mode: 'unavailable' | 'locked' | 'live';
     model: string | null;
+    /** Turning on asks for the passcode; otherwise "Use live AI" is one click. */
+    needsPasscode?: boolean;
     onUnlock: (passcode: string) => Promise<'ok' | 'wrong' | 'error'>;
     onLock: () => void;
   };
@@ -170,7 +172,11 @@ function AiNote({ live }: { live?: Props['live'] }) {
         <span className={styles.noteSep} aria-hidden>
           &middot;
         </span>
-        <button type="button" className={styles.noteLink} onClick={() => setAsking(true)}>
+        <button
+          type="button"
+          className={styles.noteLink}
+          onClick={() => (live.needsPasscode ? setAsking(true) : void live.onUnlock(''))}
+        >
           Use live AI
         </button>
       </p>
