@@ -22,7 +22,7 @@ For stage "run", carry out what the skill does NOW for this message, as a trace,
 - reply: from the line with the [[draft_reply]] or [[send_reply]] chip on the path. stepId = that line's id, text = the message. This is a chat, so the customer gets it now. If no reply chip is on the path, do not reply.
 - Every step has status "done" and error null.
 - Do not repeat actions already taken in this chat unless the skill says to do them on every message. On a follow-up message usually only the reply applies - and it always applies: when the skill has a reply step, every customer message gets a new reply that answers it.
-- ended: true only when the skill handed the chat to a person or reached End skill.
+- ended: true only when the skill reached End skill or handed the whole chat to a person. Assigning, tagging or logging a task is not a handoff. ended never replaces a reply: if the path has a reply step, reply in the same turn.
 
 Writing:
 - reply is the same text as the reply step, or null. Write it as a chat message from a support agent: 1 to 3 short sentences, under 45 words, warm and plain, in the customer's language. Ask for at most two things at once.

@@ -297,9 +297,10 @@ export function checkTurn(doc: EditorDoc, turn: SkillTurnWire, skillStarted: boo
   if (noBranch) {
     outcome = 'attention';
     reason = 'noBranch';
-  } else if (reply === null && !turn.ended) {
-    // On chat the customer is waiting: a message the skill does not answer,
-    // and does not hand off, leaves them there.
+  } else if (reply === null) {
+    // On chat the customer is waiting: a message the skill does not answer
+    // leaves them there - even when the skill hands off, the customer is
+    // told nothing. Handing off never stands in for a reply.
     outcome = 'attention';
     reason = 'noReply';
   }
