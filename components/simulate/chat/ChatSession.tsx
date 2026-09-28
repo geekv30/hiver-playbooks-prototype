@@ -16,7 +16,8 @@ import { AiNote } from '@/components/flow01/copilot/CopilotPanel';
 import type { TurnOutcome } from '@/lib/eval/wire';
 import flowStyles from '../RecentEmails.module.css';
 import LiveTrace from './LiveTrace';
-import { itemOutcome, type AgentItem, type ChatRun, type RatingItem } from './useChatRun';
+import { type AgentItem, type ChatRun, type RatingItem } from './useChatRun';
+import { chatResultLine } from './chatFlow';
 import styles from './ChatSession.module.css';
 
 // What the playground says when a message did not go as the skill intends.
@@ -195,7 +196,7 @@ export default function ChatSession({ run, doc, customerName, mode, live, onOpen
   const [value, setValue] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const { items, phase, busy, outcome, verdict, capped } = run;
+  const { items, phase, busy, outcome, capped } = run;
   const ended = phase === 'ended';
   const judging = phase === 'judging';
   const started = items.length > 0;
@@ -238,27 +239,7 @@ export default function ChatSession({ run, doc, customerName, mode, live, onOpen
   };
 
   const firstCustomerId = items.find((i) => i.kind === 'customer')?.id;
-  const flagged = items.filter((i): i is AgentItem => i.kind === 'agent' && itemOutcome(i) === 'attention').length;
-  const skillRan = items.some((i) => i.kind === 'agent' && i.turn?.stage === 'run');
-  // The review's own words when there is one: whether the customer was
-  // actually helped, not just whether every message got a reply.
-  // A turn that needed attention leads the line, so the reason always
-  // matches the label; the review's sentence follows it.
-  const turnLine = flagged > 0 ? `${flagged} ${flagged === 1 ? 'message needs' : 'messages need'} a look.` : '';
-  const resultLine =
-    outcome === 'errored'
-      ? 'The evaluation could not finish. Start over to try again.'
-      : verdict
-        ? verdict.verdict !== 'unresolved' && turnLine
-          ? `${turnLine} ${verdict.reason}`
-          : verdict.reason
-        : !skillRan
-          ? 'The skill never started: the customer did not say what they needed.'
-          : outcome === 'attention'
-            ? `${flagged} ${flagged === 1 ? 'message needs' : 'messages need'} a look.`
-            : run.engine === 'scripted'
-              ? 'Every message got a reply. Scripted replies are not reviewed for quality.'
-              : 'Every message got a reply.';
+  const resultLine = chatResultLine(run);
 
   return (
     <div className={styles.session}>

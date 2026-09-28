@@ -26,7 +26,7 @@ function excerpt(text: string, max = 48): string {
 }
 
 /** A checked step as the shared trace renderer draws it. */
-function toDef(doc: EditorDoc, s: LiveTraceStep, i: number, gated: Set<string>): TraceStepDef {
+export function toDef(doc: EditorDoc, s: LiveTraceStep, i: number, gated: Set<string>): TraceStepDef {
   const id = `${s.kind}-${i}`;
   if (s.kind === 'thinking') return { id, kind: 'thinking', ms: 0, text: s.text ?? '', label: 'Reasoning' };
   if (s.kind === 'condition') {

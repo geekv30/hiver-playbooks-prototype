@@ -1,0 +1,309 @@
+/* 01 Transcript: text on the page, the customer in a soft block, steps as one
+   quiet line under each reply. Everything shares one left edge. */
+
+.thread {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 18px 18px 20px;
+}
+
+.empty {
+  margin: auto 0;
+  padding: 0 24px;
+  text-align: center;
+  font-size: var(--fs-small);
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.who,
+.agentName {
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+/* ---- customer ------------------------------------------------------------ */
+.customer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  padding-left: 48px;
+  animation: rise var(--d-enter) var(--ease-snap) backwards;
+}
+.customer[data-grouped] {
+  margin-top: -16px;
+}
+.customerText {
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--surface-soft);
+  box-shadow: inset 0 0 0 1px var(--hairline-soft);
+  font-size: var(--fs-body);
+  line-height: 21px;
+  letter-spacing: var(--ls-body);
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ---- agent: no bubble ---------------------------------------------------- */
+.agentBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: rise var(--d-enter) var(--ease-snap) backwards;
+}
+.agent {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.agentText {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: 21px;
+  letter-spacing: var(--ls-body);
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* In flight: a line of text with a soft shimmer, not dots in a bubble. */
+.working {
+  align-self: flex-start;
+  font-size: var(--fs-small);
+  line-height: 20px;
+  color: var(--muted-soft);
+  background: linear-gradient(90deg, var(--muted-soft) 0%, var(--ink-soft) 50%, var(--muted-soft) 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 1.6s linear infinite;
+}
+.workingRight {
+  align-self: flex-end;
+}
+
+/* ---- the steps line under a reply ---------------------------------------- */
+.trace {
+  display: flex;
+  flex-direction: column;
+  margin-top: 2px;
+}
+.traceRow {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  margin-left: -4px;
+  padding: 2px 6px 2px 2px;
+  border: none;
+  border-radius: var(--r-xs);
+  background: none;
+  font-family: var(--font);
+  font-size: var(--fs-caption);
+  line-height: 18px;
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    color var(--d-hover) var(--ease-snap),
+    background var(--d-hover) var(--ease-snap);
+}
+.traceRow:hover {
+  color: var(--ink-soft);
+  background: var(--surface-soft);
+}
+.traceRow:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.chev {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  transition: transform var(--d-enter) var(--ease-snap);
+}
+.chev[data-open] {
+  transform: rotate(90deg);
+}
+.traceCount {
+  flex: none;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.traceSep {
+  flex: none;
+  color: var(--muted-soft);
+}
+.traceSummary {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--d-enter) var(--ease-snap);
+}
+.collapse[data-open] {
+  grid-template-rows: 1fr;
+}
+.inner {
+  min-height: 0;
+  overflow: hidden;
+  padding-left: 4px;
+}
+
+/* ---- events: left-aligned with the text ---------------------------------- */
+.event {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: 17px;
+  color: var(--muted);
+}
+.event svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-top: 1.5px;
+}
+.event strong {
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+.event[data-tone='warn'] svg {
+  color: var(--status-amber);
+}
+.sep {
+  margin: 0 2px;
+  color: var(--muted-soft);
+}
+
+.rating {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: -6px;
+  animation: rise var(--d-enter) var(--ease-snap) backwards;
+}
+.ratingHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: 17px;
+  color: var(--muted);
+}
+.ratingComment {
+  margin: 0;
+  padding-left: 72px;
+  font-size: var(--fs-caption);
+  line-height: 17px;
+  color: var(--muted-soft);
+}
+
+/* ---- the end: a labelled rule, then the result as a heading + a line ----- */
+.end {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: rise var(--d-enter) var(--ease-snap) backwards;
+}
+.endRule {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  color: var(--muted);
+}
+.endRule::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--hairline-soft);
+}
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+}
+p.result {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+.resultHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: 20px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--status-green);
+}
+.result[data-outcome='attention'] .dot,
+.result[data-outcome='errored'] .dot {
+  background: var(--status-amber);
+}
+.resultText {
+  margin: 0;
+  font-size: var(--fs-small);
+  line-height: 19px;
+  color: var(--muted);
+}
+.resultHead + .resultText {
+  padding-left: 15px;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .customer,
+  .agentBlock,
+  .end,
+  .rating {
+    animation: none;
+  }
+  .working {
+    animation: none;
+  }
+  .collapse,
+  .chev {
+    transition: none;
+  }
+}
