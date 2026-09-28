@@ -149,11 +149,14 @@ export function useChatRun({ doc, live, onRunRecorded }: Options) {
       try {
         let turn: CheckedTurn;
         if (engineRef.current === 'live') {
-          const res = await l.post<{ turn: CheckedTurn }>(
-            '/api/evaluate',
-            { kind: 'skill', doc: d, transcript, actionsTaken: actionsTakenOf(before), skillStarted: wasStarted },
-            signal,
-          );
+          const body = { kind: 'skill', doc: d, transcript, actionsTaken: actionsTakenOf(before), skillStarted: wasStarted };
+          // A slow or dropped call is retried once, quietly: a hiccup in the
+          // model is not something to put in front of the author.
+          const ask = () => l.post<{ turn: CheckedTurn }>('/api/evaluate', body, signal);
+          const res = await ask().catch((e: unknown) => {
+            if (signal.aborted || !(e instanceof LiveCopilotError) || (e.kind !== 'timeout' && e.kind !== 'failed')) throw e;
+            return ask();
+          });
           turn = res.turn;
         } else {
           if (!reduced()) await sleep(SCRIPTED_BEAT_MS, signal);
@@ -191,11 +194,12 @@ export function useChatRun({ doc, live, onRunRecorded }: Options) {
     const transcript = transcriptOf(itemsRef.current);
     let next: CustomerTurnWire;
     if (engineRef.current === 'live') {
-      const res = await ctx.current.live.post<{ turn: CustomerTurnWire }>(
-        '/api/evaluate',
-        { kind: 'customer', scenario: sc, transcript },
-        signal,
-      );
+      const ask = () =>
+        ctx.current.live.post<{ turn: CustomerTurnWire }>('/api/evaluate', { kind: 'customer', scenario: sc, transcript }, signal);
+      const res = await ask().catch((e: unknown) => {
+        if (signal.aborted || !(e instanceof LiveCopilotError) || (e.kind !== 'timeout' && e.kind !== 'failed')) throw e;
+        return ask();
+      });
       next = res.turn;
     } else {
       if (!reduced()) await sleep(SCRIPTED_BEAT_MS, signal);

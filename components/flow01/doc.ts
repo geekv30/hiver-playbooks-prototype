@@ -126,20 +126,22 @@ export function exampleDoc(): EditorDoc {
     // pre-filled and trigger matching has a mailbox to read from the start.
     mailboxes: ['support', 'sales'],
     guardrails: defaultGuardrails(),
-    // Handwritten NL trigger (no references/chips - the trigger box is plain text).
-    trigger: normalizeLine([
-      txt('When an email arrives at engg.hiver@grexit.com reporting an error or API status issue.'),
-    ]),
+    // Handwritten NL trigger (no references/chips - the trigger box is plain
+    // text). Channel-neutral: a skill is written once and runs on email and
+    // chat, so it says what the conversation is about, not how it arrives.
+    trigger: normalizeLine([txt('When a customer reports an API error or a problem with the API.')]),
     steps: [
       {
         id: 'ex-s1',
         body: normalizeLine([
-          txt('Summarize the error and pull the code, HTTP status, endpoint, timestamps, and SDK version.'),
+          txt(
+            'Pull out the error code, HTTP status, endpoint, when it started, and SDK version. Ask the customer for anything that is missing.',
+          ),
         ]),
       },
       {
         id: 'ex-s2',
-        body: normalizeLine([txt('Tag the ticket '), exChip('ex-c2', 'tag', 'api-error, support'), txt('.')]),
+        body: normalizeLine([txt('Tag the conversation '), exChip('ex-c2', 'tag', 'api-error, support'), txt('.')]),
       },
       {
         id: 'ex-s3',
@@ -152,13 +154,13 @@ export function exampleDoc(): EditorDoc {
       {
         id: 'ex-s4',
         body: normalizeLine([
-          exChip('ex-c4', 'kb_search', 'Engg-docs'),
+          exChip('ex-c4', 'kb_search', 'Engineering space'),
           txt(' for the error code and a known fix.'),
         ]),
       },
       {
         id: 'ex-s5',
-        body: normalizeLine([txt('Then categorize the error and draft the right reply:')]),
+        body: normalizeLine([txt('Then work out what kind of error it is and reply:')]),
       },
       // The condition block replaces the old flat "Condition" chip + draft step:
       // each arm drafts the reply that fits the error class.
@@ -173,7 +175,7 @@ export function exampleDoc(): EditorDoc {
             lines: [
               {
                 id: 'ex-bl1',
-                body: normalizeLine([exChip('ex-bc1', 'draft_reply'), txt(' with the fix and send for review.')]),
+                body: normalizeLine([exChip('ex-bc1', 'draft_reply'), txt(' with the fix, in plain steps.')]),
               },
             ],
           },
@@ -184,7 +186,10 @@ export function exampleDoc(): EditorDoc {
             lines: [
               {
                 id: 'ex-bl2',
-                body: normalizeLine([exChip('ex-bc2', 'draft_reply'), txt(' with a status update.')]),
+                body: normalizeLine([
+                  exChip('ex-bc2', 'draft_reply'),
+                  txt(' with a status update and when we will follow up.'),
+                ]),
               },
             ],
           },
@@ -194,7 +199,10 @@ export function exampleDoc(): EditorDoc {
             lines: [
               {
                 id: 'ex-bl3',
-                body: normalizeLine([exChip('ex-bc3', 'draft_reply'), txt(' with a warm note that we are looking into it.')]),
+                body: normalizeLine([
+                  exChip('ex-bc3', 'draft_reply'),
+                  txt(' saying we are looking into it, and ask for any details still missing.'),
+                ]),
               },
             ],
           },
@@ -211,7 +219,7 @@ export function exampleDoc(): EditorDoc {
       {
         id: 'ex-s7a',
         body: normalizeLine([
-          txt('If the fix needs engineering, assign the ticket to '),
+          txt('If the fix needs engineering, assign the conversation to '),
           exChip('ex-c6', 'assign', 'Varun'),
           txt(' to follow up.'),
         ]),

@@ -62,8 +62,26 @@ function cleanTranscript(t: unknown): ChatMessage[] {
     .map((m) => ({ role: m.role, text: m.text.slice(0, MAX_CHARS) }));
 }
 
+// A single model call never gets to hold the function until the platform
+// kills it (a stalled upstream once did, and the user saw a bare 504): each
+// call is capped, and the whole request keeps its own budget for a retry.
+const CALL_TIMEOUT_MS = 25_000;
+const REQUEST_BUDGET_MS = 50_000;
+
+class ModelTimeout extends Error {}
+
 /** One structured, non-streamed call. Throws with a readable message. */
 async function call<T>(cfg: CopilotConfig, instructions: string, input: string, name: string, schema: unknown, signal: AbortSignal): Promise<T> {
+  const capped = AbortSignal.any([signal, AbortSignal.timeout(CALL_TIMEOUT_MS)]);
+  try {
+    return await callOnce<T>(cfg, instructions, input, name, schema, capped);
+  } catch (e) {
+    if (!signal.aborted && capped.aborted) throw new ModelTimeout('The model took too long to answer.');
+    throw e;
+  }
+}
+
+async function callOnce<T>(cfg: CopilotConfig, instructions: string, input: string, name: string, schema: unknown, signal: AbortSignal): Promise<T> {
   const r = await fetch(`${cfg.baseUrl}/responses`, {
     method: 'POST',
     headers: { authorization: `Bearer ${cfg.key}`, 'content-type': 'application/json' },
@@ -72,7 +90,7 @@ async function call<T>(cfg: CopilotConfig, instructions: string, input: string, 
       instructions,
       input: [{ role: 'user', content: input }],
       store: false,
-      max_output_tokens: 4000,
+      max_output_tokens: 2500,
       reasoning: { effort: EFFORT },
       text: { format: { type: 'json_schema', name, strict: true, schema } },
     }),
@@ -106,6 +124,7 @@ export async function POST(req: Request) {
   if (!passcodeOk(cfg, req.headers.get('x-copilot-passcode'))) return json(401, { error: 'passcode' });
   if (rateLimited(clientIp(req), 'evaluate', EVAL_BUDGET)) return json(429, { error: 'rate_limited' });
 
+  const began = Date.now();
   const raw = await req.text();
   if (raw.length > MAX_BODY) return json(413, { error: 'too_large' });
   let body: Body;
@@ -137,7 +156,11 @@ export async function POST(req: Request) {
       // The model sometimes leaves a follow-up unanswered even though the
       // skill has a reply step. Ask once more before calling it a gap in the
       // skill - a slip of the model is not the author's to fix.
-      if (checked.reason === 'noReply' && indexSkill(body.doc).canReply) {
+      if (
+        checked.reason === 'noReply' &&
+        indexSkill(body.doc).canReply &&
+        Date.now() - began < REQUEST_BUDGET_MS - CALL_TIMEOUT_MS
+      ) {
         turn = await call<SkillTurnWire>(
           cfg,
           skillTurnPrompt(),
@@ -186,6 +209,7 @@ export async function POST(req: Request) {
     return json(400, { error: 'bad_request' });
   } catch (e) {
     if (req.signal.aborted) return json(499, { error: 'aborted' });
+    if (e instanceof ModelTimeout) return json(504, { error: 'timeout', message: e.message });
     const message = (e as Error).message;
     // The account is out of credits: say so plainly, so the page can offer
     // the scripted replies instead of echoing OpenAI's billing text.
