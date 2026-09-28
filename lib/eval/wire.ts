@@ -52,7 +52,9 @@ export interface LiveTraceStep {
   error: string | null;
 }
 
-export type Stage = 'greet' | 'run' | 'noMatch';
+/** close: the customer is wrapping up ("thanks, that's all") - the agent
+ *  signs off; like a greeting, it carries no steps. */
+export type Stage = 'greet' | 'run' | 'noMatch' | 'close';
 
 /** What the model returns for one agent turn. */
 export interface SkillTurnWire {
@@ -69,6 +71,19 @@ export interface SkillTurnWire {
 export interface CustomerTurnWire {
   message: string;
   done: boolean;
+  /** With done: how the customer rates the chat, 1-5, as the widget asks. */
+  rating: number | null;
+  /** With done: one short line on why. */
+  comment: string | null;
+}
+
+/** The end-of-chat judgement: did this conversation actually go well? */
+export type Verdict = 'resolved' | 'handedOff' | 'unresolved';
+
+export interface JudgeWire {
+  verdict: Verdict;
+  /** One specific sentence on why. */
+  reason: string;
 }
 
 export interface ChatScenario {
@@ -90,6 +105,7 @@ export type TurnOutcome = 'passed' | 'attention' | 'errored';
 export type OutcomeReason =
   | 'ok'
   | 'greet' // the agent asked what the customer needs; the skill has not started
+  | 'close' // the customer wrapped up and the agent signed off
   | 'noMatch' // the customer's need is not what the trigger describes
   | 'noBranch' // a condition matched no branch and there is no ELSE
   | 'noReply'; // the customer wrote and nothing on the skill's path answered
@@ -211,10 +227,15 @@ export function checkTurn(doc: EditorDoc, turn: SkillTurnWire, skillStarted: boo
 
   // Before the skill starts, the agent is only greeting or telling us it does
   // not fit. Neither carries steps.
-  const stage: Stage = skillStarted ? 'run' : turn.stage;
+  // A sign-off can come at any point; a greeting only before the skill starts.
+  const stage: Stage = turn.stage === 'close' ? 'close' : skillStarted ? 'run' : turn.stage;
   if (stage === 'greet') {
     const reply = turn.reply ? plain(turn.reply) : "Hi there! What can I help you with today?";
     return { ...base, stage, note: null, steps: [], reply, ended: false, outcome: 'passed', reason: 'greet' };
+  }
+  if (stage === 'close') {
+    const reply = turn.reply ? plain(turn.reply) : "You're welcome! If anything else comes up, just message us here.";
+    return { ...base, stage, note: null, steps: [], reply, ended: true, outcome: 'passed', reason: 'close' };
   }
   if (stage === 'noMatch') {
     return { ...base, stage, note: turn.note ? plain(turn.note) : null, steps: [], reply: null, ended: false, outcome: 'attention', reason: 'noMatch' };
@@ -316,7 +337,7 @@ export const SKILL_TURN_SCHEMA = {
   additionalProperties: false,
   required: ['stage', 'note', 'steps', 'reply', 'ended'],
   properties: {
-    stage: { type: 'string', enum: ['greet', 'run', 'noMatch'] },
+    stage: { type: 'string', enum: ['greet', 'run', 'noMatch', 'close'] },
     note: nullable({ type: 'string' }),
     steps: {
       type: 'array',
@@ -343,8 +364,23 @@ export const SKILL_TURN_SCHEMA = {
 export const CUSTOMER_TURN_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['message', 'done'],
-  properties: { message: { type: 'string' }, done: { type: 'boolean' } },
+  required: ['message', 'done', 'rating', 'comment'],
+  properties: {
+    message: { type: 'string' },
+    done: { type: 'boolean' },
+    rating: nullable({ type: 'integer', minimum: 1, maximum: 5 }),
+    comment: nullable({ type: 'string' }),
+  },
+} as const;
+
+export const JUDGE_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['verdict', 'reason'],
+  properties: {
+    verdict: { type: 'string', enum: ['resolved', 'handedOff', 'unresolved'] },
+    reason: { type: 'string' },
+  },
 } as const;
 
 export const SCENARIOS_SCHEMA = {

@@ -379,3 +379,44 @@
     opacity: 0.6;
   }
 }
+
+/* ---- the customer's rating ---------------------------------------------- */
+.rating {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+  animation: turnIn var(--d-enter) var(--ease-snap) backwards;
+}
+.ratingHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: 17px;
+  letter-spacing: var(--ls-caption);
+  color: var(--muted);
+}
+.ratingHead strong {
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+.stars {
+  display: inline-flex;
+  gap: 1px;
+  color: var(--status-amber);
+}
+.stars svg {
+  width: 13px;
+  height: 13px;
+}
+.ratingComment {
+  margin: 0;
+  max-width: 300px;
+  font-size: var(--fs-caption);
+  line-height: 17px;
+  letter-spacing: var(--ls-caption);
+  color: var(--muted);
+}

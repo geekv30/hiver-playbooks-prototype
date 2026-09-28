@@ -24,6 +24,7 @@ import {
   type CheckedTurn,
   type CustomerTurnWire,
   type TurnOutcome,
+  type Verdict,
 } from '@/lib/eval/wire';
 import { scriptedCustomerTurn, scriptedSkillTurn } from '@/lib/eval/scripted';
 
@@ -40,11 +41,21 @@ export type AgentItem = {
   quota?: boolean;
 };
 
-export type ChatItem = { kind: 'customer'; id: string; text: string } | AgentItem;
+/** The customer's rating at the end, as the widget asks for it. */
+export type RatingItem = { kind: 'rating'; id: string; score: number; comment: string | null };
 
-export type ChatPhase = 'idle' | 'agent' | 'customer' | 'ended';
+export type ChatItem = { kind: 'customer'; id: string; text: string } | AgentItem | RatingItem;
 
-const MAX_CUSTOMER_TURNS = 6;
+/** judging: the chat is over and the conversation is being reviewed. */
+export type ChatPhase = 'idle' | 'agent' | 'customer' | 'judging' | 'ended';
+
+/** The end-of-chat review: did the conversation actually go well? */
+export interface ChatVerdict {
+  verdict: Verdict;
+  reason: string;
+}
+
+const MAX_CUSTOMER_TURNS = 8;
 // The scripted engine answers instantly; a short beat keeps its typing state
 // readable instead of flashing (it is labelled "Scripted demo" throughout).
 const SCRIPTED_BEAT_MS = 700;
@@ -60,7 +71,7 @@ export function transcriptOf(items: ChatItem[]): ChatMessage[] {
   const out: ChatMessage[] = [];
   for (const it of items) {
     if (it.kind === 'customer') out.push({ role: 'customer', text: it.text });
-    else if (it.status === 'done' && it.turn?.reply) out.push({ role: 'agent', text: it.turn.reply });
+    else if (it.kind === 'agent' && it.status === 'done' && it.turn?.reply) out.push({ role: 'agent', text: it.turn.reply });
   }
   return out;
 }
@@ -71,8 +82,28 @@ const started = (items: ChatItem[]) => items.some((it) => it.kind === 'agent' &&
  *  bad - the skill has not been asked anything yet. */
 export function itemOutcome(it: AgentItem): TurnOutcome | null {
   if (it.status === 'error') return 'errored';
-  if (it.status !== 'done' || !it.turn || it.turn.stage === 'greet') return null;
+  if (it.status !== 'done' || !it.turn || it.turn.stage === 'greet' || it.turn.stage === 'close') return null;
   return it.turn.outcome;
+}
+
+/** Every step the skill actually took, turn by turn - what the review checks
+ *  the agent's words against ("I'm escalating this" needs an Assign). */
+function stepLog(items: ChatItem[]): string[] {
+  const out: string[] = [];
+  let turn = 0;
+  for (const it of items) {
+    if (it.kind !== 'agent' || !it.turn || it.turn.stage !== 'run') continue;
+    turn += 1;
+    for (const s of it.turn.steps) {
+      if (s.kind === 'action') {
+        const name = s.actionId ? (findAction(s.actionId)?.name ?? s.actionId) : 'Step';
+        out.push(`Turn ${turn}: ${name}${s.text ? ` - ${s.text}` : ''}`);
+      } else if (s.kind === 'condition') {
+        out.push(`Turn ${turn}: condition took branch ${s.branch}`);
+      }
+    }
+  }
+  return out;
 }
 
 function actionsTakenOf(items: ChatItem[]): string[] {
@@ -107,6 +138,10 @@ export function useChatRun({ doc, live, onRunRecorded }: Options) {
   const [items, setItems] = useState<ChatItem[]>([]);
   const [phase, setPhase] = useState<ChatPhase>('idle');
   const [engine, setEngine] = useState<'live' | 'scripted'>('scripted');
+  const [verdict, setVerdict] = useState<ChatVerdict | null>(null);
+  /** The AI customer was still going when the chat hit its length cap. */
+  const [capped, setCapped] = useState(false);
+  const goal = useRef<string | null>(null);
 
   // Latest-refs, written after commit so async loops read fresh values.
   const itemsRef = useRef(items);
@@ -174,22 +209,48 @@ export function useChatRun({ doc, live, onRunRecorded }: Options) {
     [commit],
   );
 
-  const finish = useCallback(() => {
+  // The chat is over. With the live model, the whole conversation is then
+  // reviewed: a reply to every message is not the same as a good chat, and
+  // only the review can say whether the customer was actually helped.
+  const finish = useCallback(async () => {
     abort.current?.abort();
     abort.current = null;
-    setPhase('ended');
-    if (recorded.current) return;
-    const outcomes = itemsRef.current
-      .filter((it): it is AgentItem => it.kind === 'agent')
-      .map(itemOutcome)
-      .filter((o): o is TurnOutcome => o !== null);
-    if (outcomes.length === 0) return;
+    if (recorded.current) {
+      setPhase('ended');
+      return;
+    }
     recorded.current = true;
-    ctx.current.onRunRecorded?.([worstOutcome(outcomes)]);
+    const agentItems = itemsRef.current.filter((it): it is AgentItem => it.kind === 'agent');
+    const outcomes = agentItems.map(itemOutcome).filter((o): o is TurnOutcome => o !== null);
+    const ran = agentItems.some((it) => it.turn?.stage === 'run');
+    let judged: ChatVerdict | null = null;
+    if (ran && engineRef.current === 'live') {
+      setPhase('judging');
+      try {
+        const res = await ctx.current.live.post<{ verdict: ChatVerdict }>('/api/evaluate', {
+          kind: 'judge',
+          doc: ctx.current.doc,
+          transcript: transcriptOf(itemsRef.current),
+          goal: goal.current,
+          actions: stepLog(itemsRef.current),
+          rating: (() => {
+            const r = itemsRef.current.find((it): it is RatingItem => it.kind === 'rating');
+            return r ? { score: r.score, comment: r.comment } : null;
+          })(),
+        });
+        judged = res.verdict;
+        setVerdict(judged);
+      } catch {
+        /* no review: the result falls back to the turns alone */
+      }
+    }
+    setPhase('ended');
+    if (judged?.verdict === 'unresolved') outcomes.push('attention');
+    if (outcomes.length > 0) ctx.current.onRunRecorded?.([worstOutcome(outcomes)]);
   }, []);
 
-  /** The AI customer's next message, or null when they are done. */
-  const customerTurn = useCallback(async (sc: ChatScenario, signal: AbortSignal): Promise<string | null> => {
+  /** The AI customer's next message, and whether they are done. */
+  const customerTurn = useCallback(async (sc: ChatScenario, signal: AbortSignal): Promise<CustomerTurnWire> => {
     setPhase('customer');
     const transcript = transcriptOf(itemsRef.current);
     let next: CustomerTurnWire;
@@ -205,7 +266,7 @@ export function useChatRun({ doc, live, onRunRecorded }: Options) {
       if (!reduced()) await sleep(SCRIPTED_BEAT_MS, signal);
       next = scriptedCustomerTurn(sc, transcript);
     }
-    return next.done || !next.message.trim() ? null : next.message.trim();
+    return { ...next, message: next.message.trim() };
   }, []);
 
   /** A past chat's opening, or an AI scenario: the chat starts with the
@@ -216,6 +277,9 @@ export function useChatRun({ doc, live, onRunRecorded }: Options) {
       const ctrl = new AbortController();
       abort.current = ctrl;
       recorded.current = false;
+      setVerdict(null);
+      setCapped(false);
+      goal.current = sc?.goal ?? null;
       pickEngine();
       commit([{ kind: 'customer', id: nid('cust'), text: first }]);
       try {
@@ -224,23 +288,38 @@ export function useChatRun({ doc, live, onRunRecorded }: Options) {
           setPhase('idle');
           return;
         }
+        // The AI customer and the agent talk until the customer is done -
+        // their last word, the agent's sign-off, then their rating - or the
+        // chat runs long, which is itself a finding.
+        let wrapped = false;
         for (let n = 1; n < MAX_CUSTOMER_TURNS; n += 1) {
-          // Nothing to answer: the evaluation broke, the skill does not fit
-          // this chat, or the agent said nothing.
-          if (turn.status === 'error' || turn.turn?.stage === 'noMatch' || !turn.turn?.reply) break;
-          const msg = await customerTurn(sc, ctrl.signal);
-          if (!msg) break;
-          commit([...itemsRef.current, { kind: 'customer', id: nid('cust'), text: msg }]);
-          turn = await agentTurn(ctrl.signal);
+          // Nothing to answer: the evaluation broke or the skill does not fit.
+          if (turn.status === 'error' || turn.turn?.stage === 'noMatch') {
+            wrapped = true;
+            break;
+          }
+          const next = await customerTurn(sc, ctrl.signal);
+          if (next.message) {
+            commit([...itemsRef.current, { kind: 'customer', id: nid('cust'), text: next.message }]);
+            turn = await agentTurn(ctrl.signal);
+          }
+          if (next.done) {
+            if (next.rating !== null) {
+              commit([...itemsRef.current, { kind: 'rating', id: nid('rate'), score: next.rating, comment: next.comment }]);
+            }
+            wrapped = true;
+            break;
+          }
         }
-        finish();
+        if (!wrapped) setCapped(true);
+        await finish();
       } catch (e) {
         if (ctrl.signal.aborted) return;
         commit([
           ...itemsRef.current,
           { kind: 'agent', id: nid('agent'), status: 'error', error: e instanceof LiveCopilotError ? e.message : 'The AI customer could not reply.' },
         ]);
-        finish();
+        void finish();
       }
     },
     [commit, agentTurn, customerTurn, finish, pickEngine],
@@ -255,6 +334,9 @@ export function useChatRun({ doc, live, onRunRecorded }: Options) {
       abort.current = ctrl;
       if (itemsRef.current.length === 0) {
         recorded.current = false;
+        setVerdict(null);
+        setCapped(false);
+        goal.current = null;
         pickEngine();
       }
       commit([...itemsRef.current, { kind: 'customer', id: nid('cust'), text: t }]);
@@ -291,13 +373,15 @@ export function useChatRun({ doc, live, onRunRecorded }: Options) {
     [phase, commit, agentTurn],
   );
 
-  const end = useCallback(() => finish(), [finish]);
+  const end = useCallback(() => void finish(), [finish]);
 
   const reset = useCallback(() => {
     abort.current?.abort();
     abort.current = null;
     recorded.current = false;
     commit([]);
+    setVerdict(null);
+    setCapped(false);
     setPhase('idle');
   }, [commit]);
 
@@ -305,12 +389,15 @@ export function useChatRun({ doc, live, onRunRecorded }: Options) {
     .filter((it): it is AgentItem => it.kind === 'agent')
     .map(itemOutcome)
     .filter((o): o is TurnOutcome => o !== null);
+  if (verdict?.verdict === 'unresolved') outcomes.push('attention');
 
   return {
     items,
     phase,
     engine,
-    busy: phase === 'agent' || phase === 'customer',
+    busy: phase === 'agent' || phase === 'customer' || phase === 'judging',
+    verdict,
+    capped,
     outcome: outcomes.length ? worstOutcome(outcomes) : null,
     start,
     send,

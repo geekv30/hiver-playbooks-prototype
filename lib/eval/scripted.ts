@@ -46,6 +46,10 @@ function stepsFor(id: string, body: Fragment[], out: LiveTraceStep[], replyAt: {
   }
 }
 
+// "thanks", "that's all", "bye" - the customer is wrapping up.
+const CLOSING = /^\s*(thanks|thank you|thx|ok thanks|great,? thanks|that'?s all|that is all|bye|goodbye)\b/i;
+const CLOSE_REPLY = "You're welcome! If anything else comes up, just message us here.";
+
 // "hi", "hello there", "are you there?" - nothing the skill could act on yet.
 const GREETING = /^\s*(hi|hey|hello|hiya|yo|good (morning|afternoon|evening)|are you there|anyone there|help)[\s!.?,]*(there)?[\s!.?]*$/i;
 
@@ -57,6 +61,9 @@ const LATER_REPLY = "Thanks, that helps. I've passed this on, and a teammate wil
  *  later ones only reply. */
 export function scriptedSkillTurn(doc: EditorDoc, transcript: ChatMessage[], skillStarted: boolean): SkillTurnWire {
   const last = [...transcript].reverse().find((m) => m.role === 'customer')?.text ?? '';
+  if (skillStarted && CLOSING.test(last)) {
+    return { stage: 'close', note: null, steps: [], reply: CLOSE_REPLY, ended: true };
+  }
   if (!skillStarted && GREETING.test(last)) {
     return { stage: 'greet', note: null, steps: [], reply: GREET_REPLY, ended: false };
   }
@@ -85,5 +92,7 @@ export function scriptedSkillTurn(doc: EditorDoc, transcript: ChatMessage[], ski
 export function scriptedCustomerTurn(scenario: ChatScenario, transcript: ChatMessage[]) {
   const sent = transcript.filter((m) => m.role === 'customer').length; // opening included
   const next = scenario.script?.[sent - 1];
-  return next ? { message: next, done: false } : { message: '', done: true };
+  return next
+    ? { message: next, done: false, rating: null, comment: null }
+    : { message: 'Thanks, that is all I needed.', done: true, rating: 4, comment: 'Got an answer quickly.' };
 }

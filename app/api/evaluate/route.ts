@@ -3,6 +3,7 @@
 // kind 'skill'     { doc, transcript, actionsTaken, skillStarted } -> a checked turn
 // kind 'customer'  { scenario, transcript }                  -> the AI customer's next message
 // kind 'scenarios' { doc }                                   -> chat test scenarios for this skill
+// kind 'judge'     { doc, transcript, goal, actions }         -> did the chat actually go well
 //
 // Same key, passcode and gate as Copilot. The skill turn is checked against
 // the skill here (lib/eval/wire.checkTurn), so the editor only ever renders a
@@ -12,6 +13,7 @@ import type { EditorDoc } from '@/components/flow01/doc';
 import { availability, clientIp, passcodeOk, rateLimited, readConfig, type CopilotConfig } from '@/lib/copilot/server';
 import {
   CUSTOMER_TURN_SCHEMA,
+  JUDGE_SCHEMA,
   SCENARIOS_SCHEMA,
   SKILL_TURN_SCHEMA,
   checkTurn,
@@ -22,17 +24,21 @@ import {
   type ChatMessage,
   type ChatScenario,
   type CustomerTurnWire,
+  type JudgeWire,
   type SkillTurnWire,
 } from '@/lib/eval/wire';
-import { customerPrompt, scenariosPrompt, skillTurnPrompt } from '@/lib/eval/server';
+import { customerPrompt, judgePrompt, scenariosPrompt, skillTurnPrompt } from '@/lib/eval/server';
 
 export const maxDuration = 60;
 
 const MAX_BODY = 200_000;
 const MAX_TURNS = 40;
 const MAX_CHARS = 2_000;
-// A chat evaluation spends one call per turn (two per round in AI scenarios).
-const EVAL_BUDGET = 90;
+// A chat evaluation spends a call per turn: a full AI scenario is about 18
+// (up to 8 customer turns, 8 agent turns, the scenario list and the review),
+// so the budget has to cover a reviewer running several back to back. The
+// spend cap on the key is the real limit.
+const EVAL_BUDGET = 300;
 // A turn is a long structured answer, so effort costs seconds a live chat
 // cannot spare. Explicit, because leaving it out means the model's default.
 const EFFORT = process.env.OPENAI_EVAL_REASONING?.trim() || 'none';
@@ -46,7 +52,15 @@ type Body =
       skillStarted?: boolean;
     }
   | { kind: 'customer'; scenario: ChatScenario; transcript: ChatMessage[] }
-  | { kind: 'scenarios'; doc: EditorDoc };
+  | { kind: 'scenarios'; doc: EditorDoc }
+  | {
+      kind: 'judge';
+      doc: EditorDoc;
+      transcript: ChatMessage[];
+      goal?: string | null;
+      actions?: string[];
+      rating?: { score: number; comment: string | null } | null;
+    };
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
@@ -186,7 +200,15 @@ export async function POST(req: Request) {
         transcriptToWire(cleanTranscript(body.transcript)),
       ].join('\n');
       const turn = await call<CustomerTurnWire>(cfg, customerPrompt(), input, 'customer_turn', CUSTOMER_TURN_SCHEMA, req.signal);
-      return json(200, { turn: { message: plain(turn.message).slice(0, MAX_CHARS), done: turn.done } });
+      const rating = turn.done && typeof turn.rating === 'number' ? Math.min(5, Math.max(1, Math.round(turn.rating))) : null;
+      return json(200, {
+        turn: {
+          message: plain(turn.message).slice(0, MAX_CHARS),
+          done: turn.done,
+          rating,
+          comment: rating !== null && turn.comment ? plain(turn.comment).slice(0, 300) : null,
+        },
+      });
     }
 
     if (body.kind === 'scenarios') {
@@ -204,6 +226,33 @@ export async function POST(req: Request) {
         .slice(0, 6)
         .map((s, i) => ({ id: `gen-${Date.now().toString(36)}-${i}`, persona: plain(s.persona), goal: plain(s.goal), opening: plain(s.opening) }));
       return json(200, { scenarios });
+    }
+
+    if (body.kind === 'judge') {
+      if (!body.doc?.steps) return json(400, { error: 'bad_request' });
+      const actions = (Array.isArray(body.actions) ? body.actions : []).slice(0, 60);
+      const input = [
+        'The skill:',
+        skillToWire(body.doc),
+        '',
+        `What the customer wanted: ${body.goal ? plain(body.goal).slice(0, 400) : 'not stated - infer it from the chat'}`,
+        '',
+        'The chat:',
+        transcriptToWire(cleanTranscript(body.transcript)),
+        '',
+        'Steps the skill actually took, in order:',
+        actions.length ? actions.map((a) => `- ${a}`).join('\n') : '- none',
+        '',
+        body.rating && typeof body.rating.score === 'number'
+          ? `The customer rated the chat ${Math.round(body.rating.score)} out of 5${body.rating.comment ? `: "${plain(body.rating.comment).slice(0, 300)}"` : ''}.`
+          : 'The customer did not rate the chat.',
+      ].join('\n');
+      const verdict = await call<JudgeWire>(cfg, judgePrompt(), input, 'chat_judge', JUDGE_SCHEMA, req.signal);
+      // The customer's own word is a floor: a 1 or 2 out of 5 is never a pass.
+      const unhappy = !!body.rating && body.rating.score <= 2;
+      return json(200, {
+        verdict: { verdict: unhappy && verdict.verdict !== 'unresolved' ? 'unresolved' : verdict.verdict, reason: plain(verdict.reason) },
+      });
     }
 
     return json(400, { error: 'bad_request' });
