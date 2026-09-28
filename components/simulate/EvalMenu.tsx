@@ -1,7 +1,15 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { RiArrowRightSLine, RiTimeLine, RiMailAiLine, RiHashtag } from 'react-icons/ri';
+import {
+  RiArrowRightSLine,
+  RiTimeLine,
+  RiMailAiLine,
+  RiHashtag,
+  RiChatHistoryLine,
+  RiChatSmileAiLine,
+  RiUserVoiceLine,
+} from 'react-icons/ri';
 import { SearchAiIcon } from '@/components/icons/ui';
 import NewTag from '@/components/atoms/NewTag';
 import styles from './EvalMenu.module.css';
@@ -35,6 +43,58 @@ export const EVAL_ICONS: Record<Exclude<EvalView, 'menu'>, ReactNode> = {
   custom: <RiHashtag />,
 };
 
+// The chat ways to evaluate. A skill is written once and runs on email and on
+// chat, so the channel belongs to the test, not to the skill. Not wired into
+// the menu yet - the exhibit at /component/eval-channels compares the ways to
+// offer the two channels side by side before one ships.
+export type ChatEvalView = 'pastChats' | 'chatScenarios' | 'chatLive';
+
+export const CHAT_EVAL_ENTRIES: { id: ChatEvalView; title: string; sub: string }[] = [
+  { id: 'pastChats', title: 'Past chats', sub: 'Real chats from your chat inbox' },
+  { id: 'chatScenarios', title: 'AI scenarios', sub: 'AI plays the customer, start to finish' },
+  { id: 'chatLive', title: 'Chat as a customer', sub: 'You play the customer, live' },
+];
+
+export const CHAT_EVAL_ICONS: Record<ChatEvalView, ReactNode> = {
+  pastChats: <RiChatHistoryLine />,
+  chatScenarios: <RiChatSmileAiLine />,
+  chatLive: <RiUserVoiceLine />,
+};
+
+interface CardProps {
+  icon: ReactNode;
+  title: string;
+  sub: string;
+  onClick: () => void;
+  /** The one-time NEW tag beside the chevron. */
+  isNew?: boolean;
+  /** A fresh result: the card breathes its fill, then settles. */
+  fresh?: boolean;
+}
+
+/** One entry card (Figma 1721:67654): icon on top, title + sub, chevron right.
+ *  The one renderer for every way to evaluate, on either channel. */
+export function EvalCard({ icon, title, sub, onClick, isNew, fresh }: CardProps) {
+  return (
+    <button type="button" className={styles.card} data-fresh={fresh || undefined} onClick={onClick}>
+      <span className={styles.text}>
+        <span className={styles.icon} aria-hidden>
+          {icon}
+        </span>
+        <span className={styles.titleSub}>
+          <span className={styles.title}>{title}</span>
+          <span className={styles.sub}>{sub}</span>
+        </span>
+      </span>
+      {isNew && <NewTag />}
+      <RiArrowRightSLine className={styles.chevron} aria-hidden />
+    </button>
+  );
+}
+
+/** The menu's layout pieces, so a composition of cards spaces them as the menu does. */
+export const evalMenuStyles = styles;
+
 interface Props {
   onOpen: (view: Exclude<EvalView, 'menu'>) => void;
   /** True while a fresh scan result is still news: the card carries a fill for
@@ -59,25 +119,15 @@ export default function EvalMenu({ onOpen, matchFresh, matchIsNew }: Props) {
       <h3 className={styles.heading}>Evaluate your skill in one of these ways</h3>
       <div className={styles.cards}>
         {EVAL_ENTRIES.map((e) => (
-          <button
+          <EvalCard
             key={e.id}
-            type="button"
-            className={styles.card}
-            data-fresh={(e.id === 'matching' && matchFresh) || undefined}
+            icon={EVAL_ICONS[e.id]}
+            title={e.title}
+            sub={e.sub}
             onClick={() => onOpen(e.id)}
-          >
-            <span className={styles.text}>
-              <span className={styles.icon} aria-hidden>
-                {EVAL_ICONS[e.id]}
-              </span>
-              <span className={styles.titleSub}>
-                <span className={styles.title}>{e.title}</span>
-                <span className={styles.sub}>{e.sub}</span>
-              </span>
-            </span>
-            {e.id === 'matching' && matchIsNew && <NewTag />}
-            <RiArrowRightSLine className={styles.chevron} aria-hidden />
-          </button>
+            isNew={e.id === 'matching' && matchIsNew}
+            fresh={e.id === 'matching' && matchFresh}
+          />
         ))}
       </div>
     </div>
