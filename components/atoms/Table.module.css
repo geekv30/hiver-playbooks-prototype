@@ -8,6 +8,10 @@
    its floor - on a normal desktop width everything fits. */
 .frame {
   flex: none;
+  /* Positioned so the visually hidden header label (position: absolute) is
+     contained by this scroll box; unpositioned, it escaped to the page and
+     pushed the whole page 45px wide at the 1316 minimum. */
+  position: relative;
   overflow-x: auto;
   border-width: 1px;
   border-style: solid;
@@ -71,8 +75,10 @@
   width: 1%;
 }
 .td[data-actions] {
-  padding-top: 12px;
-  padding-bottom: 12px;
+  /* The 32px button centres in the 56px cell; padding here pushed the row to
+     57 once the 1px hairline was added. */
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .tr:last-child .td {
