@@ -178,22 +178,22 @@ const VARIANTS = [
   {
     id: 'v1',
     name: 'Channel switch',
-    tag: 'Recommended',
-    note: 'One control above the cards picks Email or Chat. Email is the default, so the tab opens on exactly what ships today and the email options are untouched. Each channel shows only its own ways, so the list never grows. This is how Intercom and Pylon handle it: the channel is a selector on the test, not a separate place to test.',
+    tag: 'Alternative',
+    note: 'One control above the cards picks Email or Chat. Email is the default, so the tab opens on exactly what ships today and the email options are untouched. Kept as the alternative: it works for two channels, but it puts a second row of tabs under the panel tabs, and a third channel such as voice would crowd the control.',
     Render: V1,
   },
   {
     id: 'v2',
     name: 'One list, two groups',
-    tag: 'No new control',
+    tag: 'Ruled out',
     note: 'Every way to evaluate on one screen, under an Email and a Chat label. Nothing to switch and nothing hidden. The cost is length: seven cards do not fit the panel, so the chat ways sit below the fold, where a new user may never scroll to find them.',
     Render: V2,
   },
   {
     id: 'v3',
     name: 'Channel first',
-    tag: 'One more click',
-    note: 'The first screen asks one question, email or chat, and each answer opens that channel’s ways behind the back-header the flows already use. The first screen is the simplest of the three. The cost is a click on every evaluation, and the email ways move one level down, which changes the tab people already know.',
+    tag: 'Chosen',
+    note: 'The first screen asks one question, email or chat, and each answer opens that channel’s ways behind the back-header the flows already use. Chosen: both channels get equal weight on the first screen, so a new user sees that a skill runs on either; a new channel is one more card, not a crowded control; and it is the direction agreed with the PM. The cost is one click before every evaluation.',
     Render: V3,
   },
 ];
@@ -222,7 +222,9 @@ export default function EvalChannelsExhibit() {
           it clear that a skill can be tested on either. The email ways stay exactly as they ship.
           The chat ways are Past chats, AI scenarios and Chat as a customer. Each panel is the real
           side panel at its real size in a 1440 &times; 900 window, built from the shipped pieces,
-          so only the arrangement differs. The fit line under each one is measured live.
+          so only the arrangement differs. The fit line under each one is measured live.{' '}
+          <strong>03 is the one going forward</strong>, with 01 kept beside it as the
+          alternative.
         </p>
       </header>
 
@@ -234,7 +236,7 @@ export default function EvalChannelsExhibit() {
                 <span className={styles.num}>{String(i + 1).padStart(2, '0')}</span>
                 {name}
               </h2>
-              <span className={styles.tag} data-rec={tag === 'Recommended' || undefined}>
+              <span className={styles.tag} data-rec={tag === 'Chosen' || undefined}>
                 {tag}
               </span>
             </div>
