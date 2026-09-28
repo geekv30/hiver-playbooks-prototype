@@ -20,6 +20,10 @@ interface Props {
   approval?: boolean;
   /** Condition step: no branch matched (attention) - amber note. */
   branchWarn?: boolean;
+  /** Quiet: results as one muted line, no boxes, and no reply body - for the
+   *  chat thread, where the reply is already the bubble above and a grey box
+   *  would read as another message. */
+  quiet?: boolean;
 }
 
 function StepIcon({ step }: { step: TraceStepDef }) {
@@ -41,7 +45,7 @@ function StepIcon({ step }: { step: TraceStepDef }) {
  * step, a gray output box for an action, the matched branch for a condition, or
  * the drafted reply (with "Approval needed" when gated) for the reply step.
  */
-export default function TraceStep({ step, status, isLast, runMs, draft, approval, branchWarn }: Props) {
+export default function TraceStep({ step, status, isLast, runMs, draft, approval, branchWarn, quiet }: Props) {
   const reduce = useReducedMotion();
   const spring = { type: 'spring' as const, stiffness: 520, damping: 38 };
   const enter = reduce ? false : { opacity: 0, y: -3 };
@@ -64,7 +68,7 @@ export default function TraceStep({ step, status, isLast, runMs, draft, approval
       : step.label;
 
   return (
-    <div className={styles.step} data-status={status} data-dot={dotKind}>
+    <div className={styles.step} data-status={status} data-dot={dotKind} data-quiet={quiet || undefined}>
       <div className={styles.row}>
         <div className={styles.rail}>
           <span className={styles.dot} aria-hidden />
@@ -108,7 +112,7 @@ export default function TraceStep({ step, status, isLast, runMs, draft, approval
           )}
 
           {step.kind === 'action' && status === 'done' && step.output && (
-            <motion.div className={styles.box} initial={enter} animate={{ opacity: 1, y: 0 }} transition={spring}>
+            <motion.div className={quiet ? styles.quietOut : styles.box} initial={enter} animate={{ opacity: 1, y: 0 }} transition={spring}>
               {step.output}
             </motion.div>
           )}
@@ -118,7 +122,7 @@ export default function TraceStep({ step, status, isLast, runMs, draft, approval
             </motion.div>
           )}
 
-          {isReply && revealed && (
+          {isReply && revealed && !quiet && (
             <motion.div
               className={styles.replyWrap}
               initial={enter}

@@ -1,7 +1,6 @@
 'use client';
 
-import { RiStopCircleLine } from 'react-icons/ri';
-import { useConnectorHealth } from '@/components/flow01/connectorHealth';
+import { RiRestartLine, RiStopCircleLine } from 'react-icons/ri';
 import EvalBackHeader from '../EvalBackHeader';
 import { CHAT_EVAL_ENTRIES, CHAT_EVAL_ICONS } from '../EvalMenu';
 import scenarioStyles from '../AiScenarios.module.css';
@@ -19,9 +18,8 @@ const TITLE = CHAT_EVAL_ENTRIES.find((e) => e.id === 'chatLive')!.title;
  * the skill will sound on chat.
  */
 export default function ChatLive({ doc, live, onExit, onRunRecorded, onOpenCopilot }: ChatFlowProps) {
-  const health = useConnectorHealth();
-  const run = useChatRun({ doc, health, live, onRunRecorded });
-  const inProgress = run.items.length > 0 && run.phase !== 'ended';
+  const run = useChatRun({ doc, live, onRunRecorded });
+  const started = run.items.length > 0;
 
   return (
     <div className={flow.recent}>
@@ -33,12 +31,17 @@ export default function ChatLive({ doc, live, onExit, onRunRecorded, onOpenCopil
           onExit();
         }}
         action={
-          inProgress ? (
+          !started ? undefined : run.phase === 'ended' ? (
+            <button type="button" className={scenarioStyles.regen} onClick={run.reset}>
+              <RiRestartLine aria-hidden />
+              <span>Start over</span>
+            </button>
+          ) : (
             <button type="button" className={scenarioStyles.regen} onClick={run.end} disabled={run.busy}>
               <RiStopCircleLine aria-hidden />
               <span>End chat</span>
             </button>
-          ) : undefined
+          )
         }
       />
       <ChatSession
@@ -47,9 +50,8 @@ export default function ChatLive({ doc, live, onExit, onRunRecorded, onOpenCopil
         customerName="You, as the customer"
         mode="manual"
         live={noteLive(live)}
-        onRedo={run.reset}
         onOpenCopilot={onOpenCopilot}
-        emptyHint="Write the first message the way a customer would in your chat widget. The skill answers each message as it would on your chat inbox."
+        emptyHint="Write the first message the way a customer would in your chat widget. The AI agent answers as it would on your chat inbox, and the skill starts once the customer says what they need."
       />
     </div>
   );

@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { RiArrowDownSLine } from 'react-icons/ri';
 import { findAction } from '@/data/library';
 import { isCondition, lineToText, type EditorDoc } from '@/components/flow01/doc';
 import type { CheckedTurn, LiveTraceStep } from '@/lib/eval/wire';
 import TraceStep from '../TraceStep';
 import type { TraceStepDef } from '../traceFixture';
-import styles from '../RunTrace.module.css';
+import styles from './LiveTrace.module.css';
 
 /** The plain text of a skill step or branch line, for a prose step's label. */
 function stepText(doc: EditorDoc, id: string | null): string {
@@ -20,13 +20,13 @@ function stepText(doc: EditorDoc, id: string | null): string {
   return '';
 }
 
-function excerpt(text: string, max = 44): string {
+function excerpt(text: string, max = 48): string {
   const t = text.replace(/\s+/g, ' ').trim().replace(/[.:]$/, '');
   return t.length > max ? `${t.slice(0, max - 1).trimEnd()}...` : t;
 }
 
-/** A checked live step as the shared trace renderer draws it. */
-function toDef(doc: EditorDoc, s: LiveTraceStep, i: number): TraceStepDef {
+/** A checked step as the shared trace renderer draws it. */
+function toDef(doc: EditorDoc, s: LiveTraceStep, i: number, gated: Set<string>): TraceStepDef {
   const id = `${s.kind}-${i}`;
   if (s.kind === 'thinking') return { id, kind: 'thinking', ms: 0, text: s.text ?? '', label: 'Reasoning' };
   if (s.kind === 'condition') {
@@ -41,17 +41,12 @@ function toDef(doc: EditorDoc, s: LiveTraceStep, i: number): TraceStepDef {
       branch: arm ? (arm.type === 'else' ? 'ELSE' : lineToText(arm.condition ?? [])) : undefined,
     };
   }
-  const action = s.actionId ? findAction(s.actionId) : undefined;
+  // In the playground a gated action runs; the trace says it would wait live.
+  const later = s.stepId && gated.has(s.stepId) ? 'needs approval when live' : undefined;
   if (s.kind === 'reply') {
-    return {
-      id,
-      kind: 'reply',
-      ms: 0,
-      iconKey: 'reply',
-      label: 'Reply',
-      suffix: s.actionId === 'send_reply' ? 'send' : 'draft',
-    };
+    return { id, kind: 'reply', ms: 0, iconKey: 'reply', label: 'Reply', suffix: later };
   }
+  const action = s.actionId ? findAction(s.actionId) : undefined;
   return {
     id,
     kind: 'action',
@@ -59,46 +54,51 @@ function toDef(doc: EditorDoc, s: LiveTraceStep, i: number): TraceStepDef {
     iconKey: action?.iconKey ?? 'extract',
     connector: action?.connectorSlug,
     label: action ? action.name : excerpt(stepText(doc, s.stepId)) || 'Step',
+    suffix: later,
     output: s.text ?? undefined,
-    error: s.error ?? undefined,
   };
 }
 
-interface Props {
-  doc: EditorDoc;
-  turn: CheckedTurn;
-}
-
-/** The trace of one skill turn: the same collapsible Trace section and step
- *  renderer email evaluation uses, fed by the checked live (or scripted) turn. */
-export default function LiveTrace({ doc, turn }: Props) {
-  // Closed by default: in a chat the conversation is the read, and a turn's
-  // trace is one click away with its size stated.
+/**
+ * LiveTrace - what the skill did for one message, behind a quiet "View steps"
+ * disclosure under the agent's reply (the peer pattern: Intercom's
+ * conversation events, Ada's reasoning log). Opened, it is the same step
+ * renderer the email evaluation uses in its quiet form: each result is one
+ * muted line, so nothing under a reply reads as another chat bubble.
+ */
+export default function LiveTrace({ doc, turn }: { doc: EditorDoc; turn: CheckedTurn }) {
   const [open, setOpen] = useState(false);
+  const panelId = useId();
   if (turn.steps.length === 0) return null;
-  const defs = turn.steps.map((s, i) => toDef(doc, s, i));
-  const noBranch = turn.reason === 'noBranch';
+  const gated = new Set(turn.gatedSteps);
+  const defs = turn.steps.map((s, i) => toDef(doc, s, i, gated));
   return (
-    <div className={styles.trace}>
-      <button type="button" className={styles.head} onClick={() => setOpen((o) => !o)} aria-expanded={open}>
-        <span className={styles.title}>
-          Trace &middot; {defs.length} {defs.length === 1 ? 'step' : 'steps'}
-        </span>
+    <div className={styles.wrap}>
+      <button
+        type="button"
+        className={styles.toggle}
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-controls={panelId}
+      >
+        {open ? 'Hide steps' : 'View steps'}
+        <span className={styles.count}>{defs.length}</span>
         <RiArrowDownSLine className={styles.chev} data-open={open || undefined} aria-hidden />
       </button>
-      <div className={styles.stepsWrap} data-open={open || undefined}>
-        <div className={styles.steps}>
-          {defs.map((d, i) => (
-            <TraceStep
-              key={d.id}
-              step={d}
-              status={turn.steps[i]!.status}
-              isLast={i === defs.length - 1}
-              draft={d.kind === 'reply' ? (turn.steps[i]!.text ?? '') : undefined}
-              approval={d.kind === 'reply' && turn.held}
-              branchWarn={d.kind === 'condition' && noBranch && turn.steps[i]!.branch === 'none'}
-            />
-          ))}
+      <div className={styles.collapse} data-open={open || undefined} id={panelId}>
+        <div className={styles.inner}>
+          <div className={styles.panel}>
+            {defs.map((d, i) => (
+              <TraceStep
+                key={d.id}
+                step={d}
+                status={turn.steps[i]!.status}
+                isLast={i === defs.length - 1}
+                branchWarn={d.kind === 'condition' && turn.steps[i]!.branch === 'none'}
+                quiet
+              />
+            ))}
+          </div>
         </div>
       </div>
     </div>

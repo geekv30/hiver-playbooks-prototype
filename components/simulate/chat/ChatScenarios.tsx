@@ -1,10 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
-import { RiFlaskLine, RiPlayFill, RiRefreshLine } from 'react-icons/ri';
+import { RiFlaskLine, RiPlayFill, RiRefreshLine, RiRestartLine } from 'react-icons/ri';
 import Spinner from '@/components/atoms/Spinner';
 import Button from '@/components/atoms/Button';
-import { useConnectorHealth } from '@/components/flow01/connectorHealth';
 import { lineHasContent } from '@/components/flow01/doc';
 import { CHAT_SCENARIOS } from '@/data/chatFixtures';
 import type { ChatScenario } from '@/lib/eval/wire';
@@ -38,8 +37,7 @@ const asCard = (s: ChatScenario) => ({ id: s.id, sender: s.persona, subject: s.g
  * the AI customer and the skill talk until the customer is done.
  */
 export default function ChatScenarios({ doc, live, onExit, onRunRecorded, onOpenCopilot }: ChatFlowProps) {
-  const health = useConnectorHealth();
-  const run = useChatRun({ doc, health, live, onRunRecorded });
+  const run = useChatRun({ doc, live, onRunRecorded });
   const isLive = live.mode === 'live';
   const hasTrigger = lineHasContent(doc.trigger);
   const sig = docSignature(doc);
@@ -117,7 +115,7 @@ export default function ChatScenarios({ doc, live, onExit, onRunRecorded, onOpen
 
   const begin = (s: ChatScenario) => {
     setActive(s);
-    void run.start('scenario', s.opening, s);
+    void run.start(s.opening, s);
   };
 
   const back = () => {
@@ -135,7 +133,14 @@ export default function ChatScenarios({ doc, live, onExit, onRunRecorded, onOpen
       icon={CHAT_EVAL_ICONS.chatScenarios}
       onBack={back}
       action={
-        !active && hasTrigger ? (
+        active ? (
+          run.phase === 'ended' ? (
+            <button type="button" className={styles.regen} onClick={() => begin(active)}>
+              <RiRestartLine aria-hidden />
+              <span>Run again</span>
+            </button>
+          ) : undefined
+        ) : hasTrigger ? (
           <button type="button" className={styles.regen} onClick={regenerate} disabled={busyWriting}>
             <RiRefreshLine aria-hidden data-spin={busyWriting || undefined} />
             <span>Regenerate</span>
@@ -171,10 +176,9 @@ export default function ChatScenarios({ doc, live, onExit, onRunRecorded, onOpen
         <ChatSession
           run={run}
           doc={doc}
-          customerName={`${active.persona} (AI customer)`}
+          customerName={`${active.persona} · AI customer`}
           mode="auto"
           live={noteLive(live)}
-          onRedo={() => begin(active)}
           onOpenCopilot={onOpenCopilot}
         />
       </div>

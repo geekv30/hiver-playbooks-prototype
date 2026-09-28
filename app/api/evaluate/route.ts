@@ -1,6 +1,6 @@
 // POST /api/evaluate - one step of a chat evaluation, on the live model.
 //
-// kind 'skill'     { doc, transcript, actionsTaken, health } -> a checked turn
+// kind 'skill'     { doc, transcript, actionsTaken, skillStarted } -> a checked turn
 // kind 'customer'  { scenario, transcript }                  -> the AI customer's next message
 // kind 'scenarios' { doc }                                   -> chat test scenarios for this skill
 //
@@ -8,15 +8,15 @@
 // the skill here (lib/eval/wire.checkTurn), so the editor only ever renders a
 // trace that names real steps, and its outcome never comes from the model.
 
-import type { ConnectorSlug } from '@/types/playbook';
 import type { EditorDoc } from '@/components/flow01/doc';
-import type { ConnectorHealth } from '@/components/flow01/connectorHealth';
 import { availability, clientIp, passcodeOk, rateLimited, readConfig, type CopilotConfig } from '@/lib/copilot/server';
 import {
   CUSTOMER_TURN_SCHEMA,
   SCENARIOS_SCHEMA,
   SKILL_TURN_SCHEMA,
   checkTurn,
+  indexSkill,
+  plain,
   skillToWire,
   transcriptToWire,
   type ChatMessage,
@@ -43,7 +43,7 @@ type Body =
       doc: EditorDoc;
       transcript: ChatMessage[];
       actionsTaken?: string[];
-      health?: Record<ConnectorSlug, ConnectorHealth>;
+      skillStarted?: boolean;
     }
   | { kind: 'customer'; scenario: ChatScenario; transcript: ChatMessage[] }
   | { kind: 'scenarios'; doc: EditorDoc };
@@ -56,7 +56,7 @@ function cleanTranscript(t: unknown): ChatMessage[] {
   return t
     .filter(
       (m): m is ChatMessage =>
-        !!m && (m.role === 'customer' || m.role === 'skill') && typeof m.text === 'string' && !!m.text.trim(),
+        !!m && (m.role === 'customer' || m.role === 'agent') && typeof m.text === 'string' && !!m.text.trim(),
     )
     .slice(-MAX_TURNS)
     .map((m) => ({ role: m.role, text: m.text.slice(0, MAX_CHARS) }));
@@ -120,20 +120,36 @@ export async function POST(req: Request) {
       if (!body.doc?.steps) return json(400, { error: 'bad_request' });
       const transcript = cleanTranscript(body.transcript);
       if (transcript[transcript.length - 1]?.role !== 'customer') return json(400, { error: 'bad_request' });
-      const health = (body.health ?? {}) as Record<ConnectorSlug, ConnectorHealth>;
       const taken = (Array.isArray(body.actionsTaken) ? body.actionsTaken : []).slice(0, 40);
+      const started = body.skillStarted === true;
       const input = [
         'The skill:',
-        skillToWire(body.doc, health),
+        skillToWire(body.doc),
         '',
+        `The skill has ${started ? 'already started' : 'not started yet'} in this chat.`,
         `Actions already taken earlier in this chat: ${taken.length ? taken.join('; ') : 'none'}`,
         '',
         'The chat so far:',
         transcriptToWire(transcript),
       ].join('\n');
-      const turn = await call<SkillTurnWire>(cfg, skillTurnPrompt(), input, 'skill_turn', SKILL_TURN_SCHEMA, req.signal);
-      const firstTurn = !transcript.some((m) => m.role === 'skill');
-      return json(200, { turn: checkTurn(body.doc, turn, health, firstTurn) });
+      let turn = await call<SkillTurnWire>(cfg, skillTurnPrompt(), input, 'skill_turn', SKILL_TURN_SCHEMA, req.signal);
+      let checked = checkTurn(body.doc, turn, started);
+      // The model sometimes leaves a follow-up unanswered even though the
+      // skill has a reply step. Ask once more before calling it a gap in the
+      // skill - a slip of the model is not the author's to fix.
+      if (checked.reason === 'noReply' && indexSkill(body.doc).canReply) {
+        turn = await call<SkillTurnWire>(
+          cfg,
+          skillTurnPrompt(),
+          `${input}\n\nThe skill has a reply step on its path. Answer the customer's last message.`,
+          'skill_turn',
+          SKILL_TURN_SCHEMA,
+          req.signal,
+        );
+        checked = checkTurn(body.doc, turn, started);
+      }
+      if (checked.dropped.length) console.warn('[evaluate] dropped from trace:', checked.dropped.join(' | '));
+      return json(200, { turn: checked });
     }
 
     if (body.kind === 'customer') {
@@ -147,7 +163,7 @@ export async function POST(req: Request) {
         transcriptToWire(cleanTranscript(body.transcript)),
       ].join('\n');
       const turn = await call<CustomerTurnWire>(cfg, customerPrompt(), input, 'customer_turn', CUSTOMER_TURN_SCHEMA, req.signal);
-      return json(200, { turn: { message: turn.message.trim().slice(0, MAX_CHARS), done: turn.done } });
+      return json(200, { turn: { message: plain(turn.message).slice(0, MAX_CHARS), done: turn.done } });
     }
 
     if (body.kind === 'scenarios') {
@@ -155,7 +171,7 @@ export async function POST(req: Request) {
       const out = await call<{ scenarios: Omit<ChatScenario, 'id'>[] }>(
         cfg,
         scenariosPrompt(),
-        `The skill:\n${skillToWire(body.doc, {} as Record<ConnectorSlug, ConnectorHealth>)}`,
+        `The skill:\n${skillToWire(body.doc)}`,
         'chat_scenarios',
         SCENARIOS_SCHEMA,
         req.signal,
@@ -163,13 +179,17 @@ export async function POST(req: Request) {
       const scenarios: ChatScenario[] = out.scenarios
         .filter((s) => s.opening?.trim())
         .slice(0, 6)
-        .map((s, i) => ({ id: `gen-${Date.now().toString(36)}-${i}`, persona: s.persona, goal: s.goal, opening: s.opening }));
+        .map((s, i) => ({ id: `gen-${Date.now().toString(36)}-${i}`, persona: plain(s.persona), goal: plain(s.goal), opening: plain(s.opening) }));
       return json(200, { scenarios });
     }
 
     return json(400, { error: 'bad_request' });
   } catch (e) {
     if (req.signal.aborted) return json(499, { error: 'aborted' });
-    return json(502, { error: 'upstream', message: (e as Error).message });
+    const message = (e as Error).message;
+    // The account is out of credits: say so plainly, so the page can offer
+    // the scripted replies instead of echoing OpenAI's billing text.
+    if (/credit|quota|billing/i.test(message)) return json(402, { error: 'quota', message });
+    return json(502, { error: 'upstream', message });
   }
 }

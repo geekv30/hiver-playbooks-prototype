@@ -1,9 +1,8 @@
 'use client';
 
 import { useMemo, useState, type CSSProperties } from 'react';
-import { RiPlayFill, RiInboxLine, RiSearchLine, RiStopCircleLine } from 'react-icons/ri';
+import { RiPlayFill, RiInboxLine, RiRestartLine, RiSearchLine, RiStopCircleLine } from 'react-icons/ri';
 import Dropdown from '@/components/atoms/Dropdown';
-import { useConnectorHealth } from '@/components/flow01/connectorHealth';
 import { CHAT_INBOXES, chatInboxName, pastChatsForInbox, type PastChat } from '@/data/chatFixtures';
 import EvalBackHeader from '../EvalBackHeader';
 import { CHAT_EVAL_ICONS, CHAT_EVAL_ENTRIES } from '../EvalMenu';
@@ -39,8 +38,7 @@ export default function PastChats({ doc, live, onExit, onRunRecorded, onOpenCopi
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [reviewId, setReviewId] = useState<string | null>(null);
   const [runChat, setRunChat] = useState<PastChat | null>(null);
-  const health = useConnectorHealth();
-  const run = useChatRun({ doc, health, live, onRunRecorded });
+  const run = useChatRun({ doc, live, onRunRecorded });
 
   const chats = useMemo(() => pastChatsForInbox(inbox), [inbox]);
   const filtered = useMemo(() => {
@@ -62,7 +60,7 @@ export default function PastChats({ doc, live, onExit, onRunRecorded, onOpenCopi
     const first = chat.messages.find((m) => m.from === 'customer')?.text;
     if (!first) return;
     setRunChat(chat);
-    void run.start('past', first);
+    void run.start(first);
   };
 
   const back = () => {
@@ -83,12 +81,17 @@ export default function PastChats({ doc, live, onExit, onRunRecorded, onOpenCopi
         icon={CHAT_EVAL_ICONS.pastChats}
         onBack={back}
         action={
-          runChat && run.phase !== 'ended' && run.items.length > 0 ? (
+          !runChat ? undefined : run.phase === 'ended' ? (
+            <button type="button" className={scenarioStyles.regen} onClick={() => evaluate(runChat)}>
+              <RiRestartLine aria-hidden />
+              <span>Start over</span>
+            </button>
+          ) : (
             <button type="button" className={scenarioStyles.regen} onClick={run.end} disabled={run.busy}>
               <RiStopCircleLine aria-hidden />
               <span>End chat</span>
             </button>
-          ) : undefined
+          )
         }
       />
 
@@ -99,7 +102,6 @@ export default function PastChats({ doc, live, onExit, onRunRecorded, onOpenCopi
           customerName={runChat.customer}
           mode="manual"
           live={noteLive(live)}
-          onRedo={() => evaluate(runChat)}
           onOpenCopilot={onOpenCopilot}
         />
       ) : (

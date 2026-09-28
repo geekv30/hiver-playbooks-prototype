@@ -1,21 +1,17 @@
 'use client';
 
-// useChatRun - one chat evaluation, turn by turn.
+// useChatRun - one playground chat, turn by turn.
 //
 // The customer writes (the user, a past chat's first message, or the AI
-// customer), the skill takes a turn, and so on. Each skill turn is a checked
-// trace with an outcome (lib/eval/wire.checkTurn). A reply that is held - a
-// draft, or an action that needs approval - does not reach the customer until
-// someone sends it; in an AI scenario it is delivered for the test so the chat
-// can go on, and still counts as held.
+// customer) and the agent answers. Until the customer says what they need,
+// the agent only greets and asks; once they do, the trigger decides whether
+// the skill runs. Every reply reaches the customer - it is a simulation.
 //
 // Live when the model is on for this browser, scripted otherwise - decided per
 // conversation, so a chat never switches engines halfway.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { EditorDoc } from '@/components/flow01/doc';
-import type { ConnectorHealth } from '@/components/flow01/connectorHealth';
-import type { ConnectorSlug } from '@/types/playbook';
 import type { SimStatusKind } from '@/data/simFixtures';
 import { findAction } from '@/data/library';
 import type { LiveCopilot } from '@/lib/copilot/useLiveCopilot';
@@ -31,30 +27,25 @@ import {
 } from '@/lib/eval/wire';
 import { scriptedCustomerTurn, scriptedSkillTurn } from '@/lib/eval/scripted';
 
-export type Decision = 'sent' | 'declined';
+export type AgentItem = {
+  kind: 'agent';
+  id: string;
+  status: 'running' | 'done' | 'error';
+  turn?: CheckedTurn;
+  /** The turn the skill started on - the thread marks it. */
+  firstRun?: boolean;
+  /** Transport or model failure: the evaluation broke, not the skill. */
+  error?: string;
+  /** Out of credits: the fix is the scripted replies, not a retry. */
+  quota?: boolean;
+};
 
-export type ChatItem =
-  | { kind: 'customer'; id: string; text: string }
-  | {
-      kind: 'skill';
-      id: string;
-      status: 'running' | 'done' | 'error';
-      turn?: CheckedTurn;
-      /** Transport or model failure (not a checked outcome). */
-      error?: string;
-      /** A held reply, once someone acts on it. */
-      decision?: Decision;
-      /** Delivered for the test only (AI scenarios keep the chat going). */
-      autoDelivered?: boolean;
-    };
+export type ChatItem = { kind: 'customer'; id: string; text: string } | AgentItem;
 
-export type ChatPhase = 'idle' | 'skill' | 'customer' | 'ended';
-
-/** Where the conversation came from - labels the first customer message. */
-export type ChatOrigin = 'past' | 'scenario' | 'live';
+export type ChatPhase = 'idle' | 'agent' | 'customer' | 'ended';
 
 const MAX_CUSTOMER_TURNS = 6;
-// The scripted engine answers instantly; a short beat keeps its working state
+// The scripted engine answers instantly; a short beat keeps its typing state
 // readable instead of flashing (it is labelled "Scripted demo" throughout).
 const SCRIPTED_BEAT_MS = 700;
 
@@ -64,37 +55,32 @@ const nid = (p: string) => `${p}-${(seq += 1)}`;
 const reduced = () =>
   typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
 
-/** The conversation as the skill has seen it: every customer message, and the
- *  skill replies that actually reached the customer. */
+/** The conversation as both sides saw it. */
 export function transcriptOf(items: ChatItem[]): ChatMessage[] {
   const out: ChatMessage[] = [];
   for (const it of items) {
     if (it.kind === 'customer') out.push({ role: 'customer', text: it.text });
-    else if (it.status === 'done' && it.turn?.reply && delivered(it)) out.push({ role: 'skill', text: it.turn.reply });
+    else if (it.status === 'done' && it.turn?.reply) out.push({ role: 'agent', text: it.turn.reply });
   }
   return out;
 }
 
-export function delivered(it: Extract<ChatItem, { kind: 'skill' }>): boolean {
-  if (!it.turn?.reply) return false;
-  if (!it.turn.held) return true;
-  return it.decision === 'sent' || !!it.autoDelivered;
-}
+const started = (items: ChatItem[]) => items.some((it) => it.kind === 'agent' && it.turn?.stage === 'run');
 
-/** A skill item's outcome for the conversation roll-up. A transport failure
- *  is an errored turn: the evaluation broke, and it can be retried. */
-export function itemOutcome(it: Extract<ChatItem, { kind: 'skill' }>): TurnOutcome | null {
+/** An agent turn's part in the chat's result. A greeting is neither good nor
+ *  bad - the skill has not been asked anything yet. */
+export function itemOutcome(it: AgentItem): TurnOutcome | null {
   if (it.status === 'error') return 'errored';
-  if (it.status !== 'done' || !it.turn) return null;
+  if (it.status !== 'done' || !it.turn || it.turn.stage === 'greet') return null;
   return it.turn.outcome;
 }
 
 function actionsTakenOf(items: ChatItem[]): string[] {
   const out: string[] = [];
   for (const it of items) {
-    if (it.kind !== 'skill' || !it.turn) continue;
+    if (it.kind !== 'agent' || !it.turn) continue;
     for (const s of it.turn.steps) {
-      if (s.kind !== 'action' || s.status !== 'done' || !s.actionId) continue;
+      if (s.kind !== 'action' || !s.actionId) continue;
       out.push(`${findAction(s.actionId)?.name ?? s.actionId} (${s.stepId})`);
     }
   }
@@ -112,27 +98,25 @@ const sleep = (ms: number, signal: AbortSignal) =>
 
 interface Options {
   doc: EditorDoc;
-  health: Record<ConnectorSlug, ConnectorHealth>;
   live: LiveCopilot;
   /** The finished conversation's outcome, for the eval aggregate. */
   onRunRecorded?: (statuses: SimStatusKind[]) => void;
 }
 
-export function useChatRun({ doc, health, live, onRunRecorded }: Options) {
+export function useChatRun({ doc, live, onRunRecorded }: Options) {
   const [items, setItems] = useState<ChatItem[]>([]);
   const [phase, setPhase] = useState<ChatPhase>('idle');
   const [engine, setEngine] = useState<'live' | 'scripted'>('scripted');
-  const [scenario, setScenario] = useState<ChatScenario | null>(null);
 
   // Latest-refs, written after commit so async loops read fresh values.
   const itemsRef = useRef(items);
   useEffect(() => {
     itemsRef.current = items;
   }, [items]);
-  const ctx = useRef({ doc, health, live, onRunRecorded });
+  const ctx = useRef({ doc, live, onRunRecorded });
   useEffect(() => {
-    ctx.current = { doc, health, live, onRunRecorded };
-  }, [doc, health, live, onRunRecorded]);
+    ctx.current = { doc, live, onRunRecorded };
+  }, [doc, live, onRunRecorded]);
   const abort = useRef<AbortController | null>(null);
   const engineRef = useRef<'live' | 'scripted'>('scripted');
   const recorded = useRef(false);
@@ -144,36 +128,42 @@ export function useChatRun({ doc, health, live, onRunRecorded }: Options) {
     setItems(next);
   }, []);
 
-  /** One skill turn on the conversation as it stands. */
-  const skillTurn = useCallback(
-    async (signal: AbortSignal, auto: boolean): Promise<Extract<ChatItem, { kind: 'skill' }>> => {
-      const id = nid('skill');
-      const pending: Extract<ChatItem, { kind: 'skill' }> = { kind: 'skill', id, status: 'running' };
-      commit([...itemsRef.current, pending]);
-      setPhase('skill');
-      const before = itemsRef.current.filter((it) => it.id !== id);
+  const pickEngine = useCallback(() => {
+    const eng = ctx.current.live.mode === 'live' ? 'live' : 'scripted';
+    engineRef.current = eng;
+    setEngine(eng);
+  }, []);
+
+  /** One agent turn on the conversation as it stands. */
+  const agentTurn = useCallback(
+    async (signal: AbortSignal): Promise<AgentItem> => {
+      const id = nid('agent');
+      const pending: AgentItem = { kind: 'agent', id, status: 'running' };
+      const before = itemsRef.current;
+      commit([...before, pending]);
+      setPhase('agent');
       const transcript = transcriptOf(before);
-      const firstTurn = !before.some((it) => it.kind === 'skill');
-      const { doc: d, health: h, live: l } = ctx.current;
-      let done: Extract<ChatItem, { kind: 'skill' }>;
+      const wasStarted = started(before);
+      const { doc: d, live: l } = ctx.current;
+      let done: AgentItem;
       try {
         let turn: CheckedTurn;
         if (engineRef.current === 'live') {
           const res = await l.post<{ turn: CheckedTurn }>(
             '/api/evaluate',
-            { kind: 'skill', doc: d, transcript, actionsTaken: actionsTakenOf(before), health: h },
+            { kind: 'skill', doc: d, transcript, actionsTaken: actionsTakenOf(before), skillStarted: wasStarted },
             signal,
           );
           turn = res.turn;
         } else {
           if (!reduced()) await sleep(SCRIPTED_BEAT_MS, signal);
-          turn = checkTurn(d, scriptedSkillTurn(d, transcript), h, firstTurn);
+          turn = checkTurn(d, scriptedSkillTurn(d, transcript, wasStarted), wasStarted);
         }
-        done = { ...pending, status: 'done', turn, autoDelivered: auto && turn.held };
+        done = { ...pending, status: 'done', turn, firstRun: !wasStarted && turn.stage === 'run' };
       } catch (e) {
         if (signal.aborted) throw e;
-        const why = e instanceof LiveCopilotError ? e.message : 'Something went wrong reaching the model.';
-        done = { ...pending, status: 'error', error: why };
+        const why = e instanceof LiveCopilotError ? e.message : 'The model could not be reached.';
+        done = { ...pending, status: 'error', error: why, quota: e instanceof LiveCopilotError && e.kind === 'quota' };
       }
       commit(itemsRef.current.map((it) => (it.id === id ? done : it)));
       return done;
@@ -187,7 +177,7 @@ export function useChatRun({ doc, health, live, onRunRecorded }: Options) {
     setPhase('ended');
     if (recorded.current) return;
     const outcomes = itemsRef.current
-      .filter((it): it is Extract<ChatItem, { kind: 'skill' }> => it.kind === 'skill')
+      .filter((it): it is AgentItem => it.kind === 'agent')
       .map(itemOutcome)
       .filter((o): o is TurnOutcome => o !== null);
     if (outcomes.length === 0) return;
@@ -214,105 +204,89 @@ export function useChatRun({ doc, health, live, onRunRecorded }: Options) {
     return next.done || !next.message.trim() ? null : next.message.trim();
   }, []);
 
-  /** Start a conversation. `first` is the customer's opening, if there is one. */
+  /** A past chat's opening, or an AI scenario: the chat starts with the
+   *  customer's first message. An AI scenario then runs itself to the end. */
   const start = useCallback(
-    async (origin: ChatOrigin, first?: string, sc?: ChatScenario) => {
+    async (first: string, sc?: ChatScenario) => {
       abort.current?.abort();
       const ctrl = new AbortController();
       abort.current = ctrl;
       recorded.current = false;
-      const eng = ctx.current.live.mode === 'live' ? 'live' : 'scripted';
-      engineRef.current = eng;
-      setEngine(eng);
-      setScenario(sc ?? null);
-      commit(first ? [{ kind: 'customer', id: nid('cust'), text: first }] : []);
-      if (!first) {
-        setPhase('idle');
-        return;
-      }
+      pickEngine();
+      commit([{ kind: 'customer', id: nid('cust'), text: first }]);
       try {
-        let turn = await skillTurn(ctrl.signal, origin === 'scenario');
-        if (origin !== 'scenario' || !sc) {
-          setPhase(turn.turn?.reason === 'trigger' ? 'ended' : 'idle');
-          if (turn.turn?.reason === 'trigger') finish();
+        let turn = await agentTurn(ctrl.signal);
+        if (!sc) {
+          setPhase('idle');
           return;
         }
-        // AI scenario: the AI customer answers until it is done, the skill has
-        // nothing to answer, or the chat runs long.
         for (let n = 1; n < MAX_CUSTOMER_TURNS; n += 1) {
-          if (turn.status === 'error' || turn.turn?.reason === 'trigger' || !turn.turn?.reply) break;
+          // Nothing to answer: the evaluation broke, the skill does not fit
+          // this chat, or the agent said nothing.
+          if (turn.status === 'error' || turn.turn?.stage === 'noMatch' || !turn.turn?.reply) break;
           const msg = await customerTurn(sc, ctrl.signal);
           if (!msg) break;
           commit([...itemsRef.current, { kind: 'customer', id: nid('cust'), text: msg }]);
-          turn = await skillTurn(ctrl.signal, true);
+          turn = await agentTurn(ctrl.signal);
         }
         finish();
       } catch (e) {
         if (ctrl.signal.aborted) return;
-        // The AI customer failed: close the chat with what it has.
         commit([
           ...itemsRef.current,
-          { kind: 'skill', id: nid('skill'), status: 'error', error: e instanceof LiveCopilotError ? e.message : 'The AI customer could not reply.' },
+          { kind: 'agent', id: nid('agent'), status: 'error', error: e instanceof LiveCopilotError ? e.message : 'The AI customer could not reply.' },
         ]);
         finish();
       }
     },
-    [commit, skillTurn, customerTurn, finish],
+    [commit, agentTurn, customerTurn, finish, pickEngine],
   );
 
   /** The user, as the customer, sends a message. */
   const send = useCallback(
     async (text: string) => {
       const t = text.trim();
-      if (!t || phase === 'skill' || phase === 'customer' || phase === 'ended') return;
+      if (!t || phase === 'agent' || phase === 'customer' || phase === 'ended') return;
       const ctrl = new AbortController();
       abort.current = ctrl;
       if (itemsRef.current.length === 0) {
         recorded.current = false;
-        const eng = ctx.current.live.mode === 'live' ? 'live' : 'scripted';
-        engineRef.current = eng;
-        setEngine(eng);
+        pickEngine();
       }
       commit([...itemsRef.current, { kind: 'customer', id: nid('cust'), text: t }]);
       try {
-        const turn = await skillTurn(ctrl.signal, false);
-        if (turn.turn?.reason === 'trigger') finish();
-        else setPhase('idle');
-      } catch {
-        /* aborted */
-      }
-    },
-    [phase, commit, skillTurn, finish],
-  );
-
-  /** Send or decline a held reply. */
-  const decide = useCallback(
-    (id: string, decision: Decision) => {
-      commit(itemsRef.current.map((it) => (it.id === id && it.kind === 'skill' ? { ...it, decision } : it)));
-    },
-    [commit],
-  );
-
-  /** Re-run a failed turn from the same point in the chat. */
-  const retry = useCallback(
-    async (id: string) => {
-      const i = itemsRef.current.findIndex((it) => it.id === id);
-      if (i < 0 || phase === 'skill' || phase === 'customer') return;
-      const ctrl = new AbortController();
-      abort.current = ctrl;
-      recorded.current = false;
-      commit(itemsRef.current.slice(0, i));
-      try {
-        await skillTurn(ctrl.signal, false);
+        await agentTurn(ctrl.signal);
         setPhase('idle');
       } catch {
         /* aborted */
       }
     },
-    [phase, commit, skillTurn],
+    [phase, commit, agentTurn, pickEngine],
   );
 
-  /** Stop whatever is running and close the conversation. */
+  /** Re-run a turn the evaluation could not finish. `scripted` switches the
+   *  rest of this chat to the scripted replies (the out-of-credits fix). */
+  const retry = useCallback(
+    async (id: string, scripted?: boolean) => {
+      const i = itemsRef.current.findIndex((it) => it.id === id);
+      if (i < 0 || phase === 'agent' || phase === 'customer') return;
+      const ctrl = new AbortController();
+      abort.current = ctrl;
+      commit(itemsRef.current.slice(0, i));
+      if (scripted) {
+        engineRef.current = 'scripted';
+        setEngine('scripted');
+      }
+      try {
+        await agentTurn(ctrl.signal);
+        setPhase('idle');
+      } catch {
+        /* aborted */
+      }
+    },
+    [phase, commit, agentTurn],
+  );
+
   const end = useCallback(() => finish(), [finish]);
 
   const reset = useCallback(() => {
@@ -321,11 +295,10 @@ export function useChatRun({ doc, health, live, onRunRecorded }: Options) {
     recorded.current = false;
     commit([]);
     setPhase('idle');
-    setScenario(null);
   }, [commit]);
 
   const outcomes = items
-    .filter((it): it is Extract<ChatItem, { kind: 'skill' }> => it.kind === 'skill')
+    .filter((it): it is AgentItem => it.kind === 'agent')
     .map(itemOutcome)
     .filter((o): o is TurnOutcome => o !== null);
 
@@ -333,12 +306,10 @@ export function useChatRun({ doc, health, live, onRunRecorded }: Options) {
     items,
     phase,
     engine,
-    scenario,
-    busy: phase === 'skill' || phase === 'customer',
+    busy: phase === 'agent' || phase === 'customer',
     outcome: outcomes.length ? worstOutcome(outcomes) : null,
     start,
     send,
-    decide,
     retry,
     end,
     reset,

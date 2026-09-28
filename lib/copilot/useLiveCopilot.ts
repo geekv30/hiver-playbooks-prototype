@@ -47,7 +47,7 @@ export interface LiveCopilot {
 export class LiveCopilotError extends Error {
   constructor(
     message: string,
-    readonly kind: 'passcode' | 'rate_limited' | 'unavailable' | 'failed',
+    readonly kind: 'passcode' | 'rate_limited' | 'unavailable' | 'quota' | 'failed',
   ) {
     super(message);
   }
@@ -195,6 +195,7 @@ export function useLiveCopilot(): LiveCopilot {
       }
       if (r.status === 429) throw new LiveCopilotError('Too many requests. Wait a few minutes.', 'rate_limited');
       if (r.status === 503) throw new LiveCopilotError('Live AI is not set up here.', 'unavailable');
+      if (r.status === 402) throw new LiveCopilotError('Live AI has run out of OpenAI credits.', 'quota');
       throw new LiveCopilotError(data.message ?? `The request failed (${r.status}).`, 'failed');
     },
     [passcode],
