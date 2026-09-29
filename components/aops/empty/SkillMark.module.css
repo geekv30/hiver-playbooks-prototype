@@ -1,0 +1,84 @@
+/* The empty state's faded mark (Figma 3038:24636): an 80px glyph in 10% ink
+   that dissolves downward into the heading below it. */
+
+.mark {
+  position: relative;
+  display: block;
+  width: 80px;
+  height: 80px;
+  flex: none;
+}
+.mark img {
+  display: block;
+  width: 80px;
+  height: 80px;
+}
+
+/* Composed marks: the same fade as the Figma gradient (full ink at the top,
+   a tenth of it at the bottom), applied as a mask so glyph and sparkle share it. */
+.composed {
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.1) 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.1) 100%);
+}
+.glyph {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 64px;
+  height: 64px;
+  color: rgba(10, 10, 10, 0.1);
+}
+/* The sparkle is the one "AI" note, a touch more ink than the glyph, and it
+   settles in once on load. */
+.sparkle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 26px;
+  height: 26px;
+  color: rgba(10, 10, 10, 0.14);
+  transform-origin: 50% 50%;
+  animation: settle 700ms cubic-bezier(0.34, 1.36, 0.64, 1) 200ms both;
+}
+
+@keyframes settle {
+  from {
+    opacity: 0;
+    transform: scale(0.4) rotate(-30deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sparkle {
+    animation: none;
+  }
+}
+
+/* Round 2 (after Sarvam): larger, centered, in flat ink that dissolves to
+   nothing by its lower edge, so it sits behind the heading, not on it. The
+   sparkle tucks into the book's top-right corner. */
+.solid {
+  width: 112px;
+  height: 104px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 30%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 30%, transparent 100%);
+}
+.solid .glyph {
+  left: 50%;
+  bottom: 0;
+  width: 96px;
+  height: 96px;
+  margin-left: -48px;
+  color: rgba(10, 10, 10, 0.09);
+}
+.solid .sparkle {
+  top: 0;
+  right: 0;
+  width: 28px;
+  height: 28px;
+  color: rgba(10, 10, 10, 0.14);
+}

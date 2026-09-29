@@ -1,0 +1,417 @@
+/* AdminShell - the Hiver Admin frame (Figma 3535:86190) shared by the Skills
+   list and the New skill page: Gmail bar + grouped Admin nav (240) + Hiver AI
+   nav (224) + page header, a scrolling body, and the AI-data footer. */
+
+/* Height is divided by the global zoom for the same reason the editor canvas
+   does it: 100vh inside a zoomed element is 111% of the real viewport, which
+   left the page permanently taller than the screen. Bounded here, the main
+   column scrolls itself. */
+.page {
+  height: calc(100vh / var(--app-scale));
+  display: flex;
+  flex-direction: column;
+  background: var(--card, #fff);
+  overflow: hidden;
+}
+.shell {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
+}
+
+/* ---- Admin Panel main nav (Figma 3535:86193, HIG Primary Side Nav) ---- */
+.mainNav {
+  flex: none;
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background: var(--surface-soft); /* background/accents/hig/soft #f6f8fc */
+  border-right: 1px solid var(--border-subtle); /* #eee */
+}
+.mainNavHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 24px 16px;
+}
+.hiverMark {
+  flex: none;
+  width: 34px;
+  height: 34px;
+}
+.hiverMark img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.mainNavHeadText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.mainNavOverline {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 14px;
+  letter-spacing: 0.08px;
+  color: var(--text-soft); /* #737373 */
+}
+.mainNavTitle {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--text-default); /* #404040 */
+}
+.mainNavClose {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-right: 2px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-default);
+  cursor: pointer;
+}
+.mainNavClose svg {
+  width: 16px;
+  height: 16px;
+}
+.mainNavMenu {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 12px 24px;
+}
+.navSection {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.navSectionTitle {
+  margin: 0;
+  padding: 4px 12px 4px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: -0.06px;
+  color: var(--text-soft);
+}
+.mainNavItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: calc(100% - 12px);
+  height: 32px;
+  margin: 0 6px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: var(--text-default);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap);
+}
+.mainNavItem:hover {
+  background: var(--hairline-soft);
+}
+.mainNavItem[data-active] {
+  background: #e8edf7; /* background/accents/hig/strong */
+  font-weight: 500;
+}
+.mainNavIcon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+.navLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- Hiver AI section nav (Figma 3535:86194, SM Nav) ---- */
+.aiNav {
+  flex: none;
+  width: 224px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px 16px;
+  background: var(--card, #fff);
+  border-right: 1px solid var(--border-subtle);
+}
+.aiNavHead {
+  margin: 0;
+  padding: 0 8px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: -0.07px;
+  color: var(--text-strong); /* #171717 */
+}
+.aiNavMenu {
+  display: flex;
+  flex-direction: column;
+}
+.aiNavSection {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.aiNavSectionTitle {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  margin: 0;
+  padding: 0 12px 0 8px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: -0.06px;
+  color: var(--text-soft);
+}
+.aiNavItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 32px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: var(--text-strong);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap);
+}
+.aiNavItem:hover {
+  background: var(--bg-subtle);
+}
+.aiNavItem[data-active] {
+  background: #ebf3ff; /* background/royal/subtle */
+  font-weight: 500;
+}
+.crown {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: #f0b82e;
+}
+
+/* ---- Page (Figma 3535:86214): fixed header + footer, the body scrolls ---- */
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--card, #fff);
+}
+.header {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* Title (28) + subtitle (18) + 16px padding each side: every page's header is
+     this tall, with or without a subtitle, so the rule under it never jumps
+     between the list and its sub-pages. */
+  min-height: 79px; /* border-box: 16 + 28 + 18 + 16 + the 1px rule */
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.titleBlock {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 28px;
+  color: var(--text-strong);
+}
+.subtitle {
+  margin: 0;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--text-default);
+}
+/* "Learn" - DLS Button, secondary xs (h24, #fafafa, #d4d4d4 border, r6). */
+.learnBtn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--badge-gray-border); /* #d4d4d4 */
+  border-radius: 6px;
+  background: var(--bg-subtle);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 14px;
+  color: var(--text-strong);
+  text-decoration: none;
+  transition: background var(--d-hover) var(--ease-snap);
+}
+.learnBtn:hover {
+  background: #f5f5f5;
+}
+.learnBtn svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* Body - the Figma 3535:86220 area: count line + action, then the table or
+   the empty state. */
+.body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px 20px 40px;
+  overflow-y: auto;
+}
+.body[data-nobar] {
+  /* No top row: start where the row would have ended, so a sub-page's content
+     sits exactly where the list's empty state does. */
+  padding-top: 72px;
+}
+.bodyBar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 2px;
+}
+/* DLS Button, primary sm (h32, #246fea / #1956c8, r6, 13 medium). */
+.primaryBtn,
+.secondaryBtn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 19px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background var(--d-hover) var(--ease-snap),
+    border-color var(--d-hover) var(--ease-snap);
+}
+.primaryBtn {
+  border-color: #1956c8;
+  background: #246fea;
+  color: #fff;
+}
+.primaryBtn:hover {
+  background: #1956c8;
+}
+/* Empty state: the prompt is the primary path, so the manual one steps back. */
+.secondaryBtn {
+  border-color: var(--badge-gray-border);
+  background: var(--card);
+  color: var(--text-strong);
+}
+.secondaryBtn:hover {
+  background: var(--bg-subtle);
+}
+/* Back - the secondary button, icon-only: same 32px, border, fill and radius. */
+.backBtn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--badge-gray-border); /* #d4d4d4 */
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--text-strong);
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap);
+}
+.backBtn:hover {
+  background: var(--bg-subtle);
+}
+.backBtn svg {
+  width: 16px;
+  height: 16px;
+}
+.backBtn:focus-visible,
+.primaryBtn:focus-visible,
+.secondaryBtn:focus-visible,
+.learnBtn:focus-visible {
+  outline: 2px solid #246fea;
+  outline-offset: 2px;
+}
+
+/* Footer (Figma 3530:84883) */
+.footer {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px;
+  border-top: 1px solid var(--border-subtle);
+}
+.footerNote {
+  margin: 0;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--text-soft);
+}
+.footerLink {
+  font-weight: 500;
+  color: var(--tag-blue-ink); /* link/text #1e40af */
+  text-decoration: none;
+}
+.footerLink:hover {
+  text-decoration: underline;
+}
+.footerAction {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 14px;
+  color: var(--text-default);
+  text-decoration: none;
+}
+.footerAction:hover {
+  color: var(--text-strong);
+}
+.footerAction svg {
+  width: 12px;
+  height: 12px;
+}

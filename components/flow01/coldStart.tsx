@@ -1,7 +1,16 @@
 'use client';
 
 import type { ComponentType, SVGProps } from 'react';
-import { RiBug2Line, RiBankCardLine, RiLightbulbFlashLine, RiBookOpenLine } from 'react-icons/ri';
+import {
+  RiBug2Line,
+  RiBankCardLine,
+  RiLightbulbFlashLine,
+  RiBookOpenLine,
+  RiShoppingBag3Line,
+  RiAlarmWarningLine,
+} from 'react-icons/ri';
+import type { ConnectorSlug } from '@/types/playbook';
+import { ACTIONS } from '@/data/library';
 import {
   type EditorDoc,
   type Step,
@@ -51,10 +60,18 @@ interface ConditionSpec {
   branches: StarterBranch[];
 }
 
+/** Template filters on the Skills empty state, in display order. */
+export const STARTER_CATEGORIES = ['Triage', 'Billing and orders', 'Replies', 'Escalation'] as const;
+export type StarterCategory = (typeof STARTER_CATEGORIES)[number];
+
 export interface StarterSpec {
   id: string;
   /** Bubble label (verb-led, generic). */
   label: string;
+  /** One-line card summary of what the skill does, end to end. */
+  blurb: string;
+  /** The template filter it sits under on the Skills empty state. */
+  category: StarterCategory;
   Icon: IconCmp;
   /** Prefill written into the prompt field on click (the user can edit before generating). */
   prompt: string;
@@ -65,13 +82,15 @@ export interface StarterSpec {
   condition?: ConditionSpec;
 }
 
-// The four starter workflows. Generic across every customer; the prefill prompt
+// The starter workflows. Generic across every customer; the prefill prompt
 // reads as a sentence the user could have typed, and the built doc is coherent
 // with it.
 export const STARTERS: StarterSpec[] = [
   {
     id: 'bug-triage',
     label: 'Triage bug reports',
+    blurb: 'Collects repro steps, tags severity, and routes to engineering.',
+    category: 'Triage',
     Icon: RiBug2Line,
     prompt:
       'When a customer reports a bug, gather the steps to reproduce and the affected account, tag it by severity, route it to the engineering queue, and reply to confirm we are on it.',
@@ -87,6 +106,8 @@ export const STARTERS: StarterSpec[] = [
   {
     id: 'billing',
     label: 'Answer billing questions',
+    blurb: 'Looks up the customer and drafts a reply from your policy.',
+    category: 'Billing and orders',
     Icon: RiBankCardLine,
     prompt:
       'When a customer asks about an invoice or charge, look up their billing details, draft a clear reply from the knowledge base, and escalate to finance if a refund is requested.',
@@ -108,6 +129,8 @@ export const STARTERS: StarterSpec[] = [
   {
     id: 'feature-request',
     label: 'Route feature requests',
+    blurb: 'Logs the request to your backlog and thanks the customer.',
+    category: 'Triage',
     Icon: RiLightbulbFlashLine,
     prompt:
       'When a customer suggests a new feature, summarize the request, log it to the product backlog, and reply to thank them and set expectations.',
@@ -123,6 +146,8 @@ export const STARTERS: StarterSpec[] = [
   {
     id: 'kb-reply',
     label: 'Reply from the knowledge base',
+    blurb: 'Drafts a reply from the matching article, for approval.',
+    category: 'Replies',
     Icon: RiBookOpenLine,
     prompt:
       'When a common how-to question comes in, find the matching knowledge base article, draft a reply that matches the customer tone, and ask a teammate to review before sending.',
@@ -135,7 +160,85 @@ export const STARTERS: StarterSpec[] = [
       { before: 'Then ', action: 'approval', after: ' so a teammate reviews it before it sends.' },
     ],
   },
+  {
+    id: 'order-issues',
+    label: 'Resolve order issues',
+    blurb: 'Checks the order in Shopify and routes refunds for approval.',
+    category: 'Billing and orders',
+    Icon: RiShoppingBag3Line,
+    prompt:
+      'When a customer writes about a late, damaged, or wrong order, look up the order in Shopify. If it qualifies for a refund, ask a teammate to approve it; otherwise reply with the order status and next steps.',
+    title: 'Order issues',
+    trigger: 'When a customer writes about a late, damaged, or wrong order.',
+    steps: [
+      { text: 'Pull out the order number and what went wrong.' },
+      { before: 'Look up the order in ', action: 'shopify_get_order', after: '.' },
+    ],
+    condition: {
+      intro: 'Then resolve it:',
+      branches: [
+        { type: 'if', expr: 'the order qualifies for a refund', before: 'Ask for ', action: 'approval', after: ' to refund it.' },
+        { type: 'else', action: 'draft_reply', after: ' with the order status and next steps.' },
+      ],
+    },
+  },
+  {
+    id: 'escalate-urgent',
+    label: 'Escalate urgent issues',
+    blurb: 'Tags it urgent, alerts Slack, and hands off to Tier 2.',
+    category: 'Escalation',
+    Icon: RiAlarmWarningLine,
+    prompt:
+      'When a customer reports an outage or an urgent blocker, look them up in HubSpot, tag it urgent, post a summary to the escalations channel in Slack, and assign it to the Tier 2 queue.',
+    title: 'Urgent escalations',
+    trigger: 'When a customer reports an outage or an urgent blocker.',
+    steps: [
+      { text: 'Pull out what is broken and how many people it affects.' },
+      { before: 'Look up the customer in ', action: 'hubspot_get_contact', after: '.' },
+      { before: 'Tag it ', action: 'tag', meta: 'urgent', after: '.' },
+      { action: 'slack_send_message', meta: '#support-escalations', after: ' with a short summary.' },
+      { before: 'Assign it to the ', action: 'assign', meta: 'Tier 2 queue', after: '.' },
+    ],
+  },
 ];
+
+// ---------------------------------------------------------------------------
+// At-a-glance facts for a starter's card, read off its own steps - never typed
+// in separately, so a card can't claim a connector the skill doesn't use.
+// ---------------------------------------------------------------------------
+
+function starterActionIds(spec: StarterSpec): string[] {
+  const ids = spec.steps.map((s) => s.action);
+  spec.condition?.branches.forEach((b) => ids.push(b.action));
+  return ids.filter((id): id is string => !!id);
+}
+
+/** The connectors a starter calls, in the order its steps first use them. */
+export function starterConnectors(spec: StarterSpec): ConnectorSlug[] {
+  const out: ConnectorSlug[] = [];
+  for (const id of starterActionIds(spec)) {
+    const slug = ACTIONS.find((a) => a.id === id)?.connectorSlug;
+    if (slug && !out.includes(slug)) out.push(slug);
+  }
+  return out;
+}
+
+/** Lines the editor shows once it's built: each step, plus the condition's
+ *  intro line and the condition block itself (see buildStarterDoc). */
+export function starterStepCount(spec: StarterSpec): number {
+  return spec.steps.length + (spec.condition ? 2 : 0);
+}
+
+export type ReplyMode = 'sends' | 'approval' | 'drafts' | 'none';
+
+/** How far the starter goes on its own: the strictest human gate wins. */
+export function starterReplyMode(spec: StarterSpec): ReplyMode {
+  const ids = starterActionIds(spec);
+  if (ids.includes('approval')) return 'approval';
+  if (ids.includes('send_reply')) return 'sends';
+  if (ids.includes('draft_reply')) return 'drafts';
+  return 'none';
+}
 
 // Build a step line's fragments from a starter step / branch spec.
 function lineFrags(s: { text?: string; before?: string; action?: string; meta?: string; after?: string }) {

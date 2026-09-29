@@ -27,6 +27,9 @@ export interface LiveTurnResult {
 
 export interface LiveCopilot {
   mode: LiveMode;
+  /** The status check has answered (or failed): `mode` is final. Until then it
+   *  reads 'unavailable', which a one-shot action must not act on. */
+  settled: boolean;
   model: string | null;
   /** Turning live on needs the passcode field (none needed, or already held: no). */
   needsPasscode: boolean;
@@ -82,19 +85,30 @@ function subscribe(l: () => void) {
 
 export function useLiveCopilot(): LiveCopilot {
   const [status, setStatus] = useState<{ configured: boolean; passcodeRequired: boolean; model: string | null } | null>(null);
+  const [settled, setSettled] = useState(false);
   const passcode = useSyncExternalStore(subscribe, readStored, () => null);
   const off = useSyncExternalStore(subscribe, readOff, () => false);
 
   useEffect(() => {
     let alive = true;
-    fetch('/api/copilot/status', { cache: 'no-store' })
+    // Capped: a stalled status call must not hold up anything waiting on
+    // `settled` (it falls back to the scripted Copilot instead).
+    const ctrl = new AbortController();
+    const cap = setTimeout(() => ctrl.abort(), 5000);
+    fetch('/api/copilot/status', { cache: 'no-store', signal: ctrl.signal })
       .then((r) => (r.ok ? r.json() : null))
       .then((s) => {
         if (alive && s) setStatus(s);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        clearTimeout(cap);
+        if (alive) setSettled(true);
+      });
     return () => {
       alive = false;
+      clearTimeout(cap);
+      ctrl.abort();
     };
   }, []);
 
@@ -204,5 +218,5 @@ export function useLiveCopilot(): LiveCopilot {
     [passcode],
   );
 
-  return { mode, model: status?.model ?? null, needsPasscode, unlock, lock, post, turn };
+  return { mode, settled, model: status?.model ?? null, needsPasscode, unlock, lock, post, turn };
 }
