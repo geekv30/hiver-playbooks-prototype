@@ -96,8 +96,8 @@ export default function AdminShell({
   title: string;
   /** A section page's one-line description; a sub-page (New skill) has none. */
   subtitle?: string;
-  /** Sub-pages get a back button before the title - the DLS secondary sm
-   *  button, icon-only, so it matches the header's other actions. */
+  /** A sub-page (Figma Insights 1474:49089): a bare back arrow before a 16px
+   *  title, in a shorter header. */
   onBack?: () => void;
   /** Header actions on the right. Defaults to "Learn". */
   actions?: ReactNode;
@@ -173,7 +173,7 @@ export default function AdminShell({
 
         {/* ---- Page: header, body (Figma 3535:86220), AI-data footer ---- */}
         <main className={styles.main}>
-          <header className={styles.header}>
+          <header className={styles.header} data-sub={onBack ? true : undefined}>
             {onBack && (
               <button type="button" className={styles.backBtn} aria-label="Back to skills" onClick={onBack}>
                 <RiArrowLeftLine aria-hidden />

@@ -176,6 +176,7 @@
   /* ===== Skills-ai DLS neutrals + accents (Figma CDekAHIDQiVgcfZjKR2yck,
      Table 3535:86229). The newer screens are drawn on a warm neutral scale,
      not the cool Gray ramp above; these carry the exact variable values. */
+  --text-intense: #0a0a0a; /* text/neutral/intense */
   --text-strong: #171717; /* text/neutral/strong */
   --text-default: #404040; /* text/neutral/default */
   --text-soft: #737373; /* text/neutral/soft */
