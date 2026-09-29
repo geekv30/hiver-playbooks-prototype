@@ -3,21 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import {
-  RiCloseLine,
-  RiLayoutGridLine,
-  RiInboxLine,
-  RiBook2Line,
-  RiPriceTag3Line,
-  RiBox3Line,
-  RiPlug2Line,
-  RiGroupLine,
-  RiSettings3Line,
-  RiArrowDownSLine,
-  RiAddLine,
-  RiDeleteBinLine,
-} from 'react-icons/ri';
-import GmailBar from '@/components/flow01/GmailBar';
+import { RiDeleteBinLine } from 'react-icons/ri';
 import OutcomeBar from '@/components/runs/OutcomeBar';
 import { countBy } from '@/components/runs/runsModel';
 import { NOW, RUN_SOURCES, runsForSkill, runsInLastDays } from '@/data/runFixtures';
@@ -25,34 +11,71 @@ import { mailboxName } from '@/data/mailboxes';
 import { useIsClient } from '@/components/runs/useIsClient';
 import Badge from '@/components/atoms/Badge';
 import Table, { type TableColumn } from '@/components/atoms/Table';
+import type { DeployStatus } from '@/components/flow01/doc';
+import {
+  type SavedSkill,
+  type Workspace,
+  useSkillsStore,
+  deleteSkill,
+  deleteSeed,
+} from '@/lib/skillsStore';
+import AdminShell, { shellStyles } from './AdminShell';
 import DeleteSkillModal from './DeleteSkillModal';
-import { SparkleIcon } from '@/components/icons/ui';
+import SkillsEmptyHero from './empty/SkillsEmptyHero';
 import styles from './AopListPage.module.css';
 
 /**
- * The rows come from RUN_SOURCES - the same definitions the Runs surfaces read.
- * They used to be a separate hardcoded list, which let this page claim mailboxes
- * and last-run times that the run history disagreed with.
+ * One row, from either source: the seeded fixtures (RUN_SOURCES - the same
+ * definitions the Runs surfaces read, so a row can't disagree with its run
+ * history) or a skill the user created (the skills store).
  */
 interface AopRow {
   id: string;
   name: string;
-  active: boolean;
+  status: DeployStatus;
   mailboxes: string[];
   more?: number;
   lastUpdated: string;
   href: string;
+  /** Created by the user (lives in the store), vs a seeded fixture. */
+  saved: boolean;
 }
+
+/** Chips shown before the "+N" (the column has room for two). */
+const MAILBOX_CHIPS = 2;
 
 const SEED_ROWS: AopRow[] = RUN_SOURCES.map((s) => ({
   id: s.skillId,
   name: s.skillName,
-  active: s.status === 'active',
+  status: s.status,
   mailboxes: s.mailboxes.map(mailboxName),
   more: s.moreMailboxes,
   lastUpdated: s.lastUpdated,
   href: s.href,
+  saved: false,
 }));
+
+const DATE = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+function savedRow(s: SavedSkill): AopRow {
+  const names = s.doc.mailboxes.map(mailboxName);
+  return {
+    id: s.id,
+    name: s.doc.title.trim() || 'Untitled skill',
+    status: s.doc.status,
+    mailboxes: names.slice(0, MAILBOX_CHIPS),
+    more: names.length > MAILBOX_CHIPS ? names.length - MAILBOX_CHIPS : undefined,
+    lastUpdated: DATE.format(s.updatedAt),
+    href: `/aops/s/${s.id}`,
+    saved: true,
+  };
+}
+
+/** The same three lifecycle states the editor shows, on the DLS Badge. */
+function StatusBadge({ status }: { status: DeployStatus }) {
+  if (status === 'active') return <Badge intent="green">Active</Badge>;
+  return <Badge intent="gray">{status === 'draft' ? 'Draft' : 'Inactive'}</Badge>;
+}
 
 /** "2 hrs ago" for the newest run - read off the history rather than stored on
  *  the row, so the count and the time can never disagree. */
@@ -65,49 +88,34 @@ function sinceLabel(t: number): string {
   return `${days} day${days === 1 ? '' : 's'} ago`;
 }
 
-const MAIN_NAV = [
-  { label: 'Dashboard', icon: RiLayoutGridLine },
-  { label: 'Shared Inboxes', icon: RiInboxLine },
-  { label: 'Knowledge Base', icon: RiBook2Line },
-  { label: 'Hiver AI', icon: SparkleIcon, active: true },
-  { label: 'Shared Labels', icon: RiPriceTag3Line },
-  { label: 'Custom Objects', icon: RiBox3Line },
-  { label: 'Integrations', icon: RiPlug2Line, chevron: true },
-  { label: 'Users & Roles', icon: RiGroupLine },
-  { label: 'Settings', icon: RiSettings3Line },
-];
-
-const AI_NAV = [
-  'AI Agents',
-  'Skills',
-  'AI Tools',
-  'Knowledge Sources',
-  'AI Insights',
-  'AI Usage',
-  'Opportunities',
-];
-
 /**
- * The skill entry point (Figma 1312:14506): the Admin Panel list of AI Operating
- * Procedures inside the Hiver Admin chrome (Gmail bar + main nav + Hiver AI
- * nav). Two states, one renderer: `empty` shows the meet-Skills banner + the
- * create-first shell; otherwise the live table. Connector health surfaces only
- * inside the Enable / Publish review flows (inline fixes) - no standalone
- * Connectors entry point.
+ * The Skills list (Figma 3535:86190) inside the Admin frame. Rows are the
+ * skills this workspace has made (newest first) plus, on the demo workspace,
+ * the seeded fixtures. No rows = the empty state ("What should your skill
+ * do?" + templates) in the same body; deleting the last skill brings it back.
+ *
+ * `empty` picks the workspace that starts with no skills (/aops/empty).
  */
 export default function AopListPage({ empty }: { empty?: boolean }) {
   const router = useRouter();
-  const [rows, setRows] = useState<AopRow[]>(empty ? [] : SEED_ROWS);
-  // "12 mins ago" is computed from the clock, and this page is prerendered -
-  // the server would bake a build-time answer the browser then contradicts.
+  const workspace: Workspace = empty ? 'empty' : 'demo';
+  const store = useSkillsStore();
+  // The store is client-only (localStorage) and the clock-derived cells differ
+  // between build and load, so the body renders once hydrated - otherwise the
+  // empty state would flash before a saved skill's row replaces it.
   const isClient = useIsClient();
 
-  const activeCount = rows.filter((r) => r.active).length;
+  const rows: AopRow[] = [
+    ...store.skills.filter((s) => s.workspace === workspace).map(savedRow),
+    ...(empty ? [] : SEED_ROWS.filter((r) => !store.deletedSeeds.includes(r.id))),
+  ];
+  const activeCount = rows.filter((r) => r.status === 'active').length;
   const inactiveCount = rows.length - activeCount;
   const showEmpty = rows.length === 0;
+  const q = empty ? '?ws=empty' : '';
 
   const [pendingDelete, setPendingDelete] = useState<AopRow | null>(null);
-  const deleteRow = (id: string) => setRows((prev) => prev.filter((r) => r.id !== id));
+  const deleteRow = (row: AopRow) => (row.saved ? deleteSkill(row.id) : deleteSeed(row.id));
 
   const columns: TableColumn<AopRow>[] = [
     {
@@ -123,8 +131,7 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
     {
       id: 'status',
       header: 'Deployment status',
-      cell: (row) =>
-        row.active ? <Badge intent="green">Active</Badge> : <Badge intent="gray">Inactive</Badge>,
+      cell: (row) => <StatusBadge status={row.status} />,
     },
     {
       id: 'mapped',
@@ -147,8 +154,6 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
       id: 'history',
       header: 'Skill history · 30d',
       cell: (row) => {
-        // Client-only: the counts are read off the clock (see isClient).
-        if (!isClient) return <span className={styles.history} />;
         // "No runs yet" only for a skill that has never run; one that went quiet
         // this month shows 0 over an empty rule, beside its real last run.
         if (runsForSkill(row.id).length === 0) return <span className={styles.soft}>No runs yet</span>;
@@ -172,7 +177,6 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
       id: 'lastRun',
       header: 'Last run',
       cell: (row) => {
-        if (!isClient) return null;
         const last = runsForSkill(row.id)[0];
         return last ? (
           <span className={styles.default}>{sinceLabel(last.startedAt)}</span>
@@ -199,160 +203,81 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
     },
   ];
 
+  const bar = !isClient ? null : showEmpty ? (
+    <>
+      <span />
+      {/* The prompt below is the AI path, so this is the manual one - a blank
+          canvas, not the draft-with-AI modal again. */}
+      <Link href={`/aops/new?start=blank${empty ? '&ws=empty' : ''}`} className={shellStyles.secondaryBtn}>
+        Create from scratch
+      </Link>
+    </>
+  ) : (
+    <>
+      <p className={styles.countLine}>
+        <span>
+          {rows.length} {rows.length === 1 ? 'skill' : 'skills'}
+        </span>
+        <span className={styles.dotActive} aria-hidden>
+          •
+        </span>
+        <span>{activeCount} active</span>
+        <span className={styles.dotInactive} aria-hidden>
+          •
+        </span>
+        <span>{inactiveCount} inactive</span>
+      </p>
+      <Link href={`/aops/create${q}`} className={shellStyles.primaryBtn}>
+        Create Skill
+      </Link>
+    </>
+  );
+
   return (
-    <div className={styles.page}>
-      <GmailBar />
-      <div className={styles.shell}>
-        {/* ---- Admin Panel main nav ---- */}
-        <aside className={styles.mainNav}>
-          <div className={styles.mainNavHead}>
-            <span className={styles.hiverMark} aria-hidden>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/hiver-yellow-mark.svg" alt="" />
-            </span>
-            <span className={styles.mainNavHeadText}>
-              <span className={styles.mainNavOverline}>Hiver</span>
-              <span className={styles.mainNavTitle}>Admin Panel</span>
-            </span>
-            <button type="button" className={styles.mainNavClose} aria-label="Close admin panel" tabIndex={-1}>
-              <RiCloseLine />
-            </button>
-          </div>
-          <nav className={styles.mainNavMenu} aria-label="Admin panel">
-            {MAIN_NAV.map(({ label, icon: Icon, active, chevron }) => (
-              <button
-                key={label}
-                type="button"
-                className={styles.mainNavItem}
-                data-active={active || undefined}
-                data-chevron={chevron || undefined}
-              >
-                {chevron && <RiArrowDownSLine className={styles.mainNavChevron} aria-hidden />}
-                <Icon className={styles.mainNavIcon} aria-hidden />
-                {label}
-              </button>
-            ))}
-          </nav>
-        </aside>
-
-        {/* ---- Hiver AI section nav ---- */}
-        <aside className={styles.aiNav}>
-          <div className={styles.aiNavHead}>
-            <SparkleIcon className={styles.aiNavHeadIcon} aria-hidden />
-            <span>Hiver AI</span>
-          </div>
-          <nav className={styles.aiNavMenu} aria-label="Hiver AI">
-            {AI_NAV.map((label) => (
-              <button
-                key={label}
-                type="button"
-                className={styles.aiNavItem}
-                data-active={label === 'Skills' || undefined}
-              >
-                {label}
-              </button>
-            ))}
-          </nav>
-        </aside>
-
-        {/* ---- Page ---- */}
-        <main className={styles.main}>
-          <header className={styles.header}>
-            <div className={styles.titleRow}>
-              <div className={styles.titleBlock}>
-                <h1 className={styles.title}>Skills</h1>
-                <p className={styles.subtitle}>
-                  Automate complex workflows with step-by-step instructions for Hiver.
-                </p>
-              </div>
-              <div className={styles.headerActions}>
-                <Link href="/aops/new" className={styles.newBtn}>
-                  <RiAddLine aria-hidden />
-                  New skill
-                </Link>
-              </div>
-            </div>
-            {!showEmpty && (
-              <p className={styles.countLine}>
-                <span>
-                  {rows.length} {rows.length === 1 ? 'skill' : 'skills'}
-                </span>
-                <span className={styles.dotActive} aria-hidden>
-                  •
-                </span>
-                <span>
-                  {activeCount} active
-                </span>
-                <span className={styles.dotInactive} aria-hidden>
-                  •
-                </span>
-                <span>
-                  {inactiveCount} inactive
-                </span>
-              </p>
-            )}
-          </header>
-
-          {showEmpty ? (
-            <>
-              <section className={styles.banner}>
-                <div className={styles.bannerText}>
-                  <h2 className={styles.bannerTitle}>Meet Skills</h2>
-                  <p className={styles.bannerBody}>
-                    Enhance your workflow with Skills. Automate tasks like email
-                    tagging and reply drafting to boost productivity. Join our early access program
-                    for free, and upgrade to the paid add-on whenever you&apos;re ready.{' '}
-                    <a href="#" onClick={(e) => e.preventDefault()} className={styles.bannerLink}>
-                      Learn more
-                    </a>
-                    .
-                  </p>
-                </div>
-                <span className={styles.bannerArt} aria-hidden>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/aop-banner-art.svg" alt="" />
-                </span>
-              </section>
-
-              <Table
-                ariaLabel="Skills"
-                columns={columns}
-                rows={rows}
-                rowKey={(r) => r.id}
-                empty={
-                  <div className={styles.emptyBody}>
-                    <span className={styles.emptyArt} aria-hidden>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src="/aop-empty-illustration.png" alt="" />
-                    </span>
-                    <p className={styles.emptyTitle}>Create your first skill</p>
-                    <Link href="/aops/new" className={styles.newBtn}>
-                      <RiAddLine aria-hidden />
-                      Create New
-                    </Link>
-                  </div>
-                }
-              />
-            </>
-          ) : (
-            <Table
-              ariaLabel="Skills"
-              columns={columns}
-              rows={rows}
-              rowKey={(r) => r.id}
-              onRowClick={(r) => router.push(r.href)}
-            />
-          )}
-        </main>
-      </div>
+    <>
+      <AdminShell
+        title="Skills"
+        subtitle="Add instructions that AI Agents can follow to handle complex customer requests."
+        bar={bar}
+        bodyEmpty={showEmpty}
+      >
+        {!isClient ? null : showEmpty ? (
+          <SkillsEmptyHero
+            onSubmit={({ prompt, starter, fileName }) => router.push(newSkillHref(workspace, prompt, starter?.id, fileName))}
+          />
+        ) : (
+          <Table
+            ariaLabel="Skills"
+            columns={columns}
+            rows={rows}
+            rowKey={(r) => r.id}
+            onRowClick={(r) => router.push(r.href)}
+          />
+        )}
+      </AdminShell>
 
       {pendingDelete && (
         <DeleteSkillModal
           name={pendingDelete.name}
-          onConfirm={() => deleteRow(pendingDelete.id)}
+          onConfirm={() => deleteRow(pendingDelete)}
           onClose={() => setPendingDelete(null)}
         />
       )}
-    </div>
+    </>
   );
+}
+
+/** The editor, primed with a prompt / template / SOP from the composer. */
+export function newSkillHref(
+  workspace: Workspace,
+  prompt: string,
+  templateId?: string,
+  fileName?: string | null,
+): string {
+  const q = new URLSearchParams();
+  if (prompt) q.set('prompt', prompt);
+  if (templateId) q.set('template', templateId);
+  if (fileName) q.set('sop', fileName);
+  if (workspace === 'empty') q.set('ws', 'empty');
+  return `/aops/new?${q.toString()}`;
 }

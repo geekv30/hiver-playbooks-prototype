@@ -24,6 +24,14 @@ import EditorLine, { PaletteRequest } from './EditorLine';
 import CommandPalette from './CommandPalette';
 import ConditionBlock from './condition/ConditionBlock';
 import ColdStartModal from './ColdStartModal';
+import { STARTERS, buildStarterDoc, buildScaffoldDoc } from './coldStart';
+import {
+  type Workspace,
+  createSkill,
+  saveSkill,
+  docHasContent,
+  listHref,
+} from '@/lib/skillsStore';
 import ActionHint from './ActionHint';
 import EnableModal from './enable/EnableModal';
 import { deriveReadinessInputs, inviteKey } from './enable/readiness';
@@ -225,6 +233,23 @@ interface Props {
    *  tag and clicking it runs the connection flow (the /connector-setup route).
    *  Omit (default) to treat all connectors as already connected. */
   connectorsStartUnauthed?: boolean;
+  /** Arrived from the Skills empty state: `prompt` and/or an SOP (plus the
+   *  template it came from, if unedited) drafts straight into Copilot; `blank` is "Create from
+   *  scratch". Either way the draft-with-AI modal is skipped - the list page
+   *  already asked that question. */
+  handoff?: EditorHandoff;
+  /** Autosave into the skills store. `savedId` = an existing saved skill
+   *  (/aops/s/[id]); without it the skill is created on its first content and
+   *  the URL moves to its own address. Back returns to its workspace's list. */
+  persist?: { workspace: Workspace; savedId?: string };
+}
+
+export interface EditorHandoff {
+  prompt?: string;
+  templateId?: string;
+  /** An attached SOP's file name - drafted from the same way the modal does. */
+  sopName?: string;
+  blank?: boolean;
 }
 
 // Cold-start presentation of the one Copilot surface:
@@ -241,6 +266,8 @@ export default function EditorCanvas({
   initialDoc,
   companions,
   connectorsStartUnauthed,
+  handoff,
+  persist,
 }: Props) {
   const router = useRouter();
   const api = useEditorDoc(initialDoc);
@@ -356,7 +383,9 @@ export default function EditorCanvas({
 
   // The cold-start "draft with AI" modal shows on a fresh, empty canvas (no
   // initialDoc); the pre-seeded /api-example demo skips it. See ColdStartPhase above.
-  const [coldPhase, setColdPhase] = useState<ColdStartPhase>(initialDoc ? 'docked' : 'hero');
+  const [coldPhase, setColdPhase] = useState<ColdStartPhase>(
+    initialDoc || handoff ? 'docked' : 'hero',
+  );
   const coldStartOpen = coldPhase === 'hero'; // single remaining read: the ColdStartModal gate below
   // Connectors not yet authenticated: their action-tags render "setup needed" and
   // clicking runs the connection flow; once connected the slug leaves this set.
@@ -563,6 +592,54 @@ export default function EditorCanvas({
     setColdPhase('docked');
     requestFocus('trigger', false);
   }, [requestFocus]);
+
+  // Autosave. Nothing is written until the skill has content (an untouched
+  // canvas you walk away from isn't a skill); from then on every change is
+  // saved. The first save moves the URL to the skill's own address in place -
+  // no navigation, so the Copilot thread and editor state carry on.
+  const savedIdRef = useRef<string | null>(persist?.savedId ?? null);
+  useEffect(() => {
+    if (!persist) return;
+    if (savedIdRef.current) {
+      saveSkill(savedIdRef.current, doc);
+      return;
+    }
+    if (!docHasContent(doc)) return;
+    const created = createSkill(persist.workspace, doc);
+    savedIdRef.current = created.id;
+    window.history.replaceState(null, '', `/aops/s/${created.id}`);
+  }, [doc, persist]);
+
+  // The Skills empty state's handoff, consumed once. A prompt waits for the live
+  // status check so it goes to the model when live is on (mode reads
+  // 'unavailable' until then). It runs a tick after mount (the canvas paints
+  // first; a StrictMode re-run just reschedules it), then cleans the URL so a
+  // reload doesn't draft it again.
+  const handoffDone = useRef(false);
+  useEffect(() => {
+    if (!handoff || handoffDone.current) return;
+    const hasDraft = !!(handoff.prompt || handoff.sopName);
+    if (!handoff.blank && !(hasDraft && live.settled)) return;
+    const t = setTimeout(() => {
+      handoffDone.current = true;
+      if (handoff.blank) {
+        requestFocus('trigger', false);
+      } else {
+        // Same priority as the modal: an SOP scaffolds titled from the file;
+        // else an unedited template builds its rich doc; else scaffold from text.
+        const { prompt, sopName } = handoff;
+        const spec = STARTERS.find((s) => s.id === handoff.templateId);
+        const genDoc = sopName
+          ? buildScaffoldDoc({ text: prompt, fileName: sopName })
+          : spec && spec.prompt === prompt
+            ? buildStarterDoc(spec)
+            : buildScaffoldDoc({ text: prompt });
+        handleColdStartGenerate(genDoc, prompt || `Turn my SOP "${sopName}" into a skill.`);
+      }
+      router.replace(pathname, { scroll: false });
+    }, 0);
+    return () => clearTimeout(t);
+  }, [handoff, live.settled, handleColdStartGenerate, requestFocus, router, pathname]);
 
   // Drive the cold-start working steps on the seeded assistant message, then load
   // the drafted doc + resolve that message to the acknowledgement.
@@ -1478,7 +1555,7 @@ export default function EditorCanvas({
         onSettings={() => openEnable('manage')}
         onPause={pauseAop}
         onResume={resumeAop}
-        onBack={() => router.push('/aops')}
+        onBack={() => router.push(persist ? listHref(persist.workspace) : '/aops')}
         // The count is clock-derived: the prerendered page cannot know it, so
         // it fills in on the client (a baked number is a hydration mismatch).
         runCount={isClient ? runs.length : undefined}

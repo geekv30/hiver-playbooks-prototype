@@ -27,6 +27,9 @@ export interface LiveTurnResult {
 
 export interface LiveCopilot {
   mode: LiveMode;
+  /** The status check has answered (or failed): `mode` is final. Until then it
+   *  reads 'unavailable', which a one-shot action must not act on. */
+  settled: boolean;
   model: string | null;
   /** Turning live on needs the passcode field (none needed, or already held: no). */
   needsPasscode: boolean;
@@ -82,6 +85,7 @@ function subscribe(l: () => void) {
 
 export function useLiveCopilot(): LiveCopilot {
   const [status, setStatus] = useState<{ configured: boolean; passcodeRequired: boolean; model: string | null } | null>(null);
+  const [settled, setSettled] = useState(false);
   const passcode = useSyncExternalStore(subscribe, readStored, () => null);
   const off = useSyncExternalStore(subscribe, readOff, () => false);
 
@@ -92,7 +96,10 @@ export function useLiveCopilot(): LiveCopilot {
       .then((s) => {
         if (alive && s) setStatus(s);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        if (alive) setSettled(true);
+      });
     return () => {
       alive = false;
     };
@@ -204,5 +211,5 @@ export function useLiveCopilot(): LiveCopilot {
     [passcode],
   );
 
-  return { mode, model: status?.model ?? null, needsPasscode, unlock, lock, post, turn };
+  return { mode, settled, model: status?.model ?? null, needsPasscode, unlock, lock, post, turn };
 }
