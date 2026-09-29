@@ -23,7 +23,7 @@ type Filter = 'All' | StarterCategory;
 
 export interface EmptyHeroSubmit {
   prompt: string;
-  /** The template it came from, only while its text is unedited. */
+  /** The template card that was clicked; null when the composer sent it. */
   starter: StarterSpec | null;
   /** An attached SOP's file name (the prototype drafts from the name, as the modal does). */
   fileName: string | null;
@@ -32,8 +32,9 @@ export interface EmptyHeroSubmit {
 /**
  * The Skills empty state (Figma 3038:24511, refined after Sarvam's agent
  * builder and Dugong's template library): a faded mark, one question, one
- * composer, then the templates under category filters. Picking a template fills
- * the composer with its description, so every path runs through the same input.
+ * composer, then the templates under category filters. Picking a template sends
+ * it straight to Copilot on the New skill page - the composer is for your own
+ * words (or an SOP), not a staging area for a template.
  */
 export default function SkillsEmptyHero({
   mark = 'solid',
@@ -45,7 +46,6 @@ export default function SkillsEmptyHero({
   onSubmit?: (submit: EmptyHeroSubmit) => void;
 }) {
   const [text, setText] = useState('');
-  const [picked, setPicked] = useState<StarterSpec | null>(null);
   const [filter, setFilter] = useState<Filter>('All');
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -54,8 +54,8 @@ export default function SkillsEmptyHero({
   const fileRef = useRef<HTMLInputElement>(null);
   const [multiline, setMultiline] = useState(false);
 
-  // Grow with the text (a picked template's prompt runs 2-3 lines); the
-  // buttons then settle to the bottom row, the way a chat composer does.
+  // Grow with the text (a pasted paragraph runs several lines); the buttons
+  // then settle to the bottom row, the way a chat composer does.
   useLayoutEffect(() => {
     const el = inputRef.current;
     if (!el) return;
@@ -72,16 +72,10 @@ export default function SkillsEmptyHero({
   const shown = filter === 'All' ? STARTERS : STARTERS.filter((s) => s.category === filter);
   const canSubmit = text.trim().length > 0 || file != null;
 
+  // The template alone: its own prompt + id, so the editor builds its full doc.
+  // Anything typed or attached in the composer is a different skill, not added.
   const pick = (spec: StarterSpec) => {
-    setText(spec.prompt);
-    setPicked(spec);
-    const el = inputRef.current;
-    if (!el) return;
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    el.focus({ preventScroll: true });
-    requestAnimationFrame(() => {
-      el.selectionStart = el.selectionEnd = el.value.length;
-    });
+    onSubmit?.({ prompt: spec.prompt, starter: spec, fileName: null });
   };
 
   const acceptFile = (f: File | null) => {
@@ -107,12 +101,7 @@ export default function SkillsEmptyHero({
 
   const submit = () => {
     if (!canSubmit) return;
-    const prompt = text.trim();
-    onSubmit?.({
-      prompt,
-      starter: picked && text === picked.prompt ? picked : null,
-      fileName: file?.name ?? null,
-    });
+    onSubmit?.({ prompt: text.trim(), starter: null, fileName: file?.name ?? null });
   };
 
   return (
