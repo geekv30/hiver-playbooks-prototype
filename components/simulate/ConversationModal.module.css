@@ -142,3 +142,31 @@
     transition: none;
   }
 }
+
+/* Why a matched email is here - a tinted line between the subject and the body,
+   so the reader checks the call against the email right below it. */
+.reason {
+  flex: none;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--surface-soft);
+  font-size: var(--fs-small);
+  line-height: 19px;
+  color: var(--ink-soft);
+}
+.reason svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  color: var(--muted);
+}
+.reasonLabel {
+  font-weight: 500;
+  color: var(--ink);
+  margin-right: 6px;
+}

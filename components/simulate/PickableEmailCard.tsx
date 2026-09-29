@@ -3,6 +3,7 @@
 import { RiShareBoxLine } from 'react-icons/ri';
 import Radio from '@/components/atoms/Radio';
 import type { SimEmail } from '@/data/simFixtures';
+import MatchReasonButton from './MatchReasonButton';
 import styles from './PickableEmailCard.module.css';
 
 interface Props {
@@ -12,8 +13,11 @@ interface Props {
   onSelect: () => void;
   /** When provided, a hover-revealed redirect opens the full conversation. */
   onOpen?: () => void;
-  /** Quiet trailing metadata on the sender row (a scanned row's arrival time). */
+  /** Quiet trailing metadata on the sender row (a past chat's start time). */
   aside?: string;
+  /** Why this row is here (a matched row's reason), behind an info icon that
+   *  sits last on the sender row - always visible, opened by a click. */
+  reason?: string;
 }
 
 /**
@@ -23,7 +27,7 @@ interface Props {
  * redirect button is a valid sibling rather than nested inside a radio. When
  * `onOpen` is set (recent conversations), the redirect reveals on hover.
  */
-export default function PickableEmailCard({ email, selected, onSelect, onOpen, aside }: Props) {
+export default function PickableEmailCard({ email, selected, onSelect, onOpen, aside, reason }: Props) {
   return (
     <article className={styles.card} data-selected={selected || undefined} onClick={onSelect}>
       <div className={styles.top}>
@@ -49,6 +53,7 @@ export default function PickableEmailCard({ email, selected, onSelect, onOpen, a
             <RiShareBoxLine aria-hidden />
           </button>
         )}
+        {reason && <MatchReasonButton reason={reason} />}
       </div>
       <div className={styles.body}>
         <div className={styles.subject}>{email.subject}</div>

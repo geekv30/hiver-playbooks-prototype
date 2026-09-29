@@ -127,7 +127,7 @@
   }
 }
 
-/* Trailing metadata on the sender row (arrival time on a scanned row) - quiet
+/* Trailing metadata on the sender row (a past chat's start time) - quiet
    enough that the sender and subject still lead. */
 .aside {
   flex: none;

@@ -24,7 +24,7 @@ const TOPIC_LEXICON: Record<string, string[]> = {
   data: ['export', 'csv', 'report', 'records', 'sync', 'syncing', 'import', 'backup'],
   account: ['account', 'workspace', 'seat', 'invite', 'teammate', 'member', 'upgrade', 'downgrade'],
   security: ['security', 'breach', 'phishing', 'suspicious', 'vulnerability', 'compliance'],
-  howto: ['how do i', 'how can i', 'where do i', 'documentation', 'docs', 'walk me through'],
+  howto: ['how-to', 'how do i', 'how can i', 'where do i', 'documentation', 'docs', 'walk me through'],
 };
 
 const STOPWORDS = new Set([
@@ -42,16 +42,20 @@ const BROAD_TOPICS = new Set(['error', 'howto']);
 
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-// One matcher per topic, compiled once. Whole-word (or whole-phrase) matching
-// matters: "reporting an error" must not count as the data topic via "report".
-const TOPIC_PATTERNS: [string, RegExp][] = Object.entries(TOPIC_LEXICON).map(([topic, kws]) => [
-  topic,
-  new RegExp(`(^|[^a-z0-9])(${kws.map(escape).join('|')})([^a-z0-9]|$)`, 'i'),
-]);
+// One matcher per topic, compiled once, and shared by the match and its reason
+// so the two can never disagree. Whole-word (or whole-phrase) matching matters:
+// "reporting an error" must not count as the data topic via "report". Global so
+// `matchAll` can list every hit; `search` ignores lastIndex, so it stays safe.
+const TOPIC_PATTERNS = new Map<string, RegExp>(
+  Object.entries(TOPIC_LEXICON).map(([topic, kws]) => [
+    topic,
+    new RegExp(`(^|[^a-z0-9])(${kws.map(escape).join('|')})(?=[^a-z0-9]|$)`, 'gi'),
+  ]),
+);
 
 /** The topics a piece of text belongs to, by its own words. */
 export function topicsOf(text: string): string[] {
-  return TOPIC_PATTERNS.filter(([, re]) => re.test(text)).map(([topic]) => topic);
+  return [...TOPIC_PATTERNS].filter(([, re]) => text.search(re) !== -1).map(([topic]) => topic);
 }
 
 /** Significant words, for the fallback when a trigger sits in no known topic. */
@@ -64,8 +68,76 @@ function keywords(text: string): Set<string> {
   );
 }
 
+// How a reason names each topic ("Reads as an API problem: ..."). Config beside
+// the lexicon: add a topic, name it here.
+const TOPIC_NAMES: Record<string, string> = {
+  api: 'an API problem',
+  error: 'something not working',
+  billing: 'a billing question',
+  refund: 'a refund or cancellation',
+  access: 'a sign-in or access problem',
+  order: 'an order or delivery issue',
+  feature: 'a feature request',
+  data: 'a data or export issue',
+  account: 'a workspace or seat change',
+  security: 'a security concern',
+  howto: 'a how-to question',
+};
+
+/** The words in `text` that put it in `topic`, as written, in reading order. */
+function evidenceFor(text: string, topic: string): string[] {
+  const re = TOPIC_PATTERNS.get(topic);
+  return re ? [...text.matchAll(re)].map((m) => m[2]!) : [];
+}
+
+/** Every named topic gets a word before any topic gets a second one. */
+function interleave(lists: string[][]): string[] {
+  const out: string[] = [];
+  for (let i = 0; lists.some((l) => i < l.length); i += 1) {
+    for (const l of lists) if (i < l.length) out.push(l[i]!);
+  }
+  return out;
+}
+
+// Shown in capitals however the email wrote them ("apis" reads as "APIs").
+const ACRONYMS = new Set(['api', 'sdk', 'csv', 'http']);
+
+function display(word: string): string {
+  const lower = word.toLowerCase();
+  const stem = lower.replace(/s$/, '');
+  if (ACRONYMS.has(lower)) return lower.toUpperCase();
+  if (ACRONYMS.has(stem)) return `${stem.toUpperCase()}s`;
+  return lower.replace(/\bi\b/g, 'I');
+}
+
+/** "a", "a" and "b", "a", "b" and "c" - quoted, since they are the email's words. */
+function quoteList(words: string[]): string {
+  const q = words.map((w) => `\u201c${w}\u201d`);
+  return q.length <= 1 ? q.join('') : `${q.slice(0, -1).join(', ')} and ${q[q.length - 1]}`;
+}
+
+/** Each word once, in sentence casing (acronyms kept), up to `max`. */
+function distinct(words: string[], max: number): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const w of words) {
+    const shown = display(w);
+    // "error" and "errors" are one piece of evidence, not two.
+    const k = shown.toLowerCase().replace(/s$/, '');
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(shown);
+    if (out.length === max) break;
+  }
+  return out;
+}
+
 /**
- * Does this email match the trigger?
+ * Does this email match the trigger - and if so, why?
+ *
+ * Returns the reason in plain words, or null when it does not match. The reason
+ * quotes the email's own words that decided it, so a reviewer can check the
+ * call at a glance instead of trusting it.
  *
  * The trigger's SPECIFIC topics decide it: an "API status issue" trigger keeps
  * the inbox's API mail and leaves a login error alone. When a trigger is written
@@ -73,25 +145,30 @@ function keywords(text: string): Set<string> {
  * decide instead, and a trigger in no known topic falls back to word overlap -
  * so every trigger matches something sensible rather than nothing.
  */
-export function matchesTrigger(email: SimEmail, trigger: string): boolean {
+export function matchReason(email: SimEmail, trigger: string): string | null {
   const triggerText = trigger.trim();
-  if (!triggerText) return false;
+  if (!triggerText) return null;
   const emailText = `${email.subject} ${email.preview}`;
   const tTopics = topicsOf(triggerText);
   if (tTopics.length > 0) {
     const eTopics = new Set(topicsOf(emailText));
     const specific = tTopics.filter((t) => !BROAD_TOPICS.has(t));
     const decisive = specific.length > 0 ? specific : tTopics;
-    return decisive.some((topic) => eTopics.has(topic));
+    const shared = decisive.filter((topic) => eTopics.has(topic));
+    if (shared.length === 0) return null;
+    // Name at most two topics, and quote only words from the topics named, so
+    // every quoted word backs a claim the sentence makes.
+    const named = shared.slice(0, 2);
+    const words = distinct(interleave(named.map((t) => evidenceFor(emailText, t))), 3);
+    const names = named.map((t) => TOPIC_NAMES[t] ?? t);
+    return `Reads as ${names.join(' and ')}: mentions ${quoteList(words)}.`;
   }
   const tWords = keywords(triggerText);
-  if (tWords.size === 0) return false;
+  if (tWords.size === 0) return null;
   const eWords = keywords(emailText);
-  let shared = 0;
-  tWords.forEach((w) => {
-    if (eWords.has(w)) shared += 1;
-  });
-  return shared >= 2;
+  const shared = [...tWords].filter((w) => eWords.has(w));
+  if (shared.length < 2) return null;
+  return `Uses the same words as your trigger: ${quoteList(shared.slice(0, 3))}.`;
 }
 
 // ---------------------------------------------------------------------------
@@ -286,16 +363,6 @@ const SENDERS = [
   'Priya Raman', 'Jonas Weber',
 ];
 
-// How long ago each row arrived - the pool is newest first, so the label grows
-// with the index (minutes, then hours, then days).
-const ago = (n: number, unit: string) => `${n} ${unit}${n === 1 ? '' : 's'} ago`;
-function receivedLabel(i: number): string {
-  if (i === 0) return 'just now';
-  if (i < 6) return ago(i * 9, 'min');
-  if (i < 30) return ago(Math.max(1, Math.round(i / 5)), 'hr');
-  return ago(Math.max(1, Math.round(i / 24)), 'day');
-}
-
 function hash(s: string): number {
   let h = 2166136261;
   for (let i = 0; i < s.length; i += 1) {
@@ -331,7 +398,6 @@ export function poolForMailbox(mailboxId: string, size = SCAN_CEILING): SimEmail
       draft: t.draft,
       outcome: t.outcome,
       failAt: t.failAt,
-      received: receivedLabel(i),
     };
   });
 }
