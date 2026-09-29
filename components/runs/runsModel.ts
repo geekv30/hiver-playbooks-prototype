@@ -114,7 +114,8 @@ export interface DayGroup {
   runs: SkillRun[];
 }
 
-/** The run list, grouped by day, newest first. */
+/** The run list, grouped by day. Keeps the order it is given - every source
+ *  already sorts newest first, so days and rows come out newest first too. */
 export function groupByDay(runs: SkillRun[]): DayGroup[] {
   const order: number[] = [];
   const index = new Map<number, SkillRun[]>();

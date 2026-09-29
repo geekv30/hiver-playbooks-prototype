@@ -690,7 +690,3 @@ export function runsInLastDays(skillId: string, days: number): SkillRun[] {
   const cutoff = NOW - days * DAY;
   return runsForSkill(skillId).filter((r) => r.startedAt >= cutoff);
 }
-
-export function sourceFor(skillId: string): SkillRunSource | undefined {
-  return RUN_SOURCES.find((s) => s.skillId === skillId);
-}
