@@ -1,0 +1,17 @@
+.mode {
+  width: 320px;
+  margin-top: 20px;
+}
+
+/* Three 432px panels need 1344px; below that they wrap to two a row instead
+   of pushing the page sideways. */
+.grid {
+  grid-template-columns: repeat(auto-fill, 432px);
+  row-gap: 48px;
+  justify-content: start;
+}
+@media (min-width: 1408px) {
+  .grid {
+    justify-content: space-between;
+  }
+}

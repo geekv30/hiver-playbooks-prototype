@@ -69,6 +69,9 @@
   height: 14px;
 }
 .name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-size: var(--fs-small); /* 13px */
   line-height: 19px;
   font-weight: 400;
@@ -103,6 +106,26 @@
 }
 .reasoning[data-warn] {
   color: var(--status-amber);
+}
+
+/* Quiet variant (the chat thread): a step's result is one muted line under
+   its name, and the content column pads less, so a turn's steps read as a
+   log rather than a stack of cards. */
+.quietOut {
+  font-size: var(--fs-caption);
+  line-height: 17px;
+  letter-spacing: var(--ls-caption);
+  color: var(--muted);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.step[data-quiet] .content {
+  padding: 2px 8px 10px;
+}
+.step[data-quiet] .reasoning {
+  font-size: var(--fs-caption);
+  line-height: 17px;
+  color: var(--muted);
 }
 
 /* Grey output / draft box: Gray 6a fill. Tighter vertical padding than the outcome

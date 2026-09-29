@@ -1,3 +1,5 @@
+import type { ConnectorSlug } from '@/types/playbook';
+
 // Per-step status during a run. gray dot -> green as each step succeeds.
 export type StepStatus = 'pending' | 'running' | 'done' | 'failed' | 'skipped';
 
@@ -24,6 +26,10 @@ export interface TraceStepDef {
   condType?: 'if' | 'elseif' | 'else';
   /** condition: the matched branch expression (or the no-branch note). */
   branch?: string;
+  /** action: the connector it ran on - its brand mark replaces the verb icon. */
+  connector?: ConnectorSlug;
+  /** failed action: why it failed (defaults to the generic request error). */
+  error?: string;
 }
 
 // The trace template for the illustrative API Skill. Thinking steps are interleaved

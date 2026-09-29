@@ -50,15 +50,18 @@ const WINDOW_MS = 10 * 60_000;
 const MAX_PER_WINDOW = 30;
 const hits = new Map<string, number[]>();
 
-export function rateLimited(ip: string): boolean {
+/** `bucket` keeps budgets apart: a chat evaluation spends a call per turn, so
+ *  it gets its own allowance rather than starving Copilot. */
+export function rateLimited(ip: string, bucket = 'copilot', max = MAX_PER_WINDOW): boolean {
+  const key = `${bucket}:${ip}`;
   const now = Date.now();
-  const recent = (hits.get(ip) ?? []).filter((t) => now - t < WINDOW_MS);
-  if (recent.length >= MAX_PER_WINDOW) {
-    hits.set(ip, recent);
+  const recent = (hits.get(key) ?? []).filter((t) => now - t < WINDOW_MS);
+  if (recent.length >= max) {
+    hits.set(key, recent);
     return true;
   }
   recent.push(now);
-  hits.set(ip, recent);
+  hits.set(key, recent);
   return false;
 }
 

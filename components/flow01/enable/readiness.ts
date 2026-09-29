@@ -161,13 +161,16 @@ export function computeChecks(
         detail: "hasn't been run yet - a quick pass on past emails catches broken steps early.",
         action: { type: 'evaluate' },
       });
-    } else if (evalAgg.failed > 0) {
+    } else if (evalAgg.failed + evalAgg.attention > 0) {
+      // A run that needs attention (no branch matched, the trigger would not
+      // fire, nothing replied) did not succeed either - it is flagged too.
+      const flagged = evalAgg.failed + evalAgg.attention;
       checks.push({
         id: 'evaluation',
         kind: 'evaluation',
         tone: 'warn',
         title: 'Evaluation',
-        detail: `flagged ${evalAgg.failed} of ${evalAgg.total} ${evalAgg.total === 1 ? 'run' : 'runs'} - review them before going live.`,
+        detail: `flagged ${flagged} of ${evalAgg.total} ${evalAgg.total === 1 ? 'run' : 'runs'} - review them before going live.`,
         action: { type: 'evaluate' },
       });
     } else {

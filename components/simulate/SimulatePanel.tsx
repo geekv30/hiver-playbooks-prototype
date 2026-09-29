@@ -3,7 +3,12 @@
 import { useState } from 'react';
 import { RiPlayFill, RiCloseLine } from 'react-icons/ri';
 import type { SimStatusKind } from '@/data/simFixtures';
-import EvalMenu, { type EvalView, EVAL_TITLES, EVAL_ICONS } from './EvalMenu';
+import EvalMenu, { type EvalChannel, type EvalView, EVAL_TITLES, EVAL_ICONS } from './EvalMenu';
+import PastChats from './chat/PastChats';
+import ChatScenarios from './chat/ChatScenarios';
+import ChatLive from './chat/ChatLive';
+import type { EditorDoc } from '@/components/flow01/doc';
+import type { LiveCopilot } from '@/lib/copilot/useLiveCopilot';
 import EvalBackHeader from './EvalBackHeader';
 import MatchingEmails from './MatchingEmails';
 import RecentEmails from './RecentEmails';
@@ -43,13 +48,21 @@ interface Props {
   onMatchingSeen?: () => void;
   /** Whether the Matching emails card still carries its New pill. */
   matchingIsNew?: boolean;
+  /** The skill itself - chat evaluation runs it turn by turn. */
+  doc?: EditorDoc;
+  /** The live model (chat evaluation runs on it when it is on). */
+  live?: LiveCopilot;
+  /** The menu's channel, owned above so Copilot can point at email. */
+  channel?: EvalChannel;
+  onChannel?: (c: EvalChannel) => void;
 }
 
 /**
  * SimulatePanel - the Evaluate surface (Figma 1721:67361).
  *
- * A thin router: the root offers three entry cards (EvalMenu - Recent
- * conversations / AI scenarios / Custom email). Entering one opens its flow, which
+ * A thin router: the root offers the entry cards for the picked channel
+ * (EvalMenu - Email: Matching emails / Recent conversations / AI scenarios /
+ * Custom email; Chat: Past chats / AI scenarios / Chat as a customer). Entering one opens its flow, which
  * renders its OWN `‹` back-header BELOW the persistent Copilot | Evaluation tabs
  * (the tabs no longer swap out). Each flow owns its navigation and its single-email
  * run; they converge on the shared trace primitives.
@@ -69,8 +82,16 @@ export default function SimulatePanel({
   scan,
   onMatchingSeen,
   matchingIsNew,
+  doc,
+  live,
+  channel: channelProp,
+  onChannel,
 }: Props) {
   const [view, setView] = useState<EvalView>('menu');
+  // Controlled when the canvas owns it; a local fallback keeps the panel whole.
+  const [localChannel, setLocalChannel] = useState<EvalChannel>('email');
+  const channel = channelProp ?? localChannel;
+  const setChannel = onChannel ?? setLocalChannel;
   // Drill direction for the slide (forward = into a flow, back = out to the menu).
   const [dir, setDir] = useState<'fwd' | 'back' | null>(null);
 
@@ -78,6 +99,8 @@ export default function SimulatePanel({
     // Matching emails needs the canvas-level scan; without it the card would
     // open an empty view, so it stays put instead.
     if (v === 'matching' && !scan) return;
+    // A chat flow runs the skill itself; without it there is nothing to run.
+    if ((v === 'pastChats' || v === 'chatScenarios' || v === 'chatLive') && (!doc || !live)) return;
     if (v === 'matching') onMatchingSeen?.();
     setDir('fwd');
     setView(v);
@@ -114,7 +137,23 @@ export default function SimulatePanel({
 
         <div className={styles.viewWrap} data-dir={dir ?? undefined} key={view}>
           {view === 'menu' && (
-            <EvalMenu onOpen={openFlow} matchFresh={scan?.fresh} matchIsNew={matchingIsNew} />
+            <EvalMenu
+              onOpen={openFlow}
+              channel={channel}
+              onChannel={setChannel}
+              matchFresh={scan?.fresh}
+              matchIsNew={matchingIsNew}
+            />
+          )}
+
+          {view === 'pastChats' && doc && live && (
+            <PastChats doc={doc} live={live} onExit={toMenu} onRunRecorded={onRunRecorded} onOpenCopilot={onOpenCopilot} />
+          )}
+          {view === 'chatScenarios' && doc && live && (
+            <ChatScenarios doc={doc} live={live} onExit={toMenu} onRunRecorded={onRunRecorded} onOpenCopilot={onOpenCopilot} />
+          )}
+          {view === 'chatLive' && doc && live && (
+            <ChatLive doc={doc} live={live} onExit={toMenu} onRunRecorded={onRunRecorded} onOpenCopilot={onOpenCopilot} />
           )}
 
           {view === 'matching' && scan && (

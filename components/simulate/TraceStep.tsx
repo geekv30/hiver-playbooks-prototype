@@ -3,6 +3,7 @@
 import { motion, useReducedMotion } from 'motion/react';
 import { RiBrain2Line, RiContactsLine } from 'react-icons/ri';
 import { ACTION_ICON } from '@/components/icons/ui/action-icon-map';
+import { CONNECTOR_ICON } from '@/components/icons/connectors';
 import { SIM_COPY } from '@/data/simFixtures';
 import type { TraceStepDef, StepStatus } from './traceFixture';
 import styles from './TraceStep.module.css';
@@ -19,10 +20,18 @@ interface Props {
   approval?: boolean;
   /** Condition step: no branch matched (attention) - amber note. */
   branchWarn?: boolean;
+  /** Quiet: results as one muted line, no boxes, and no reply body - for the
+   *  chat thread, where the reply is already the bubble above and a grey box
+   *  would read as another message. */
+  quiet?: boolean;
 }
 
 function StepIcon({ step }: { step: TraceStepDef }) {
   if (step.kind === 'thinking') return <RiBrain2Line />;
+  if (step.connector) {
+    const Brand = CONNECTOR_ICON[step.connector];
+    return <Brand />;
+  }
   if (step.iconKey === 'contact') return <RiContactsLine />;
   const key = step.kind === 'condition' ? 'condition' : step.iconKey;
   const Icon = key ? ACTION_ICON[key] : undefined;
@@ -36,7 +45,7 @@ function StepIcon({ step }: { step: TraceStepDef }) {
  * step, a gray output box for an action, the matched branch for a condition, or
  * the drafted reply (with "Approval needed" when gated) for the reply step.
  */
-export default function TraceStep({ step, status, isLast, runMs, draft, approval, branchWarn }: Props) {
+export default function TraceStep({ step, status, isLast, runMs, draft, approval, branchWarn, quiet }: Props) {
   const reduce = useReducedMotion();
   const spring = { type: 'spring' as const, stiffness: 520, damping: 38 };
   const enter = reduce ? false : { opacity: 0, y: -3 };
@@ -50,16 +59,16 @@ export default function TraceStep({ step, status, isLast, runMs, draft, approval
 
   // A thinking step reads "Thinking" while in flight, "Thought for Ns" once done.
   const thoughtSec = Math.max(1, Math.round((runMs ?? step.ms) / 1000));
+  // A step that brings its own label (a live trace) keeps it; the scripted
+  // trace's thinking steps time themselves and its condition reads Categorize.
   const label = isThinking
-    ? status === 'done'
-      ? `Thought for ${thoughtSec}s`
-      : 'Thinking'
+    ? (step.label ?? (status === 'done' ? `Thought for ${thoughtSec}s` : 'Thinking'))
     : isCond
-      ? 'Categorize'
+      ? (step.label ?? 'Categorize')
       : step.label;
 
   return (
-    <div className={styles.step} data-status={status} data-dot={dotKind}>
+    <div className={styles.step} data-status={status} data-dot={dotKind} data-quiet={quiet || undefined}>
       <div className={styles.row}>
         <div className={styles.rail}>
           <span className={styles.dot} aria-hidden />
@@ -103,17 +112,17 @@ export default function TraceStep({ step, status, isLast, runMs, draft, approval
           )}
 
           {step.kind === 'action' && status === 'done' && step.output && (
-            <motion.div className={styles.box} initial={enter} animate={{ opacity: 1, y: 0 }} transition={spring}>
+            <motion.div className={quiet ? styles.quietOut : styles.box} initial={enter} animate={{ opacity: 1, y: 0 }} transition={spring}>
               {step.output}
             </motion.div>
           )}
           {step.kind === 'action' && status === 'failed' && (
             <motion.div className={styles.errorBox} initial={enter} animate={{ opacity: 1, y: 0 }} transition={spring}>
-              {SIM_COPY.stepError}
+              {step.error ?? SIM_COPY.stepError}
             </motion.div>
           )}
 
-          {isReply && revealed && (
+          {isReply && revealed && !quiet && (
             <motion.div
               className={styles.replyWrap}
               initial={enter}

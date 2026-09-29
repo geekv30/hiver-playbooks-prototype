@@ -1,0 +1,143 @@
+/* Exhibit chrome. Deliberately plain: the panels are the subject, so nothing
+   here competes with them. Same register as /component/runs-lead. */
+.page {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 44px 32px 96px;
+}
+
+.pageHead {
+  margin-bottom: 36px;
+  max-width: 760px;
+}
+.eyebrow {
+  margin: 0 0 8px;
+  font-size: var(--fs-micro);
+  line-height: var(--lh-micro);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.h1 {
+  margin: 0 0 10px;
+  font-size: 26px;
+  line-height: 1.25;
+  letter-spacing: -0.018em;
+  font-weight: 500;
+  color: var(--ink);
+}
+.lede {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  letter-spacing: -0.005em;
+  color: var(--muted);
+}
+
+/* Three columns, one per arrangement. Each column is a subgrid, so the notes
+   can differ in length while the three panels still start on one line. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 432px);
+  grid-template-rows: auto auto auto auto;
+  column-gap: 24px;
+  justify-content: space-between;
+}
+.col {
+  display: grid;
+  grid-row: span 4;
+  grid-template-rows: subgrid;
+  row-gap: 0;
+  min-width: 0;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0;
+  font-size: var(--fs-h5);
+  line-height: 1.35;
+  letter-spacing: var(--ls-h5);
+  font-weight: 600;
+  color: var(--ink);
+}
+.num {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: var(--fs-micro);
+  font-weight: 500;
+  color: var(--muted-soft);
+  font-variant-numeric: tabular-nums;
+}
+.tag {
+  padding: 2px 7px;
+  border: 1px solid var(--hairline-soft);
+  border-radius: 999px;
+  font-size: var(--fs-micro);
+  line-height: 1.5;
+  font-weight: 500;
+  color: var(--muted);
+  background: var(--card);
+}
+.tag[data-rec] {
+  color: var(--run-completed, #05a570);
+  border-color: color-mix(in srgb, var(--run-completed, #05a570) 28%, transparent);
+}
+.note {
+  margin: 0 0 10px;
+  font-size: var(--fs-small);
+  line-height: 1.55;
+  color: var(--muted);
+}
+/* The measured fit, stated plainly under each note. */
+.fit {
+  margin: 0 0 12px;
+  min-height: 17px;
+  font-size: var(--fs-caption);
+  line-height: 17px;
+  font-weight: 500;
+  color: var(--run-completed, #05a570);
+  font-variant-numeric: tabular-nums;
+}
+.fit[data-over] {
+  color: var(--status-amber);
+}
+
+/* The panel at its real height. SidePanel's .panel is a flex item, so the
+   stage is the flex row it expects. */
+.stage {
+  display: flex;
+  align-items: stretch;
+}
+/* Below the tabs: one scroll area, as the real pane scrolls. */
+.scroll {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+/* V2's group label: the section's name above its cards, quiet so the cards
+   stay the subject. Aligned to the heading's 4px inset. */
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.groupLabel {
+  margin: 0;
+  padding: 0 4px;
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: var(--ls-caption);
+  color: var(--muted);
+}

@@ -32,7 +32,9 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEvalState } from '@/components/simulate/useEvalState';
 import { useTriggerScan } from '@/components/simulate/useTriggerScan';
 import SimulatePanel from '@/components/simulate/SimulatePanel';
+import type { EvalChannel } from '@/components/simulate/EvalMenu';
 import RunsView from '@/components/runs/RunsView';
+import { useIsClient } from '@/components/runs/useIsClient';
 import { revisionMarks, runsForSkill, sourceFor } from '@/data/runFixtures';
 import { type CopilotMessage, type CopilotProposalData } from './copilot/CopilotPanel';
 import SidePanel, { type SideTab } from './copilot/SidePanel';
@@ -310,6 +312,7 @@ export default function EditorCanvas({
   // beside the document, while Runs replaces it and needs the whole stage.
   const runSource = skillId ? sourceFor(skillId) : undefined;
   const runs = useMemo(() => (skillId ? runsForSkill(skillId) : []), [skillId]);
+  const isClient = useIsClient();
   const runMarks = useMemo(() => (runSource ? revisionMarks(runSource) : []), [runSource]);
 
   // Runs is its OWN ROUTE (/<skill>/runs), not a flag on the editor's.
@@ -329,6 +332,9 @@ export default function EditorCanvas({
     router.push(runsMode ? base : `${base}/runs`, { scroll: false });
   }, [router, pathname, runsMode]);
 
+  // The Evaluation menu's channel. Owned here so Copilot's matching row, which
+  // points at an email flow, can bring the menu back to Email.
+  const [evalChannel, setEvalChannel] = useState<EvalChannel>('email');
   // The New pill on the Matching emails card, retired once the user opens it.
   // Session state on purpose: a reload is a fresh look at the new type.
   const [matchingIsNew, setMatchingIsNew] = useState(true);
@@ -1473,7 +1479,9 @@ export default function EditorCanvas({
         onPause={pauseAop}
         onResume={resumeAop}
         onBack={() => router.push('/aops')}
-        runCount={runs.length > 0 ? runs.length : undefined}
+        // The count is clock-derived: the prerendered page cannot know it, so
+        // it fills in on the client (a baked number is a hydration mismatch).
+        runCount={isClient ? runs.length : undefined}
         runsOpen={runsOpen}
         onToggleRuns={runs.length > 0 ? toggleRuns : undefined}
       />
@@ -1519,7 +1527,10 @@ export default function EditorCanvas({
                 onUndoProposal: undoProposal,
                 onVerdict: setCopilotVerdict,
                 onMailboxAnswer: answerMailboxes,
-                onOpenEvaluation: () => setPanelTab('simulate'),
+                onOpenEvaluation: () => {
+                  setEvalChannel('email');
+                  setPanelTab('simulate');
+                },
                 // The handoff line and the unprompted hint both read the LIVE
                 // scan, so Copilot can never contradict the Evaluation tab.
                 // Absent until a scan exists, and dropped once it is stale.
@@ -1544,6 +1555,10 @@ export default function EditorCanvas({
                 scan,
                 matchingIsNew,
                 onMatchingSeen: () => setMatchingIsNew(false),
+                doc,
+                live,
+                channel: evalChannel,
+                onChannel: setEvalChannel,
               }}
             />
           )
@@ -1560,6 +1575,10 @@ export default function EditorCanvas({
             scan={scan}
             matchingIsNew={matchingIsNew}
             onMatchingSeen={() => setMatchingIsNew(false)}
+            doc={doc}
+            live={live}
+            channel={evalChannel}
+            onChannel={setEvalChannel}
           />
         )}
         <div className={styles.area}>

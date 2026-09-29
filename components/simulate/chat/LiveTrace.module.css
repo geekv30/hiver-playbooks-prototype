@@ -1,0 +1,67 @@
+/* Under an agent reply: the meta line ("AI agent · 9 steps"), then the steps,
+   opened in place as a log (TraceStep's quiet form) - no frame, no boxes. */
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: 18px;
+  letter-spacing: var(--ls-caption);
+  color: var(--muted);
+}
+.sep {
+  color: var(--muted-soft);
+}
+/* "9 steps": a quiet underline that firms up on hover or while open. */
+.toggle {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--hairline);
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--d-hover) var(--ease-snap);
+}
+.toggle:hover,
+.toggle[aria-expanded='true'] {
+  text-decoration-color: currentColor;
+}
+.toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-xs);
+}
+
+/* Open / close tweens the height (grid 0fr <-> 1fr, the card-resize idiom). */
+.collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--d-enter) var(--ease-snap);
+}
+.collapse[data-open] {
+  grid-template-rows: 1fr;
+}
+.inner {
+  min-height: 0;
+  overflow: hidden;
+}
+.panel {
+  padding-top: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collapse {
+    transition: none;
+  }
+}
