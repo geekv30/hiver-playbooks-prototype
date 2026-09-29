@@ -14,6 +14,7 @@ import { SearchAiIcon } from '@/components/icons/ui';
 import NewTag from '@/components/atoms/NewTag';
 import SegmentedControl from '@/components/atoms/SegmentedControl';
 import styles from './EvalMenu.module.css';
+import { EVAL_CHANNELS } from './evalChannels';
 
 export type EvalView = 'menu' | 'matching' | 'recent' | 'scenarios' | 'custom' | ChatEvalView;
 
@@ -110,6 +111,9 @@ interface Props {
   /** Which channel's ways the menu shows. */
   channel: EvalChannel;
   onChannel: (c: EvalChannel) => void;
+  /** The channels on offer (evalChannels.EVAL_CHANNELS). With one, the menu
+   *  shows its ways and no switch. */
+  channels?: readonly EvalChannel[];
   /** True while a fresh scan result is still news: the card carries a fill for
    *  that window and then settles back to plain (Figma 3344:20223 / 3345:28443). */
   matchFresh?: boolean;
@@ -126,11 +130,16 @@ interface Props {
  * count is Copilot's row to report. What the scan changes here is temporary: a
  * fill while the result is still news, then plain again.
  */
-export default function EvalMenu({ onOpen, channel, onChannel, matchFresh, matchIsNew }: Props) {
+export default function EvalMenu({ onOpen, channel: picked, onChannel, channels = EVAL_CHANNELS, matchFresh, matchIsNew }: Props) {
+  // A channel that is not on offer falls back to the first that is.
+  const channel = channels.includes(picked) ? picked : channels[0]!;
+  const tabs = CHANNEL_TABS.filter((t) => channels.includes(t.id));
   return (
     <div className={styles.menu}>
       <h3 className={styles.heading}>Evaluate your skill in one of these ways</h3>
-      <SegmentedControl tabs={CHANNEL_TABS} active={channel} onChange={onChannel} ariaLabel="Channel to evaluate on" />
+      {tabs.length > 1 && (
+        <SegmentedControl tabs={tabs} active={channel} onChange={onChannel} ariaLabel="Channel to evaluate on" />
+      )}
       <div className={styles.cards} key={channel} data-channel={channel}>
         {channel === 'email'
           ? EVAL_ENTRIES.map((e) => (

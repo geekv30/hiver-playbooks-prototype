@@ -1,0 +1,118 @@
+/* Evaluation library: the live panel on the left (sticky), the index on the
+   right. Plain chrome, same register as the other /component exhibits. */
+
+.layout {
+  display: grid;
+  grid-template-columns: 432px minmax(0, 1fr);
+  gap: 40px;
+  align-items: start;
+}
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.stage {
+  position: sticky;
+  top: 24px;
+  display: flex;
+  height: 830px;
+}
+.panelBody {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.index {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  min-width: 0;
+}
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.groupTitle {
+  margin: 0;
+  font-size: var(--fs-h5);
+  line-height: 1.35;
+  letter-spacing: var(--ls-h5);
+  font-weight: 600;
+  color: var(--ink);
+}
+.rows {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--hairline-soft);
+  border-radius: var(--r-lg);
+  background: var(--card);
+}
+.rowHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-small);
+  line-height: 18px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.chip {
+  flex: none;
+  padding: 1px 7px;
+  border-radius: var(--r-pill);
+  background: var(--surface-soft);
+  font-size: var(--fs-micro);
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.chip[data-channel='chat'] {
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+.chip[data-paused] {
+  background: var(--status-amber-bg);
+  color: var(--status-amber);
+}
+.what {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: 17px;
+  color: var(--ink-soft);
+}
+.file,
+.code {
+  font-family: var(--mono);
+  font-size: var(--fs-micro);
+  line-height: 15px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.code {
+  font-size: 0.92em;
+  color: var(--ink-soft);
+}
