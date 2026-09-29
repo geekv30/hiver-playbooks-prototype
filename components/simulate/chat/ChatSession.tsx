@@ -75,14 +75,13 @@ function AgentTurn({
   doc,
   onRetry,
   onOpenCopilot,
-  onScripted,
 }: {
   item: AgentItem;
   doc: EditorDoc;
-  onRetry: (scripted?: boolean) => void;
+  /** Re-run the failed turn; `scripted` finishes this chat on the scripted
+   *  replies (the out-of-credits fix). Absent once the chat is over. */
+  onRetry?: (scripted?: boolean) => void;
   onOpenCopilot?: () => void;
-  /** Switch this browser to the scripted replies (the out-of-credits fix). */
-  onScripted?: () => void;
 }) {
   const t = item.turn;
 
@@ -119,15 +118,8 @@ function AgentTurn({
         ) : item.status === 'error' || !t ? (
           <Notice
             action={
-              item.quota && onScripted ? (
-                <button
-                  type="button"
-                  className={styles.link}
-                  onClick={() => {
-                    onScripted();
-                    onRetry(true);
-                  }}
-                >
+              !onRetry ? undefined : item.quota ? (
+                <button type="button" className={styles.link} onClick={() => onRetry(true)}>
                   Use scripted replies
                 </button>
               ) : (
@@ -284,9 +276,8 @@ export default function ChatSession({ run, doc, customerName, mode, live, onOpen
               key={it.id}
               item={it}
               doc={doc}
-              onRetry={(scripted) => void run.retry(it.id, scripted)}
+              onRetry={phase === 'idle' ? (scripted) => void run.retry(it.id, scripted) : undefined}
               onOpenCopilot={onOpenCopilot}
-              onScripted={live?.onLock}
             />
           );
         })}

@@ -36,7 +36,11 @@ export function chatResultLine(
   const turnLine = flagged > 0 ? `${flagged} ${flagged === 1 ? 'message needs' : 'messages need'} a look.` : '';
   if (outcome === 'errored') return 'The evaluation could not finish. Start over to try again.';
   if (verdict) return verdict.verdict !== 'unresolved' && turnLine ? `${turnLine} ${verdict.reason}` : verdict.reason;
-  if (!skillRan) return 'The skill never started: the customer did not say what they needed.';
+  if (!skillRan) {
+    return items.some((i) => i.kind === 'agent' && i.turn?.stage === 'noMatch')
+      ? 'The skill did not run: this chat is not what the trigger describes.'
+      : 'The skill never started: the customer did not say what they needed.';
+  }
   if (outcome === 'attention') return turnLine;
   return run.engine === 'scripted'
     ? 'Every message got a reply. Scripted replies are not reviewed for quality.'

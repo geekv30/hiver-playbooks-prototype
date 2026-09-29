@@ -39,6 +39,8 @@ export type AgentItem = {
   error?: string;
   /** Out of credits: the fix is the scripted replies, not a retry. */
   quota?: boolean;
+  /** An error on the AI customer's turn: Retry asks the customer again. */
+  side?: 'agent' | 'customer';
 };
 
 /** The customer's rating at the end, as the widget asks for it. */
@@ -106,7 +108,9 @@ const started = (items: ChatItem[]) => items.some((it) => it.kind === 'agent' &&
  *  bad - the skill has not been asked anything yet. */
 export function itemOutcome(it: AgentItem): TurnOutcome | null {
   if (it.status === 'error') return 'errored';
-  if (it.status !== 'done' || !it.turn || it.turn.stage === 'greet' || it.turn.stage === 'close') return null;
+  // Not running on a chat the trigger does not describe is the skill doing
+  // its job: neutral, so an off-trigger test never flags the skill.
+  if (it.status !== 'done' || !it.turn || it.turn.stage !== 'run') return null;
   return it.turn.outcome;
 }
 
@@ -179,6 +183,8 @@ export function useChatRun({ doc, live, onRunRecorded }: Options) {
   const abort = useRef<AbortController | null>(null);
   const engineRef = useRef<'live' | 'scripted'>('scripted');
   const recorded = useRef(false);
+  // The AI scenario this chat is running, so a retry can pick the chat back up.
+  const scenario = useRef<ChatScenario | null>(null);
 
   useEffect(
     () => () => {
@@ -231,7 +237,7 @@ export function useChatRun({ doc, live, onRunRecorded }: Options) {
       } catch (e) {
         if (signal.aborted) throw e;
         const why = e instanceof LiveCopilotError ? e.message : 'The model could not be reached.';
-        done = { ...pending, status: 'error', error: why, quota: e instanceof LiveCopilotError && e.kind === 'quota' };
+        done = { ...pending, status: 'error', error: why, quota: e instanceof LiveCopilotError && e.kind === 'quota', side: 'agent' };
       }
       commit(itemsRef.current.map((it) => (it.id === id ? done : it)));
       return done;
@@ -259,6 +265,10 @@ export function useChatRun({ doc, live, onRunRecorded }: Options) {
     const ran = agentItems.some((it) => it.turn?.stage === 'run');
     let judged: ChatVerdict | null = null;
     if (ran && engineRef.current === 'live') {
+      // The review belongs to this chat: Back, Start over or a new chat
+      // aborts it, and a review that comes back after that is dropped.
+      const ctrl = new AbortController();
+      abort.current = ctrl;
       setPhase('judging');
       try {
         const res = await ctx.current.live.post<{ verdict: ChatVerdict }>('/api/evaluate', {
@@ -271,12 +281,15 @@ export function useChatRun({ doc, live, onRunRecorded }: Options) {
             const r = itemsRef.current.find((it): it is RatingItem => it.kind === 'rating');
             return r ? { score: r.score, comment: r.comment } : null;
           })(),
-        });
+        }, ctrl.signal);
+        if (ctrl.signal.aborted) return;
         judged = res.verdict;
         setVerdict(judged);
       } catch {
+        if (ctrl.signal.aborted) return;
         /* no review: the result falls back to the turns alone */
       }
+      if (abort.current === ctrl) abort.current = null;
     }
     setPhase('ended');
     if (judged?.verdict === 'unresolved') outcomes.push('attention');
@@ -303,6 +316,64 @@ export function useChatRun({ doc, live, onRunRecorded }: Options) {
     return { ...next, message: next.message.trim() };
   }, []);
 
+  /** The AI customer and the agent talk until the customer is done - their
+   *  last word, the agent's sign-off, then their rating - or the chat runs
+   *  long, which is itself a finding. `turn` is the agent's last turn, or null
+   *  when the customer speaks next. An error pauses the chat on its notice
+   *  (Retry picks it back up; Stop ends it). */
+  const converse = useCallback(
+    async (sc: ChatScenario, signal: AbortSignal, last: AgentItem | null) => {
+      let turn = last;
+      let wrapped = false;
+      const customers = () => itemsRef.current.filter((it) => it.kind === 'customer').length;
+      for (;;) {
+        if (turn?.status === 'error') {
+          setPhase('idle');
+          return;
+        }
+        // The skill does not fit this chat: nothing more to test.
+        if (turn?.turn?.stage === 'noMatch') {
+          wrapped = true;
+          break;
+        }
+        if (customers() >= MAX_CUSTOMER_TURNS) break;
+        let next: CustomerTurnWire;
+        try {
+          next = await customerTurn(sc, signal);
+        } catch (e) {
+          if (signal.aborted) throw e;
+          commit([
+            ...itemsRef.current,
+            {
+              kind: 'agent',
+              id: nid('agent'),
+              status: 'error',
+              side: 'customer',
+              error: e instanceof LiveCopilotError ? e.message : 'The AI customer could not reply.',
+              quota: e instanceof LiveCopilotError && e.kind === 'quota',
+            },
+          ]);
+          setPhase('idle');
+          return;
+        }
+        if (next.message) {
+          commit([...itemsRef.current, { kind: 'customer', id: nid('cust'), text: next.message }]);
+          turn = await agentTurn(signal);
+        }
+        if (next.done) {
+          if (next.rating !== null) {
+            commit([...itemsRef.current, { kind: 'rating', id: nid('rate'), score: next.rating, comment: next.comment }]);
+          }
+          wrapped = true;
+          break;
+        }
+      }
+      if (!wrapped) setCapped(true);
+      await finish();
+    },
+    [commit, agentTurn, customerTurn, finish],
+  );
+
   /** A past chat's opening, or an AI scenario: the chat starts with the
    *  customer's first message. An AI scenario then runs itself to the end. */
   const start = useCallback(
@@ -314,55 +385,22 @@ export function useChatRun({ doc, live, onRunRecorded }: Options) {
       setVerdict(null);
       setCapped(false);
       goal.current = sc?.goal ?? null;
+      scenario.current = sc ?? null;
       pickEngine();
+      revokeAttachments(itemsRef.current);
       commit([{ kind: 'customer', id: nid('cust'), text: first }]);
       try {
-        let turn = await agentTurn(ctrl.signal);
+        const turn = await agentTurn(ctrl.signal);
         if (!sc) {
           setPhase('idle');
           return;
         }
-        // The AI customer and the agent talk until the customer is done -
-        // their last word, the agent's sign-off, then their rating - or the
-        // chat runs long, which is itself a finding.
-        let wrapped = false;
-        for (let n = 1; n < MAX_CUSTOMER_TURNS; n += 1) {
-          // Nothing to answer: the evaluation broke or the skill does not fit.
-          if (turn.status === 'error' || turn.turn?.stage === 'noMatch') {
-            wrapped = true;
-            break;
-          }
-          const next = await customerTurn(sc, ctrl.signal);
-          if (next.message) {
-            commit([...itemsRef.current, { kind: 'customer', id: nid('cust'), text: next.message }]);
-            turn = await agentTurn(ctrl.signal);
-          }
-          if (next.done) {
-            if (next.rating !== null) {
-              commit([...itemsRef.current, { kind: 'rating', id: nid('rate'), score: next.rating, comment: next.comment }]);
-            }
-            wrapped = true;
-            break;
-          }
-        }
-        if (!wrapped) setCapped(true);
-        await finish();
-      } catch (e) {
-        if (ctrl.signal.aborted) return;
-        commit([
-          ...itemsRef.current,
-          {
-            kind: 'agent',
-            id: nid('agent'),
-            status: 'error',
-            error: e instanceof LiveCopilotError ? e.message : 'The AI customer could not reply.',
-            quota: e instanceof LiveCopilotError && e.kind === 'quota',
-          },
-        ]);
-        void finish();
+        await converse(sc, ctrl.signal, turn);
+      } catch {
+        /* aborted: a newer chat, Back or Start over took over */
       }
     },
-    [commit, agentTurn, customerTurn, finish, pickEngine],
+    [commit, agentTurn, converse, pickEngine],
   );
 
   /** The user, as the customer, sends a message. */
@@ -377,6 +415,7 @@ export function useChatRun({ doc, live, onRunRecorded }: Options) {
         setVerdict(null);
         setCapped(false);
         goal.current = null;
+        scenario.current = null;
         pickEngine();
       }
       commit([
@@ -398,22 +437,32 @@ export function useChatRun({ doc, live, onRunRecorded }: Options) {
   const retry = useCallback(
     async (id: string, scripted?: boolean) => {
       const i = itemsRef.current.findIndex((it) => it.id === id);
-      if (i < 0 || phase === 'agent' || phase === 'customer') return;
+      // A finished chat is over: Run again / Start over, not Retry.
+      if (i < 0 || phase !== 'idle') return;
+      const failed = itemsRef.current[i]!;
       const ctrl = new AbortController();
       abort.current = ctrl;
+      revokeAttachments(itemsRef.current.slice(i));
       commit(itemsRef.current.slice(0, i));
       if (scripted) {
         engineRef.current = 'scripted';
         setEngine('scripted');
       }
+      const sc = scenario.current;
       try {
-        await agentTurn(ctrl.signal);
-        setPhase('idle');
+        // The AI customer's turn failed: ask the customer again.
+        if (failed.kind === 'agent' && failed.side === 'customer' && sc) {
+          await converse(sc, ctrl.signal, null);
+          return;
+        }
+        const turn = await agentTurn(ctrl.signal);
+        if (sc) await converse(sc, ctrl.signal, turn);
+        else setPhase('idle');
       } catch {
         /* aborted */
       }
     },
-    [phase, commit, agentTurn],
+    [phase, commit, agentTurn, converse],
   );
 
   const end = useCallback(() => void finish(), [finish]);
@@ -423,6 +472,7 @@ export function useChatRun({ doc, live, onRunRecorded }: Options) {
     abort.current = null;
     revokeAttachments(itemsRef.current);
     recorded.current = false;
+    scenario.current = null;
     commit([]);
     setVerdict(null);
     setCapped(false);

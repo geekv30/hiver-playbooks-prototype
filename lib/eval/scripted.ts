@@ -46,8 +46,10 @@ function stepsFor(id: string, body: Fragment[], out: LiveTraceStep[], replyAt: {
   }
 }
 
-// "thanks", "that's all", "bye" - the customer is wrapping up.
-const CLOSING = /^\s*(thanks|thank you|thx|ok thanks|great,? thanks|that'?s all|that is all|bye|goodbye)\b/i;
+// "thanks", "that's all", "bye" - the customer is wrapping up. The whole
+// message has to be the sign-off: "Thanks, but it still fails" is not one.
+const CLOSING =
+  /^\s*((ok(ay)?|great|perfect|awesome),?\s*)?(thanks|thank you|thx|that'?s all|that is all|bye|goodbye)(\s+(so much|a lot|again|for (the|your) help))?[\s!.,]*(((that'?s|that is) all( i needed)?|bye|goodbye)[\s!.]*)?$/i;
 const CLOSE_REPLY = "You're welcome! If anything else comes up, just message us here.";
 
 // "hi", "hello there", "are you there?" - nothing the skill could act on yet.

@@ -42,9 +42,12 @@ export default function ChatScenarios({ doc, live, onExit, onRunRecorded, onOpen
   const hasTrigger = lineHasContent(doc.trigger);
   const sig = docSignature(doc);
 
-  const [list, setList] = useState<ChatScenario[]>(() => written.get(sig) ?? []);
+  // A version the model could not write for opens on the standard set.
+  const [list, setList] = useState<ChatScenario[]>(() => written.get(sig) ?? (failedWrites.has(sig) ? CHAT_SCENARIOS : []));
   const [loading, setLoading] = useState(false);
-  const [note, setNote] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(() =>
+    !written.has(sig) && failedWrites.has(sig) ? 'The scenarios could not be written. Showing the standard set instead.' : null,
+  );
   const [chosenId, setChosenId] = useState<string | null>(null);
   const [active, setActive] = useState<ChatScenario | null>(null);
   const [turn, setTurn] = useState(0); // scripted regenerate: rotates the set
@@ -74,6 +77,9 @@ export default function ChatScenarios({ doc, live, onExit, onRunRecorded, onOpen
       setList(res.scenarios);
     } catch (e) {
       if (c.signal.aborted) return;
+      // What the note says is what shows: the standard set, not the last
+      // list the model wrote.
+      written.delete(sig);
       failedWrites.add(sig);
       setList(CHAT_SCENARIOS);
       setNote(
