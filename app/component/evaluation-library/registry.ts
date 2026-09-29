@@ -1,7 +1,10 @@
 /* Every piece of the Evaluation tab, grouped by what it is for. The index the
  * library page lists; the full write-up (states, rules, how the pieces fit) is
- * docs/EVALUATION_COMPONENTS.md. `channel` says where a piece is used: email
- * pieces are paused in the app while evalChannels.EVAL_CHANNELS is chat only. */
+ * docs/EVALUATION_COMPONENTS.md. `channel` says where a piece is used; `way`
+ * ties a chat flow to its menu entry, so the page can mark it paused while it
+ * is not in evalChannels.CHAT_WAYS. */
+
+import type { ChatEvalView } from '@/components/simulate/EvalMenu';
 
 export type LibChannel = 'email' | 'chat' | 'both';
 
@@ -10,6 +13,7 @@ export interface LibEntry {
   file: string;
   what: string;
   channel: LibChannel;
+  way?: ChatEvalView;
 }
 
 export interface LibGroup {
@@ -23,7 +27,7 @@ export const LIBRARY: LibGroup[] = [
     entries: [
       { name: 'SimulatePanel', file: 'components/simulate/SimulatePanel.tsx', what: 'The Evaluation tab: routes the menu to each flow and back, with the drill slide.', channel: 'both' },
       { name: 'EvalMenu + EvalCard', file: 'components/simulate/EvalMenu.tsx', what: 'The "Evaluate your skill in one of these ways" cards, and the Email | Chat switch when more than one channel is on.', channel: 'both' },
-      { name: 'evalChannels', file: 'components/simulate/evalChannels.ts', what: 'Which channels the tab offers. Chat only today; add email to bring every email way back.', channel: 'both' },
+      { name: 'evalChannels', file: 'components/simulate/evalChannels.ts', what: 'What the tab offers: both channels; on chat, only Chat as a customer for now.', channel: 'both' },
       { name: 'EvalBackHeader', file: 'components/simulate/EvalBackHeader.tsx', what: 'A flow’s header: back, the flow’s icon and title, one action on the right.', channel: 'both' },
       { name: 'SimEmptyState', file: 'components/simulate/SimEmptyState.tsx', what: 'The informative empty state: dimmed real cards, then icon, headline, one action.', channel: 'both' },
     ],
@@ -31,9 +35,9 @@ export const LIBRARY: LibGroup[] = [
   {
     title: 'Chat ways',
     entries: [
-      { name: 'PastChats', file: 'components/simulate/chat/PastChats.tsx', what: 'Pick a chat inbox and one real chat; the skill answers its first message, then you carry on.', channel: 'chat' },
-      { name: 'ChatScenarios', file: 'components/simulate/chat/ChatScenarios.tsx', what: 'Scenarios written for this skill; the AI customer and the skill talk to the end.', channel: 'chat' },
-      { name: 'ChatLive', file: 'components/simulate/chat/ChatLive.tsx', what: 'Chat as a customer: you write every customer message.', channel: 'chat' },
+      { name: 'PastChats', file: 'components/simulate/chat/PastChats.tsx', what: 'Pick a chat inbox and one real chat; the skill answers its first message, then you carry on.', channel: 'chat', way: 'pastChats' },
+      { name: 'ChatScenarios', file: 'components/simulate/chat/ChatScenarios.tsx', what: 'Scenarios written for this skill; the AI customer and the skill talk to the end.', channel: 'chat', way: 'chatScenarios' },
+      { name: 'ChatLive', file: 'components/simulate/chat/ChatLive.tsx', what: 'Chat as a customer: you write every customer message.', channel: 'chat', way: 'chatLive' },
       { name: 'ChatSession', file: 'components/simulate/chat/ChatSession.tsx', what: 'The playground thread: ink customer bubbles, agent on the page, dividers, the pinned result.', channel: 'chat' },
       { name: 'LiveTrace', file: 'components/simulate/chat/LiveTrace.tsx', what: '"AI agent · N steps" under a reply; opens that turn’s steps in place.', channel: 'chat' },
       { name: 'ChatComposer + AttachmentList', file: 'components/simulate/chat/ChatComposer.tsx', what: 'The rounded field with paperclip, drop and paste; file chips; sent thumbnails and tiles.', channel: 'chat' },
@@ -43,7 +47,7 @@ export const LIBRARY: LibGroup[] = [
     ],
   },
   {
-    title: 'Email ways (paused in the app)',
+    title: 'Email ways',
     entries: [
       { name: 'MatchingEmails', file: 'components/simulate/MatchingEmails.tsx', what: 'Real mail from one mailbox that matches the trigger: 50 a batch, up to 200, Scan more.', channel: 'email' },
       { name: 'useTriggerScan', file: 'components/simulate/useTriggerScan.ts', what: 'The scan behind Matching emails; Copilot’s matching row reads it too.', channel: 'email' },

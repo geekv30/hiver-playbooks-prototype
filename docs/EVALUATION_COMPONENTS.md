@@ -1,32 +1,23 @@
 # Evaluation components
 
-The written reference for the Evaluation tab: every piece, what it does, the states it has, the rules it follows, and how to bring a paused channel back. Live companion: **`/component/evaluation-library`**, which runs every flow of both channels in the real panel next to an index of these pieces (`app/component/evaluation-library/registry.ts`).
+The written reference for the Evaluation tab: every piece, what it does, the states it has, the rules it follows, and how to bring a paused way back. Live companion: **`/component/evaluation-library`**, which runs every flow of both channels in the real panel next to an index of these pieces (`app/component/evaluation-library/registry.ts`).
 
 Last updated 2026-09-29.
 
-## Status: chat only, email paused
+## Status: both channels; on chat, only Chat as a customer
 
-A skill is written once and runs on email and on chat. The Evaluation tab currently offers **chat only**, because chat is the focus. Email was paused, not removed: every email component, fixture and hook is still in the repo and still works (try it at `/component/evaluation-library`).
+A skill is written once and runs on email and on chat. The Evaluation tab offers **both channels** with the **Email | Chat** switch. Email offers all four ways. Chat offers only **Chat as a customer** for now: **Past chats** and chat **AI scenarios** are paused, not removed. Their components, fixtures and engine are still in the repo and still work (try them at `/component/evaluation-library`).
 
-**One switch:** `components/simulate/evalChannels.ts`
+**The switches:** `components/simulate/evalChannels.ts`
 
 ```ts
-export const EVAL_CHANNELS: readonly EvalChannel[] = ['chat'];            // today
-export const EVAL_CHANNELS: readonly EvalChannel[] = ['email', 'chat'];   // both, as before
+export const EVAL_CHANNELS: readonly EvalChannel[] = ['email', 'chat'];   // the channels, in menu order
+export const CHAT_WAYS: readonly ChatEvalView[] = ['chatLive'];           // today
+export const CHAT_WAYS: readonly ChatEvalView[] = ['pastChats', 'chatScenarios', 'chatLive'];  // all three
 ```
 
-What the switch controls (all through `channelOn('email')` or the `channels` prop):
-
-| With email off | Where |
-|---|---|
-| The menu shows the chat ways only, with no Email / Chat switch (the switch renders only when 2+ channels are on) | `EvalMenu.tsx` |
-| The panel opens on the first channel on offer | `SimulatePanel.tsx`, `EditorCanvas.tsx` (`evalChannel` state) |
-| No background mailbox scan on open, and none after Copilot's mailbox question | `EditorCanvas.tsx` (auto-scan effect, `answerMailboxes`) |
-| Copilot's matching-emails row ("Evaluate on N emails that match your trigger") is hidden | `EditorCanvas.tsx` (`scanState`) |
-| Copilot's "Open Evaluation" no longer forces the Email channel | `EditorCanvas.tsx` (`onOpenEvaluation`) |
-| Enable's evaluation check says "a quick pass on past chats" instead of "past emails" | `components/flow01/enable/readiness.ts` |
-
-Copilot still asks which mailboxes a skill is for; the answer is stored on the skill for Enable. Only the scan that follows it is paused.
+- `CHAT_WAYS` filters the chat cards in `EvalMenu.tsx` (passed through `SimulatePanel` as `chatWays`).
+- `EVAL_CHANNELS` decides which channels the menu offers. The Email | Chat switch renders only when two or more are on. With email taken out, `channelOn('email')` also pauses the background mailbox scan, Copilot's matching-emails row, and Copilot's Open Evaluation jump to Email (`EditorCanvas.tsx`), and Enable's evaluation line says "past chats" instead of "past emails" (`components/flow01/enable/readiness.ts`). All of that is on today, because both channels are on.
 
 ## How the tab is put together
 
@@ -44,15 +35,15 @@ SidePanel (Copilot | Evaluation tabs, always pinned)
 
 | Way | Channel | Card subtitle |
 |---|---|---|
-| Past chats | chat | Real chats from your chat inbox |
-| AI scenarios | chat | AI plays the customer, start to finish |
+| Past chats (paused) | chat | Real chats from your chat inbox |
+| AI scenarios (paused) | chat | AI plays the customer, start to finish |
 | Chat as a customer | chat | You play the customer, live |
 | Matching emails | email | Real emails your trigger would fire on |
 | Recent conversations | email | Recent emails from your shared inbox |
 | AI scenarios | email | Tailor-made AI test scenarios |
 | Custom email | email | Write your own test email |
 
-## Chat evaluation (live in the app)
+## Chat evaluation (Chat as a customer live in the app; the other two paused)
 
 ### The playground rules (locked with Geeky, 2026-09-28)
 
@@ -73,8 +64,8 @@ SidePanel (Copilot | Evaluation tabs, always pinned)
 
 | Component | File | What it does, and its states |
 |---|---|---|
-| PastChats | `components/simulate/chat/PastChats.tsx` | Pick a chat inbox, search, pick one real chat, Evaluate. The skill answers the chat's first message, then you carry on as the customer (composer on). The transcript icon opens `ChatTranscriptModal`. States: no inbox picked, list, empty search, running, ended. |
-| ChatScenarios | `components/simulate/chat/ChatScenarios.tsx` | Live: the model writes scenarios for this skill (two it is built for, one missing a detail, one edge case), cached per skill version. Scripted or failed write: the standard set (`CHAT_SCENARIOS`), with a note when the write failed. Regenerate in the header. No trigger: `SimEmptyState` with ghost cards. Pick one, Evaluate: the AI customer and the skill talk to the end; Run again in the header. |
+| PastChats (paused) | `components/simulate/chat/PastChats.tsx` | Pick a chat inbox, search, pick one real chat, Evaluate. The skill answers the chat's first message, then you carry on as the customer (composer on). The transcript icon opens `ChatTranscriptModal`. States: no inbox picked, list, empty search, running, ended. |
+| ChatScenarios (paused) | `components/simulate/chat/ChatScenarios.tsx` | Live: the model writes scenarios for this skill (two it is built for, one missing a detail, one edge case), cached per skill version. Scripted or failed write: the standard set (`CHAT_SCENARIOS`), with a note when the write failed. Regenerate in the header. No trigger: `SimEmptyState` with ghost cards. Pick one, Evaluate: the AI customer and the skill talk to the end; Run again in the header. |
 | ChatLive | `components/simulate/chat/ChatLive.tsx` | Chat as a customer: empty hint, then you write every message. Header: End chat while open, Start over once ended. |
 | ChatSession | `components/simulate/chat/ChatSession.tsx` | The thread shared by all three ways. Pieces: `Divider`, `Notice` (a turn that went wrong, with Fix with Copilot / Retry / Use scripted replies), `AgentTurn`, `Verdict` (the pinned result; "Reviewing the conversation..." while judged), the customer typing dots, the agent's "Working on a reply..." shimmer, Stop evaluation for AI scenarios. The thread fades under the pinned result. |
 | LiveTrace | `components/simulate/chat/LiveTrace.tsx` | The "AI agent · N steps" line and the inline trace (`TraceStep` in its `quiet` form). `toDef` turns a checked step into the shared trace step. |
@@ -95,7 +86,7 @@ SidePanel (Copilot | Evaluation tabs, always pinned)
 
 The review (`judge`) decides the result line: resolved / handed off promptly / unresolved. A rating of 2 or less is never a pass. A full AI scenario spends about 18 model calls.
 
-## Email evaluation (paused in the app)
+## Email evaluation (live in the app)
 
 | Component | File | What it does, and its states |
 |---|---|---|

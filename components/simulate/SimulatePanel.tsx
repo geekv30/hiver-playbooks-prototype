@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { RiPlayFill, RiCloseLine } from 'react-icons/ri';
 import type { SimStatusKind } from '@/data/simFixtures';
-import EvalMenu, { type EvalChannel, type EvalView, EVAL_TITLES, EVAL_ICONS } from './EvalMenu';
+import EvalMenu, { type ChatEvalView, type EvalChannel, type EvalView, EVAL_TITLES, EVAL_ICONS } from './EvalMenu';
 import PastChats from './chat/PastChats';
 import ChatScenarios from './chat/ChatScenarios';
 import ChatLive from './chat/ChatLive';
@@ -16,7 +16,7 @@ import AiScenarios from './AiScenarios';
 import CustomEval from './CustomEval';
 import type { TriggerScan } from './useTriggerScan';
 import styles from './SimulatePanel.module.css';
-import { EVAL_CHANNELS } from './evalChannels';
+import { CHAT_WAYS, EVAL_CHANNELS } from './evalChannels';
 
 interface Props {
   /** Whether the panel is open (the canvas makes space for it). */
@@ -58,6 +58,8 @@ interface Props {
   onChannel?: (c: EvalChannel) => void;
   /** The channels on offer; the app's are evalChannels.EVAL_CHANNELS. */
   channels?: readonly EvalChannel[];
+  /** The chat ways on offer; the app's are evalChannels.CHAT_WAYS. */
+  chatWays?: readonly ChatEvalView[];
 }
 
 /**
@@ -90,6 +92,7 @@ export default function SimulatePanel({
   channel: channelProp,
   onChannel,
   channels = EVAL_CHANNELS,
+  chatWays = CHAT_WAYS,
 }: Props) {
   const [view, setView] = useState<EvalView>('menu');
   // Controlled when the canvas owns it; a local fallback keeps the panel whole.
@@ -146,6 +149,7 @@ export default function SimulatePanel({
               channel={channel}
               onChannel={setChannel}
               channels={channels}
+              chatWays={chatWays}
               matchFresh={scan?.fresh}
               matchIsNew={matchingIsNew}
             />
