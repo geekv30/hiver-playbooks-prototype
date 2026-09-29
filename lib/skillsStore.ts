@@ -58,7 +58,20 @@ function commit(next: State) {
 }
 
 // Hydrate at module load on the client, so the first client snapshot is final.
-if (typeof window !== 'undefined') hydrate();
+// Another tab's save re-reads the key, so two open tabs can't overwrite each
+// other with stale copies.
+if (typeof window !== 'undefined') {
+  hydrate();
+  window.addEventListener('storage', (e) => {
+    if (e.key !== STORAGE_KEY) return;
+    try {
+      state = e.newValue ? { ...EMPTY, ...(JSON.parse(e.newValue) as State) } : EMPTY;
+    } catch {
+      return;
+    }
+    listeners.forEach((l) => l());
+  });
+}
 
 const subscribe = (cb: () => void) => {
   listeners.add(cb);
@@ -70,6 +83,16 @@ const getServerSnapshot = () => EMPTY;
 /** Live store (re-renders on any change). The server render sees it empty. */
 export function useSkillsStore(): State {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+
+/** Whether a saved skill exists - re-renders only when that flips (null on the
+ *  server), not on every save the way the full store would. */
+export function useSkillExists(id: string): boolean | null {
+  return useSyncExternalStore(
+    subscribe,
+    () => state.skills.some((s) => s.id === id),
+    () => null,
+  );
 }
 
 export function getSkill(id: string): SavedSkill | undefined {
@@ -134,4 +157,27 @@ export function resetWorkspace(workspace: Workspace) {
     skills: state.skills.filter((s) => s.workspace !== workspace),
     deletedSeeds: workspace === 'demo' ? [] : state.deletedSeeds,
   });
+}
+
+// A prompt too long for a URL (a pasted SOP) rides to the editor in
+// sessionStorage instead of the query string, which would hit URL limits.
+const HANDOFF_KEY = 'hiver.playbooks.handoffPrompt';
+export const MAX_URL_PROMPT = 1500;
+
+export function stashPrompt(prompt: string) {
+  try {
+    window.sessionStorage.setItem(HANDOFF_KEY, prompt);
+  } catch {
+    /* storage blocked - the caller falls back to a truncated URL prompt */
+  }
+}
+
+export function takeStashedPrompt(): string | undefined {
+  try {
+    const v = window.sessionStorage.getItem(HANDOFF_KEY) ?? undefined;
+    window.sessionStorage.removeItem(HANDOFF_KEY);
+    return v;
+  } catch {
+    return undefined;
+  }
 }

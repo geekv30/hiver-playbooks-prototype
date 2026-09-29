@@ -18,6 +18,8 @@ import {
   useSkillsStore,
   deleteSkill,
   deleteSeed,
+  stashPrompt,
+  MAX_URL_PROMPT,
 } from '@/lib/skillsStore';
 import AdminShell, { shellStyles } from './AdminShell';
 import DeleteSkillModal from './DeleteSkillModal';
@@ -275,7 +277,12 @@ export function newSkillHref(
   fileName?: string | null,
 ): string {
   const q = new URLSearchParams();
-  if (prompt) q.set('prompt', prompt);
+  if (prompt.length > MAX_URL_PROMPT) {
+    stashPrompt(prompt);
+    q.set('prompt_ref', '1');
+  } else if (prompt) {
+    q.set('prompt', prompt);
+  }
   if (templateId) q.set('template', templateId);
   if (fileName) q.set('sop', fileName);
   if (workspace === 'empty') q.set('ws', 'empty');

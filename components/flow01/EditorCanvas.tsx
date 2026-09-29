@@ -636,10 +636,14 @@ export default function EditorCanvas({
             : buildScaffoldDoc({ text: prompt });
         handleColdStartGenerate(genDoc, prompt || `Turn my SOP "${sopName}" into a skill.`);
       }
-      router.replace(pathname, { scroll: false });
+      // Native replaceState, not router.replace: the router treats "same path
+      // minus the query" as a no-op in production builds.
+      // The workspace stays in the URL, so a reload before the first autosave
+      // still files the skill under the list it came from.
+      window.history.replaceState(null, '', pathname + (persist?.workspace === 'empty' ? '?ws=empty' : ''));
     }, 0);
     return () => clearTimeout(t);
-  }, [handoff, live.settled, handleColdStartGenerate, requestFocus, router, pathname]);
+  }, [handoff, live.settled, handleColdStartGenerate, requestFocus, pathname, persist]);
 
   // Drive the cold-start working steps on the seeded assistant message, then load
   // the drafted doc + resolve that message to the acknowledgement.

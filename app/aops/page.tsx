@@ -1,7 +1,5 @@
-import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import AopListPage from '@/components/aops/AopListPage';
-import WorkspaceReset from '@/components/aops/WorkspaceReset';
 
 export const metadata: Metadata = {
   title: 'Skills · Hiver',
@@ -9,14 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return (
-    <>
-      {/* `?fresh` resets this workspace; it reads the URL, so it sits in its own
-          Suspense boundary and the list itself stays statically prerendered. */}
-      <Suspense fallback={null}>
-        <WorkspaceReset workspace="demo" />
-      </Suspense>
-      <AopListPage />
-    </>
-  );
+  return <AopListPage />;
 }

@@ -91,17 +91,24 @@ export function useLiveCopilot(): LiveCopilot {
 
   useEffect(() => {
     let alive = true;
-    fetch('/api/copilot/status', { cache: 'no-store' })
+    // Capped: a stalled status call must not hold up anything waiting on
+    // `settled` (it falls back to the scripted Copilot instead).
+    const ctrl = new AbortController();
+    const cap = setTimeout(() => ctrl.abort(), 5000);
+    fetch('/api/copilot/status', { cache: 'no-store', signal: ctrl.signal })
       .then((r) => (r.ok ? r.json() : null))
       .then((s) => {
         if (alive && s) setStatus(s);
       })
       .catch(() => {})
       .finally(() => {
+        clearTimeout(cap);
         if (alive) setSettled(true);
       });
     return () => {
       alive = false;
+      clearTimeout(cap);
+      ctrl.abort();
     };
   }, []);
 

@@ -175,7 +175,8 @@ export default function SkillsEmptyHero({
           spellCheck={false}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
+            // Not while an IME is composing: that Enter confirms a candidate.
+            if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
               e.preventDefault();
               submit();
             }

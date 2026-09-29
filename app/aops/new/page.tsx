@@ -7,12 +7,12 @@ export const metadata: Metadata = {
   description: 'Create a new skill.',
 };
 
-// A fresh, empty canvas: no initialDoc, so the cold-start "draft with AI"
-// modal greets the user (the same editor the seeded journeys use) - unless the
-// Skills empty state handed off a prompt or "Create from scratch" (see
-// NewSkillCanvas). That handoff is read from the URL, so it needs a Suspense
-// boundary to stay statically prerendered. The fallback is null on purpose:
-// the shell is this component, so there is nothing to show before it.
+// The editor for a brand-new skill, primed by the composer's handoff (a
+// prompt, template, or SOP) or "Create from scratch". With no handoff it goes
+// to the New skill page (see NewSkillCanvas). The handoff is read from the
+// URL, so it needs a Suspense boundary to stay statically prerendered. The
+// fallback is null on purpose: the shell is this component, so there is
+// nothing to show before it.
 export default function Page() {
   return (
     <Suspense fallback={null}>
