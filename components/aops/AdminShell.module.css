@@ -230,12 +230,22 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  /* Title (28) + subtitle (18) + 16px padding each side: every page's header is
-     this tall, with or without a subtitle, so the rule under it never jumps
-     between the list and its sub-pages. */
+  /* Title (28) + subtitle (18) + 16px padding each side: a section page's
+     header is this tall even without a subtitle. A sub-page's is shorter. */
   min-height: 79px; /* border-box: 16 + 28 + 18 + 16 + the 1px rule */
   padding: 16px 24px;
   border-bottom: 1px solid var(--border-subtle);
+}
+/* Sub-page header (Figma Insights 1474:49089): 16/24 padding around a 36px
+   action - 68px with the rule - and a 16px regular title after the arrow. */
+.header[data-sub] {
+  min-height: 0;
+}
+.header[data-sub] .title {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  color: var(--text-intense);
 }
 .titleBlock {
   flex: 1;
@@ -343,17 +353,41 @@
 .secondaryBtn:hover {
   background: var(--bg-subtle);
 }
-/* Back - the secondary button, icon-only: same 32px, border, fill and radius. */
+/* A sub-page header's action - DLS Button, secondary md (h36, #fafafa,
+   #d4d4d4 border, r6, 14/20 medium). */
+.headerBtn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 16px;
+  border: 1px solid var(--badge-gray-border);
+  border-radius: 6px;
+  background: var(--bg-subtle);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--text-strong);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background var(--d-hover) var(--ease-snap);
+}
+.headerBtn:hover {
+  background: #f5f5f5;
+}
+/* Back - a bare 16px arrow (Figma draws no box). The 4px of padding is taken
+   back by the margin, so the glyph sits exactly where Figma puts it while the
+   hit area and hover tint get a little room. */
 .backBtn {
   flex: none;
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border: 1px solid var(--badge-gray-border); /* #d4d4d4 */
+  margin: -4px;
+  padding: 4px;
+  border: none;
   border-radius: 6px;
-  background: var(--card);
+  background: none;
   color: var(--text-strong);
   cursor: pointer;
   transition: background var(--d-hover) var(--ease-snap);
@@ -366,6 +400,7 @@
   height: 16px;
 }
 .backBtn:focus-visible,
+.headerBtn:focus-visible,
 .primaryBtn:focus-visible,
 .secondaryBtn:focus-visible,
 .learnBtn:focus-visible {

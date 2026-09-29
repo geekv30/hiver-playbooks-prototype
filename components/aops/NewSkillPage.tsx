@@ -19,12 +19,12 @@ export default function NewSkillPage() {
 
   return (
     <AdminShell
-      title="New skill"
+      title="Create new skill"
       onBack={() => router.push(listHref(workspace))}
       actions={
         <Link
           href={`/aops/new?start=blank${workspace === 'empty' ? '&ws=empty' : ''}`}
-          className={shellStyles.secondaryBtn}
+          className={shellStyles.headerBtn}
         >
           Create from scratch
         </Link>
