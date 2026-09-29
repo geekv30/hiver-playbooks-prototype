@@ -1,15 +1,14 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { RiExternalLinkLine, RiFileCopyLine, RiCheckLine, RiGitCommitLine } from 'react-icons/ri';
-import { NOW, type RevisionMark, type SkillRun } from '@/data/runFixtures';
+import { RiExternalLinkLine, RiFileCopyLine, RiCheckLine } from 'react-icons/ri';
+import { NOW, type SkillRun } from '@/data/runFixtures';
 import RunTrace from './RunTrace';
 import { formatWait } from './runsModel';
 import styles from './RunDetail.module.css';
 
 interface Props {
   run: SkillRun | null;
-  staleMark?: RevisionMark | null;
   onOpenConversation?: (run: SkillRun) => void;
   showSkill?: boolean;
 }
@@ -84,7 +83,7 @@ function CopyEmail({ email }: { email: string }) {
  * the pane does not repeat them in a facts rail. There is deliberately no
  * separate list of actions taken - the trace already is that list.
  */
-export default function RunDetail({ run, staleMark, onOpenConversation }: Props) {
+export default function RunDetail({ run, onOpenConversation }: Props) {
   if (!run) {
     return (
       <div className={styles.detail}>
@@ -135,17 +134,6 @@ export default function RunDetail({ run, staleMark, onOpenConversation }: Props)
 
         <section className={styles.section}>
           <h3 className={styles.sectionTitle}>Skill execution</h3>
-
-          {staleMark && (
-            <div className={styles.stale}>
-              <RiGitCommitLine className={styles.staleIcon} aria-hidden />
-              <p className={styles.staleText}>
-                <span className={styles.staleLead}>This ran on an earlier version. </span>
-                The skill was edited since - {staleMark.summary.toLowerCase()} - so these steps
-                will not match the skill as it reads today.
-              </p>
-            </div>
-          )}
 
           <RunTrace run={run} />
         </section>

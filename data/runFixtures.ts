@@ -78,18 +78,6 @@ export interface SkillRun {
   error?: RunError;
   /** Awaiting approval: who holds it, and since when. */
   assignee?: string;
-  /** The skill revision this ran on. Pinned, so an old run still makes sense
-   *  after the skill is edited. */
-  revision: number;
-}
-
-/** A point where the skill definition changed. Rendered between runs so a
- *  change in behavior has a visible cause. */
-export interface RevisionMark {
-  revision: number;
-  at: number;
-  /** One short sentence: what changed. */
-  summary: string;
 }
 
 // --- Seed pools (generic, swappable) ---------------------------------------
@@ -443,8 +431,6 @@ export interface SkillRunSource {
   liveForDays?: number;
   /** Stopped N days ago (a paused skill): no runs after that point. */
   stoppedDaysAgo?: number;
-  /** When the skill definition changed, as days ago. */
-  revisions?: { daysAgo: number; summary: string }[];
 }
 
 /** Build one skill's run history. Pure and seeded: same source, same history. */
@@ -452,7 +438,6 @@ export function generateRuns(src: SkillRunSource): SkillRun[] {
   if (src.volume === 0 || src.mailboxes.length === 0) return [];
   const rand = rng(hash(src.skillId));
   const now = anchorNow();
-  const revs = [...(src.revisions ?? [])].sort((a, b) => b.daysAgo - a.daysAgo);
   const mix = src.mix ?? MIX_DEFAULT;
   const allow = SKILL_EMAILS[src.skillId];
   const pool = allow
@@ -532,12 +517,6 @@ export function generateRuns(src: SkillRunSource): SkillRun[] {
       const appliedFinal =
         state === 'declined' ? applied.filter((a) => a !== 'Reply drafted') : applied;
 
-      const daysAgo = (now - startedAt) / DAY;
-      const revision =
-        revs.findIndex((r) => daysAgo >= r.daysAgo) === -1
-          ? revs.length + 1
-          : revs.length - revs.findIndex((r) => daysAgo >= r.daysAgo);
-
       runs.push({
         id: `run_${src.skillId}_${runs.length + 1}`,
         skillId: src.skillId,
@@ -557,23 +536,11 @@ export function generateRuns(src: SkillRunSource): SkillRun[] {
           ? { step: failure.step, code: failure.code, message: failure.message }
           : undefined,
         assignee: state === 'awaiting' ? APPROVERS[Math.floor(rand() * APPROVERS.length)] : undefined,
-        revision,
       });
     }
   }
 
   return runs.sort((a, b) => b.startedAt - a.startedAt);
-}
-
-/** The revision marks for a skill, as absolute timestamps. */
-export function revisionMarks(src: SkillRunSource): RevisionMark[] {
-  const now = anchorNow();
-  const revs = [...(src.revisions ?? [])].sort((a, b) => b.daysAgo - a.daysAgo);
-  return revs.map((r, i) => ({
-    revision: revs.length - i + 1,
-    at: now - r.daysAgo * DAY,
-    summary: r.summary,
-  }));
 }
 
 // --- The seeded skills -----------------------------------------------------
@@ -594,10 +561,6 @@ export const RUN_SOURCES: SkillRunSource[] = [
     href: '/api-example',
     lastUpdated: 'Sep 17, 2026',
     volume: 148,
-    revisions: [
-      { daysAgo: 12, summary: 'Reply step changed from send to draft' },
-      { daysAgo: 4, summary: 'Added a ClickUp task step' },
-    ],
   },
 
   // Healthy. Nothing failing, nothing waiting - the verdict reads "Running
@@ -726,8 +689,4 @@ export function allRuns(): SkillRun[] {
 export function runsInLastDays(skillId: string, days: number): SkillRun[] {
   const cutoff = NOW - days * DAY;
   return runsForSkill(skillId).filter((r) => r.startedAt >= cutoff);
-}
-
-export function sourceFor(skillId: string): SkillRunSource | undefined {
-  return RUN_SOURCES.find((s) => s.skillId === skillId);
 }

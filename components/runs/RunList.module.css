@@ -41,34 +41,6 @@ section + section .dayHead { border-top: 1px solid var(--log-rule, #eceff6); }
   font-variant-numeric: tabular-nums;
 }
 
-/* A skill edit, shown where it happened in the timeline. This is the line that
-   answers "why did it start behaving differently on Tuesday" without anyone
-   having to ask - runs above it and below it ran on different definitions. */
-.revision {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 11px 16px 11px 34px;
-  background: var(--violet-subtle);
-}
-.revIcon {
-  width: 14px;
-  height: 14px;
-  flex: none;
-  color: var(--violet-intense);
-}
-.revText {
-  min-width: 0;
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  letter-spacing: var(--ls-caption);
-  color: var(--body);
-}
-.revLead {
-  font-weight: 500;
-  color: var(--violet-intense);
-}
-
 /* A run (Figma 3593:24612): mark, subject + time, mailbox. No rule between
    rows - the day header does the grouping and 12px of air does the rest. */
 .row {

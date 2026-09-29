@@ -43,7 +43,7 @@ import SimulatePanel from '@/components/simulate/SimulatePanel';
 import type { EvalChannel } from '@/components/simulate/EvalMenu';
 import RunsView from '@/components/runs/RunsView';
 import { useIsClient } from '@/components/runs/useIsClient';
-import { revisionMarks, runsForSkill, sourceFor } from '@/data/runFixtures';
+import { runsForSkill } from '@/data/runFixtures';
 import { type CopilotMessage, type CopilotProposalData } from './copilot/CopilotPanel';
 import SidePanel, { type SideTab } from './copilot/SidePanel';
 import { LiveCopilotError, useLiveCopilot } from '@/lib/copilot/useLiveCopilot';
@@ -337,10 +337,8 @@ export default function EditorCanvas({
   // Runs - the skill's execution history. A MODE of this page rather than a
   // third companion tab: Copilot and Evaluation are authoring tools that sit
   // beside the document, while Runs replaces it and needs the whole stage.
-  const runSource = skillId ? sourceFor(skillId) : undefined;
   const runs = useMemo(() => (skillId ? runsForSkill(skillId) : []), [skillId]);
   const isClient = useIsClient();
-  const runMarks = useMemo(() => (runSource ? revisionMarks(runSource) : []), [runSource]);
 
   // Runs is its OWN ROUTE (/<skill>/runs), not a flag on the editor's.
   //
@@ -1571,7 +1569,6 @@ export default function EditorCanvas({
         {runsOpen ? (
           <RunsView
             runs={runs}
-            marks={runMarks}
             onOpenConversation={() => showHint('Opening the conversation is coming soon.')}
           />
         ) : (

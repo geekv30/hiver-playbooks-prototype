@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import SegmentedControl from '@/components/atoms/SegmentedControl';
 import Dropdown from '@/components/atoms/Dropdown';
-import { RUN_SOURCES, type RevisionMark, type SkillRun } from '@/data/runFixtures';
+import { RUN_SOURCES, type SkillRun } from '@/data/runFixtures';
 import { mailboxName } from '@/data/mailboxes';
 import RunStateFilter from './RunStateFilter';
 import ActivityStrip from './ActivityStrip';
@@ -23,7 +23,6 @@ import styles from './RunsView.module.css';
 
 interface Props {
   runs: SkillRun[];
-  marks?: RevisionMark[];
   allSkills?: boolean;
   /** Pre-select a skill (arriving from that skill's Runs cell on the list). */
   initialSkillId?: string | null;
@@ -55,7 +54,6 @@ const RANGES = [
  */
 export default function RunsView({
   runs,
-  marks = [],
   allSkills,
   initialSkillId = null,
   onOpenConversation,
@@ -98,12 +96,6 @@ export default function RunsView({
   }, [windowRuns, filter.mailboxId]);
 
   const selected = listRuns.find((r) => r.id === selectedId) ?? listRuns[0] ?? null;
-
-  const staleMark = useMemo(() => {
-    if (!selected) return null;
-    const later = marks.filter((m) => m.at > selected.startedAt);
-    return later.length > 0 ? later[later.length - 1]! : null;
-  }, [selected, marks]);
 
   const narrowed =
     filter.state !== null ||
@@ -179,7 +171,6 @@ export default function RunsView({
           <div className={styles.emptySplit}>
             <RunList
               runs={listRuns}
-              marks={marks}
               selectedId={null}
               onSelect={setSelectedId}
               showSkill={allSkills}
@@ -191,7 +182,6 @@ export default function RunsView({
             <div className={styles.listCol}>
               <RunList
                 runs={listRuns}
-                marks={marks}
                 selectedId={selected?.id ?? null}
                 onSelect={setSelectedId}
                 showSkill={allSkills}
@@ -200,7 +190,6 @@ export default function RunsView({
             </div>
             <RunDetail
               run={selected}
-              staleMark={staleMark}
               onOpenConversation={onOpenConversation}
               showSkill={allSkills}
             />
