@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { RiCloseLine } from 'react-icons/ri';
+import { RiCloseLine, RiFocus3Line } from 'react-icons/ri';
 import ModalShell from '@/components/atoms/ModalShell';
 import type { SimEmail } from '@/data/simFixtures';
 import styles from './ConversationModal.module.css';
@@ -83,6 +83,16 @@ export default function ConversationModal({ email, onClose }: Props) {
             <h2 className={styles.subject}>{email.subject}</h2>
             <span className={styles.received}>{receivedLabel(email.id)}</span>
           </div>
+
+          {email.matchReason && (
+            <p className={styles.reason}>
+              <RiFocus3Line aria-hidden />
+              <span>
+                <span className={styles.reasonLabel}>Why it matched</span>
+                {email.matchReason}
+              </span>
+            </p>
+          )}
 
           <div className={styles.body}>
             {paragraphs.map((p, i) => (

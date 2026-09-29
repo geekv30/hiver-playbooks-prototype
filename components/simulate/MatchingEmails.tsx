@@ -350,7 +350,7 @@ export default function MatchingEmails({
                 selected={selectedId === e.id}
                 onSelect={() => setSelectedId(e.id)}
                 onOpen={() => setReviewId(e.id)}
-                aside={e.received}
+                reason={e.matchReason}
               />
             </div>
           ))}

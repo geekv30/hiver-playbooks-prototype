@@ -17,7 +17,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SimEmail } from '@/data/simFixtures';
-import { SCAN_BATCH, SCAN_CEILING, matchesTrigger, poolForMailbox } from '@/data/matchPool';
+import { SCAN_BATCH, SCAN_CEILING, matchReason, poolForMailbox } from '@/data/matchPool';
 
 export type ScanPhase = 'idle' | 'scanning' | 'settled';
 
@@ -143,7 +143,10 @@ export function useTriggerScan(trigger: string): TriggerScan {
 
   const matchesIn = useCallback(
     (from: number, to: number) =>
-      pool.current.slice(from, to).filter((e) => matchesTrigger(e, triggerRef.current)),
+      pool.current.slice(from, to).flatMap((e) => {
+        const reason = matchReason(e, triggerRef.current);
+        return reason ? [{ ...e, matchReason: reason }] : [];
+      }),
     [],
   );
 

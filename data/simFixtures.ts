@@ -35,8 +35,8 @@ export interface SimEmail {
   failAt?: number;
   /** Drafted reply shown on a passed run (coherent with this email). */
   draft?: string;
-  /** Relative arrival time ("2 hrs ago") - shown on scanned inbound rows. */
-  received?: string;
+  /** Why the trigger matched this email, in plain words (matched rows only). */
+  matchReason?: string;
 }
 
 export interface SimTopic {
