@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import NewSkillPage from '@/components/aops/NewSkillPage';
 
 export const metadata: Metadata = {
-  title: 'New skill · Hiver',
+  title: 'Create new skill · Hiver',
   description: 'Describe a skill, start from a template, or attach an SOP.',
 };
 
