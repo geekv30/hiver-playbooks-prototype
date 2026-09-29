@@ -5,8 +5,8 @@ import PanelTabs from '@/components/flow01/copilot/PanelTabs';
 import panelStyles from '@/components/flow01/copilot/SidePanel.module.css';
 import { exampleDoc, lineToText } from '@/components/flow01/doc';
 import SimulatePanel from '@/components/simulate/SimulatePanel';
-import type { EvalChannel } from '@/components/simulate/EvalMenu';
-import { ALL_EVAL_CHANNELS, EVAL_CHANNELS } from '@/components/simulate/evalChannels';
+import type { ChatEvalView, EvalChannel } from '@/components/simulate/EvalMenu';
+import { ALL_CHAT_WAYS, ALL_EVAL_CHANNELS, CHAT_WAYS } from '@/components/simulate/evalChannels';
 import { useTriggerScan } from '@/components/simulate/useTriggerScan';
 import { useLiveCopilot } from '@/lib/copilot/useLiveCopilot';
 import exhibit from '../eval-channels/page.module.css';
@@ -14,10 +14,13 @@ import { LIBRARY, type LibChannel } from './registry';
 import styles from './page.module.css';
 
 /* The Evaluation library: every evaluation flow, of both channels, usable in
- * the real panel - including the email ways the app has paused - beside an
+ * the real panel - including the chat ways the app has paused - beside an
  * index of the pieces they are built from. */
 
 const CHANNEL_LABEL: Record<LibChannel, string> = { email: 'Email', chat: 'Chat', both: 'Both' };
+
+/** A chat way that is off in the app right now. */
+const pausedWay = (way?: ChatEvalView) => !!way && !CHAT_WAYS.includes(way);
 
 function LivePanel() {
   const doc = useMemo(() => exampleDoc(), []);
@@ -46,6 +49,7 @@ function LivePanel() {
             channel={channel}
             onChannel={setChannel}
             channels={ALL_EVAL_CHANNELS}
+            chatWays={ALL_CHAT_WAYS}
           />
         </div>
       </aside>
@@ -54,16 +58,15 @@ function LivePanel() {
 }
 
 export default function EvaluationLibrary() {
-  const inApp = EVAL_CHANNELS.map((c) => (c === 'email' ? 'Email' : 'Chat')).join(' and ');
   return (
     <main className={exhibit.page}>
       <header className={exhibit.pageHead}>
         <p className={exhibit.eyebrow}>Evaluation · library</p>
         <h1 className={exhibit.h1}>Every way to evaluate a skill, and what it is built from</h1>
         <p className={exhibit.lede}>
-          The app offers <strong>{inApp}</strong> evaluation right now. This page keeps both channels usable in the
-          real panel, with the example skill, so nothing paused is lost. To bring a channel back, add it to{' '}
-          <code className={styles.code}>EVAL_CHANNELS</code> in{' '}
+          The app offers every email way and, on chat, only <strong>Chat as a customer</strong> for now. This page
+          keeps every way usable in the real panel, with the example skill, so nothing paused is lost. To bring a
+          chat way back, add it to <code className={styles.code}>CHAT_WAYS</code> in{' '}
           <code className={styles.code}>components/simulate/evalChannels.ts</code>. The full write-up of every piece
           is <code className={styles.code}>docs/EVALUATION_COMPONENTS.md</code>.
         </p>
@@ -80,13 +83,9 @@ export default function EvaluationLibrary() {
                   <li key={e.name} className={styles.row}>
                     <div className={styles.rowHead}>
                       <span className={styles.name}>{e.name}</span>
-                      <span
-                        className={styles.chip}
-                        data-channel={e.channel}
-                        data-paused={(e.channel === 'email' && !EVAL_CHANNELS.includes('email')) || undefined}
-                      >
+                      <span className={styles.chip} data-channel={e.channel} data-paused={pausedWay(e.way) || undefined}>
                         {CHANNEL_LABEL[e.channel]}
-                        {e.channel === 'email' && !EVAL_CHANNELS.includes('email') ? ' · paused' : ''}
+                        {pausedWay(e.way) ? ' · paused' : ''}
                       </span>
                     </div>
                     <p className={styles.what}>{e.what}</p>
