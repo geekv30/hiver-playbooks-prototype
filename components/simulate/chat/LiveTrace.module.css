@@ -1,54 +1,52 @@
-/* The steps under one agent reply: a quiet text toggle, then the trace as a
-   log (TraceStep's quiet form) - no frame, no boxes, nothing that reads as
-   another chat bubble. */
+/* Under an agent reply: the meta line ("AI agent · 9 steps"), then the steps,
+   opened in place as a log (TraceStep's quiet form) - no frame, no boxes. */
 .wrap {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
 }
-.toggle {
-  display: inline-flex;
+.meta {
+  display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   margin: 0;
-  padding: 2px 0;
-  border: none;
-  background: none;
-  font-family: var(--font);
   font-size: var(--fs-caption);
-  line-height: 16px;
-  font-weight: 500;
+  line-height: 18px;
   letter-spacing: var(--ls-caption);
   color: var(--muted);
-  cursor: pointer;
-  transition: color var(--d-hover) var(--ease-snap);
 }
-.toggle:hover {
+.sep {
+  color: var(--muted-soft);
+}
+/* "9 steps": a quiet underline that firms up on hover or while open. */
+.toggle {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
   color: var(--ink-soft);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--hairline);
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--d-hover) var(--ease-snap);
+}
+.toggle:hover,
+.toggle[aria-expanded='true'] {
+  text-decoration-color: currentColor;
 }
 .toggle:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: var(--r-xs);
 }
-.count {
-  font-variant-numeric: tabular-nums;
-  color: var(--muted-soft);
-}
-.chev {
-  width: 14px;
-  height: 14px;
-  transition: transform var(--d-hover) var(--ease-snap);
-}
-.chev[data-open] {
-  transform: rotate(180deg);
-}
 
 /* Open / close tweens the height (grid 0fr <-> 1fr, the card-resize idiom). */
 .collapse {
   display: grid;
   grid-template-rows: 0fr;
-  width: 100%;
   transition: grid-template-rows var(--d-enter) var(--ease-snap);
 }
 .collapse[data-open] {
@@ -59,12 +57,11 @@
   overflow: hidden;
 }
 .panel {
-  padding-top: 8px;
+  padding-top: 6px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .collapse,
-  .chev {
+  .collapse {
     transition: none;
   }
 }

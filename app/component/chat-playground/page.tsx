@@ -72,7 +72,9 @@ export default function ChatPlaygroundExhibit() {
           review&rsquo;s own reason. Run again replays it beat by beat, so you can see the typing, reviewing and
           ended states. Switch to <strong>You as the customer</strong> to type into each panel yourself (the
           scripted engine replies). The steps inside every panel use the renderer the email evaluation uses, so
-          only the layout differs.
+          only the layout differs. <strong>What shipped takes a part of each:</strong> 02&rsquo;s customer bubble,
+          centred skill line and &ldquo;AI agent &middot; N steps&rdquo; line (opening 01&rsquo;s steps in place), 01&rsquo;s
+          reply on the page, and 03&rsquo;s pinned result carrying 02&rsquo;s result card.
         </p>
         <div className={styles.mode}>
           <SegmentedControl

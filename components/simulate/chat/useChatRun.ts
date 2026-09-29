@@ -44,7 +44,20 @@ export type AgentItem = {
 /** The customer's rating at the end, as the widget asks for it. */
 export type RatingItem = { kind: 'rating'; id: string; score: number; comment: string | null };
 
-export type ChatItem = { kind: 'customer'; id: string; text: string } | AgentItem | RatingItem;
+/** A file the customer attached. The playground shows it in the chat; the
+ *  agent is told its name, not its contents. */
+export interface ChatAttachment {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  /** An object URL, for an image's thumbnail; null for other files. */
+  url: string | null;
+}
+
+export type CustomerItem = { kind: 'customer'; id: string; text: string; attachments?: ChatAttachment[] };
+
+export type ChatItem = CustomerItem | AgentItem | RatingItem;
 
 /** judging: the chat is over and the conversation is being reviewed. */
 export type ChatPhase = 'idle' | 'agent' | 'customer' | 'judging' | 'ended';
@@ -70,10 +83,21 @@ const reduced = () =>
 export function transcriptOf(items: ChatItem[]): ChatMessage[] {
   const out: ChatMessage[] = [];
   for (const it of items) {
-    if (it.kind === 'customer') out.push({ role: 'customer', text: it.text });
+    if (it.kind === 'customer') {
+      const files = it.attachments?.length ? `[Attached: ${it.attachments.map((a) => a.name).join(', ')}]` : '';
+      out.push({ role: 'customer', text: [it.text, files].filter(Boolean).join('\n') });
+    }
     else if (it.kind === 'agent' && it.status === 'done' && it.turn?.reply) out.push({ role: 'agent', text: it.turn.reply });
   }
   return out;
+}
+
+/** Free the thumbnails' object URLs once their chat is gone. */
+export function revokeAttachments(items: ChatItem[]) {
+  for (const it of items) {
+    if (it.kind !== 'customer') continue;
+    for (const a of it.attachments ?? []) if (a.url) URL.revokeObjectURL(a.url);
+  }
 }
 
 const started = (items: ChatItem[]) => items.some((it) => it.kind === 'agent' && it.turn?.stage === 'run');
@@ -156,7 +180,13 @@ export function useChatRun({ doc, live, onRunRecorded }: Options) {
   const engineRef = useRef<'live' | 'scripted'>('scripted');
   const recorded = useRef(false);
 
-  useEffect(() => () => abort.current?.abort(), []);
+  useEffect(
+    () => () => {
+      abort.current?.abort();
+      revokeAttachments(itemsRef.current);
+    },
+    [],
+  );
 
   const commit = useCallback((next: ChatItem[]) => {
     itemsRef.current = next;
@@ -337,9 +367,9 @@ export function useChatRun({ doc, live, onRunRecorded }: Options) {
 
   /** The user, as the customer, sends a message. */
   const send = useCallback(
-    async (text: string) => {
+    async (text: string, attachments: ChatAttachment[] = []) => {
       const t = text.trim();
-      if (!t || phase === 'agent' || phase === 'customer' || phase === 'ended') return;
+      if ((!t && attachments.length === 0) || phase === 'agent' || phase === 'customer' || phase === 'ended') return;
       const ctrl = new AbortController();
       abort.current = ctrl;
       if (itemsRef.current.length === 0) {
@@ -349,7 +379,10 @@ export function useChatRun({ doc, live, onRunRecorded }: Options) {
         goal.current = null;
         pickEngine();
       }
-      commit([...itemsRef.current, { kind: 'customer', id: nid('cust'), text: t }]);
+      commit([
+        ...itemsRef.current,
+        { kind: 'customer', id: nid('cust'), text: t, ...(attachments.length ? { attachments } : {}) },
+      ]);
       try {
         await agentTurn(ctrl.signal);
         setPhase('idle');
@@ -388,6 +421,7 @@ export function useChatRun({ doc, live, onRunRecorded }: Options) {
   const reset = useCallback(() => {
     abort.current?.abort();
     abort.current = null;
+    revokeAttachments(itemsRef.current);
     recorded.current = false;
     commit([]);
     setVerdict(null);

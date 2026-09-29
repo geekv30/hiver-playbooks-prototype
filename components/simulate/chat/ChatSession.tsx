@@ -1,20 +1,13 @@
 'use client';
 
-import { useEffect, useRef, useState, type ComponentProps, type ReactNode } from 'react';
-import {
-  RiArrowUpLine,
-  RiFlashlightLine,
-  RiInformationLine,
-  RiStarFill,
-  RiStarLine,
-  RiStopCircleLine,
-} from 'react-icons/ri';
+import { useEffect, useLayoutEffect, useRef, useState, type ComponentProps, type ReactNode } from 'react';
+import { RiInformationLine, RiStarFill, RiStarLine, RiStopCircleLine } from 'react-icons/ri';
 import Spinner from '@/components/atoms/Spinner';
-import { SparkleIcon } from '@/components/icons/ui';
 import type { EditorDoc } from '@/components/flow01/doc';
 import { AiNote } from '@/components/flow01/copilot/CopilotPanel';
 import type { TurnOutcome } from '@/lib/eval/wire';
 import flowStyles from '../RecentEmails.module.css';
+import ChatComposer, { AttachmentList } from './ChatComposer';
 import LiveTrace from './LiveTrace';
 import { type AgentItem, type ChatRun, type RatingItem } from './useChatRun';
 import { chatResultLine } from './chatFlow';
@@ -47,17 +40,12 @@ interface Props {
   emptyHint?: string;
 }
 
-/** A centred line in the thread for something that happened, not something
- *  anyone said (the skill starting, the skill not fitting). */
-function Event({ icon, children, tone }: { icon?: ReactNode; children: ReactNode; tone?: 'warn' }) {
+/** A line across the thread with a label in it, for something that happened
+ *  rather than something anyone said: the skill starting, the chat ending. */
+function Divider({ children, tone }: { children: ReactNode; tone?: 'warn' }) {
   return (
-    <p className={styles.event} data-tone={tone}>
-      {icon && (
-        <span className={styles.eventIcon} aria-hidden>
-          {icon}
-        </span>
-      )}
-      {children}
+    <p className={styles.divider} data-tone={tone}>
+      <span className={styles.dividerLabel}>{children}</span>
     </p>
   );
 }
@@ -74,17 +62,23 @@ function Notice({ children, action }: { children: ReactNode; action?: ReactNode 
   );
 }
 
+function Stars({ score }: { score: number }) {
+  return (
+    <span className={styles.stars} aria-label={`${score} out of 5`}>
+      {[1, 2, 3, 4, 5].map((n) => (n <= score ? <RiStarFill key={n} aria-hidden /> : <RiStarLine key={n} aria-hidden />))}
+    </span>
+  );
+}
+
 function AgentTurn({
   item,
   doc,
-  showName,
   onRetry,
   onOpenCopilot,
   onScripted,
 }: {
   item: AgentItem;
   doc: EditorDoc;
-  showName: boolean;
   onRetry: (scripted?: boolean) => void;
   onOpenCopilot?: () => void;
   /** Switch this browser to the scripted replies (the out-of-credits fix). */
@@ -97,9 +91,9 @@ function AgentTurn({
   if (item.status === 'done' && t?.stage === 'noMatch') {
     return (
       <div data-item={item.id}>
-        <Event icon={<RiInformationLine />} tone="warn">
+        <Divider tone="warn">
           <strong>The skill did not run.</strong> {t.note ?? 'This chat is not what the trigger describes.'}
-        </Event>
+        </Divider>
       </div>
     );
   }
@@ -113,93 +107,129 @@ function AgentTurn({
   return (
     <div className={styles.agentBlock} data-item={item.id}>
       {item.firstRun && (
-        <Event icon={<RiFlashlightLine />}>
-          Skill started <span className={styles.eventSep}>&middot;</span>{' '}
-          <strong>{doc.title.trim() || 'Untitled skill'}</strong>
-        </Event>
+        <Divider>
+          Skill started <span className={styles.sep}>&middot;</span> <strong>{doc.title.trim() || 'Untitled skill'}</strong>
+        </Divider>
       )}
       <div className={styles.agent}>
-        <span className={styles.avatar} aria-hidden>
-          <SparkleIcon />
-        </span>
-        <div className={styles.agentCol}>
-          {showName && <span className={styles.author}>AI agent</span>}
-
-          {item.status === 'running' ? (
-            <div className={`${styles.bubbleAgent} ${styles.typing}`} aria-label="The agent is typing">
-              <span />
-              <span />
-              <span />
-            </div>
-          ) : item.status === 'error' || !t ? (
-            <Notice
-              action={
-                item.quota && onScripted ? (
-                  <button
-                    type="button"
-                    className={styles.link}
-                    onClick={() => {
-                      onScripted();
-                      onRetry(true);
-                    }}
-                  >
-                    Use scripted replies
-                  </button>
-                ) : (
-                  <button type="button" className={styles.link} onClick={() => onRetry()}>
-                    Retry
-                  </button>
-                )
-              }
-            >
-              {item.error ?? 'The model could not be reached.'}
-            </Notice>
-          ) : (
-            <>
-              {t.reply ? <div className={styles.bubbleAgent}>{t.reply}</div> : null}
-              {t.reason === 'noReply' && <Notice action={fix}>{NOTICE.noReply}</Notice>}
-              {t.reason === 'noBranch' && <Notice action={fix}>{NOTICE.noBranch}</Notice>}
-              <LiveTrace doc={doc} turn={t} />
-            </>
-          )}
-        </div>
+        {item.status === 'running' ? (
+          <span className={styles.working} aria-label="The agent is typing">
+            Working on a reply...
+          </span>
+        ) : item.status === 'error' || !t ? (
+          <Notice
+            action={
+              item.quota && onScripted ? (
+                <button
+                  type="button"
+                  className={styles.link}
+                  onClick={() => {
+                    onScripted();
+                    onRetry(true);
+                  }}
+                >
+                  Use scripted replies
+                </button>
+              ) : (
+                <button type="button" className={styles.link} onClick={() => onRetry()}>
+                  Retry
+                </button>
+              )
+            }
+          >
+            {item.error ?? 'The model could not be reached.'}
+          </Notice>
+        ) : (
+          <>
+            {t.reply ? <p className={styles.agentText}>{t.reply}</p> : null}
+            {t.reason === 'noReply' && <Notice action={fix}>{NOTICE.noReply}</Notice>}
+            {t.reason === 'noBranch' && <Notice action={fix}>{NOTICE.noBranch}</Notice>}
+            <LiveTrace doc={doc} turn={t} />
+          </>
+        )}
       </div>
     </div>
   );
 }
 
-/** The customer's rating, as the widget collects it at the end of a chat. */
-function Rating({ item, who }: { item: RatingItem; who: string }) {
+/**
+ * Verdict - the answer to "did it work?", pinned under the header once the
+ * chat ends (verdict first: the thread below is the evidence). The result, the
+ * review's reason clamped to two lines, and the customer's rating.
+ */
+function Verdict({ run, who }: { run: ChatRun; who: string }) {
+  const [more, setMore] = useState(false);
+  const [clamped, setClamped] = useState(false);
+  const reasonRef = useRef<HTMLParagraphElement>(null);
+  const reason = chatResultLine(run);
+  const rating = run.items.find((i): i is RatingItem => i.kind === 'rating');
+
+  // Offer "Show more" only when the reason is actually cut off.
+  useLayoutEffect(() => {
+    const el = reasonRef.current;
+    if (!el || more) return;
+    const measure = () => setClamped(el.scrollHeight > el.clientHeight + 1);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [reason, more, run.phase]);
+
+  if (run.phase === 'judging') {
+    return (
+      <div className={styles.verdict} data-state="busy">
+        <p className={styles.busy}>
+          <Spinner size={12} />
+          <span>Reviewing the conversation...</span>
+        </p>
+      </div>
+    );
+  }
+  const outcome = run.outcome;
   return (
-    <div className={styles.rating} data-item={item.id}>
-      <p className={styles.ratingHead}>
-        <span className={styles.stars} aria-hidden>
-          {[1, 2, 3, 4, 5].map((n) => (n <= item.score ? <RiStarFill key={n} /> : <RiStarLine key={n} />))}
-        </span>
-        <span>
-          <strong>{who}</strong> rated the chat {item.score} out of 5
-        </span>
+    <div className={styles.verdict} data-outcome={outcome ?? 'none'}>
+      {outcome && (
+        <p className={styles.verdictHead}>
+          <span className={styles.dot} aria-hidden />
+          {RESULT[outcome]}
+        </p>
+      )}
+      <p ref={reasonRef} className={styles.reason} data-clamp={!more || undefined}>
+        {reason}
       </p>
-      {item.comment && <p className={styles.ratingComment}>&ldquo;{item.comment}&rdquo;</p>}
+      {(clamped || more) && (
+        <button type="button" className={styles.more} onClick={() => setMore((m) => !m)} aria-expanded={more}>
+          {more ? 'Show less' : 'Show more'}
+        </button>
+      )}
+      {rating && (
+        <p className={styles.rating}>
+          <Stars score={rating.score} />
+          <span>
+            {who} rated it {rating.score} of 5
+            {rating.comment && <> &middot; &ldquo;{rating.comment}&rdquo;</>}
+          </span>
+        </p>
+      )}
     </div>
   );
 }
 
 /**
- * ChatSession - one playground chat, laid out like the chat widget it
- * simulates: the customer on the right in the brand color, the AI agent on
- * the left in grey with its avatar and name, and what the skill did behind
- * "View steps" under each reply. Events (the skill starting or not fitting)
- * are centred lines. Shared by Past chats, AI scenarios and Chat as a customer.
+ * ChatSession - one playground chat. The customer writes in dark bubbles on
+ * the right, as in the chat widget; the AI agent writes on the page, with
+ * "AI agent · N steps" under each reply opening what the skill did in place.
+ * The skill starting and the chat ending are labelled lines across the
+ * thread, and the result is pinned at the top once the chat is over. Shared
+ * by Past chats, AI scenarios and Chat as a customer.
  */
 export default function ChatSession({ run, doc, customerName, mode, live, onOpenCopilot, emptyHint }: Props) {
-  const [value, setValue] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-  const { items, phase, busy, outcome, capped } = run;
+  const { items, phase, capped } = run;
   const ended = phase === 'ended';
   const judging = phase === 'judging';
   const started = items.length > 0;
+  const who = customerName.split(' · ')[0] ?? customerName;
 
   // Keep the newest turn in view. A tall finished agent turn is brought in by
   // its top, so the reply is what shows first.
@@ -219,30 +249,12 @@ export default function ChatSession({ run, doc, customerName, mode, live, onOpen
     el.scrollTo({ top: el.scrollHeight, behavior });
   }, [items, phase, ended]);
 
-  useEffect(() => {
-    if (mode === 'manual' && !busy && !ended) inputRef.current?.focus({ preventScroll: true });
-  }, [mode, busy, ended]);
-
-  // Auto-grow the composer to four lines.
-  useEffect(() => {
-    const el = inputRef.current;
-    if (!el) return;
-    el.style.height = 'auto';
-    el.style.height = `${Math.min(el.scrollHeight, 88)}px`;
-  }, [value]);
-
-  const submit = () => {
-    const t = value.trim();
-    if (!t || busy || ended) return;
-    void run.send(t);
-    setValue('');
-  };
-
   const firstCustomerId = items.find((i) => i.kind === 'customer')?.id;
-  const resultLine = chatResultLine(run);
 
   return (
-    <div className={styles.session}>
+    <div className={styles.session} data-pinned={((ended || judging) && started) || undefined}>
+      {(ended || judging) && started && <Verdict run={run} who={who} />}
+
       <div className={styles.thread} ref={scrollRef} role="log" aria-live="polite" aria-relevant="additions">
         {!started && mode === 'manual' && emptyHint && (
           <div className={styles.empty}>
@@ -252,9 +264,7 @@ export default function ChatSession({ run, doc, customerName, mode, live, onOpen
 
         {items.map((it, i) => {
           const prev = items[i - 1];
-          if (it.kind === 'rating') {
-            return <Rating key={it.id} item={it} who={customerName.split(' \u00b7 ')[0] ?? customerName} />;
-          }
+          if (it.kind === 'rating') return null; // it sits in the pinned result
           if (it.kind === 'customer') {
             return (
               <div
@@ -264,19 +274,16 @@ export default function ChatSession({ run, doc, customerName, mode, live, onOpen
                 data-grouped={prev?.kind === 'customer' || undefined}
               >
                 {it.id === firstCustomerId && <span className={styles.author}>{customerName}</span>}
-                <div className={styles.bubbleCustomer}>{it.text}</div>
+                {it.attachments && it.attachments.length > 0 && <AttachmentList files={it.attachments} />}
+                {it.text && <div className={styles.bubbleCustomer}>{it.text}</div>}
               </div>
             );
           }
-          // The agent's name heads each run of its messages, as in the widget.
-          const showName = !(prev?.kind === 'agent' && prev.turn?.stage !== 'noMatch');
-          if (it.kind !== 'agent') return null;
           return (
             <AgentTurn
               key={it.id}
               item={it}
               doc={doc}
-              showName={showName}
               onRetry={(scripted) => void run.retry(it.id, scripted)}
               onOpenCopilot={onOpenCopilot}
               onScripted={live?.onLock}
@@ -298,60 +305,10 @@ export default function ChatSession({ run, doc, customerName, mode, live, onOpen
           <p className={styles.event}>The chat reached 8 customer messages without wrapping up, so it was stopped there.</p>
         )}
 
-        {(ended || judging) && started && (
-          <div className={styles.end}>
-            <div className={styles.endRule}>
-              <span>Chat ended</span>
-            </div>
-            {judging ? (
-              <p className={styles.result}>
-                <Spinner size={12} />
-                <span>Reviewing the conversation...</span>
-              </p>
-            ) : (
-            <p className={styles.result} data-outcome={outcome ?? 'none'}>
-              {outcome && <span className={styles.resultDot} aria-hidden />}
-              {outcome && <strong>{RESULT[outcome]}</strong>}
-              {outcome && <span className={styles.eventSep}>&middot;</span>}
-              <span>{resultLine}</span>
-            </p>
-            )}
-          </div>
-        )}
+        {(ended || judging) && started && <Divider>Chat ended</Divider>}
       </div>
 
-      {mode === 'manual' && !ended && !judging && (
-        <div className={styles.composerWrap}>
-          <div className={styles.composer}>
-            <textarea
-              ref={inputRef}
-              className={styles.input}
-              rows={1}
-              value={value}
-              placeholder="Message as the customer..."
-              aria-label="Message as the customer"
-              onChange={(e) => setValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  submit();
-                }
-              }}
-            />
-            <button
-              type="button"
-              className={styles.send}
-              aria-label="Send as the customer"
-              data-ready={(!busy && value.trim().length > 0) || undefined}
-              disabled={busy || value.trim().length === 0}
-              onClick={submit}
-            >
-              <RiArrowUpLine />
-            </button>
-          </div>
-          <AiNote live={live} />
-        </div>
-      )}
+      {mode === 'manual' && !ended && !judging && <ChatComposer run={run} live={live} />}
 
       {mode === 'auto' && started && !ended && !judging && (
         <div className={flowStyles.footer}>

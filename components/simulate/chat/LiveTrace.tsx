@@ -1,7 +1,6 @@
 'use client';
 
 import { useId, useState } from 'react';
-import { RiArrowDownSLine } from 'react-icons/ri';
 import { findAction } from '@/data/library';
 import { isCondition, lineToText, type EditorDoc } from '@/components/flow01/doc';
 import type { CheckedTurn, LiveTraceStep } from '@/lib/eval/wire';
@@ -60,47 +59,57 @@ export function toDef(doc: EditorDoc, s: LiveTraceStep, i: number, gated: Set<st
 }
 
 /**
- * LiveTrace - what the skill did for one message, behind a quiet "View steps"
- * disclosure under the agent's reply (the peer pattern: Intercom's
- * conversation events, Ada's reasoning log). Opened, it is the same step
- * renderer the email evaluation uses in its quiet form: each result is one
- * muted line, so nothing under a reply reads as another chat bubble.
+ * LiveTrace - who wrote a reply and what the skill did for it: the meta line
+ * under the agent's message ("AI agent · 9 steps", the widget's own
+ * convention), where "9 steps" opens the trace right there in the thread. The
+ * trace is the step renderer the email evaluation uses, in its quiet form, so
+ * nothing under a reply reads as another message.
  */
-export default function LiveTrace({ doc, turn }: { doc: EditorDoc; turn: CheckedTurn }) {
+export default function LiveTrace({ doc, turn, name = 'AI agent' }: { doc: EditorDoc; turn?: CheckedTurn; name?: string }) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
-  if (turn.steps.length === 0) return null;
-  const gated = new Set(turn.gatedSteps);
-  const defs = turn.steps.map((s, i) => toDef(doc, s, i, gated));
+  const steps = turn?.steps ?? [];
+  const gated = new Set(turn?.gatedSteps ?? []);
+  const defs = steps.map((s, i) => toDef(doc, s, i, gated));
   return (
     <div className={styles.wrap}>
-      <button
-        type="button"
-        className={styles.toggle}
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        aria-controls={panelId}
-      >
-        {open ? 'Hide steps' : 'View steps'}
-        <span className={styles.count}>{defs.length}</span>
-        <RiArrowDownSLine className={styles.chev} data-open={open || undefined} aria-hidden />
-      </button>
-      <div className={styles.collapse} data-open={open || undefined} id={panelId}>
-        <div className={styles.inner}>
-          <div className={styles.panel}>
-            {defs.map((d, i) => (
-              <TraceStep
-                key={d.id}
-                step={d}
-                status={turn.steps[i]!.status}
-                isLast={i === defs.length - 1}
-                branchWarn={d.kind === 'condition' && turn.steps[i]!.branch === 'none'}
-                quiet
-              />
-            ))}
+      <p className={styles.meta}>
+        <span>{name}</span>
+        {defs.length > 0 && (
+          <>
+            <span className={styles.sep} aria-hidden>
+              &middot;
+            </span>
+            <button
+              type="button"
+              className={styles.toggle}
+              onClick={() => setOpen((o) => !o)}
+              aria-expanded={open}
+              aria-controls={panelId}
+            >
+              {defs.length} {defs.length === 1 ? 'step' : 'steps'}
+            </button>
+          </>
+        )}
+      </p>
+      {defs.length > 0 && (
+        <div className={styles.collapse} data-open={open || undefined} id={panelId}>
+          <div className={styles.inner}>
+            <div className={styles.panel}>
+              {defs.map((d, i) => (
+                <TraceStep
+                  key={d.id}
+                  step={d}
+                  status={steps[i]!.status}
+                  isLast={i === defs.length - 1}
+                  branchWarn={d.kind === 'condition' && steps[i]!.branch === 'none'}
+                  quiet
+                />
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
