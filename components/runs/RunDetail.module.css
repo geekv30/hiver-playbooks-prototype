@@ -173,31 +173,6 @@
   color: var(--log-head, #a3a3a3);
 }
 
-/* The earlier-version note, when the skill has been edited since. */
-.stale {
-  display: flex;
-  align-items: flex-start;
-  gap: 9px;
-  padding: 11px 13px;
-  border-radius: var(--r-md);
-  background: var(--violet-subtle);
-}
-.staleIcon {
-  width: 15px;
-  height: 15px;
-  flex: none;
-  margin-top: 1px;
-  color: var(--violet-intense);
-}
-.staleText {
-  margin: 0;
-  font-size: var(--fs-caption);
-  line-height: 1.5;
-  letter-spacing: var(--ls-caption);
-  color: var(--body);
-}
-.staleLead { font-weight: 500; color: var(--violet-intense); }
-
 .empty {
   flex: 1 1 auto;
   display: flex;

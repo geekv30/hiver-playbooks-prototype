@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { RiArrowLeftLine } from 'react-icons/ri';
 import GmailBar from '@/components/flow01/GmailBar';
-import { allRuns, revisionMarks, sourceFor } from '@/data/runFixtures';
+import { allRuns } from '@/data/runFixtures';
 import RunsView from './RunsView';
 import styles from './AllRunsPage.module.css';
 
@@ -23,10 +23,6 @@ export default function AllRunsPage() {
   // URL, so back/forward and a shared link all land in the same place.
   const params = useSearchParams();
   const skillId = params.get('skill');
-  const marks = useMemo(() => {
-    const src = skillId ? sourceFor(skillId) : undefined;
-    return src ? revisionMarks(src) : [];
-  }, [skillId]);
 
   return (
     <div className={styles.page}>
@@ -52,7 +48,7 @@ export default function AllRunsPage() {
             </div>
           </header>
           <div className={styles.body}>
-            <RunsView key={skillId ?? 'all'} runs={runs} marks={marks} allSkills initialSkillId={skillId} />
+            <RunsView key={skillId ?? 'all'} runs={runs} allSkills initialSkillId={skillId} />
           </div>
         </main>
       </div>

@@ -1,7 +1,6 @@
 'use client';
 
-import { RiGitCommitLine } from 'react-icons/ri';
-import type { RevisionMark, SkillRun } from '@/data/runFixtures';
+import type { SkillRun } from '@/data/runFixtures';
 import { mailboxName } from '@/data/mailboxes';
 import { RunStateDot } from './RunStatePill';
 import { formatDayLabel, formatTime, groupByDay } from './runsModel';
@@ -9,7 +8,6 @@ import styles from './RunList.module.css';
 
 interface Props {
   runs: SkillRun[];
-  marks?: RevisionMark[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   /** All-skills mode puts the skill name on each row. */
@@ -25,19 +23,15 @@ interface Props {
  * wrote in and how long it took all stay in the detail - repeating them on
  * every row made the list harder to scan, not easier, and the outcome dot
  * already carries the one thing worth seeing at this distance.
- *
- * Skill edits appear in the timeline where they happened, so a change in
- * behavior has a visible cause rather than something a person has to remember.
  */
 export default function RunList({
   runs,
-  marks = [],
   selectedId,
   onSelect,
   showSkill,
   filtered,
 }: Props) {
-  const groups = groupByDay(runs, marks);
+  const groups = groupByDay(runs);
 
   if (runs.length === 0) {
     return (
@@ -67,20 +61,7 @@ export default function RunList({
             </span>
           </header>
 
-          {g.items.map((item) => {
-            if (item.kind === 'mark') {
-              const m = item.mark;
-              return (
-                <div key={`mark-${m.revision}`} className={styles.revision}>
-                  <RiGitCommitLine className={styles.revIcon} aria-hidden />
-                  <p className={styles.revText}>
-                    <span className={styles.revLead}>Skill edited. </span>
-                    {m.summary}. Runs below this ran on the earlier version.
-                  </p>
-                </div>
-              );
-            }
-            const run = item.run;
+          {g.runs.map((run) => {
             const on = run.id === selectedId;
             return (
               <button

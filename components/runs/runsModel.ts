@@ -1,7 +1,7 @@
 // Derived state for the Runs surface. Pure selectors over SkillRun[] - the
 // components render the result and compute nothing themselves.
 
-import { NOW, type RunState, type SkillRun, type RevisionMark } from '@/data/runFixtures';
+import { NOW, type RunState, type SkillRun } from '@/data/runFixtures';
 
 export const RUN_STATES: RunState[] = ['completed', 'awaiting', 'failed', 'declined'];
 
@@ -109,27 +109,13 @@ export function bucketByDay(runs: SkillRun[], days: number): DayBucket[] {
   return out;
 }
 
-/** A row in the list: a run, or the moment the skill changed. */
-export type DayItem =
-  | { kind: 'run'; at: number; run: SkillRun }
-  | { kind: 'mark'; at: number; mark: RevisionMark };
-
 export interface DayGroup {
   day: number;
   runs: SkillRun[];
-  /** Runs and revision marks in one time-ordered sequence. */
-  items: DayItem[];
 }
 
-/**
- * The run list, grouped by day (newest first), with revision marks placed by
- * time rather than pinned to the top of the day.
- *
- * The placement is the whole claim the marker makes - "runs below this ran on
- * the earlier version" is only true if the marker sits between the runs that
- * straddle the edit, not merely on the right date.
- */
-export function groupByDay(runs: SkillRun[], marks: RevisionMark[] = []): DayGroup[] {
+/** The run list, grouped by day, newest first. */
+export function groupByDay(runs: SkillRun[]): DayGroup[] {
   const order: number[] = [];
   const index = new Map<number, SkillRun[]>();
   for (const r of runs) {
@@ -141,16 +127,7 @@ export function groupByDay(runs: SkillRun[], marks: RevisionMark[] = []): DayGro
       order.push(d);
     }
   }
-  return order.map((day) => {
-    const dayRuns = index.get(day)!;
-    const items: DayItem[] = [
-      ...dayRuns.map((run) => ({ kind: 'run' as const, at: run.startedAt, run })),
-      ...marks
-        .filter((m) => startOfDay(m.at) === day)
-        .map((mark) => ({ kind: 'mark' as const, at: mark.at, mark })),
-    ].sort((a, b) => b.at - a.at);
-    return { day, runs: dayRuns, items };
-  });
+  return order.map((day) => ({ day, runs: index.get(day)! }));
 }
 
 /** The dominant failure cause, when there is one worth naming. Drives the
