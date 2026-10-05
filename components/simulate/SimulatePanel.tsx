@@ -15,8 +15,8 @@ import RecentEmails from './RecentEmails';
 import AiScenarios from './AiScenarios';
 import CustomEval from './CustomEval';
 import type { TriggerScan } from './useTriggerScan';
+import { CHAT_WAYS } from './evalChannels';
 import styles from './SimulatePanel.module.css';
-import { CHAT_WAYS, EVAL_CHANNELS } from './evalChannels';
 
 interface Props {
   /** Whether the panel is open (the canvas makes space for it). */
@@ -56,8 +56,6 @@ interface Props {
   /** The menu's channel, owned above so Copilot can point at email. */
   channel?: EvalChannel;
   onChannel?: (c: EvalChannel) => void;
-  /** The channels on offer; the app's are evalChannels.EVAL_CHANNELS. */
-  channels?: readonly EvalChannel[];
   /** The chat ways on offer; the app's are evalChannels.CHAT_WAYS. */
   chatWays?: readonly ChatEvalView[];
 }
@@ -91,12 +89,11 @@ export default function SimulatePanel({
   live,
   channel: channelProp,
   onChannel,
-  channels = EVAL_CHANNELS,
   chatWays = CHAT_WAYS,
 }: Props) {
   const [view, setView] = useState<EvalView>('menu');
   // Controlled when the canvas owns it; a local fallback keeps the panel whole.
-  const [localChannel, setLocalChannel] = useState<EvalChannel>(channels[0]!);
+  const [localChannel, setLocalChannel] = useState<EvalChannel>('email');
   const channel = channelProp ?? localChannel;
   const setChannel = onChannel ?? setLocalChannel;
   // Drill direction for the slide (forward = into a flow, back = out to the menu).
@@ -148,7 +145,6 @@ export default function SimulatePanel({
               onOpen={openFlow}
               channel={channel}
               onChannel={setChannel}
-              channels={channels}
               chatWays={chatWays}
               matchFresh={scan?.fresh}
               matchIsNew={matchingIsNew}

@@ -41,7 +41,6 @@ import { useEvalState } from '@/components/simulate/useEvalState';
 import { useTriggerScan } from '@/components/simulate/useTriggerScan';
 import SimulatePanel from '@/components/simulate/SimulatePanel';
 import type { EvalChannel } from '@/components/simulate/EvalMenu';
-import { EVAL_CHANNELS, channelOn } from '@/components/simulate/evalChannels';
 import RunsView from '@/components/runs/RunsView';
 import { useIsClient } from '@/components/runs/useIsClient';
 import { runsForSkill } from '@/data/runFixtures';
@@ -360,7 +359,7 @@ export default function EditorCanvas({
 
   // The Evaluation menu's channel. Owned here so Copilot's matching row, which
   // points at an email flow, can bring the menu back to Email.
-  const [evalChannel, setEvalChannel] = useState<EvalChannel>(EVAL_CHANNELS[0]!);
+  const [evalChannel, setEvalChannel] = useState<EvalChannel>('email');
   // The New pill on the Matching emails card, retired once the user opens it.
   // Session state on purpose: a reload is a fresh look at the new type.
   const [matchingIsNew, setMatchingIsNew] = useState(true);
@@ -370,8 +369,6 @@ export default function EditorCanvas({
   // on the skill's first mailbox underneath them.
   const autoScanned = useRef<string | null>(null);
   useEffect(() => {
-    // The scan feeds Matching emails, an email way: off while email is.
-    if (!channelOn('email')) return;
     if (scan.state.phase !== 'idle' || scan.state.cleared) return;
     const trigger = triggerText.trim();
     if (!trigger || autoScanned.current === trigger) return;
@@ -699,7 +696,7 @@ export default function EditorCanvas({
         prev.map((m, i) => (i === index ? { ...m, mailboxChosen: ids } : m)),
       );
       const first = ids[0];
-      if (!first || !lineHasContent(docRef.current.trigger) || !channelOn('email')) return;
+      if (!first || !lineHasContent(docRef.current.trigger)) return;
       setCopilotMessages((prev) => [
         ...prev,
         { role: 'assistant', text: '', scan: { mailbox: mailboxName(first) } },
@@ -1609,14 +1606,14 @@ export default function EditorCanvas({
                 onVerdict: setCopilotVerdict,
                 onMailboxAnswer: answerMailboxes,
                 onOpenEvaluation: () => {
-                  if (channelOn('email')) setEvalChannel('email');
+                  setEvalChannel('email');
                   setPanelTab('simulate');
                 },
                 // The handoff line and the unprompted hint both read the LIVE
                 // scan, so Copilot can never contradict the Evaluation tab.
                 // Absent until a scan exists, and dropped once it is stale.
                 scanState:
-                  channelOn('email') && scan.state.mailboxId && scan.state.phase !== 'idle' && !scan.stale
+                  scan.state.mailboxId && scan.state.phase !== 'idle' && !scan.stale
                     ? {
                         scanning: scan.state.phase === 'scanning',
                         count: scan.state.matches.length,

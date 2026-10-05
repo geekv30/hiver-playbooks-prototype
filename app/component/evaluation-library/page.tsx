@@ -1,12 +1,13 @@
 'use client';
 
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import PanelTabs from '@/components/flow01/copilot/PanelTabs';
 import panelStyles from '@/components/flow01/copilot/SidePanel.module.css';
 import { exampleDoc, lineToText } from '@/components/flow01/doc';
 import SimulatePanel from '@/components/simulate/SimulatePanel';
-import type { ChatEvalView, EvalChannel } from '@/components/simulate/EvalMenu';
-import { ALL_CHAT_WAYS, ALL_EVAL_CHANNELS, CHAT_WAYS } from '@/components/simulate/evalChannels';
+import { CHAT_EVAL_ENTRIES, type ChatEvalView, type EvalChannel } from '@/components/simulate/EvalMenu';
+import { CHAT_WAYS } from '@/components/simulate/evalChannels';
 import { useTriggerScan } from '@/components/simulate/useTriggerScan';
 import { useLiveCopilot } from '@/lib/copilot/useLiveCopilot';
 import exhibit from '../eval-channels/page.module.css';
@@ -19,6 +20,10 @@ import styles from './page.module.css';
 
 const CHANNEL_LABEL: Record<LibChannel, string> = { email: 'Email', chat: 'Chat', both: 'Both' };
 
+// Every chat way the code has, read off the menu's own entries so a new way
+// shows up here without a second list to update.
+const ALL_CHAT_WAYS = CHAT_EVAL_ENTRIES.map((e) => e.id);
+
 /** A chat way that is off in the app right now. */
 const pausedWay = (way?: ChatEvalView) => !!way && !CHAT_WAYS.includes(way);
 
@@ -29,28 +34,41 @@ function LivePanel() {
   const live = useLiveCopilot();
   const [channel, setChannel] = useState<EvalChannel>('chat');
   const [matchingIsNew, setMatchingIsNew] = useState(true);
+  // Copilot lives in the skill editor; here its tab says so instead of
+  // doing nothing, and Fix with Copilot leads to it.
+  const [tab, setTab] = useState<'copilot' | 'simulate'>('simulate');
   return (
     <div className={styles.stage}>
       <aside className={panelStyles.panel} aria-label="Evaluation library panel">
-        <PanelTabs active="simulate" onChange={() => {}} />
+        <PanelTabs active={tab} onChange={setTab} />
         <div className={styles.panelBody}>
-          <SimulatePanel
-            docked
-            open
-            hasScenarios
-            hasTrigger
-            trigger={trigger}
-            mailboxes={doc.mailboxes}
-            scan={scan}
-            matchingIsNew={matchingIsNew}
-            onMatchingSeen={() => setMatchingIsNew(false)}
-            doc={doc}
-            live={live}
-            channel={channel}
-            onChannel={setChannel}
-            channels={ALL_EVAL_CHANNELS}
-            chatWays={ALL_CHAT_WAYS}
-          />
+          {tab === 'copilot' && (
+            <p className={styles.copilotNote}>
+              Copilot runs in the skill editor, next to the skill it edits. Open{' '}
+              <Link href="/api-example">the example skill</Link> to use it.
+            </p>
+          )}
+          {/* Kept mounted while Copilot shows, so a chat in progress survives. */}
+          <div className={styles.pane} hidden={tab !== 'simulate'}>
+            <SimulatePanel
+              docked
+              open={tab === 'simulate'}
+              onOpenCopilot={() => setTab('copilot')}
+              onRunRecorded={() => {}}
+              hasScenarios
+              hasTrigger
+              trigger={trigger}
+              mailboxes={doc.mailboxes}
+              scan={scan}
+              matchingIsNew={matchingIsNew}
+              onMatchingSeen={() => setMatchingIsNew(false)}
+              doc={doc}
+              live={live}
+              channel={channel}
+              onChannel={setChannel}
+              chatWays={ALL_CHAT_WAYS}
+            />
+          </div>
         </div>
       </aside>
     </div>

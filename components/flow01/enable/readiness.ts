@@ -6,7 +6,6 @@ import { CONNECTOR_META } from '@/data/connectors';
 import { mailboxHasTag, mailboxHasMember, isTeamMember } from '@/data/mailboxDirectory';
 import { mailboxName } from '@/data/mailboxes';
 import { isCondition, lineHasContent, type EditorDoc } from '../doc';
-import { channelOn } from '@/components/simulate/evalChannels';
 
 /**
  * The Enable flow's readiness model. deriveReadinessInputs scans the doc once
@@ -159,7 +158,7 @@ export function computeChecks(
         kind: 'evaluation',
         tone: 'pending',
         title: 'Evaluation',
-        detail: `hasn't been run yet - a quick pass on ${channelOn('email') ? 'past emails' : 'past chats'} catches broken steps early.`,
+        detail: "hasn't been run yet - a quick pass on past emails catches broken steps early.",
         action: { type: 'evaluate' },
       });
     } else if (evalAgg.failed + evalAgg.attention > 0) {

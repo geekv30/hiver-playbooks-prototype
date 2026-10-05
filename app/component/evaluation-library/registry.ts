@@ -27,7 +27,7 @@ export const LIBRARY: LibGroup[] = [
     entries: [
       { name: 'SimulatePanel', file: 'components/simulate/SimulatePanel.tsx', what: 'The Evaluation tab: routes the menu to each flow and back, with the drill slide.', channel: 'both' },
       { name: 'EvalMenu + EvalCard', file: 'components/simulate/EvalMenu.tsx', what: 'The "Evaluate your skill in one of these ways" cards, and the Email | Chat switch when more than one channel is on.', channel: 'both' },
-      { name: 'evalChannels', file: 'components/simulate/evalChannels.ts', what: 'What the tab offers: both channels; on chat, only Chat as a customer for now.', channel: 'both' },
+      { name: 'evalChannels (CHAT_WAYS)', file: 'components/simulate/evalChannels.ts', what: 'The chat ways on offer: Chat as a customer only, for now. Add a way back to bring its card back.', channel: 'chat' },
       { name: 'EvalBackHeader', file: 'components/simulate/EvalBackHeader.tsx', what: 'A flow’s header: back, the flow’s icon and title, one action on the right.', channel: 'both' },
       { name: 'SimEmptyState', file: 'components/simulate/SimEmptyState.tsx', what: 'The informative empty state: dimmed real cards, then icon, headline, one action.', channel: 'both' },
     ],
@@ -67,7 +67,7 @@ export const LIBRARY: LibGroup[] = [
     title: 'Shared by both',
     entries: [
       { name: 'TraceStep', file: 'components/simulate/TraceStep.tsx', what: 'One trace step (reasoning, action, condition, reply); `quiet` is the chat’s log form.', channel: 'both' },
-      { name: 'SimStatus', file: 'components/simulate/SimStatus.tsx', what: 'A coloured dot and label for every run status.', channel: 'both' },
+      { name: 'SimStatus', file: 'components/simulate/SimStatus.tsx', what: 'A colored dot and label for every run status.', channel: 'both' },
       { name: 'useEvalState + docSignature', file: 'components/simulate/useEvalState.ts', what: 'The runs Enable reads, and when a result belongs to an earlier version of the skill.', channel: 'both' },
     ],
   },
@@ -75,7 +75,7 @@ export const LIBRARY: LibGroup[] = [
     title: 'Engine and API (chat)',
     entries: [
       { name: 'wire', file: 'lib/eval/wire.ts', what: 'The chat evaluation’s format and checkTurn: keeps real steps, drops model slips, sets the outcome.', channel: 'chat' },
-      { name: 'scripted', file: 'lib/eval/scripted.ts', what: 'Scripted replies when live AI is off, labelled everywhere.', channel: 'chat' },
+      { name: 'scripted', file: 'lib/eval/scripted.ts', what: 'Scripted replies when live AI is off, labeled everywhere.', channel: 'chat' },
       { name: 'server prompts', file: 'lib/eval/server.ts', what: 'The skill, customer, scenarios and review prompts.', channel: 'chat' },
       { name: '/api/evaluate', file: 'app/api/evaluate/route.ts', what: 'The live model behind the passcode: kinds skill, customer, scenarios, judge.', channel: 'chat' },
     ],

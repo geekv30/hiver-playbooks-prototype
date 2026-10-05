@@ -8,16 +8,13 @@ Last updated 2026-09-29.
 
 A skill is written once and runs on email and on chat. The Evaluation tab offers **both channels** with the **Email | Chat** switch. Email offers all four ways. Chat offers only **Chat as a customer** for now: **Past chats** and chat **AI scenarios** are paused, not removed. Their components, fixtures and engine are still in the repo and still work (try them at `/component/evaluation-library`).
 
-**The switches:** `components/simulate/evalChannels.ts`
+**The switch:** `CHAT_WAYS` in `components/simulate/evalChannels.ts`, today `['chatLive']`. To bring all three back:
 
 ```ts
-export const EVAL_CHANNELS: readonly EvalChannel[] = ['email', 'chat'];   // the channels, in menu order
-export const CHAT_WAYS: readonly ChatEvalView[] = ['chatLive'];           // today
-export const CHAT_WAYS: readonly ChatEvalView[] = ['pastChats', 'chatScenarios', 'chatLive'];  // all three
+export const CHAT_WAYS: readonly ChatEvalView[] = ['pastChats', 'chatScenarios', 'chatLive'];
 ```
 
-- `CHAT_WAYS` filters the chat cards in `EvalMenu.tsx` (passed through `SimulatePanel` as `chatWays`).
-- `EVAL_CHANNELS` decides which channels the menu offers. The Email | Chat switch renders only when two or more are on. With email taken out, `channelOn('email')` also pauses the background mailbox scan, Copilot's matching-emails row, and Copilot's Open Evaluation jump to Email (`EditorCanvas.tsx`), and Enable's evaluation line says "past chats" instead of "past emails" (`components/flow01/enable/readiness.ts`). All of that is on today, because both channels are on.
+`CHAT_WAYS` filters the chat cards in `EvalMenu.tsx` (passed through `SimulatePanel` as `chatWays`). With no chat ways at all, the menu drops the Chat tab rather than show an empty list.
 
 ## How the tab is put together
 
