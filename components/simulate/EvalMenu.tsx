@@ -13,6 +13,7 @@ import {
 import { SearchAiIcon } from '@/components/icons/ui';
 import NewTag from '@/components/atoms/NewTag';
 import SegmentedControl from '@/components/atoms/SegmentedControl';
+import { CHAT_WAYS } from './evalChannels';
 import styles from './EvalMenu.module.css';
 
 export type EvalView = 'menu' | 'matching' | 'recent' | 'scenarios' | 'custom' | ChatEvalView;
@@ -110,6 +111,9 @@ interface Props {
   /** Which channel's ways the menu shows. */
   channel: EvalChannel;
   onChannel: (c: EvalChannel) => void;
+  /** The chat ways on offer (evalChannels.CHAT_WAYS). With none, the menu
+   *  drops the Chat tab rather than show an empty list. */
+  chatWays?: readonly ChatEvalView[];
   /** True while a fresh scan result is still news: the card carries a fill for
    *  that window and then settles back to plain (Figma 3344:20223 / 3345:28443). */
   matchFresh?: boolean;
@@ -126,11 +130,16 @@ interface Props {
  * count is Copilot's row to report. What the scan changes here is temporary: a
  * fill while the result is still news, then plain again.
  */
-export default function EvalMenu({ onOpen, channel, onChannel, matchFresh, matchIsNew }: Props) {
+export default function EvalMenu({ onOpen, channel: picked, onChannel, chatWays = CHAT_WAYS, matchFresh, matchIsNew }: Props) {
+  const chatEntries = CHAT_EVAL_ENTRIES.filter((e) => chatWays.includes(e.id));
+  const tabs = chatEntries.length > 0 ? CHANNEL_TABS : CHANNEL_TABS.filter((t) => t.id !== 'chat');
+  const channel = tabs.some((t) => t.id === picked) ? picked : 'email';
   return (
     <div className={styles.menu}>
       <h3 className={styles.heading}>Evaluate your skill in one of these ways</h3>
-      <SegmentedControl tabs={CHANNEL_TABS} active={channel} onChange={onChannel} ariaLabel="Channel to evaluate on" />
+      {tabs.length > 1 && (
+        <SegmentedControl tabs={tabs} active={channel} onChange={onChannel} ariaLabel="Channel to evaluate on" />
+      )}
       <div className={styles.cards} key={channel} data-channel={channel}>
         {channel === 'email'
           ? EVAL_ENTRIES.map((e) => (
@@ -144,7 +153,7 @@ export default function EvalMenu({ onOpen, channel, onChannel, matchFresh, match
                 fresh={e.id === 'matching' && matchFresh}
               />
             ))
-          : CHAT_EVAL_ENTRIES.map((e) => (
+          : chatEntries.map((e) => (
               <EvalCard key={e.id} icon={CHAT_EVAL_ICONS[e.id]} title={e.title} sub={e.sub} onClick={() => onOpen(e.id)} />
             ))}
       </div>

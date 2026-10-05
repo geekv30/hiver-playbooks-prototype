@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { RiPlayFill, RiCloseLine } from 'react-icons/ri';
 import type { SimStatusKind } from '@/data/simFixtures';
-import EvalMenu, { type EvalChannel, type EvalView, EVAL_TITLES, EVAL_ICONS } from './EvalMenu';
+import EvalMenu, { type ChatEvalView, type EvalChannel, type EvalView, EVAL_TITLES, EVAL_ICONS } from './EvalMenu';
 import PastChats from './chat/PastChats';
 import ChatScenarios from './chat/ChatScenarios';
 import ChatLive from './chat/ChatLive';
@@ -15,6 +15,7 @@ import RecentEmails from './RecentEmails';
 import AiScenarios from './AiScenarios';
 import CustomEval from './CustomEval';
 import type { TriggerScan } from './useTriggerScan';
+import { CHAT_WAYS } from './evalChannels';
 import styles from './SimulatePanel.module.css';
 
 interface Props {
@@ -55,6 +56,8 @@ interface Props {
   /** The menu's channel, owned above so Copilot can point at email. */
   channel?: EvalChannel;
   onChannel?: (c: EvalChannel) => void;
+  /** The chat ways on offer; the app's are evalChannels.CHAT_WAYS. */
+  chatWays?: readonly ChatEvalView[];
 }
 
 /**
@@ -86,6 +89,7 @@ export default function SimulatePanel({
   live,
   channel: channelProp,
   onChannel,
+  chatWays = CHAT_WAYS,
 }: Props) {
   const [view, setView] = useState<EvalView>('menu');
   // Controlled when the canvas owns it; a local fallback keeps the panel whole.
@@ -141,6 +145,7 @@ export default function SimulatePanel({
               onOpen={openFlow}
               channel={channel}
               onChannel={setChannel}
+              chatWays={chatWays}
               matchFresh={scan?.fresh}
               matchIsNew={matchingIsNew}
             />
