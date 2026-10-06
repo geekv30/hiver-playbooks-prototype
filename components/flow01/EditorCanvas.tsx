@@ -352,10 +352,16 @@ export default function EditorCanvas({
   // shared links work without any of this bookkeeping.
   const pathname = usePathname();
   const runsOpen = runsMode;
+  // Where this skill's Runs lives: a seeded skill's own route, or a saved
+  // skill's address once it has one (autosave moves /aops/new there in place).
+  // A skill that has never been saved - an untouched /aops/new, the /canvas
+  // demos - has no history to point at.
+  const runsBase =
+    skillId || pathname.startsWith('/aops/s/') ? pathname.replace(/\/runs$/, '') : null;
   const toggleRuns = useCallback(() => {
-    const base = pathname.replace(/\/runs$/, '');
-    router.push(runsMode ? base : `${base}/runs`, { scroll: false });
-  }, [router, pathname, runsMode]);
+    if (!runsBase) return;
+    router.push(runsMode ? runsBase : `${runsBase}/runs`, { scroll: false });
+  }, [router, runsBase, runsMode]);
 
   // The Evaluation menu's channel. Owned here so Copilot's matching row, which
   // points at an email flow, can bring the menu back to Email.
@@ -1560,15 +1566,26 @@ export default function EditorCanvas({
         onBack={() => router.push(persist ? listHref(persist.workspace) : '/aops')}
         // The count is clock-derived: the prerendered page cannot know it, so
         // it fills in on the client (a baked number is a hydration mismatch).
-        runCount={isClient ? runs.length : undefined}
+        // Zero shows no number: "Runs 0" reads as a count of something wrong.
+        runCount={isClient && runs.length > 0 ? runs.length : undefined}
         runsOpen={runsOpen}
-        onToggleRuns={runs.length > 0 ? toggleRuns : undefined}
+        // Runs is offered once a skill has been live: a draft cannot have run,
+        // so the control would only open an explanation. Inside Runs it is
+        // always set - it is the way back to the editor.
+        onToggleRuns={runsOpen || (runsBase && doc.status !== 'draft') ? toggleRuns : undefined}
       />
 
       <div className={styles.stage} data-runs={runsOpen || undefined}>
         {runsOpen ? (
           <RunsView
             runs={runs}
+            skill={{
+              status: doc.status,
+              mailboxes: doc.mailboxes,
+              trigger: triggerText,
+              liveSince: doc.liveSince,
+              pausedAt: doc.pausedAt,
+            }}
             onOpenConversation={() => showHint('Opening the conversation is coming soon.')}
           />
         ) : (

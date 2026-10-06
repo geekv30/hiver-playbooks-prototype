@@ -3,7 +3,7 @@
 import type { SkillRun } from '@/data/runFixtures';
 import { mailboxName } from '@/data/mailboxes';
 import { RunStateDot } from './RunStatePill';
-import { formatDayLabel, formatTime, groupByDay } from './runsModel';
+import { formatDayLabel, formatDayShort, formatTime, groupByDay, type RangeDays } from './runsModel';
 import styles from './RunList.module.css';
 
 interface Props {
@@ -14,6 +14,10 @@ interface Props {
   showSkill?: boolean;
   /** True when a filter is narrowing the list - changes what "nothing here" means. */
   filtered?: boolean;
+  /** The window is empty but the skill ran before it: how long the window is,
+   *  when the last run was, and the range that would reach it (if any). */
+  quiet?: { days: number; last: number; widen: RangeDays | null };
+  onWiden?: (days: RangeDays) => void;
 }
 
 /**
@@ -30,8 +34,29 @@ export default function RunList({
   onSelect,
   showSkill,
   filtered,
+  quiet,
+  onWiden,
 }: Props) {
   const groups = groupByDay(runs);
+
+  if (runs.length === 0 && quiet) {
+    return (
+      <div className={styles.list} data-empty>
+        <div className={styles.empty}>
+          <p className={styles.emptyTitle}>No runs in the last {quiet.days} days</p>
+          <p className={styles.emptyBody}>
+            The last one was on {formatDayShort(quiet.last)}
+            {quiet.widen ? '.' : ', further back than this page goes.'}
+          </p>
+          {quiet.widen && onWiden && (
+            <button type="button" className={styles.widen} onClick={() => onWiden(quiet.widen!)}>
+              Show the last {quiet.widen} days
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   if (runs.length === 0) {
     return (

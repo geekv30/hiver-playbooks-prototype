@@ -97,3 +97,15 @@
 @media (max-width: 1240px) {
   .listCol { flex-basis: 340px; }
 }
+
+/* A skill that has never run: one island, one stage tall like the log island
+   it stands in for, with its statement centered in it - a short card on an
+   empty gray stage would leave the page's whole lower half dead. */
+.zeroIsland {
+  height: 100cqh;
+  min-height: 420px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 34px;
+}

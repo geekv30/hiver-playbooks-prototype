@@ -44,6 +44,11 @@ export interface EditorDoc {
   triggerMode: TriggerMode;
   mailboxes: string[];
   guardrails: Guardrails;
+  /** When the skill last went live (Enable or Resume). Runs reads it to say how
+   *  long a skill that has not run yet has been listening. */
+  liveSince?: number;
+  /** When it was last paused. Cleared when it goes live again. */
+  pausedAt?: number;
 }
 
 // --- Condition block (IF / ELSE-IF / ELSE) ---------------------------------

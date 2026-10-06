@@ -248,11 +248,11 @@ export function useEditorDoc(initial?: EditorDoc): EditorApi {
   );
 
   const enable = useCallback(() => {
-    commit({ ...docRef.current, status: 'active' }, null);
+    commit({ ...docRef.current, status: 'active', liveSince: Date.now(), pausedAt: undefined }, null);
   }, [commit]);
 
   const pause = useCallback(() => {
-    commit({ ...docRef.current, status: 'paused' }, null);
+    commit({ ...docRef.current, status: 'paused', pausedAt: Date.now() }, null);
   }, [commit]);
 
   const loadDoc = useCallback(

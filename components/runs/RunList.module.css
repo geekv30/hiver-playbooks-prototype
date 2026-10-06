@@ -130,11 +130,13 @@ section + section .dayHead { border-top: 1px solid var(--log-rule, #eceff6); }
   text-align: center;
 }
 .emptyTitle {
+  margin: 0;
   font-size: var(--fs-small);
   font-weight: 500;
   color: var(--ink);
 }
 .emptyBody {
+  margin: 0;
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
   color: var(--muted);
@@ -150,3 +152,27 @@ section + section .dayHead { border-top: 1px solid var(--log-rule, #eceff6); }
 @media (prefers-reduced-motion: reduce) {
   .row { transition: none; }
 }
+
+/* The one way out of a quiet window: widen it to reach the last run. */
+.widen {
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 6px;
+  border: 1px solid var(--pill-border, #d4d4d4);
+  background: var(--pill-bg, #fafafa);
+  font: inherit;
+  font-size: var(--fs-small);
+  line-height: 19px;
+  font-weight: 500;
+  letter-spacing: var(--ls-small);
+  color: var(--pill-ink, #171717);
+  cursor: pointer;
+  transition:
+    background var(--d-hover) var(--ease-snap),
+    border-color var(--d-hover) var(--ease-snap);
+}
+.widen:hover { background: var(--surface-soft); border-color: var(--hairline-strong); }
+.widen:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }

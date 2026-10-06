@@ -3,12 +3,13 @@
 import { useMemo, useState } from 'react';
 import SegmentedControl from '@/components/atoms/SegmentedControl';
 import Dropdown from '@/components/atoms/Dropdown';
-import { RUN_SOURCES, type SkillRun } from '@/data/runFixtures';
+import { NOW, RUN_SOURCES, type SkillRun } from '@/data/runFixtures';
 import { mailboxName } from '@/data/mailboxes';
 import RunStateFilter from './RunStateFilter';
 import ActivityStrip from './ActivityStrip';
 import RunList from './RunList';
 import RunDetail from './RunDetail';
+import NoRunsYet, { type RunsSkill } from './NoRunsYet';
 import { useIsClient } from './useIsClient';
 import {
   DEFAULT_FILTER,
@@ -27,6 +28,15 @@ interface Props {
   /** Pre-select a skill (arriving from that skill's Runs cell on the list). */
   initialSkillId?: string | null;
   onOpenConversation?: (run: SkillRun) => void;
+  /** The skill this history belongs to (single-skill mode). Lets a skill that
+   *  has never run say why, instead of drawing an empty chart and list. */
+  skill?: RunsSkill;
+}
+
+/** The smallest range, wider than the current one, that reaches back to `t`. */
+function widenTo(t: number, days: RangeDays): RangeDays | null {
+  const age = Math.ceil((startOfDay(NOW) - startOfDay(t)) / 86_400_000) + 1;
+  return ([30, 90] as RangeDays[]).find((d) => d > days && d >= age) ?? null;
 }
 
 const RANGES = [
@@ -57,6 +67,7 @@ export default function RunsView({
   allSkills,
   initialSkillId = null,
   onOpenConversation,
+  skill,
 }: Props) {
   // A week opens the page: every day then has room for its date and its total.
   const [filter, setFilter] = useState<RunFilter>({
@@ -110,6 +121,25 @@ export default function RunsView({
       </div>
     );
   }
+
+  // Never run: one island that says why, in place of the chart and the log.
+  if (!allSkills && skill && runs.length === 0) {
+    return (
+      <div className={styles.view}>
+        <section className={`${styles.island} ${styles.zeroIsland}`} aria-label="Runs">
+          <NoRunsYet skill={skill} />
+        </section>
+      </div>
+    );
+  }
+
+  // Nothing in this window, but the skill has run before it: the list says
+  // when, and offers the range that reaches it, rather than "No runs yet".
+  const lastRun = filter.skillId ? runs.find((r) => r.skillId === filter.skillId) : runs[0];
+  const quiet =
+    listRuns.length === 0 && !narrowed && lastRun
+      ? { days: filter.days, last: lastRun.startedAt, widen: widenTo(lastRun.startedAt, filter.days) }
+      : undefined;
 
   return (
     <div className={styles.view}>
@@ -175,6 +205,8 @@ export default function RunsView({
               onSelect={setSelectedId}
               showSkill={allSkills}
               filtered={narrowed}
+              quiet={quiet}
+              onWiden={(days) => setFilter((f) => ({ ...f, days, day: null }))}
             />
           </div>
         ) : (

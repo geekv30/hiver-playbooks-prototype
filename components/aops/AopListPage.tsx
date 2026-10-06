@@ -156,8 +156,11 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
       id: 'history',
       header: 'Skill history · 30d',
       cell: (row) => {
-        // "No runs yet" only for a skill that has never run; one that went quiet
-        // this month shows 0 over an empty rule, beside its real last run.
+        // A draft has never been live, so it has no history to be empty of.
+        // "No runs yet" only for a live or paused skill that has never run; one
+        // that went quiet this month shows 0 over an empty rule, beside its real
+        // last run.
+        if (row.status === 'draft') return <span className={styles.soft}>Not live</span>;
         if (runsForSkill(row.id).length === 0) return <span className={styles.soft}>No runs yet</span>;
         const runs = runsInLastDays(row.id, 30);
         return (

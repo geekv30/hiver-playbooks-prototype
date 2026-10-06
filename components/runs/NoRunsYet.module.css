@@ -1,0 +1,99 @@
+/* A skill with no runs: one centered statement at a readable measure, the
+   same composition as the run list's own empty state. */
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 480px;
+  text-align: center;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* The state mark hangs in a 16px box so the title starts on a fixed x. Live
+   breathes - a quiet ring, the one moving thing on the page, because the skill
+   is genuinely doing something (watching). Paused and draft sit still. */
+.mark {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+.dot {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--run-mark-declined);
+}
+.wrap[data-status='active'] .dot { background: var(--run-completed); }
+.wrap[data-status='active'] .dot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--run-completed);
+  opacity: 0.35;
+  animation: listen 2.4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+@keyframes listen {
+  0% { transform: scale(1); opacity: 0.35; }
+  70%, 100% { transform: scale(2.6); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wrap[data-status='active'] .dot::after { animation: none; opacity: 0; }
+}
+
+.title {
+  margin: 0;
+  font-size: var(--fs-h5);
+  line-height: 22px;
+  letter-spacing: var(--ls-h5);
+  font-weight: 500;
+  color: var(--chart-ink, #171717);
+}
+
+.body {
+  margin: 0;
+  font-size: var(--fs-small);
+  line-height: 20px;
+  letter-spacing: var(--ls-small);
+  color: var(--detail-muted, #6f7c90);
+  text-wrap: pretty;
+}
+
+/* What the skill is waiting to match: a label over the trigger's own words, in
+   the soft well the run trace uses for payloads. */
+.trigger {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-self: stretch;
+  margin-top: 20px;
+}
+.label {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 500;
+  color: var(--detail-muted, #6f7c90);
+}
+.quote {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--log-rule, #eceff6);
+  border-radius: 8px;
+  background: var(--surface-soft, #fafafa);
+  font-size: var(--fs-small);
+  line-height: 20px;
+  letter-spacing: var(--ls-small);
+  color: var(--detail-ink, #404040);
+}
