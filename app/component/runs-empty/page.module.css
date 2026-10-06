@@ -1,13 +1,27 @@
-/* Exhibit chrome. Deliberately plain: the frames are the subject. */
+/* A review document built from the real components: reading text in one
+   column, live frames at the app's own width beneath it. */
 .page {
   max-width: 1440px;
   margin: 0 auto;
-  padding: 44px 32px 96px;
+  padding: 56px 32px 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 72px;
 }
 
-.pageHead { margin-bottom: 44px; max-width: 760px; }
-.eyebrow {
-  margin: 0 0 8px;
+.text,
+.mast,
+.block {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.mast { gap: 10px; }
+.kicker {
+  margin: 0;
   font-size: var(--fs-micro);
   line-height: var(--lh-micro);
   font-weight: 500;
@@ -16,85 +30,175 @@
   color: var(--muted);
 }
 .h1 {
-  margin: 0 0 10px;
-  font-size: 26px;
-  line-height: 1.25;
-  letter-spacing: -0.018em;
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
   font-weight: 500;
   color: var(--ink);
+  text-wrap: balance;
 }
-.lede {
+.standfirst {
   margin: 0;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.55;
-  letter-spacing: -0.005em;
   color: var(--muted);
 }
 
-.group { margin-bottom: 64px; }
-.groupTitle {
-  margin: 0 0 6px;
-  font-size: var(--fs-h4);
-  line-height: var(--lh-h4);
-  letter-spacing: var(--ls-h4);
+.block { gap: 14px; }
+.h2 {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  letter-spacing: var(--ls-h3);
   font-weight: 600;
   color: var(--ink);
-}
-.groupLede {
-  margin: 0 0 28px;
-  max-width: 820px;
-  font-size: 14px;
-  line-height: 1.55;
-  color: var(--muted);
+  text-wrap: balance;
 }
 
-.item { margin-bottom: 36px; }
-.itemHead {
+/* Index */
+.index {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--hairline);
+}
+.index li {
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  gap: 12px;
+  align-items: baseline;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--hairline-soft);
+  font-size: 14px;
+}
+.index a { color: var(--ink); text-decoration: none; font-weight: 500; }
+.index a:hover { color: var(--accent); }
+.indexN,
+.tdN {
+  font-size: var(--fs-caption);
+  color: var(--muted-soft);
+  font-variant-numeric: tabular-nums;
+}
+.indexArea { font-size: var(--fs-caption); color: var(--muted); }
+
+/* One case: its text, its live frame, then where to try it. */
+.case {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  scroll-margin-top: 24px;
+}
+.case > .text { gap: 14px; }
+.qual {
+  margin: 0;
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 4px;
-}
-.itemName {
-  margin: 0;
-  font-size: var(--fs-h5);
-  line-height: var(--lh-h5);
-  letter-spacing: var(--ls-h5);
-  font-weight: 600;
-  color: var(--ink);
+  font-size: var(--fs-micro);
+  line-height: var(--lh-micro);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 .tag {
   padding: 2px 7px;
-  border: 1px solid var(--hairline-soft);
+  border: 1px solid color-mix(in srgb, var(--run-completed) 28%, transparent);
   border-radius: 999px;
   font-size: var(--fs-micro);
-  line-height: 1.5;
-  font-weight: 500;
-  color: var(--muted);
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--run-completed);
   background: var(--card);
 }
-.tag[data-tone='Recommended'],
-.tag[data-tone='Ships'] {
-  color: var(--run-completed);
-  border-color: color-mix(in srgb, var(--run-completed) 28%, transparent);
+.tag[data-tone='Decision'] {
+  color: #c2410c;
+  border-color: #fed7aa;
+  background: #fff7ed;
 }
-.note {
-  margin: 0 0 14px;
-  max-width: 820px;
-  font-size: 13px;
+.when {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+/* Before / now */
+.bn {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.bn > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px 14px 14px;
+  border: 1px solid var(--hairline-soft);
+  border-radius: 10px;
+  background: var(--card);
+}
+.bn > div[data-now] {
+  border-color: color-mix(in srgb, var(--run-completed) 30%, transparent);
+  background: color-mix(in srgb, var(--run-completed) 5%, var(--card));
+}
+.bn p {
+  margin: 0;
+  font-size: 14px;
   line-height: 1.55;
   color: var(--muted);
 }
+.bn > div[data-now] p { color: var(--ink); }
+.bnLabel {
+  font-size: var(--fs-micro);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-soft);
+}
+.bn > div[data-now] .bnLabel { color: var(--run-completed); }
 
-/* A toolbar, framed as it sits in the app. */
+/* The copy as it reads on screen */
+.copy {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.copy li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 0 6px 14px;
+  border-left: 1px solid var(--hairline);
+}
+.copyH { font-size: 15px; font-weight: 500; color: var(--ink); }
+.copyL { font-size: 14px; color: var(--muted); }
+
+/* Frames */
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.frameLabel {
+  margin: 8px 0 0;
+  font-size: var(--fs-caption);
+  color: var(--muted);
+}
+.frameLabel:first-child { margin-top: 0; }
 .frame {
   border: 1px solid var(--hairline-soft);
   border-radius: 10px;
   overflow: hidden;
 }
-
-/* The Runs stage, at a fixed height: RunsView sizes its log island off its
-   own box, so it needs a bounded one. */
+/* The Runs stage at a fixed height: RunsView sizes its log island off its own
+   box. Tall frames are a real window: scroll inside to reach the log. */
 .stage {
   display: flex;
   height: 520px;
@@ -103,7 +207,6 @@
   overflow: hidden;
   background: var(--canvas-soft);
 }
-/* A real window height: like the app, the frame scrolls past the chart to the log. */
 .stage[data-tall] { height: 820px; }
 .stage > * {
   flex: 1 1 auto;
@@ -111,6 +214,80 @@
   min-height: 0;
 }
 
+.case > .text:last-child { gap: 10px; }
+.try {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  font-size: 13px;
+}
+.try span { color: var(--muted); }
+.try a { color: var(--accent); text-decoration: none; font-weight: 500; }
+.try a:hover { text-decoration: underline; }
+.aside {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #fff7ed;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: #7c3a10;
+}
+.aside b {
+  margin-right: 8px;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Copy table */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.table th {
+  text-align: left;
+  padding: 8px 10px 8px 0;
+  border-bottom: 1px solid var(--hairline);
+  font-size: var(--fs-micro);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.table td {
+  padding: 9px 10px 9px 0;
+  border-bottom: 1px solid var(--hairline-soft);
+  vertical-align: top;
+}
+.tdN { width: 44px; }
+.tdH { font-weight: 500; color: var(--ink); }
+.tdL { color: var(--muted); }
+
+/* Decisions */
+.dec {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--hairline);
+}
+.dec li {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 16px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--hairline-soft);
+  font-size: 14px;
+}
+.decT { font-weight: 600; color: var(--ink); }
+.decRef { margin-left: 8px; font-size: var(--fs-caption); font-weight: 400; color: var(--muted-soft); }
+.decD { color: var(--muted); }
+
 .pending { height: 600px; }
-.lede a { color: var(--accent); text-decoration: none; }
-.lede a:hover { text-decoration: underline; }
+
+@media (max-width: 720px) {
+  .bn { grid-template-columns: 1fr; }
+  .dec li { grid-template-columns: 1fr; gap: 2px; }
+}
