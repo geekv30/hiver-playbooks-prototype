@@ -717,23 +717,29 @@ export function runsForSkill(skillId: string): SkillRun[] {
   return out;
 }
 
-/** When a seeded skill went live and, if paused, when it stopped - derived
- *  from the same spans the generator uses, so the chart's shading lands
- *  exactly where the history starts and stops. */
-export function liveSpan(src: SkillRunSource): { liveSince?: number; pausedAt?: number } {
-  if (src.status === 'draft') return {};
-  const day = (d: number) => {
+/** When a seeded skill went live and, if paused, when it stopped. Read off
+ *  the skill's own generated runs - the first one, the last one - so the chart's
+ *  shading meets the history exactly in any timezone, and on the same clock
+ *  (NOW) as the history. Client-side only: NOW is the browser's. A skill with
+ *  no runs falls back to the span it was configured with. */
+export function liveSpan(skillId: string): { liveSince?: number; pausedAt?: number } {
+  const src = RUN_SOURCES.find((s) => s.skillId === skillId);
+  if (!src || src.status === 'draft') return {};
+  const runs = runsForSkill(skillId); // newest first
+  const dayAgo = (d: number) => {
     const t = new Date(NOW - d * DAY);
     t.setHours(0, 0, 0, 0);
     return t.getTime();
   };
-  return {
-    liveSince: src.liveForDays ? day(src.liveForDays - 1) + 10 * 3_600_000 : undefined,
-    pausedAt:
-      src.status === 'paused' && src.stoppedDaysAgo
-        ? day(src.stoppedDaysAgo - 1) + 9 * 3_600_000
-        : undefined,
-  };
+  let liveSince: number | undefined;
+  if (src.liveForDays) {
+    liveSince = runs.length > 0 ? runs[runs.length - 1]!.startedAt : dayAgo(src.liveForDays - 1) + 10 * 3_600_000;
+  }
+  let pausedAt: number | undefined;
+  if (src.status === 'paused' && src.stoppedDaysAgo) {
+    pausedAt = runs.length > 0 ? Math.min(NOW, runs[0]!.startedAt + 3_600_000) : dayAgo(src.stoppedDaysAgo - 1) + 9 * 3_600_000;
+  }
+  return { liveSince, pausedAt };
 }
 
 /** Every run across every skill, newest first. */

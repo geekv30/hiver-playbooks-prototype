@@ -3,7 +3,7 @@
 import { RiArrowRightLine } from 'react-icons/ri';
 import type { DeployStatus } from '@/components/flow01/doc';
 import { mailboxSummary } from '@/data/mailboxes';
-import { formatTime } from './runsModel';
+import { formatDayShort, formatTime } from './runsModel';
 import styles from './NoRunsYet.module.css';
 
 /** What the Runs surface needs to know about a skill that has never run. */
@@ -27,8 +27,7 @@ function when(t: number, on = false): string {
   const at = formatTime(t);
   if (diff === 0) return `today at ${at}`;
   if (diff === 1) return `yesterday at ${at}`;
-  const date = new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  return `${on ? 'on ' : ''}${date} at ${at}`;
+  return `${on ? 'on ' : ''}${formatDayShort(t)} at ${at}`;
 }
 
 function copy(skill: RunsSkill): { title: string; body: string } {

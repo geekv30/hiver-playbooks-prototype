@@ -43,7 +43,8 @@ import SimulatePanel from '@/components/simulate/SimulatePanel';
 import type { EvalChannel } from '@/components/simulate/EvalMenu';
 import RunsView from '@/components/runs/RunsView';
 import { useIsClient } from '@/components/runs/useIsClient';
-import { runsForSkill } from '@/data/runFixtures';
+import { liveSpan, runsForSkill } from '@/data/runFixtures';
+import { SEEDED_EDITS } from '@/lib/seedSkills';
 import { type CopilotMessage, type CopilotProposalData } from './copilot/CopilotPanel';
 import SidePanel, { type SideTab } from './copilot/SidePanel';
 import { LiveCopilotError, useLiveCopilot } from '@/lib/copilot/useLiveCopilot';
@@ -273,7 +274,12 @@ export default function EditorCanvas({
   persist,
 }: Props) {
   const router = useRouter();
-  const api = useEditorDoc(initialDoc);
+  // A seeded skill picks up where this visit left it (see SEEDED_EDITS). The
+  // map is empty on the server and on a fresh load, so hydration agrees; it
+  // only has an entry after a client-side navigation, which does not hydrate.
+  const api = useEditorDoc(
+    (skillId && typeof window !== 'undefined' && SEEDED_EDITS.get(skillId)) || initialDoc,
+  );
   const { doc, undo, redo } = api;
   // Always-current doc (for handlers that need the freshest doc, e.g. snapshotting
   // before a proposal Apply so its Undo restores exactly the pre-apply state).
@@ -365,6 +371,8 @@ export default function EditorCanvas({
     if (!runsBase) return;
     router.push(runsMode ? runsBase : `${runsBase}/runs`, { scroll: false });
   }, [router, runsBase, runsMode]);
+  // A seeded skill's dates come off its run history, on this browser's clock.
+  const seedSpan = useMemo(() => (skillId ? liveSpan(skillId) : {}), [skillId]);
 
   // Runs' "See what would match": back to the editor with Evaluation open on
   // Matching emails. The ask rides in sessionStorage, not the URL - the router
@@ -374,7 +382,9 @@ export default function EditorCanvas({
   const checkMatches = useCallback(() => {
     if (!runsBase) return;
     try {
-      window.sessionStorage.setItem(OPEN_MATCHING_KEY, '1');
+      // The value names the editor that should open it, so a navigation that
+      // lands somewhere else leaves it for nobody.
+      window.sessionStorage.setItem(OPEN_MATCHING_KEY, runsBase);
     } catch {
       /* storage blocked - the editor still opens, on Copilot */
     }
@@ -392,7 +402,7 @@ export default function EditorCanvas({
     if (runsMode) return;
     let asked = false;
     try {
-      asked = window.sessionStorage.getItem(OPEN_MATCHING_KEY) === '1';
+      asked = window.sessionStorage.getItem(OPEN_MATCHING_KEY) === pathname;
       window.sessionStorage.removeItem(OPEN_MATCHING_KEY);
     } catch {
       return;
@@ -405,7 +415,7 @@ export default function EditorCanvas({
     setEvalChannel('email');
     setMatchingIsNew(false);
     setOpenMatching((n) => n + 1);
-  }, [runsMode]);
+  }, [runsMode, pathname]);
   // Journey B: a skill we already know the mailboxes for scans on open, quietly -
   // the badge is the only signal. Exactly ONCE per trigger version: a user who
   // clears the scan to pick a different mailbox must not have this restart it
@@ -638,6 +648,9 @@ export default function EditorCanvas({
   // canvas you walk away from isn't a skill); from then on every change is
   // saved. The first save moves the URL to the skill's own address in place -
   // no navigation, so the Copilot thread and editor state carry on.
+  useEffect(() => {
+    if (skillId) SEEDED_EDITS.set(skillId, doc);
+  }, [skillId, doc]);
   const savedIdRef = useRef<string | null>(persist?.savedId ?? null);
   useEffect(() => {
     if (!persist) return;
@@ -1621,8 +1634,8 @@ export default function EditorCanvas({
               status: doc.status,
               mailboxes: doc.mailboxes,
               trigger: triggerText,
-              liveSince: doc.liveSince,
-              pausedAt: doc.pausedAt,
+              liveSince: doc.liveSince ?? seedSpan.liveSince,
+              pausedAt: doc.status === 'paused' ? (doc.pausedAt ?? seedSpan.pausedAt) : undefined,
             }}
             onOpenConversation={() => showHint('Opening the conversation is coming soon.')}
           />

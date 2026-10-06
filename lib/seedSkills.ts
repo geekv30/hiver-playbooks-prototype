@@ -1,4 +1,4 @@
-import { RUN_SOURCES, liveSpan } from '@/data/runFixtures';
+import { RUN_SOURCES } from '@/data/runFixtures';
 import {
   type EditorDoc,
   defaultGuardrails,
@@ -26,9 +26,16 @@ export function seedDoc(id: string): EditorDoc | null {
     triggerMode: 'automatic',
     mailboxes: src.mailboxes,
     guardrails: defaultGuardrails(),
-    ...liveSpan(src),
+    // No liveSince/pausedAt here: this runs on the server at build time, and
+    // those are read off the run history on the client (liveSpan).
   };
 }
+
+/** Edits to a seeded skill for this visit. Seeded skills are not saved, and
+ *  Runs is its own route, so without this a Pause (or any edit) vanished on
+ *  the way to Runs and back. Module state: survives client navigation, gone on
+ *  reload - the demo's seeds stay as shipped. Empty on the server. */
+export const SEEDED_EDITS = new Map<string, EditorDoc>();
 
 /** Every seeded skill with its own page (the flagship keeps /api-example). */
 export const SEED_PAGE_IDS = RUN_SOURCES.filter((s) => s.href.startsWith('/aops/seed/')).map(

@@ -74,7 +74,7 @@ export default function RunList({
           <p className={styles.emptyBody}>
             {filtered
               ? 'Try a wider time range, or clear a filter above.'
-              : "Hasn't fired yet. Any minute now."}
+              : 'Runs show up here once it fires.'}
           </p>
         </div>
       </div>

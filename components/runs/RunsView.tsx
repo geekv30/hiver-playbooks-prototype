@@ -40,9 +40,11 @@ interface Props {
   onCheckMatches?: () => void;
 }
 
+const DAY = 86_400_000;
+
 /** The smallest range, wider than the current one, that reaches back to `t`. */
 function widenTo(t: number, days: RangeDays): RangeDays | null {
-  const age = Math.ceil((startOfDay(NOW) - startOfDay(t)) / 86_400_000) + 1;
+  const age = Math.ceil((startOfDay(NOW) - startOfDay(t)) / DAY) + 1;
   return ([30, 90] as RangeDays[]).find((d) => d > days && d >= age) ?? null;
 }
 
@@ -179,9 +181,17 @@ export default function RunsView({
   // The days the skill could not have run, so they are not read as quiet ones.
   const off: OffSpan[] = [];
   if (!allSkills && skill) {
-    if (skill.liveSince) off.push({ from: 0, to: startOfDay(skill.liveSince) - 1, label: 'Not live yet' });
+    // Never over a day that has runs - the history is the stronger evidence,
+    // and the stamps (set on the wall clock) can drift from it by a day.
+    const oldest = runs.length > 0 ? startOfDay(runs[runs.length - 1]!.startedAt) : Infinity;
+    const newest = runs.length > 0 ? startOfDay(runs[0]!.startedAt) : -Infinity;
+    const today = startOfDay(NOW);
+    if (skill.liveSince) {
+      off.push({ from: 0, to: Math.min(startOfDay(skill.liveSince), oldest) - 1, label: 'Not live yet' });
+    }
     if (skill.status === 'paused' && skill.pausedAt) {
-      off.push({ from: startOfDay(skill.pausedAt), to: startOfDay(NOW), label: 'Paused' });
+      const from = Math.min(Math.max(startOfDay(skill.pausedAt), newest + DAY), today);
+      off.push({ from, to: today, label: 'Paused' });
     }
   }
 
@@ -218,15 +228,13 @@ export default function RunsView({
       }
       // A wider range that does hold this outcome is worth one click.
       if (filter.day === null && filter.days < 90) {
-        const wider = ([30, 90] as RangeDays[]).find(
-          (d) => d > filter.days && applyFilter(runs, { ...filter, days: d }).length > 0,
-        );
-        if (wider) {
-          const n = applyFilter(runs, { ...filter, days: wider }).length;
-          actions.push({
-            label: `Show the last ${wider} days (${n})`,
-            onClick: () => setDays(wider),
-          });
+        for (const d of [30, 90] as RangeDays[]) {
+          if (d <= filter.days) continue;
+          const n = applyFilter(runs, { ...filter, days: d }).length;
+          if (n > 0) {
+            actions.push({ label: `Show the last ${d} days (${n})`, onClick: () => setDays(d) });
+            break;
+          }
         }
       }
       if (others.length === 0 && actions.length === 0) {
@@ -260,7 +268,7 @@ export default function RunsView({
             <span className={styles.noticeTitle}>Suspiciously quiet.</span> Still on, but nothing since{' '}
             {formatDayShort(runs[0]!.startedAt)}. Check the trigger or the mailbox.
           </p>
-          {onCheckMatches && (
+          {onCheckMatches && skill?.trigger.trim() && (
             <button type="button" className={styles.noticeLink} onClick={onCheckMatches}>
               See what would match
               <RiArrowRightLine aria-hidden />

@@ -9,6 +9,10 @@ export const metadata: Metadata = {
   description: 'What a seeded skill did, run by run.',
 };
 
+// Only the seeded skills with their own page; anything else is a 404 (the
+// flagship lives at /api-example, not here).
+export const dynamicParams = false;
+
 export function generateStaticParams() {
   return SEED_PAGE_IDS.map((id) => ({ id }));
 }
@@ -16,7 +20,7 @@ export function generateStaticParams() {
 // A seeded skill's execution history: its own route, like /api-example/runs.
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const doc = seedDoc(id);
+  const doc = SEED_PAGE_IDS.includes(id) ? seedDoc(id) : null;
   if (!doc) notFound();
   return (
     <Suspense fallback={null}>

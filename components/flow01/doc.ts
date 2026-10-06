@@ -44,8 +44,9 @@ export interface EditorDoc {
   triggerMode: TriggerMode;
   mailboxes: string[];
   guardrails: Guardrails;
-  /** When the skill last went live (Enable or Resume). Runs reads it to say how
-   *  long a skill that has not run yet has been listening. */
+  /** When the skill first went live (Enable; Resume keeps it). Runs reads it
+   *  to say how long a skill that has not run yet has been listening, and to
+   *  shade the days before it on the chart. */
   liveSince?: number;
   /** When it was last paused. Cleared when it goes live again. */
   pausedAt?: number;

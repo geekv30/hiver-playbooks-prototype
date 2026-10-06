@@ -76,7 +76,7 @@ export default function RunsEmptyDoc() {
     const src = RUN_SOURCES.find((x) => x.skillId === id)!;
     return {
       runs: runsForSkill(id),
-      skill: { status: src.status, mailboxes: src.mailboxes, trigger: src.trigger, ...liveSpan(src) },
+      skill: { status: src.status, mailboxes: src.mailboxes, trigger: src.trigger, ...liveSpan(id) },
     };
   };
 

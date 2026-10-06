@@ -157,7 +157,7 @@ export default function ActivityStrip({ buckets, picked, onPick, caption = 'full
           ))}
 
           <div className={styles.cols} data-picked={picked !== null || undefined}>
-            {buckets.map((b) => {
+            {buckets.map((b, i) => {
               const on = picked === b.day;
               const tall = (b.counts.total / max) * 100;
               return (
@@ -202,7 +202,7 @@ export default function ActivityStrip({ buckets, picked, onPick, caption = 'full
                       <span className={styles.tipDay}>{formatDayLabel(b.day)}</span>
                       {b.counts.total === 0 ? (
                         (() => {
-                          const sp = offAt(buckets.indexOf(b));
+                          const sp = offAt(i);
                           return sp ? sp.label : 'No runs';
                         })()
                       ) : (
