@@ -46,7 +46,6 @@ function widenTo(t: number, days: RangeDays): RangeDays | null {
   return ([30, 90] as RangeDays[]).find((d) => d > days && d >= age) ?? null;
 }
 
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 /** The empty list's headline per outcome - what it looked for, said like a
  *  person would. */
@@ -62,11 +61,13 @@ const NOTHING: Record<RunState, string> = {
 function noneOf(state: RunState, n: number): string {
   switch (state) {
     case 'completed':
-      return `None of the ${n} runs here made it to the end. Worth a look.`;
+      return n === 1
+        ? 'The one run here did not make it to the end. Worth a look.'
+        : `None of the ${n} runs here made it to the end. Worth a look.`;
     case 'awaiting':
       return 'Approvals: inbox zero.';
     case 'failed':
-      return `Not one of the ${n} runs here tripped.`;
+      return n === 1 ? 'The one run here did not trip.' : `Not one of the ${n} runs here tripped.`;
     case 'declined':
       return 'Nobody said no to a single draft.';
   }
@@ -211,7 +212,7 @@ export default function RunsView({
       const actions: ListEmpty['actions'] = [];
       if (others.length > 0) {
         actions.push({
-          label: `Show all ${plural(others.length, 'run', 'runs')}`,
+          label: others.length === 1 ? 'Show the 1 run' : `Show all ${others.length} runs`,
           onClick: () => setFilter((f) => ({ ...f, state: null })),
         });
       }

@@ -90,22 +90,19 @@ export default function RunsEmptyDoc() {
     {
       area: 'Runs button',
       title: 'A skill that is still a draft',
-      tag: 'Decision',
+      tag: 'Ships',
       when: 'You just created a skill and have not enabled it.',
-      before: 'No Runs button on any skill you created, even after Enable. Only the one seeded demo skill had one.',
-      now: 'Drafts get no Runs button: a draft cannot have run, so the bar keeps one job, Enable. The button appears the moment the skill goes live, in the same slot, and stays when paused. No number until there is one - "Runs 0" reads like an error count.',
+      before: 'No Runs button on any skill you created, even after Enable. On the Skills list a draft read "No runs yet" and "Never", as if it could have run.',
+      now: 'No Runs button on a draft; it appears the moment the skill goes live, in the same slot, and stays when paused, with no number until there is one. On the Skills list a draft\'s Skill history and Last run show a quiet dash: the status column already says Draft.',
       Render: () => (
         <div className={styles.bars}>
           <p className={styles.frameLabel}>Draft</p>
           <Bar status="draft" runs={false} />
           <p className={styles.frameLabel}>Live or paused</p>
           <Bar status="active" runs />
-          <p className={styles.frameLabel}>Considered, not chosen: Runs on a draft too</p>
-          <Bar status="draft" runs />
         </div>
       ),
-      tries: [['Draft skill', '/aops/seed/nps-followups'], ['Live skill', '/aops/seed/contract-renewals']],
-      note: 'Showing Runs on drafts keeps one position in every state, but it leads to "nothing yet" for the whole time someone is writing the skill.',
+      tries: [['Draft skill', '/aops/seed/nps-followups'], ['Live skill', '/aops/seed/contract-renewals'], ['NPS follow-ups row on the Skills list', '/aops']],
     },
     {
       area: 'Before the first run',
@@ -113,7 +110,7 @@ export default function RunsEmptyDoc() {
       tag: 'Ships',
       when: 'The skill is enabled and waiting. The most common state right after Enable.',
       before: 'A skill you created had no Runs page. Had one opened, it would have been an empty chart, an empty list and an empty detail: three ways of saying nothing.',
-      now: 'One card: where it is listening and since when, the trigger it waits on (the first thing to check when nothing comes in), and a way to find out instead of waiting. The dot breathes because the skill is doing something.',
+      now: 'One card: where it is listening and since when, and a way to check what would match instead of waiting. The dot breathes because the skill is doing something.',
       copy: [['All ears, no emails yet', 'Watching Billing and Refunds since 12:27 PM. The first match lands here.']],
       Render: () => (
         <Stage>
@@ -121,16 +118,6 @@ export default function RunsEmptyDoc() {
         </Stage>
       ),
       tries: [['Contract renewal reminders', '/aops/seed/contract-renewals/runs']],
-    },
-    {
-      area: 'Before the first run',
-      title: '"Will anything ever match this?"',
-      tag: 'Ships',
-      when: 'A live skill has no runs, or has gone quiet (case 08), and you want to know whether the trigger is why.',
-      before: 'The only way to find out was to wait.',
-      now: '"See what would match" goes back to the editor with Evaluation open on Matching emails, scanning the skill\'s mailbox. It is navigation to an existing tool, so Runs stays read-only.',
-      tries: [['Click "See what would match" here', '/aops/seed/contract-renewals/runs']],
-      note: 'The Matching emails "How it works?" tooltip opens on arrival. That is the panel\'s existing first-open behavior; it could be skipped when coming from Runs.',
     },
     {
       area: 'Before the first run',
@@ -213,7 +200,6 @@ export default function RunsEmptyDoc() {
         );
       },
       tries: [['Invoice disputes', '/aops/seed/invoice-disputes/runs'], ['The Quiet badge on the Skills list', '/aops']],
-      note: 'The threshold is a flat 7 days. A skill that normally runs twice a month would trip it while behaving normally; it could scale with each skill\'s usual rate instead.',
     },
     {
       area: 'Filters',
@@ -241,7 +227,7 @@ export default function RunsEmptyDoc() {
       title: 'A filter that matches nothing at all',
       tag: 'Ships',
       when: 'No range on offer holds the picked outcome either.',
-      before: 'Same as case 09.',
+      before: 'Same as case 08.',
       now: 'Only the way out that shows something: "Show all N runs".',
       copy: [['Nothing failed in the last 90 days', 'Not one of the 216 runs here tripped.']],
       Render: () => (
@@ -279,7 +265,7 @@ export default function RunsEmptyDoc() {
       tag: 'Ships',
       when: 'Runs opens on 7 days, and the last run is older than that.',
       before: '"No runs yet". False, and alarming.',
-      now: 'The date of the last run, and the range that reaches it. On a live skill this comes with the "Suspiciously quiet" line (case 08); a paused skill, as here, gets it alone.',
+      now: 'The date of the last run, and the range that reaches it. On a live skill this comes with the "Suspiciously quiet" line (case 07); a paused skill, as here, gets it alone.',
       copy: [['Crickets for 7 days', 'Last run: Sep 25.']],
       Render: () => (
         <Stage tall>
@@ -296,17 +282,16 @@ export default function RunsEmptyDoc() {
       before: 'Every one opened the same blank /canvas. "Contract renewal reminders" opened an empty editor that was not it.',
       now: 'Each opens its own skill (name, status, mailboxes, trigger, steps) at /aops/seed/<id>, with its own Runs at /runs. The Skill history cell opens that skill\'s Runs too.',
       tries: [['Skills list', '/aops'], ['Contract renewal reminders', '/aops/seed/contract-renewals']],
-      note: 'Side effect: "All skill runs" (/aops/runs) is now reachable only by URL. Its last way in was the history cell. Keep it somewhere, or remove it.',
+      note: '"All skill runs" (/aops/runs) is now reachable only by URL; its last way in was the history cell.',
     },
   ];
 
   const DECISIONS: [string, string, string?][] = [
-    ['Draft Runs button', 'Hidden on drafts (recommended), or shown and opening "Nothing to see. Yet."', '01'],
-    ['The copy', 'Approve or change any line in the table above.'],
-    ['Quiet threshold', 'A flat 7 days, or scaled to each skill\'s usual rate.', '08'],
-    ['All skill runs page', 'Give /aops/runs an entry point again, or remove it.', '13'],
-    ['Tooltip on arrival', 'Skip the "How it works?" tooltip when coming from Runs.', '03'],
-    ['Ship it', 'Open the PR; whole-diff review, then merge on your go.'],
+    ['Drafts', 'No Runs button; a quiet dash in the run columns on the Skills list.', '01'],
+    ['No trigger on empty states', 'Live and paused say what happened in a headline and a line. The live one keeps "See what would match".', '02'],
+    ['Matching-emails tooltip', 'Left as it is when arriving from Runs.'],
+    ['Quiet threshold', 'A flat 7 days.', '07'],
+    ['The copy', 'As written above.'],
   ];
 
   const num = (i: number) => String(i + 1).padStart(2, '0');
@@ -423,7 +408,7 @@ export default function RunsEmptyDoc() {
       </section>
 
       <section className={styles.block}>
-        <h2 className={styles.h2}>Decisions for you</h2>
+        <h2 className={styles.h2}>Decided on Oct 6</h2>
         <ul className={styles.dec}>
           {DECISIONS.map(([t, d, ref]) => (
             <li key={t}>

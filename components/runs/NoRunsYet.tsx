@@ -10,22 +10,25 @@ import styles from './NoRunsYet.module.css';
 export interface RunsSkill {
   status: DeployStatus;
   mailboxes: string[];
-  /** The trigger, as plain text - what the skill is waiting to match. */
+  /** The trigger, as plain text. Not shown; a skill with none has nothing
+   *  to match, so the check-matches link needs it. */
   trigger: string;
   liveSince?: number;
   pausedAt?: number;
 }
 
-/** "today at 2:14 PM", "yesterday at 9:05 AM", "on Oct 3 at 4:40 PM". Real
- *  wall-clock time: these stamps are set by the person enabling the skill, not
- *  read off the fixtures' anchored clock. */
-function when(t: number): string {
+/** "today at 2:14 PM", "yesterday at 9:05 AM", "Oct 3 at 4:40 PM" - with "on"
+ *  before a date when `on` is set ("Paused on Oct 3", but "since Oct 3").
+ *  Real wall-clock time: these stamps are set by the person enabling the
+ *  skill, not read off the fixtures' anchored clock. */
+function when(t: number, on = false): string {
   const day = (x: number) => new Date(x).setHours(0, 0, 0, 0);
   const diff = Math.round((day(Date.now()) - day(t)) / 86_400_000);
   const at = formatTime(t);
   if (diff === 0) return `today at ${at}`;
   if (diff === 1) return `yesterday at ${at}`;
-  return `on ${new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at ${at}`;
+  const date = new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return `${on ? 'on ' : ''}${date} at ${at}`;
 }
 
 function copy(skill: RunsSkill): { title: string; body: string } {
@@ -36,7 +39,7 @@ function copy(skill: RunsSkill): { title: string; body: string } {
   if (skill.status === 'paused') {
     return {
       title: 'Clocked out before its first shift',
-      body: `Paused${skill.pausedAt ? ` ${when(skill.pausedAt)}` : ''}. Nothing matched while it was on.`,
+      body: `Paused${skill.pausedAt ? ` ${when(skill.pausedAt, true)}` : ''}. Nothing matched while it was on.`,
     };
   }
   return {
@@ -51,9 +54,8 @@ function copy(skill: RunsSkill): { title: string; body: string } {
  * One island in place of the chart and the log: a plot of empty days and an
  * empty list beside an empty detail would be three ways of saying nothing.
  * Instead it says which of the three reasons applies - not live yet, live and
- * waiting, or paused before anything matched - and, for a skill that has been
- * live, the trigger it is waiting on, since that is the first thing to check
- * when nothing has come in.
+ * waiting, or paused before anything matched - in a headline and one line.
+ * A live skill also offers to check what would match, rather than wait.
  */
 export default function NoRunsYet({
   skill,
@@ -65,7 +67,7 @@ export default function NoRunsYet({
   onCheckMatches?: () => void;
 }) {
   const { title, body } = copy(skill);
-  const showTrigger = skill.status !== 'draft' && skill.trigger.trim() !== '';
+  const canCheck = skill.status === 'active' && skill.trigger.trim() !== '' && onCheckMatches;
   return (
     <div className={styles.wrap} data-status={skill.status}>
       <div className={styles.head}>
@@ -75,13 +77,7 @@ export default function NoRunsYet({
         <h2 className={styles.title}>{title}</h2>
       </div>
       <p className={styles.body}>{body}</p>
-      {showTrigger && (
-        <div className={styles.trigger}>
-          <span className={styles.label}>Trigger</span>
-          <p className={styles.quote}>{skill.trigger}</p>
-        </div>
-      )}
-      {showTrigger && onCheckMatches && (
+      {canCheck && (
         <button type="button" className={styles.link} onClick={onCheckMatches}>
           See what would match
           <RiArrowRightLine aria-hidden />

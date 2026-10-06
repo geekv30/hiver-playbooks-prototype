@@ -79,6 +79,18 @@ function StatusBadge({ status }: { status: DeployStatus }) {
   return <Badge intent="gray">{status === 'draft' ? 'Draft' : 'Inactive'}</Badge>;
 }
 
+/** A draft's run columns. It has never been live, so "No runs yet" or "Never"
+ *  would imply it could have run; the status column already says Draft, so
+ *  these stay empty rather than repeat it. Screen readers still get the why. */
+function NotLive() {
+  return (
+    <span className={styles.soft}>
+      <span aria-hidden>-</span>
+      <span className={styles.srOnly}>Not live yet</span>
+    </span>
+  );
+}
+
 /** "2 hrs ago" for the newest run - read off the history rather than stored on
  *  the row, so the count and the time can never disagree. */
 function sinceLabel(t: number): string {
@@ -156,11 +168,10 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
       id: 'history',
       header: 'Skill history · 30d',
       cell: (row) => {
-        // A draft has never been live, so it has no history to be empty of.
         // "No runs yet" only for a live or paused skill that has never run; one
         // that went quiet this month shows 0 over an empty rule, beside its real
         // last run.
-        if (row.status === 'draft') return <span className={styles.soft}>Not live</span>;
+        if (row.status === 'draft') return <NotLive />;
         if (runsForSkill(row.id).length === 0) return <span className={styles.soft}>No runs yet</span>;
         const runs = runsInLastDays(row.id, 30);
         return (
@@ -182,6 +193,7 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
       id: 'lastRun',
       header: 'Last run',
       cell: (row) => {
+        if (row.status === 'draft') return <NotLive />;
         const runs = runsForSkill(row.id);
         const last = runs[0];
         // A live skill that has stopped running is the one row worth a nudge.

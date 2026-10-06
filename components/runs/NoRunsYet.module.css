@@ -71,40 +71,13 @@
   text-wrap: pretty;
 }
 
-/* What the skill is waiting to match: a label over the trigger's own words, in
-   the soft well the run trace uses for payloads. */
-.trigger {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  align-self: stretch;
-  margin-top: 20px;
-}
-.label {
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  font-weight: 500;
-  color: var(--detail-muted, #6f7c90);
-}
-.quote {
-  margin: 0;
-  padding: 10px 12px;
-  border: 1px solid var(--log-rule, #eceff6);
-  border-radius: 8px;
-  background: var(--surface-soft, #fafafa);
-  font-size: var(--fs-small);
-  line-height: 20px;
-  letter-spacing: var(--ls-small);
-  color: var(--detail-ink, #404040);
-}
-
 /* The way to stop waiting and find out: a quiet text link, not a button - it
    leaves this page for the editor's Evaluation. */
 .link {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  margin-top: 6px;
+  margin-top: 10px;
   padding: 4px 6px;
   border: 0;
   border-radius: 6px;
