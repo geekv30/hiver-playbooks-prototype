@@ -11,8 +11,7 @@ type Intent =
   | 'active'
   | 'paused'
   | 'gray'
-  | 'green'
-  | 'amber';
+  | 'green';
 
 interface Props {
   children: ReactNode;
