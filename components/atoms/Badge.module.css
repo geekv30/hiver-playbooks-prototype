@@ -69,8 +69,7 @@
    12/18 medium. Longhand borders: the `border:` shorthand with a var() colour
    mis-compiles under Turbopack (see ModalShell.module.css). */
 .gray,
-.green,
-.amber {
+.green {
   height: 22px;
   min-height: 22px;
   padding: 0 8px;
@@ -89,11 +88,4 @@
   background: var(--badge-green-bg);
   border-color: var(--badge-green-border);
   color: var(--badge-green-ink);
-}
-
-/* The DLS badge's attention tone, for a nudge (a live skill gone quiet). */
-.amber {
-  background: #fff7ed;
-  border-color: #fed7aa;
-  color: #c2410c;
 }

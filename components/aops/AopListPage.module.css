@@ -130,12 +130,6 @@
   outline-offset: 0;
 }
 
-.lastRun {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .srOnly {
   position: absolute;
   width: 1px;

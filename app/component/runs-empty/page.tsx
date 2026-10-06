@@ -189,7 +189,7 @@ export default function RunsEmptyDoc() {
       tag: 'Ships',
       when: 'Still switched on, but no run in 7 days or more. Usually a trigger that stopped matching, or a mailbox that came loose.',
       before: 'Nothing. The row said Active and "11 days ago", and no one would notice.',
-      now: 'One line above the chart, with the way to check. On the Skills list the row gets an amber Quiet badge beside its last run. It names the date, not "N days", so it can never disagree with the list.',
+      now: 'One line above the chart, with the way to check. It names the date, not "N days", so it can never disagree with the Last run column on the Skills list.',
       copy: [['Suspiciously quiet.', 'Still on, but nothing since Sep 26. Check the trigger or the mailbox.']],
       Render: () => {
         const { runs, skill } = seeded('invoice-disputes');
@@ -199,7 +199,7 @@ export default function RunsEmptyDoc() {
           </Stage>
         );
       },
-      tries: [['Invoice disputes', '/aops/seed/invoice-disputes/runs'], ['The Quiet badge on the Skills list', '/aops']],
+      tries: [['Invoice disputes', '/aops/seed/invoice-disputes/runs']],
     },
     {
       area: 'Filters',
