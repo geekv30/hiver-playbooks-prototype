@@ -43,7 +43,8 @@ import SimulatePanel from '@/components/simulate/SimulatePanel';
 import type { EvalChannel } from '@/components/simulate/EvalMenu';
 import RunsView from '@/components/runs/RunsView';
 import { useIsClient } from '@/components/runs/useIsClient';
-import { runsForSkill } from '@/data/runFixtures';
+import { liveSpan, runsForSkill } from '@/data/runFixtures';
+import { SEEDED_EDITS } from '@/lib/seedSkills';
 import { type CopilotMessage, type CopilotProposalData } from './copilot/CopilotPanel';
 import SidePanel, { type SideTab } from './copilot/SidePanel';
 import { LiveCopilotError, useLiveCopilot } from '@/lib/copilot/useLiveCopilot';
@@ -88,6 +89,9 @@ interface FocusReq {
 }
 
 const TRIGGER_PLACEHOLDER = 'e.g. when an email reports an API error';
+
+/** Runs -> editor handoff: open Evaluation on Matching emails on arrival. */
+const OPEN_MATCHING_KEY = 'hiver.playbooks.openMatching';
 // Step placeholder + the "@ for actions" hint pill on a fresh line (Figma 647:40010).
 // '@' opens the actions command palette (references are reachable inside it); the
 // hint pill is the no-keystroke path. Curly quotes around '@' per the Figma copy.
@@ -270,7 +274,12 @@ export default function EditorCanvas({
   persist,
 }: Props) {
   const router = useRouter();
-  const api = useEditorDoc(initialDoc);
+  // A seeded skill picks up where this visit left it (see SEEDED_EDITS). The
+  // map is empty on the server and on a fresh load, so hydration agrees; it
+  // only has an entry after a client-side navigation, which does not hydrate.
+  const api = useEditorDoc(
+    (skillId && typeof window !== 'undefined' && SEEDED_EDITS.get(skillId)) || initialDoc,
+  );
   const { doc, undo, redo } = api;
   // Always-current doc (for handlers that need the freshest doc, e.g. snapshotting
   // before a proposal Apply so its Undo restores exactly the pre-apply state).
@@ -352,10 +361,35 @@ export default function EditorCanvas({
   // shared links work without any of this bookkeeping.
   const pathname = usePathname();
   const runsOpen = runsMode;
+  // Where this skill's Runs lives: a seeded skill's own route, or a saved
+  // skill's address once it has one (autosave moves /aops/new there in place).
+  // A skill that has never been saved - an untouched /aops/new, the /canvas
+  // demos - has no history to point at.
+  const runsBase =
+    skillId || pathname.startsWith('/aops/s/') ? pathname.replace(/\/runs$/, '') : null;
   const toggleRuns = useCallback(() => {
-    const base = pathname.replace(/\/runs$/, '');
-    router.push(runsMode ? base : `${base}/runs`, { scroll: false });
-  }, [router, pathname, runsMode]);
+    if (!runsBase) return;
+    router.push(runsMode ? runsBase : `${runsBase}/runs`, { scroll: false });
+  }, [router, runsBase, runsMode]);
+  // A seeded skill's dates come off its run history, on this browser's clock.
+  const seedSpan = useMemo(() => (skillId ? liveSpan(skillId) : {}), [skillId]);
+
+  // Runs' "See what would match": back to the editor with Evaluation open on
+  // Matching emails. The ask rides in sessionStorage, not the URL - the router
+  // replays a first-load query on later navigations, so a ?eval= would keep
+  // reopening the panel.
+  const [openMatching, setOpenMatching] = useState(0);
+  const checkMatches = useCallback(() => {
+    if (!runsBase) return;
+    try {
+      // The value names the editor that should open it, so a navigation that
+      // lands somewhere else leaves it for nobody.
+      window.sessionStorage.setItem(OPEN_MATCHING_KEY, runsBase);
+    } catch {
+      /* storage blocked - the editor still opens, on Copilot */
+    }
+    router.push(runsBase, { scroll: false });
+  }, [router, runsBase]);
 
   // The Evaluation menu's channel. Owned here so Copilot's matching row, which
   // points at an email flow, can bring the menu back to Email.
@@ -363,6 +397,25 @@ export default function EditorCanvas({
   // The New pill on the Matching emails card, retired once the user opens it.
   // Session state on purpose: a reload is a fresh look at the new type.
   const [matchingIsNew, setMatchingIsNew] = useState(true);
+  // Arriving from Runs' "See what would match" (see checkMatches).
+  useEffect(() => {
+    if (runsMode) return;
+    let asked = false;
+    try {
+      asked = window.sessionStorage.getItem(OPEN_MATCHING_KEY) === pathname;
+      window.sessionStorage.removeItem(OPEN_MATCHING_KEY);
+    } catch {
+      return;
+    }
+    if (!asked) return;
+    // A one-time handoff read from storage on arrival - there is no render-time
+    // source for it (the server cannot see sessionStorage).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPanelTab('simulate');
+    setEvalChannel('email');
+    setMatchingIsNew(false);
+    setOpenMatching((n) => n + 1);
+  }, [runsMode, pathname]);
   // Journey B: a skill we already know the mailboxes for scans on open, quietly -
   // the badge is the only signal. Exactly ONCE per trigger version: a user who
   // clears the scan to pick a different mailbox must not have this restart it
@@ -595,6 +648,9 @@ export default function EditorCanvas({
   // canvas you walk away from isn't a skill); from then on every change is
   // saved. The first save moves the URL to the skill's own address in place -
   // no navigation, so the Copilot thread and editor state carry on.
+  useEffect(() => {
+    if (skillId) SEEDED_EDITS.set(skillId, doc);
+  }, [skillId, doc]);
   const savedIdRef = useRef<string | null>(persist?.savedId ?? null);
   useEffect(() => {
     if (!persist) return;
@@ -1560,15 +1616,27 @@ export default function EditorCanvas({
         onBack={() => router.push(persist ? listHref(persist.workspace) : '/aops')}
         // The count is clock-derived: the prerendered page cannot know it, so
         // it fills in on the client (a baked number is a hydration mismatch).
-        runCount={isClient ? runs.length : undefined}
+        // Zero shows no number: "Runs 0" reads as a count of something wrong.
+        runCount={isClient && runs.length > 0 ? runs.length : undefined}
         runsOpen={runsOpen}
-        onToggleRuns={runs.length > 0 ? toggleRuns : undefined}
+        // Runs is offered once a skill has been live: a draft cannot have run,
+        // so the control would only open an explanation. Inside Runs it is
+        // always set - it is the way back to the editor.
+        onToggleRuns={runsOpen || (runsBase && doc.status !== 'draft') ? toggleRuns : undefined}
       />
 
       <div className={styles.stage} data-runs={runsOpen || undefined}>
         {runsOpen ? (
           <RunsView
             runs={runs}
+            onCheckMatches={checkMatches}
+            skill={{
+              status: doc.status,
+              mailboxes: doc.mailboxes,
+              trigger: triggerText,
+              liveSince: doc.liveSince ?? seedSpan.liveSince,
+              pausedAt: doc.status === 'paused' ? (doc.pausedAt ?? seedSpan.pausedAt) : undefined,
+            }}
             onOpenConversation={() => showHint('Opening the conversation is coming soon.')}
           />
         ) : (
@@ -1637,6 +1705,7 @@ export default function EditorCanvas({
                 live,
                 channel: evalChannel,
                 onChannel: setEvalChannel,
+                openMatching,
               }}
             />
           )

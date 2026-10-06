@@ -14,6 +14,16 @@ interface Props {
   showSkill?: boolean;
   /** True when a filter is narrowing the list - changes what "nothing here" means. */
   filtered?: boolean;
+  /** What to say when the list is empty, and the ways out. Written by the
+   *  surface, which knows what is filtered and what lies outside it. */
+  empty?: ListEmpty;
+}
+
+export interface ListEmpty {
+  title: string;
+  body: string;
+  /** At most two; the first is the likeliest next step. */
+  actions?: { label: string; onClick: () => void }[];
 }
 
 /**
@@ -30,8 +40,29 @@ export default function RunList({
   onSelect,
   showSkill,
   filtered,
+  empty,
 }: Props) {
   const groups = groupByDay(runs);
+
+  if (runs.length === 0 && empty) {
+    return (
+      <div className={styles.list} data-empty>
+        <div className={styles.empty}>
+          <p className={styles.emptyTitle}>{empty.title}</p>
+          <p className={styles.emptyBody}>{empty.body}</p>
+          {empty.actions && empty.actions.length > 0 && (
+            <div className={styles.emptyActions}>
+              {empty.actions.map((a) => (
+                <button key={a.label} type="button" className={styles.widen} onClick={a.onClick}>
+                  {a.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   if (runs.length === 0) {
     return (
@@ -43,7 +74,7 @@ export default function RunList({
           <p className={styles.emptyBody}>
             {filtered
               ? 'Try a wider time range, or clear a filter above.'
-              : 'Runs appear here as soon as this skill fires on an email in one of its mailboxes.'}
+              : 'Runs show up here once it fires.'}
           </p>
         </div>
       </div>

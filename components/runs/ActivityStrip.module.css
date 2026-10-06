@@ -254,3 +254,34 @@
 @media (prefers-reduced-motion: reduce) {
   .col { transition: none; }
 }
+
+/* Days the skill was not live: a faint hatch behind the columns, labeled once
+   at the top. Behind, not over - a paused day can still carry the runs from
+   before the pause, and those stay fully readable. */
+.off {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 4px;
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--run-grid) 0 1px,
+    transparent 1px 7px
+  );
+  background-color: color-mix(in srgb, var(--surface-soft, #fafafa) 70%, transparent);
+  pointer-events: none;
+}
+.offLabel {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--card);
+  font-size: var(--fs-micro);
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--chart-muted, #64758b);
+  white-space: nowrap;
+}

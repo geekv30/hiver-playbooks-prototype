@@ -53,6 +53,7 @@ interface SimProps {
   live?: ComponentProps<typeof SimulatePanel>['live'];
   channel?: ComponentProps<typeof SimulatePanel>['channel'];
   onChannel?: ComponentProps<typeof SimulatePanel>['onChannel'];
+  openMatching?: number;
 }
 
 interface Props {

@@ -43,9 +43,12 @@ export default function RunStateFilter({ counts, value, onChange }: Props) {
             type="button"
             className={styles.chip}
             data-on={on || undefined}
-            data-empty={n === 0 || undefined}
+            data-empty={(n === 0 && !on) || undefined}
             aria-pressed={on}
-            disabled={n === 0}
+            // A picked chip stays clickable at 0: narrowing the range or the
+            // mailbox can empty the outcome under it, and a disabled chip
+            // would leave no way to turn it off where it was turned on.
+            disabled={n === 0 && !on}
             onClick={() => onChange(on ? null : s)}
           >
             <span className={styles.dotBox} aria-hidden>

@@ -58,6 +58,9 @@ interface Props {
   onChannel?: (c: EvalChannel) => void;
   /** The chat ways on offer; the app's are evalChannels.CHAT_WAYS. */
   chatWays?: readonly ChatEvalView[];
+  /** Bump to jump straight into Matching emails (Runs' "See what would
+   *  match"). A counter rather than a flag, so asking twice works twice. */
+  openMatching?: number;
 }
 
 /**
@@ -90,6 +93,7 @@ export default function SimulatePanel({
   channel: channelProp,
   onChannel,
   chatWays = CHAT_WAYS,
+  openMatching = 0,
 }: Props) {
   const [view, setView] = useState<EvalView>('menu');
   // Controlled when the canvas owns it; a local fallback keeps the panel whole.
@@ -98,6 +102,16 @@ export default function SimulatePanel({
   const setChannel = onChannel ?? setLocalChannel;
   // Drill direction for the slide (forward = into a flow, back = out to the menu).
   const [dir, setDir] = useState<'fwd' | 'back' | null>(null);
+  // A request to open Matching emails, adopted during render (React's
+  // "adjust state when a prop changes"), so it lands in the same paint.
+  const [seenMatching, setSeenMatching] = useState(0);
+  if (openMatching !== seenMatching) {
+    setSeenMatching(openMatching);
+    if (openMatching > 0 && scan) {
+      setDir('fwd');
+      setView('matching');
+    }
+  }
 
   const openFlow = (v: Exclude<EvalView, 'menu'>) => {
     // Matching emails needs the canvas-level scan; without it the card would

@@ -11,7 +11,7 @@ import styles from './page.module.css';
  * editor owns it from there and autosaves back). It subscribes only to whether
  * the skill exists, so a save doesn't re-render the editor a second time.
  */
-export default function SavedSkillEditor({ id }: { id: string }) {
+export default function SavedSkillEditor({ id, runsMode }: { id: string; runsMode?: boolean }) {
   const exists = useSkillExists(id);
   const skill = useMemo(() => (exists ? getSkill(id) : undefined), [id, exists]);
   const persist = useMemo(
@@ -31,5 +31,5 @@ export default function SavedSkillEditor({ id }: { id: string }) {
       </main>
     );
   }
-  return <EditorCanvas key={skill.id} companions initialDoc={skill.doc} persist={persist} />;
+  return <EditorCanvas key={skill.id} companions initialDoc={skill.doc} persist={persist} runsMode={runsMode} />;
 }

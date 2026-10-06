@@ -248,11 +248,17 @@ export function useEditorDoc(initial?: EditorDoc): EditorApi {
   );
 
   const enable = useCallback(() => {
-    commit({ ...docRef.current, status: 'active' }, null);
+    const doc = docRef.current;
+    // liveSince marks the FIRST go-live: Resume keeps it, or a paused skill
+    // with history would have all of it drawn as "not live yet".
+    commit(
+      { ...doc, status: 'active', liveSince: doc.status === 'draft' ? Date.now() : doc.liveSince, pausedAt: undefined },
+      null,
+    );
   }, [commit]);
 
   const pause = useCallback(() => {
-    commit({ ...docRef.current, status: 'paused' }, null);
+    commit({ ...docRef.current, status: 'paused', pausedAt: Date.now() }, null);
   }, [commit]);
 
   const loadDoc = useCallback(

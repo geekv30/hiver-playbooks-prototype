@@ -1,20 +1,24 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { RiArrowRightLine } from 'react-icons/ri';
 import SegmentedControl from '@/components/atoms/SegmentedControl';
 import Dropdown from '@/components/atoms/Dropdown';
-import { RUN_SOURCES, type SkillRun } from '@/data/runFixtures';
+import { NOW, RUN_SOURCES, type RunState, type SkillRun } from '@/data/runFixtures';
 import { mailboxName } from '@/data/mailboxes';
 import RunStateFilter from './RunStateFilter';
-import ActivityStrip from './ActivityStrip';
-import RunList from './RunList';
+import ActivityStrip, { type OffSpan } from './ActivityStrip';
+import RunList, { type ListEmpty } from './RunList';
 import RunDetail from './RunDetail';
+import NoRunsYet, { type RunsSkill } from './NoRunsYet';
 import { useIsClient } from './useIsClient';
 import {
   DEFAULT_FILTER,
   applyFilter,
   bucketByDay,
   countBy,
+  formatDayShort,
+  quietDays,
   startOfDay,
   type RangeDays,
   type RunFilter,
@@ -27,6 +31,48 @@ interface Props {
   /** Pre-select a skill (arriving from that skill's Runs cell on the list). */
   initialSkillId?: string | null;
   onOpenConversation?: (run: SkillRun) => void;
+  /** The skill this history belongs to (single-skill mode). Lets a skill that
+   *  has never run say why, instead of drawing an empty chart and list. */
+  skill?: RunsSkill;
+  /** Open on a narrower view than the default (the exhibits use it). */
+  initialFilter?: Partial<RunFilter>;
+  /** Open Evaluation > Matching emails for this skill. */
+  onCheckMatches?: () => void;
+}
+
+const DAY = 86_400_000;
+
+/** The smallest range, wider than the current one, that reaches back to `t`. */
+function widenTo(t: number, days: RangeDays): RangeDays | null {
+  const age = Math.ceil((startOfDay(NOW) - startOfDay(t)) / DAY) + 1;
+  return ([30, 90] as RangeDays[]).find((d) => d > days && d >= age) ?? null;
+}
+
+
+/** The empty list's headline per outcome - what it looked for, said like a
+ *  person would. */
+const NOTHING: Record<RunState, string> = {
+  completed: 'Nothing completed',
+  awaiting: "Nobody's waiting on approval",
+  failed: 'Nothing failed',
+  declined: 'No drafts turned down',
+};
+
+/** One line about the runs that ARE here, so "0 failed" reads as the fact it
+ *  is rather than as a broken page. */
+function noneOf(state: RunState, n: number): string {
+  switch (state) {
+    case 'completed':
+      return n === 1
+        ? 'The one run here did not make it to the end. Worth a look.'
+        : `None of the ${n} runs here made it to the end. Worth a look.`;
+    case 'awaiting':
+      return 'Approvals: inbox zero.';
+    case 'failed':
+      return n === 1 ? 'The one run here did not trip.' : `Not one of the ${n} runs here tripped.`;
+    case 'declined':
+      return 'Nobody said no to a single draft.';
+  }
 }
 
 const RANGES = [
@@ -57,12 +103,16 @@ export default function RunsView({
   allSkills,
   initialSkillId = null,
   onOpenConversation,
+  skill,
+  initialFilter,
+  onCheckMatches,
 }: Props) {
   // A week opens the page: every day then has room for its date and its total.
   const [filter, setFilter] = useState<RunFilter>({
     ...DEFAULT_FILTER,
     days: 7,
     skillId: initialSkillId,
+    ...initialFilter,
   });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // Run history is clock-derived and these routes are prerendered, so the
@@ -111,10 +161,125 @@ export default function RunsView({
     );
   }
 
+  // Never run: one island that says why, in place of the chart and the log.
+  if (!allSkills && skill && runs.length === 0) {
+    return (
+      <div className={styles.view}>
+        <section className={`${styles.island} ${styles.zeroIsland}`} aria-label="Runs">
+          <NoRunsYet skill={skill} onCheckMatches={onCheckMatches} />
+        </section>
+      </div>
+    );
+  }
+
+  const empty = listRuns.length === 0 ? emptyFor() : undefined;
+
+  // Still switched on, but nothing has run in a week or more: worth saying
+  // before anyone reads the chart, because the chart only shows it as absence.
+  const quiet = !allSkills && skill?.status === 'active' ? quietDays(runs) : null;
+
+  // The days the skill could not have run, so they are not read as quiet ones.
+  const off: OffSpan[] = [];
+  if (!allSkills && skill) {
+    // Never over a day that has runs - the history is the stronger evidence,
+    // and the stamps (set on the wall clock) can drift from it by a day.
+    const oldest = runs.length > 0 ? startOfDay(runs[runs.length - 1]!.startedAt) : Infinity;
+    const newest = runs.length > 0 ? startOfDay(runs[0]!.startedAt) : -Infinity;
+    const today = startOfDay(NOW);
+    if (skill.liveSince) {
+      off.push({ from: 0, to: Math.min(startOfDay(skill.liveSince), oldest) - 1, label: 'Not live yet' });
+    }
+    if (skill.status === 'paused' && skill.pausedAt) {
+      const from = Math.min(Math.max(startOfDay(skill.pausedAt), newest + DAY), today);
+      off.push({ from, to: today, label: 'Paused' });
+    }
+  }
+
+  /** The list's empty statement: what it looked for, what is there instead,
+   *  and at most two ways out. */
+  function emptyFor(): ListEmpty | undefined {
+    const setDays = (days: RangeDays) => setFilter((f) => ({ ...f, days, day: null }));
+    const where = filter.mailboxId ? ` in ${mailboxName(filter.mailboxId)}` : '';
+    const when = filter.day !== null ? ` on ${formatDayShort(filter.day)}` : ` in the last ${filter.days} days`;
+
+    if (!narrowed) {
+      // Nothing in this window, but the skill has run before it: say when,
+      // and offer the range that reaches it, rather than "No runs yet".
+      const last = filter.skillId ? runs.find((r) => r.skillId === filter.skillId) : runs[0];
+      if (!last) return undefined;
+      const widen = widenTo(last.startedAt, filter.days);
+      return {
+        title: `Crickets for ${filter.days} days`,
+        body: `Last run: ${formatDayShort(last.startedAt)}${widen ? '.' : ', further back than this page goes.'}`,
+        actions: widen ? [{ label: `Show the last ${widen} days`, onClick: () => setDays(widen) }] : undefined,
+      };
+    }
+
+    // An outcome is picked. The runs it filtered out are the useful fact.
+    if (filter.state) {
+      const state = filter.state;
+      const others = applyFilter(runs, { ...filter, state: null });
+      const actions: ListEmpty['actions'] = [];
+      if (others.length > 0) {
+        actions.push({
+          label: others.length === 1 ? 'Show the 1 run' : `Show all ${others.length} runs`,
+          onClick: () => setFilter((f) => ({ ...f, state: null })),
+        });
+      }
+      // A wider range that does hold this outcome is worth one click.
+      if (filter.day === null && filter.days < 90) {
+        for (const d of [30, 90] as RangeDays[]) {
+          if (d <= filter.days) continue;
+          const n = applyFilter(runs, { ...filter, days: d }).length;
+          if (n > 0) {
+            actions.push({ label: `Show the last ${d} days (${n})`, onClick: () => setDays(d) });
+            break;
+          }
+        }
+      }
+      if (others.length === 0 && actions.length === 0) {
+        actions.push({ label: 'Clear filters', onClick: () => setFilter((f) => ({ ...f, state: null, mailboxId: null, day: null, query: '' })) });
+      }
+      return {
+        title: `${NOTHING[state]}${where}${when}`,
+        body: others.length > 0 ? noneOf(state, others.length) : 'Not a peep.',
+        actions,
+      };
+    }
+
+    // Narrowed by mailbox or day alone.
+    return {
+      title: `No runs${where}${when}`,
+      body: filter.day !== null ? 'A quiet day off.' : 'Not a peep from this one.',
+      actions: [
+        { label: 'Clear filters', onClick: () => setFilter((f) => ({ ...f, mailboxId: null, day: null, query: '' })) },
+      ],
+    };
+  }
+
   return (
     <div className={styles.view}>
+      {quiet !== null && (
+        <section className={`${styles.island} ${styles.notice}`} aria-label="Heads up">
+          <span className={styles.noticeDot} aria-hidden />
+          <p className={styles.noticeText}>
+            {/* The date, not "N days": the list's "11 days ago" rounds differently
+                and the two must never disagree. */}
+            <span className={styles.noticeTitle}>Suspiciously quiet.</span> Still on, but nothing since{' '}
+            {formatDayShort(runs[0]!.startedAt)}. Check the trigger or the mailbox.
+          </p>
+          {onCheckMatches && skill?.trigger.trim() && (
+            <button type="button" className={styles.noticeLink} onClick={onCheckMatches}>
+              See what would match
+              <RiArrowRightLine aria-hidden />
+            </button>
+          )}
+        </section>
+      )}
+
       <section className={`${styles.island} ${styles.chartIsland}`} aria-label="Runs per day">
         <ActivityStrip
+          off={off}
           buckets={bucketByDay(windowRuns, filter.days)}
           picked={filter.day}
           onPick={(day) => setFilter((f) => ({ ...f, day: day === null ? null : startOfDay(day) }))}
@@ -175,6 +340,7 @@ export default function RunsView({
               onSelect={setSelectedId}
               showSkill={allSkills}
               filtered={narrowed}
+              empty={empty}
             />
           </div>
         ) : (

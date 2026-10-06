@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { RiDeleteBinLine } from 'react-icons/ri';
 import OutcomeBar from '@/components/runs/OutcomeBar';
-import { countBy } from '@/components/runs/runsModel';
+import { countBy, quietDays } from '@/components/runs/runsModel';
 import { NOW, RUN_SOURCES, runsForSkill, runsInLastDays } from '@/data/runFixtures';
 import { mailboxName } from '@/data/mailboxes';
 import { useIsClient } from '@/components/runs/useIsClient';
@@ -77,6 +77,18 @@ function savedRow(s: SavedSkill): AopRow {
 function StatusBadge({ status }: { status: DeployStatus }) {
   if (status === 'active') return <Badge intent="green">Active</Badge>;
   return <Badge intent="gray">{status === 'draft' ? 'Draft' : 'Inactive'}</Badge>;
+}
+
+/** A draft's run columns. It has never been live, so "No runs yet" or "Never"
+ *  would imply it could have run; the status column already says Draft, so
+ *  these stay empty rather than repeat it. Screen readers still get the why. */
+function NotLive() {
+  return (
+    <span className={styles.soft}>
+      <span aria-hidden>-</span>
+      <span className={styles.srOnly}>Not live yet</span>
+    </span>
+  );
 }
 
 /** "2 hrs ago" for the newest run - read off the history rather than stored on
@@ -156,8 +168,10 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
       id: 'history',
       header: 'Skill history · 30d',
       cell: (row) => {
-        // "No runs yet" only for a skill that has never run; one that went quiet
-        // this month shows 0 over an empty rule, beside its real last run.
+        // "No runs yet" only for a live or paused skill that has never run; one
+        // that went quiet this month shows 0 over an empty rule, beside its real
+        // last run.
+        if (row.status === 'draft') return <NotLive />;
         if (runsForSkill(row.id).length === 0) return <span className={styles.soft}>No runs yet</span>;
         const runs = runsInLastDays(row.id, 30);
         return (
@@ -165,7 +179,7 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
             type="button"
             className={`${styles.history} ${styles.historyBtn}`}
             onClick={() =>
-              router.push(row.id === 'api-error-triage' ? `${row.href}/runs` : `/aops/runs?skill=${row.id}`)
+              router.push(`${row.href}/runs`)
             }
             aria-label={`${runs.length} runs in the last 30 days for ${row.name}`}
           >
@@ -179,9 +193,16 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
       id: 'lastRun',
       header: 'Last run',
       cell: (row) => {
-        const last = runsForSkill(row.id)[0];
+        if (row.status === 'draft') return <NotLive />;
+        const runs = runsForSkill(row.id);
+        const last = runs[0];
+        // A live skill that has stopped running is the one row worth a nudge.
+        const quiet = row.status === 'active' && quietDays(runs) !== null;
         return last ? (
-          <span className={styles.default}>{sinceLabel(last.startedAt)}</span>
+          <span className={styles.lastRun}>
+            <span className={styles.default}>{sinceLabel(last.startedAt)}</span>
+            {quiet && <Badge intent="amber">Quiet</Badge>}
+          </span>
         ) : (
           <span className={styles.soft}>Never</span>
         );
