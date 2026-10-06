@@ -140,7 +140,8 @@ section + section .dayHead { border-top: 1px solid var(--log-rule, #eceff6); }
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
   color: var(--muted);
-  max-width: 34ch;
+  max-width: 44ch;
+  text-wrap: pretty;
 }
 .end {
   padding: 14px 16px 22px;
@@ -153,9 +154,15 @@ section + section .dayHead { border-top: 1px solid var(--log-rule, #eceff6); }
   .row { transition: none; }
 }
 
-/* The one way out of a quiet window: widen it to reach the last run. */
+/* The ways out of an empty list: one row, under the sentence. */
+.emptyActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
 .widen {
-  margin-top: 10px;
   display: inline-flex;
   align-items: center;
   height: 28px;

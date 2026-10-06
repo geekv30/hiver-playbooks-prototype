@@ -59,6 +59,17 @@ export default function RunsEmptyExhibit() {
     [],
   );
 
+  // The flagship with this week's failures taken out: failures exist further
+  // back, so the filtered-empty state has a wider range to offer.
+  const noFailsThisWeek = useMemo(
+    () =>
+      runsForSkill('api-error-triage').filter(
+        (r) => !(r.state === 'failed' && r.startedAt >= NOW - 8 * 86_400_000),
+      ),
+    [],
+  );
+  const neverFails = useMemo(() => runsForSkill('refund-requests'), []);
+
   // Stamps relative to the Runs clock, so the copy reads the way
   // it does for someone who just enabled the skill.
   const live: RunsSkill = {
@@ -138,6 +149,34 @@ export default function RunsEmptyExhibit() {
           Render: () => (
             <Stage>
               <RunsView runs={[]} skill={draft} />
+            </Stage>
+          ),
+        },
+      ],
+    },
+    {
+      title: 'A filter that matches nothing',
+      lede: 'An outcome is picked and nothing in view has it - usually because the range or mailbox changed under it. Two panes saying two different empty things ("No conversations match" beside "Runs will show up here") read as a broken page. The whole log says one thing: what it looked for, what is there instead, and the way out.',
+      items: [
+        {
+          id: 'failed-wider',
+          name: 'None this week, some further back',
+          tag: 'Ships',
+          note: 'The sentence is about the runs that ARE here ("None of the 31 runs here failed"), so zero reads as the fact it is. Two ways out: drop the outcome, or widen to the range that holds some - with how many, so the click is not a guess. The picked chip stays clickable at 0; before this it went disabled and could not be turned off.',
+          Render: () => (
+            <Stage tall>
+              <RunsView runs={noFailsThisWeek} skill={live} initialFilter={{ state: 'failed' }} />
+            </Stage>
+          ),
+        },
+        {
+          id: 'failed-never',
+          name: 'None at all in reach',
+          tag: 'Ships',
+          note: 'No wider range holds one either, so the only way out offered is the one that shows something. No celebration copy - a skill that never fails is the expectation, not news.',
+          Render: () => (
+            <Stage tall>
+              <RunsView runs={neverFails} skill={live} initialFilter={{ state: 'failed', days: 90 }} />
             </Stage>
           ),
         },

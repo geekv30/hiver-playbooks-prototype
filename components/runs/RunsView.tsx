@@ -3,11 +3,11 @@
 import { useMemo, useState } from 'react';
 import SegmentedControl from '@/components/atoms/SegmentedControl';
 import Dropdown from '@/components/atoms/Dropdown';
-import { NOW, RUN_SOURCES, type SkillRun } from '@/data/runFixtures';
+import { NOW, RUN_SOURCES, type RunState, type SkillRun } from '@/data/runFixtures';
 import { mailboxName } from '@/data/mailboxes';
 import RunStateFilter from './RunStateFilter';
 import ActivityStrip from './ActivityStrip';
-import RunList from './RunList';
+import RunList, { type ListEmpty } from './RunList';
 import RunDetail from './RunDetail';
 import NoRunsYet, { type RunsSkill } from './NoRunsYet';
 import { useIsClient } from './useIsClient';
@@ -16,6 +16,7 @@ import {
   applyFilter,
   bucketByDay,
   countBy,
+  formatDayShort,
   startOfDay,
   type RangeDays,
   type RunFilter,
@@ -31,12 +32,40 @@ interface Props {
   /** The skill this history belongs to (single-skill mode). Lets a skill that
    *  has never run say why, instead of drawing an empty chart and list. */
   skill?: RunsSkill;
+  /** Open on a narrower view than the default (the exhibits use it). */
+  initialFilter?: Partial<RunFilter>;
 }
 
 /** The smallest range, wider than the current one, that reaches back to `t`. */
 function widenTo(t: number, days: RangeDays): RangeDays | null {
   const age = Math.ceil((startOfDay(NOW) - startOfDay(t)) / 86_400_000) + 1;
   return ([30, 90] as RangeDays[]).find((d) => d > days && d >= age) ?? null;
+}
+
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+/** What an outcome filter is looking for, as a noun phrase. */
+const LOOKING_FOR: Record<RunState, string> = {
+  completed: 'completed runs',
+  awaiting: 'runs awaiting approval',
+  failed: 'failed runs',
+  declined: 'declined drafts',
+};
+
+/** Why none of the runs in view matched the picked outcome - said about THOSE
+ *  runs, so "0 failed" reads as the fact it is rather than as a broken page. */
+function noneOf(state: RunState, n: number): string {
+  const these = n === 1 ? 'the 1 run here' : `the ${n} runs here`;
+  switch (state) {
+    case 'completed':
+      return `None of ${these} ran through to the end.`;
+    case 'awaiting':
+      return `None of ${these} is waiting on a teammate to sign off a reply.`;
+    case 'failed':
+      return `None of ${these} failed.`;
+    case 'declined':
+      return `No one turned down a draft from ${these}.`;
+  }
 }
 
 const RANGES = [
@@ -68,12 +97,14 @@ export default function RunsView({
   initialSkillId = null,
   onOpenConversation,
   skill,
+  initialFilter,
 }: Props) {
   // A week opens the page: every day then has room for its date and its total.
   const [filter, setFilter] = useState<RunFilter>({
     ...DEFAULT_FILTER,
     days: 7,
     skillId: initialSkillId,
+    ...initialFilter,
   });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // Run history is clock-derived and these routes are prerendered, so the
@@ -133,13 +164,71 @@ export default function RunsView({
     );
   }
 
-  // Nothing in this window, but the skill has run before it: the list says
-  // when, and offers the range that reaches it, rather than "No runs yet".
-  const lastRun = filter.skillId ? runs.find((r) => r.skillId === filter.skillId) : runs[0];
-  const quiet =
-    listRuns.length === 0 && !narrowed && lastRun
-      ? { days: filter.days, last: lastRun.startedAt, widen: widenTo(lastRun.startedAt, filter.days) }
-      : undefined;
+  const empty = listRuns.length === 0 ? emptyFor() : undefined;
+
+  /** The list's empty statement: what it looked for, what is there instead,
+   *  and at most two ways out. */
+  function emptyFor(): ListEmpty | undefined {
+    const setDays = (days: RangeDays) => setFilter((f) => ({ ...f, days, day: null }));
+    const where = filter.mailboxId ? ` in ${mailboxName(filter.mailboxId)}` : '';
+    const when = filter.day !== null ? ` on ${formatDayShort(filter.day)}` : ` in the last ${filter.days} days`;
+
+    if (!narrowed) {
+      // Nothing in this window, but the skill has run before it: say when,
+      // and offer the range that reaches it, rather than "No runs yet".
+      const last = filter.skillId ? runs.find((r) => r.skillId === filter.skillId) : runs[0];
+      if (!last) return undefined;
+      const widen = widenTo(last.startedAt, filter.days);
+      return {
+        title: `No runs in the last ${filter.days} days`,
+        body: `The last one was on ${formatDayShort(last.startedAt)}${widen ? '.' : ', further back than this page goes.'}`,
+        actions: widen ? [{ label: `Show the last ${widen} days`, onClick: () => setDays(widen) }] : undefined,
+      };
+    }
+
+    // An outcome is picked. The runs it filtered out are the useful fact.
+    if (filter.state) {
+      const state = filter.state;
+      const others = applyFilter(runs, { ...filter, state: null });
+      const actions: ListEmpty['actions'] = [];
+      if (others.length > 0) {
+        actions.push({
+          label: `Show all ${plural(others.length, 'run', 'runs')}`,
+          onClick: () => setFilter((f) => ({ ...f, state: null })),
+        });
+      }
+      // A wider range that does hold this outcome is worth one click.
+      if (filter.day === null && filter.days < 90) {
+        const wider = ([30, 90] as RangeDays[]).find(
+          (d) => d > filter.days && applyFilter(runs, { ...filter, days: d }).length > 0,
+        );
+        if (wider) {
+          const n = applyFilter(runs, { ...filter, days: wider }).length;
+          actions.push({
+            label: `Show the last ${wider} days (${n})`,
+            onClick: () => setDays(wider),
+          });
+        }
+      }
+      if (others.length === 0 && actions.length === 0) {
+        actions.push({ label: 'Clear filters', onClick: () => setFilter((f) => ({ ...f, state: null, mailboxId: null, day: null, query: '' })) });
+      }
+      return {
+        title: `No ${LOOKING_FOR[state]}${where}${when}`,
+        body: others.length > 0 ? noneOf(state, others.length) : `Nothing ran${where}${when}.`,
+        actions,
+      };
+    }
+
+    // Narrowed by mailbox or day alone.
+    return {
+      title: `No runs${where}${when}`,
+      body: filter.day !== null ? 'Nothing ran that day.' : 'Nothing ran in that mailbox in this period.',
+      actions: [
+        { label: 'Clear filters', onClick: () => setFilter((f) => ({ ...f, mailboxId: null, day: null, query: '' })) },
+      ],
+    };
+  }
 
   return (
     <div className={styles.view}>
@@ -205,8 +294,7 @@ export default function RunsView({
               onSelect={setSelectedId}
               showSkill={allSkills}
               filtered={narrowed}
-              quiet={quiet}
-              onWiden={(days) => setFilter((f) => ({ ...f, days, day: null }))}
+              empty={empty}
             />
           </div>
         ) : (
