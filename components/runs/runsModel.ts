@@ -144,6 +144,18 @@ export function failureLead(
   return { code, count, total: failed.length };
 }
 
+/** A live skill that has gone this long without a run is worth a look. */
+export const QUIET_AFTER_DAYS = 7;
+
+/** Whole days since the newest run, when that is long enough to be news;
+ *  null for a skill that ran recently or never ran at all. */
+export function quietDays(runs: SkillRun[]): number | null {
+  const last = runs.reduce((a, r) => Math.max(a, r.startedAt), 0);
+  if (last === 0) return null;
+  const days = Math.floor((startOfDay(NOW) - startOfDay(last)) / DAY);
+  return days >= QUIET_AFTER_DAYS ? days : null;
+}
+
 /** How long the oldest pending approval has been waiting, in ms. */
 export function oldestWait(runs: SkillRun[]): number | null {
   const waiting = runs.filter((r) => r.state === 'awaiting');

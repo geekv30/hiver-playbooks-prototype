@@ -112,3 +112,5 @@
 }
 
 .pending { height: 600px; }
+.lede a { color: var(--accent); text-decoration: none; }
+.lede a:hover { text-decoration: underline; }

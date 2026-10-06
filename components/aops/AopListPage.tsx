@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { RiDeleteBinLine } from 'react-icons/ri';
 import OutcomeBar from '@/components/runs/OutcomeBar';
-import { countBy } from '@/components/runs/runsModel';
+import { countBy, quietDays } from '@/components/runs/runsModel';
 import { NOW, RUN_SOURCES, runsForSkill, runsInLastDays } from '@/data/runFixtures';
 import { mailboxName } from '@/data/mailboxes';
 import { useIsClient } from '@/components/runs/useIsClient';
@@ -168,7 +168,7 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
             type="button"
             className={`${styles.history} ${styles.historyBtn}`}
             onClick={() =>
-              router.push(row.id === 'api-error-triage' ? `${row.href}/runs` : `/aops/runs?skill=${row.id}`)
+              router.push(`${row.href}/runs`)
             }
             aria-label={`${runs.length} runs in the last 30 days for ${row.name}`}
           >
@@ -182,9 +182,15 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
       id: 'lastRun',
       header: 'Last run',
       cell: (row) => {
-        const last = runsForSkill(row.id)[0];
+        const runs = runsForSkill(row.id);
+        const last = runs[0];
+        // A live skill that has stopped running is the one row worth a nudge.
+        const quiet = row.status === 'active' && quietDays(runs) !== null;
         return last ? (
-          <span className={styles.default}>{sinceLabel(last.startedAt)}</span>
+          <span className={styles.lastRun}>
+            <span className={styles.default}>{sinceLabel(last.startedAt)}</span>
+            {quiet && <Badge intent="amber">Quiet</Badge>}
+          </span>
         ) : (
           <span className={styles.soft}>Never</span>
         );

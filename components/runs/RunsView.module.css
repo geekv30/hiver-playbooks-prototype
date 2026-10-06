@@ -109,3 +109,53 @@
   justify-content: center;
   padding: 32px 34px;
 }
+
+/* A live skill gone quiet: one line above the chart, same island, an amber
+   dot - a nudge, not an alarm. */
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px 14px 34px;
+}
+.noticeDot {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--run-mark-awaiting);
+}
+.noticeText {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--fs-small);
+  line-height: 20px;
+  letter-spacing: var(--ls-small);
+  color: var(--detail-muted, #6f7c90);
+}
+.noticeTitle {
+  font-weight: 500;
+  color: var(--chart-ink, #171717);
+}
+.noticeLink {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font: inherit;
+  font-size: var(--fs-small);
+  line-height: 19px;
+  font-weight: 500;
+  letter-spacing: var(--ls-small);
+  color: var(--accent);
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap);
+}
+.noticeLink:hover { background: var(--surface-soft); }
+.noticeLink:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.noticeLink svg { width: 14px; height: 14px; }

@@ -1,12 +1,13 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { RiArrowRightLine } from 'react-icons/ri';
 import SegmentedControl from '@/components/atoms/SegmentedControl';
 import Dropdown from '@/components/atoms/Dropdown';
 import { NOW, RUN_SOURCES, type RunState, type SkillRun } from '@/data/runFixtures';
 import { mailboxName } from '@/data/mailboxes';
 import RunStateFilter from './RunStateFilter';
-import ActivityStrip from './ActivityStrip';
+import ActivityStrip, { type OffSpan } from './ActivityStrip';
 import RunList, { type ListEmpty } from './RunList';
 import RunDetail from './RunDetail';
 import NoRunsYet, { type RunsSkill } from './NoRunsYet';
@@ -17,6 +18,7 @@ import {
   bucketByDay,
   countBy,
   formatDayShort,
+  quietDays,
   startOfDay,
   type RangeDays,
   type RunFilter,
@@ -34,6 +36,8 @@ interface Props {
   skill?: RunsSkill;
   /** Open on a narrower view than the default (the exhibits use it). */
   initialFilter?: Partial<RunFilter>;
+  /** Open Evaluation > Matching emails for this skill. */
+  onCheckMatches?: () => void;
 }
 
 /** The smallest range, wider than the current one, that reaches back to `t`. */
@@ -44,27 +48,27 @@ function widenTo(t: number, days: RangeDays): RangeDays | null {
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
-/** What an outcome filter is looking for, as a noun phrase. */
-const LOOKING_FOR: Record<RunState, string> = {
-  completed: 'completed runs',
-  awaiting: 'runs awaiting approval',
-  failed: 'failed runs',
-  declined: 'declined drafts',
+/** The empty list's headline per outcome - what it looked for, said like a
+ *  person would. */
+const NOTHING: Record<RunState, string> = {
+  completed: 'Nothing completed',
+  awaiting: "Nobody's waiting on approval",
+  failed: 'Nothing failed',
+  declined: 'No drafts turned down',
 };
 
-/** Why none of the runs in view matched the picked outcome - said about THOSE
- *  runs, so "0 failed" reads as the fact it is rather than as a broken page. */
+/** One line about the runs that ARE here, so "0 failed" reads as the fact it
+ *  is rather than as a broken page. */
 function noneOf(state: RunState, n: number): string {
-  const these = n === 1 ? 'the 1 run here' : `the ${n} runs here`;
   switch (state) {
     case 'completed':
-      return `None of ${these} ran through to the end.`;
+      return `None of the ${n} runs here made it to the end. Worth a look.`;
     case 'awaiting':
-      return `None of ${these} is waiting on a teammate to sign off a reply.`;
+      return 'Approvals: inbox zero.';
     case 'failed':
-      return `None of ${these} failed.`;
+      return `Not one of the ${n} runs here tripped.`;
     case 'declined':
-      return `No one turned down a draft from ${these}.`;
+      return 'Nobody said no to a single draft.';
   }
 }
 
@@ -98,6 +102,7 @@ export default function RunsView({
   onOpenConversation,
   skill,
   initialFilter,
+  onCheckMatches,
 }: Props) {
   // A week opens the page: every day then has room for its date and its total.
   const [filter, setFilter] = useState<RunFilter>({
@@ -158,13 +163,26 @@ export default function RunsView({
     return (
       <div className={styles.view}>
         <section className={`${styles.island} ${styles.zeroIsland}`} aria-label="Runs">
-          <NoRunsYet skill={skill} />
+          <NoRunsYet skill={skill} onCheckMatches={onCheckMatches} />
         </section>
       </div>
     );
   }
 
   const empty = listRuns.length === 0 ? emptyFor() : undefined;
+
+  // Still switched on, but nothing has run in a week or more: worth saying
+  // before anyone reads the chart, because the chart only shows it as absence.
+  const quiet = !allSkills && skill?.status === 'active' ? quietDays(runs) : null;
+
+  // The days the skill could not have run, so they are not read as quiet ones.
+  const off: OffSpan[] = [];
+  if (!allSkills && skill) {
+    if (skill.liveSince) off.push({ from: 0, to: startOfDay(skill.liveSince) - 1, label: 'Not live yet' });
+    if (skill.status === 'paused' && skill.pausedAt) {
+      off.push({ from: startOfDay(skill.pausedAt), to: startOfDay(NOW), label: 'Paused' });
+    }
+  }
 
   /** The list's empty statement: what it looked for, what is there instead,
    *  and at most two ways out. */
@@ -180,8 +198,8 @@ export default function RunsView({
       if (!last) return undefined;
       const widen = widenTo(last.startedAt, filter.days);
       return {
-        title: `No runs in the last ${filter.days} days`,
-        body: `The last one was on ${formatDayShort(last.startedAt)}${widen ? '.' : ', further back than this page goes.'}`,
+        title: `Crickets for ${filter.days} days`,
+        body: `Last run: ${formatDayShort(last.startedAt)}${widen ? '.' : ', further back than this page goes.'}`,
         actions: widen ? [{ label: `Show the last ${widen} days`, onClick: () => setDays(widen) }] : undefined,
       };
     }
@@ -214,8 +232,8 @@ export default function RunsView({
         actions.push({ label: 'Clear filters', onClick: () => setFilter((f) => ({ ...f, state: null, mailboxId: null, day: null, query: '' })) });
       }
       return {
-        title: `No ${LOOKING_FOR[state]}${where}${when}`,
-        body: others.length > 0 ? noneOf(state, others.length) : `Nothing ran${where}${when}.`,
+        title: `${NOTHING[state]}${where}${when}`,
+        body: others.length > 0 ? noneOf(state, others.length) : 'Not a peep.',
         actions,
       };
     }
@@ -223,7 +241,7 @@ export default function RunsView({
     // Narrowed by mailbox or day alone.
     return {
       title: `No runs${where}${when}`,
-      body: filter.day !== null ? 'Nothing ran that day.' : 'Nothing ran in that mailbox in this period.',
+      body: filter.day !== null ? 'A quiet day off.' : 'Not a peep from this one.',
       actions: [
         { label: 'Clear filters', onClick: () => setFilter((f) => ({ ...f, mailboxId: null, day: null, query: '' })) },
       ],
@@ -232,8 +250,27 @@ export default function RunsView({
 
   return (
     <div className={styles.view}>
+      {quiet !== null && (
+        <section className={`${styles.island} ${styles.notice}`} aria-label="Heads up">
+          <span className={styles.noticeDot} aria-hidden />
+          <p className={styles.noticeText}>
+            {/* The date, not "N days": the list's "11 days ago" rounds differently
+                and the two must never disagree. */}
+            <span className={styles.noticeTitle}>Suspiciously quiet.</span> Still on, but nothing since{' '}
+            {formatDayShort(runs[0]!.startedAt)}. Check the trigger or the mailbox.
+          </p>
+          {onCheckMatches && (
+            <button type="button" className={styles.noticeLink} onClick={onCheckMatches}>
+              See what would match
+              <RiArrowRightLine aria-hidden />
+            </button>
+          )}
+        </section>
+      )}
+
       <section className={`${styles.island} ${styles.chartIsland}`} aria-label="Runs per day">
         <ActivityStrip
+          off={off}
           buckets={bucketByDay(windowRuns, filter.days)}
           picked={filter.day}
           onPick={(day) => setFilter((f) => ({ ...f, day: day === null ? null : startOfDay(day) }))}

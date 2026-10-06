@@ -129,3 +129,9 @@
   outline: 2px solid var(--accent);
   outline-offset: 0;
 }
+
+.lastRun {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}

@@ -88,6 +88,9 @@ interface FocusReq {
 }
 
 const TRIGGER_PLACEHOLDER = 'e.g. when an email reports an API error';
+
+/** Runs -> editor handoff: open Evaluation on Matching emails on arrival. */
+const OPEN_MATCHING_KEY = 'hiver.playbooks.openMatching';
 // Step placeholder + the "@ for actions" hint pill on a fresh line (Figma 647:40010).
 // '@' opens the actions command palette (references are reachable inside it); the
 // hint pill is the no-keystroke path. Curly quotes around '@' per the Figma copy.
@@ -363,12 +366,46 @@ export default function EditorCanvas({
     router.push(runsMode ? runsBase : `${runsBase}/runs`, { scroll: false });
   }, [router, runsBase, runsMode]);
 
+  // Runs' "See what would match": back to the editor with Evaluation open on
+  // Matching emails. The ask rides in sessionStorage, not the URL - the router
+  // replays a first-load query on later navigations, so a ?eval= would keep
+  // reopening the panel.
+  const [openMatching, setOpenMatching] = useState(0);
+  const checkMatches = useCallback(() => {
+    if (!runsBase) return;
+    try {
+      window.sessionStorage.setItem(OPEN_MATCHING_KEY, '1');
+    } catch {
+      /* storage blocked - the editor still opens, on Copilot */
+    }
+    router.push(runsBase, { scroll: false });
+  }, [router, runsBase]);
+
   // The Evaluation menu's channel. Owned here so Copilot's matching row, which
   // points at an email flow, can bring the menu back to Email.
   const [evalChannel, setEvalChannel] = useState<EvalChannel>('email');
   // The New pill on the Matching emails card, retired once the user opens it.
   // Session state on purpose: a reload is a fresh look at the new type.
   const [matchingIsNew, setMatchingIsNew] = useState(true);
+  // Arriving from Runs' "See what would match" (see checkMatches).
+  useEffect(() => {
+    if (runsMode) return;
+    let asked = false;
+    try {
+      asked = window.sessionStorage.getItem(OPEN_MATCHING_KEY) === '1';
+      window.sessionStorage.removeItem(OPEN_MATCHING_KEY);
+    } catch {
+      return;
+    }
+    if (!asked) return;
+    // A one-time handoff read from storage on arrival - there is no render-time
+    // source for it (the server cannot see sessionStorage).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPanelTab('simulate');
+    setEvalChannel('email');
+    setMatchingIsNew(false);
+    setOpenMatching((n) => n + 1);
+  }, [runsMode]);
   // Journey B: a skill we already know the mailboxes for scans on open, quietly -
   // the badge is the only signal. Exactly ONCE per trigger version: a user who
   // clears the scan to pick a different mailbox must not have this restart it
@@ -1579,6 +1616,7 @@ export default function EditorCanvas({
         {runsOpen ? (
           <RunsView
             runs={runs}
+            onCheckMatches={checkMatches}
             skill={{
               status: doc.status,
               mailboxes: doc.mailboxes,
@@ -1654,6 +1692,7 @@ export default function EditorCanvas({
                 live,
                 channel: evalChannel,
                 onChannel: setEvalChannel,
+                openMatching,
               }}
             />
           )

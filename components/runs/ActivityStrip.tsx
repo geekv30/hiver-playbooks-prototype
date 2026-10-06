@@ -27,6 +27,18 @@ interface Props {
    * surface that owns the filter.
    */
   range?: ReactNode;
+  /**
+   * Stretches when the skill was not live - before it was enabled, or since
+   * it was paused. Start-of-day ms, inclusive. Without them, those days read
+   * as quiet days, which they were not: nothing could have run.
+   */
+  off?: OffSpan[];
+}
+
+export interface OffSpan {
+  from: number;
+  to: number;
+  label: string;
 }
 
 /** The tallest day in the window. */
@@ -72,7 +84,7 @@ const LABEL_EVERY_UP_TO = 10;
  * and each column is a filter: pick a day to narrow the list, pick it again to
  * clear. The y-axis carries the scale, so no bar needs a caption to be read.
  */
-export default function ActivityStrip({ buckets, picked, onPick, caption = 'full', range }: Props) {
+export default function ActivityStrip({ buckets, picked, onPick, caption = 'full', range, off = [] }: Props) {
   const [hover, setHover] = useState<number | null>(null);
   const { peak } = peakOf(buckets);
   const ticks = scaleOf(peak);
@@ -80,6 +92,15 @@ export default function ActivityStrip({ buckets, picked, onPick, caption = 'full
   const n = buckets.length;
   const dense = n > LABEL_EVERY_UP_TO;
   const every = dense ? Math.ceil(n / 8) : 1;
+  // Each span as a run of columns. Clipped to the window; dropped if outside.
+  const spans = off
+    .map((o) => {
+      const first = buckets.findIndex((b) => b.day >= o.from);
+      const last = buckets.reduce((a, b, i) => (b.day <= o.to ? i : a), -1);
+      return first < 0 || last < first ? null : { ...o, first, last };
+    })
+    .filter((x): x is OffSpan & { first: number; last: number } => x !== null);
+  const offAt = (i: number) => spans.find((sp) => i >= sp.first && i <= sp.last);
 
   return (
     <div className={styles.wrap}>
@@ -117,6 +138,22 @@ export default function ActivityStrip({ buckets, picked, onPick, caption = 'full
               style={{ top: `${100 - (t / max) * 100}%` }}
               aria-hidden
             />
+          ))}
+
+          {spans.map((sp) => (
+            <span
+              key={sp.label + sp.first}
+              className={styles.off}
+              style={{
+                left: `${(sp.first / n) * 100}%`,
+                width: `${((sp.last - sp.first + 1) / n) * 100}%`,
+              }}
+              aria-hidden
+            >
+              {/* The label only where it fits: a one-day sliver at 90 days
+                  carries the shading and the hover readout alone. */}
+              {(sp.last - sp.first + 1) / n >= 0.08 && <span className={styles.offLabel}>{sp.label}</span>}
+            </span>
           ))}
 
           <div className={styles.cols} data-picked={picked !== null || undefined}>
@@ -164,7 +201,10 @@ export default function ActivityStrip({ buckets, picked, onPick, caption = 'full
                     <span className={styles.tip} role="presentation">
                       <span className={styles.tipDay}>{formatDayLabel(b.day)}</span>
                       {b.counts.total === 0 ? (
-                        'No runs'
+                        (() => {
+                          const sp = offAt(buckets.indexOf(b));
+                          return sp ? sp.label : 'No runs';
+                        })()
                       ) : (
                         RUN_STATES.filter((s) => b.counts[s] > 0).map((s) => (
                           <span key={s} className={styles.tipRow}>

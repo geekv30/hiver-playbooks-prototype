@@ -97,3 +97,27 @@
   letter-spacing: var(--ls-small);
   color: var(--detail-ink, #404040);
 }
+
+/* The way to stop waiting and find out: a quiet text link, not a button - it
+   leaves this page for the editor's Evaluation. */
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font: inherit;
+  font-size: var(--fs-small);
+  line-height: 19px;
+  font-weight: 500;
+  letter-spacing: var(--ls-small);
+  color: var(--accent);
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap);
+}
+.link:hover { background: var(--surface-soft); }
+.link:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.link svg { width: 14px; height: 14px; }

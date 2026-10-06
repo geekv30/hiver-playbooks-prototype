@@ -1,5 +1,6 @@
 'use client';
 
+import { RiArrowRightLine } from 'react-icons/ri';
 import type { DeployStatus } from '@/components/flow01/doc';
 import { mailboxSummary } from '@/data/mailboxes';
 import { formatTime } from './runsModel';
@@ -30,22 +31,17 @@ function when(t: number): string {
 function copy(skill: RunsSkill): { title: string; body: string } {
   const where = mailboxSummary(skill.mailboxes);
   if (skill.status === 'draft') {
-    return {
-      title: 'Not live yet',
-      body: 'Runs start once this skill is enabled. Each one records what the skill did on a real email, step by step.',
-    };
+    return { title: 'Nothing to see. Yet.', body: 'Enable this skill and its runs show up here.' };
   }
   if (skill.status === 'paused') {
-    const since = skill.pausedAt ? `Paused ${when(skill.pausedAt)}. ` : 'Paused. ';
     return {
-      title: 'No runs while it was live',
-      body: `${since}No email${where ? ` in ${where}` : ''} matched the trigger while it was on. Resume it to start listening again.`,
+      title: 'Clocked out before its first shift',
+      body: `Paused${skill.pausedAt ? ` ${when(skill.pausedAt)}` : ''}. Nothing matched while it was on.`,
     };
   }
-  const live = `Live${where ? ` on ${where}` : ''}${skill.liveSince ? ` since ${when(skill.liveSince)}` : ''}.`;
   return {
-    title: 'Listening for its first email',
-    body: `${live} When an email matches the trigger, the run shows up here with every step the skill took.`,
+    title: 'All ears, no emails yet',
+    body: `Watching ${where || 'its mailboxes'}${skill.liveSince ? ` since ${when(skill.liveSince)}` : ''}. The first match lands here.`,
   };
 }
 
@@ -59,7 +55,15 @@ function copy(skill: RunsSkill): { title: string; body: string } {
  * live, the trigger it is waiting on, since that is the first thing to check
  * when nothing has come in.
  */
-export default function NoRunsYet({ skill }: { skill: RunsSkill }) {
+export default function NoRunsYet({
+  skill,
+  onCheckMatches,
+}: {
+  skill: RunsSkill;
+  /** Open Evaluation > Matching emails: the honest answer to "will anything
+   *  ever match this?" without waiting to find out. */
+  onCheckMatches?: () => void;
+}) {
   const { title, body } = copy(skill);
   const showTrigger = skill.status !== 'draft' && skill.trigger.trim() !== '';
   return (
@@ -76,6 +80,12 @@ export default function NoRunsYet({ skill }: { skill: RunsSkill }) {
           <span className={styles.label}>Trigger</span>
           <p className={styles.quote}>{skill.trigger}</p>
         </div>
+      )}
+      {showTrigger && onCheckMatches && (
+        <button type="button" className={styles.link} onClick={onCheckMatches}>
+          See what would match
+          <RiArrowRightLine aria-hidden />
+        </button>
       )}
     </div>
   );

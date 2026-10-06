@@ -167,6 +167,7 @@ const SKILL_EMAILS: Record<string, string[]> = {
   'feature-requests': ['re4', 'x5', 'x6'],
   'welcome-onboarding': ['re9', 'x4'],
   'contract-renewals': ['x3'],
+  'invoice-disputes': ['re2', 're5', 're8', 're11'],
 };
 
 /** How long a gated reply waits before the draft is discarded and the run
@@ -429,8 +430,12 @@ export interface SkillRunSource {
   /** Live only for the last N days - a skill enabled recently has no history
    *  before it existed, and the activity strip should show that honestly. */
   liveForDays?: number;
-  /** Stopped N days ago (a paused skill): no runs after that point. */
+  /** Stopped N days ago: no runs after that point. On a paused skill that is
+   *  when it was paused; on an active one, it has simply gone quiet. */
   stoppedDaysAgo?: number;
+  /** The skill as written, for its editor page: the trigger and its steps. */
+  trigger: string;
+  steps: string[];
 }
 
 /** Build one skill's run history. Pure and seeded: same source, same history. */
@@ -561,6 +566,8 @@ export const RUN_SOURCES: SkillRunSource[] = [
     href: '/api-example',
     lastUpdated: 'Sep 17, 2026',
     volume: 148,
+    trigger: 'When a customer reports an API error or a problem with the API.',
+    steps: ['Summarize the error and tag the conversation.', 'Create a bug task for engineering.', 'Draft a reply with the fix or next step.'],
   },
 
   // Healthy. Nothing failing, nothing waiting - the verdict reads "Running
@@ -572,10 +579,12 @@ export const RUN_SOURCES: SkillRunSource[] = [
     description: 'Checks order context before drafting refund replies',
     status: 'active',
     mailboxes: ['billing', 'refunds'],
-    href: '/canvas',
+    href: '/aops/seed/refund-requests',
     lastUpdated: 'Sep 15, 2026',
     volume: 76,
     mix: { completed: 0.88, awaiting: 0, failed: 0, declined: 0.12 },
+    trigger: 'When a customer asks for a refund on an order.',
+    steps: ['Look up the order and check it is inside the refund window.', 'Draft a reply confirming the refund or explaining why not.'],
   },
 
   // High volume, and the cleanest possible history: it only reads and tags, so
@@ -588,11 +597,13 @@ export const RUN_SOURCES: SkillRunSource[] = [
     status: 'active',
     mailboxes: ['support', 'sales'],
     moreMailboxes: 14,
-    href: '/canvas',
+    href: '/aops/seed/inbound-tagging',
     lastUpdated: 'Aug 30, 2026',
     volume: 412,
     shape: 'triage',
     mix: { completed: 1, awaiting: 0, failed: 0, declined: 0 },
+    trigger: 'When any new email arrives.',
+    steps: ['Classify the topic and urgency.', 'Tag the conversation.'],
   },
 
   // Low volume: a handful of runs across a month, so the activity strip is
@@ -603,10 +614,12 @@ export const RUN_SOURCES: SkillRunSource[] = [
     description: 'Escalates late deliveries to the ops queue',
     status: 'active',
     mailboxes: ['support'],
-    href: '/canvas',
+    href: '/aops/seed/shipping-delays',
     lastUpdated: 'Sep 9, 2026',
     volume: 16,
     mix: { completed: 0.62, awaiting: 0.3, failed: 0, declined: 0.08 },
+    trigger: 'When a customer says a delivery is late or has not arrived.',
+    steps: ['Pull the order and tracking details.', 'Create a task in the ops queue.', 'Draft a reply with the new delivery date.'],
   },
 
   // Paused, with history. The runs stop dead six days ago, which is the whole
@@ -617,11 +630,13 @@ export const RUN_SOURCES: SkillRunSource[] = [
     description: 'Logs feature requests to the product backlog',
     status: 'paused',
     mailboxes: ['support', 'marketing'],
-    href: '/canvas',
+    href: '/aops/seed/feature-requests',
     lastUpdated: 'Sep 12, 2026',
     volume: 54,
     stoppedDaysAgo: 6,
     mix: { completed: 0.82, awaiting: 0.04, failed: 0.1, declined: 0.04 },
+    trigger: 'When a customer asks for a feature we do not have.',
+    steps: ['Log the request on the product backlog.', 'Draft a reply thanking them.'],
   },
 
   // Enabled four days ago: no history before it existed, so the left of the
@@ -632,11 +647,13 @@ export const RUN_SOURCES: SkillRunSource[] = [
     description: 'Welcomes new customers and shares setup docs',
     status: 'active',
     mailboxes: ['onboarding'],
-    href: '/canvas',
+    href: '/aops/seed/welcome-onboarding',
     lastUpdated: 'Sep 18, 2026',
     volume: 26,
     liveForDays: 5,
     mix: { completed: 0.82, awaiting: 0.09, failed: 0, declined: 0.09 },
+    trigger: 'When a new customer emails for the first time after signing up.',
+    steps: ['Draft a welcome reply with the setup guide.'],
   },
 
   // Live, but nothing has matched its trigger yet. The honest empty state on
@@ -647,9 +664,29 @@ export const RUN_SOURCES: SkillRunSource[] = [
     description: 'Flags renewals coming up in the next 30 days',
     status: 'active',
     mailboxes: ['success'],
-    href: '/canvas',
+    href: '/aops/seed/contract-renewals',
     lastUpdated: 'Sep 20, 2026',
     volume: 0,
+    liveForDays: 3,
+    trigger: 'When a customer asks about renewing their contract.',
+    steps: ['Pull the contract and renewal date.', 'Draft a reply with the renewal quote.'],
+  },
+
+  // Live, busy until nine days ago, then nothing: still switched on, but no
+  // email has matched since. The quiet that should make someone look.
+  {
+    skillId: 'invoice-disputes',
+    skillName: 'Invoice disputes',
+    description: 'Pulls the invoice and drafts a reply to billing disputes',
+    status: 'active',
+    mailboxes: ['billing'],
+    href: '/aops/seed/invoice-disputes',
+    lastUpdated: 'Aug 28, 2026',
+    volume: 38,
+    stoppedDaysAgo: 9,
+    mix: { completed: 0.8, awaiting: 0.12, failed: 0.04, declined: 0.04 },
+    trigger: 'When a customer disputes a charge on their invoice.',
+    steps: ['Pull the invoice and the charge in question.', 'Draft a reply explaining the charge or confirming a credit.'],
   },
 
   // Never enabled and unassigned - it has no mailbox to run in.
@@ -659,9 +696,11 @@ export const RUN_SOURCES: SkillRunSource[] = [
     description: 'Follows up on low scores with an apology and a call offer',
     status: 'draft',
     mailboxes: [],
-    href: '/connector-setup',
+    href: '/aops/seed/nps-followups',
     lastUpdated: 'Sep 19, 2026',
     volume: 0,
+    trigger: 'When a customer leaves a low NPS score.',
+    steps: ['Draft an apology and offer a call.'],
   },
 ];
 
@@ -676,6 +715,25 @@ export function runsForSkill(skillId: string): SkillRun[] {
   const out = src ? generateRuns(src) : [];
   RUN_CACHE.set(skillId, out);
   return out;
+}
+
+/** When a seeded skill went live and, if paused, when it stopped - derived
+ *  from the same spans the generator uses, so the chart's shading lands
+ *  exactly where the history starts and stops. */
+export function liveSpan(src: SkillRunSource): { liveSince?: number; pausedAt?: number } {
+  if (src.status === 'draft') return {};
+  const day = (d: number) => {
+    const t = new Date(NOW - d * DAY);
+    t.setHours(0, 0, 0, 0);
+    return t.getTime();
+  };
+  return {
+    liveSince: src.liveForDays ? day(src.liveForDays - 1) + 10 * 3_600_000 : undefined,
+    pausedAt:
+      src.status === 'paused' && src.stoppedDaysAgo
+        ? day(src.stoppedDaysAgo - 1) + 9 * 3_600_000
+        : undefined,
+  };
 }
 
 /** Every run across every skill, newest first. */
