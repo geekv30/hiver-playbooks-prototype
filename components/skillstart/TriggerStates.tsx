@@ -68,9 +68,9 @@ const STATES: StateDoc[] = [
     title: 'Live, only with /',
     when: 'The author turns off starting on its own.',
     shows: {
-      a: 'A line says the trigger does not start the skill now.',
+      a: 'A line says the skill runs only with /.',
       b: 'The section name changes to "When to use".',
-      c: 'Hiver AI turns grey. A line says the trigger does not start the skill now.',
+      c: 'Hiver AI turns grey. A line says the skill runs only with /.',
     },
     seed: () => live({ config: SLASH_ONLY }),
   },
@@ -144,7 +144,7 @@ const STATES: StateDoc[] = [
     id: 'only-me',
     title: 'Only the author can use /',
     when: 'The author is trying it out before sharing it.',
-    shows: 'Who shows "Only me". A line says only you see it.',
+    shows: 'Who shows "Only me". A line says only you see the skill.',
     seed: (d) => (d === 'c' ? live({ config: { ...BOTH, reach: 'me' } }) : null),
     na: {
       a: 'Not in A: / follows the skill’s mailboxes, so there is no per-person setting.',

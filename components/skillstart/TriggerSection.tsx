@@ -77,14 +77,13 @@ export function TriggerSection({ direction, config, onConfig, status, title, tri
 
 /** What changed, in one line, for the toast on a live skill. */
 export function changeLine(prev: StartConfig, next: StartConfig, slug: string | null): string {
-  // B swaps both at once.
-  if (prev.auto && !prev.slash && !next.auto && next.slash) return slug ? `It runs only with /${slug} now.` : 'It runs only with / now.';
-  if (!prev.auto && prev.slash && next.auto && !next.slash) return 'It runs only on its own now.';
-  if (!next.auto && !next.slash) return 'This skill does not run now.';
-  if (prev.auto && !next.auto) return next.slash ? 'It does not run on its own now. The / command still works.' : 'It does not run on its own now.';
-  if (!prev.auto && next.auto) return 'It runs on its own again.';
-  if (prev.slash && !next.slash) return 'It is not in the / menu now.';
-  if (!prev.slash && next.slash) return 'It is in the / menu again.';
+  const cmd = slug ? `/${slug}` : 'its / command';
+  if (!prev.auto && prev.slash && next.auto && !next.slash) return 'This skill now runs only on its own.';
+  if (!next.auto && !next.slash) return 'This skill does not run.';
+  if (prev.auto && !next.auto) return next.slash ? `This skill now runs only with ${cmd}.` : 'This skill does not run.';
+  if (!prev.auto && next.auto) return 'This skill runs on its own again.';
+  if (prev.slash && !next.slash) return 'This skill is not in the / menu now.';
+  if (!prev.slash && next.slash) return 'This skill is in the / menu again.';
   if (prev.reach !== next.reach)
     return next.reach === 'everyone' ? 'Everyone can use / now.' : next.reach === 'me' ? 'Only you can use / now.' : 'Only the Billing team can use / now.';
   return 'Saved.';
