@@ -46,11 +46,11 @@ const DIRECTIONS: DirectionDoc[] = [
     tab: 'A. Two switches',
     name: 'Two switches',
     pitch:
-      'Starting on its own and starting with / are separate, and both are on by default. The trigger does both jobs: it decides when the skill runs on its own, and it is the line people read in the / menu.',
+      'Two switches. One switch lets the skill run on its own. The other lets people run it with / in Copilot. Both are on at the start.',
     answers: [
-      ['Choices', 'Two switches, both on by default. Both off is allowed, with a warning that the skill never runs.'],
-      ['On an email that does not fit', 'Runs, and says the email does not fit the trigger.'],
-      ['Where / works', 'On emails and chats in the skill’s mailboxes, the same places it runs on its own.'],
+      ['Choices', 'Two switches. Both are on at the start. If both are off, a warning shows.'],
+      ['On an email that does not match', 'The skill runs. Copilot says that the email does not match.'],
+      ['Where / works', 'Only in the mailboxes of the skill.'],
     ],
     tries: [
       'Open Lena’s email about her billing address, type /refund and press Enter twice. It runs, finds nothing to refund, and says the email does not fit.',
@@ -63,11 +63,11 @@ const DIRECTIONS: DirectionDoc[] = [
     tab: 'B. One choice',
     name: 'One choice',
     pitch:
-      'One question with three answers: on its own, either way (on its own or with /), or only with /. A skill that only runs with / has no trigger. It has a "When to use" line instead, which is what the / menu shows.',
+      'One choice with three options: On its own, Either way, Only with /. With "Only with /", the trigger becomes "When to use". People see that text in the / menu.',
     answers: [
-      ['Choices', 'Three, and one is always picked, so a skill can never be set to never run. Default: either way.'],
-      ['On an email that does not fit', 'Runs, no check. The person who typed / is the trigger.'],
-      ['Where / works', 'Anywhere Copilot is. Mailboxes only limit where it runs on its own.'],
+      ['Choices', 'Three options. One is always picked. The default is Either way.'],
+      ['On an email that does not match', 'The skill runs. There is no check.'],
+      ['Where / works', 'In all of Hiver. Mailboxes apply only when it runs on its own.'],
     ],
     tries: [
       'Pick "Only with /". Trigger becomes "When to use", and editing that line changes the / menu.',
@@ -80,11 +80,11 @@ const DIRECTIONS: DirectionDoc[] = [
     tab: 'C. Two doors',
     name: 'Two doors',
     pitch:
-      'Each way in has its own reach. On its own reaches mailboxes; / reaches people (everyone, a team, or only the author). Copilot checks the open email against each trigger, lists the skills that fit first, and asks before running one that does not.',
+      'Two switches, and each has its own reach. Mailboxes limit where it runs on its own. A Who menu limits who can use /. Copilot shows matching skills first. On other emails, Copilot asks first.',
     answers: [
-      ['Choices', 'Two switches, each with its own reach: effectively three modes, and the author picks who can type it.'],
-      ['On an email that does not fit', 'Asks first: "This email does not look like that. Run it anyway?"'],
-      ['Where / works', 'Anywhere Copilot is, for the people it is shared with.'],
+      ['Choices', 'Two switches. Each has its own reach.'],
+      ['On an email that does not match', 'Copilot asks first: "Run it anyway?"'],
+      ['Where / works', 'In all of Hiver, for the people you pick.'],
     ],
     tries: [
       'Type / on Priya’s email. Refund requests is listed under "Fits this email".',

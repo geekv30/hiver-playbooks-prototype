@@ -25,9 +25,9 @@ export interface StartCtx {
   hasTrigger: boolean;
 }
 
-/** "in Billing and Refunds", or where they will come from on a draft. */
+/** " in Billing and Refunds". Empty on a draft: mailboxes come at Enable. */
 function where(mailboxes: string[]): string {
-  return mailboxes.length ? `in ${mailboxList(mailboxes)}` : 'in the mailboxes you pick at Enable';
+  return mailboxes.length ? ` in ${mailboxList(mailboxes)}` : '';
 }
 
 export function Slug({ slug, clash }: { slug: string; clash?: boolean }) {
@@ -58,10 +58,10 @@ function slashSub(ctx: StartCtx, lead: ReactNode): ReactNode {
   if (ctx.clash && ctx.slug)
     return (
       <span className={styles.subError}>
-        Another skill already uses /{ctx.slug}. Rename this skill to give it its own command.
+        Another skill uses this command. Change the skill name.
       </span>
     );
-  if (!ctx.slug) return 'Name the skill to get its / command.';
+  if (!ctx.slug) return 'Give the skill a name to get its / command.';
   return lead;
 }
 
@@ -71,21 +71,20 @@ function StateNotice({ ctx, direction }: { ctx: StartCtx; direction: 'a' | 'b' |
   if (status === 'paused')
     return (
       <Notice tone="quiet" icon={<RiPauseCircleLine aria-hidden />}>
-        Paused. Nothing starts, on its own or with /, until you resume.
+        Paused. This skill does not run until you resume it.
       </Notice>
     );
-  if (!config.auto && !config.slash) return <Notice tone="warn">With both off, this skill never runs.</Notice>;
+  if (!config.auto && !config.slash) return <Notice tone="warn">This skill does not run. Turn on one of the two.</Notice>;
   if (!config.auto && !ctx.hasTrigger)
     return (
       <Notice tone="warn">
-        {direction === 'b' ? 'Write when to use it.' : 'Write a trigger.'} It is the line people read next to{' '}
-        <Command slug={ctx.slug} /> in the / menu.
+        {direction === 'b' ? 'Write when to use it.' : 'Write a trigger.'} People see it in the / menu.
       </Notice>
     );
   if (!config.auto && direction !== 'b')
     return (
       <Notice tone="quiet" icon={<RiSlashCommands2 aria-hidden />}>
-        It does not run on its own, so the trigger only tells people when to use it in the / menu.
+        The trigger does not start the skill now. People see it in the / menu.
       </Notice>
     );
   return null;
@@ -100,7 +99,7 @@ export function TwoSwitches(ctx: StartCtx) {
       <div className={styles.switchRow}>
         <div className={styles.switchText}>
           <span className={styles.switchTitle}>Runs on its own</span>
-          <span className={styles.switchSub}>When an email or chat {where(mailboxes)} fits the trigger.</span>
+          <span className={styles.switchSub}>Runs when a new email or chat{where(mailboxes)} matches the trigger.</span>
         </div>
         <Toggle checked={config.auto} onChange={(auto) => onChange({ ...config, auto })} ariaLabel="Runs on its own" />
       </div>
@@ -110,7 +109,7 @@ export function TwoSwitches(ctx: StartCtx) {
             Runs with <Command slug={slug} clash={clash} />
           </span>
           <span className={styles.switchSub}>
-            {slashSub(ctx, <>When an agent or admin types it in Copilot, on an email or chat {where(mailboxes)}.</>)}
+            {slashSub(ctx, <>Runs when someone types it in Copilot{mailboxes.length ? `. Works only${where(mailboxes)}` : ''}.</>)}
           </span>
         </div>
         <Toggle checked={config.slash} onChange={(s) => onChange({ ...config, slash: s })} ariaLabel="Runs with /" />
@@ -153,17 +152,16 @@ export function OneChoiceHelp(ctx: StartCtx) {
   return (
     <>
       <p className={styles.help}>
-        {choice === 'auto' && <>Runs on its own when an email or chat {where(mailboxes)} fits. It is not in Copilot&apos;s / menu.</>}
+        {choice === 'auto' && <>Runs when a new email or chat{where(mailboxes)} matches. It is not in the / menu.</>}
         {choice === 'both' && (
           <>
-            Runs on its own when an email or chat {where(mailboxes)} fits. Agents and admins can also run it with{' '}
-            <Command slug={slug} clash={clash} /> in Copilot, anywhere in Hiver.
+            Runs when a new email or chat{where(mailboxes)} matches. People can also type <Command slug={slug} clash={clash} /> in
+            Copilot.
           </>
         )}
         {choice === 'slash' && (
           <>
-            Shown next to <Command slug={slug} clash={clash} /> in Copilot&apos;s / menu, so people pick the right skill. It
-            never starts on its own, so it needs no mailboxes.
+            Runs only when someone types <Command slug={slug} clash={clash} /> in Copilot. People see this text in the / menu.
           </>
         )}
       </p>
@@ -187,7 +185,7 @@ export function TwoDoors(ctx: StartCtx) {
         </span>
         <div className={styles.switchText}>
           <span className={styles.switchTitle}>Hiver AI</span>
-          <span className={styles.switchSub}>On its own, when an email or chat {where(mailboxes)} fits the trigger.</span>
+          <span className={styles.switchSub}>Runs when a new email or chat{where(mailboxes)} matches the trigger.</span>
         </div>
         <Toggle checked={config.auto} onChange={(auto) => onChange({ ...config, auto })} ariaLabel="Hiver AI starts it on its own" />
       </div>
@@ -201,7 +199,7 @@ export function TwoDoors(ctx: StartCtx) {
             {slashSub(
               ctx,
               <>
-                With <Command slug={slug} clash={clash} /> in Copilot, anywhere in Hiver.
+                Runs when someone types <Command slug={slug} clash={clash} /> in Copilot.
               </>,
             )}
           </span>
@@ -220,10 +218,10 @@ export function TwoDoors(ctx: StartCtx) {
       </div>
       <StateNotice ctx={ctx} direction="c" />
       {config.slash && config.reach === 'me' && ctx.status !== 'paused' && (
-        <p className={styles.help}>Only you see it in the / menu. Share it with a team or everyone when it is ready.</p>
+        <p className={styles.help}>Only you see it in the / menu.</p>
       )}
       {config.slash && config.reach !== 'me' && config.auto && ctx.status !== 'paused' && (
-        <p className={styles.help}>Copilot lists it first on an email that fits. On one that does not, it asks before running.</p>
+        <p className={styles.help}>Copilot shows it first on emails that match. On other emails, Copilot asks before it runs.</p>
       )}
     </div>
   );

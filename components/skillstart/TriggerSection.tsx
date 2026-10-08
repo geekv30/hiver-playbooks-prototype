@@ -5,10 +5,9 @@ import EditorLine from '@/components/flow01/EditorLine';
 import Toolbar from '@/components/flow01/Toolbar';
 import ed from '@/components/flow01/EditorCanvas.module.css';
 import { lineHasContent, type DeployStatus } from '@/components/flow01/doc';
-import { mailboxList } from '@/data/mailboxes';
 import type { Fragment } from '@/types/playbook';
 import { OneChoice, OneChoiceHelp, TwoDoors, TwoSwitches, type StartCtx } from './StartControls';
-import { REACH_LABEL, type Direction, type StartConfig } from './model';
+import type { Direction, StartConfig } from './model';
 import styles from './TriggerSection.module.css';
 
 /** The / command a name gives a skill: "Refund requests" -> "refund-requests". */
@@ -77,17 +76,17 @@ export function TriggerSection({ direction, config, onConfig, status, title, tri
 }
 
 /** What changed, in one line, for the toast on a live skill. */
-export function changeLine(prev: StartConfig, next: StartConfig, slug: string | null, mailboxes: string[]): string {
+export function changeLine(prev: StartConfig, next: StartConfig, slug: string | null): string {
   // B swaps both at once.
-  if (prev.auto && !prev.slash && !next.auto && next.slash) return slug ? `Now runs only with /${slug}.` : 'Now runs only with /.';
-  if (!prev.auto && prev.slash && next.auto && !next.slash) return "Now runs only on its own. Removed from Copilot's / menu.";
-  if (!next.auto && !next.slash) return 'It no longer runs at all.';
-  if (prev.auto && !next.auto) return next.slash ? 'No longer runs on its own. It still works with /.' : 'No longer runs on its own.';
-  if (!prev.auto && next.auto) return `Runs on its own again, on new emails and chats in ${mailboxList(mailboxes)}.`;
-  if (prev.slash && !next.slash) return "Removed from Copilot's / menu.";
-  if (!prev.slash && next.slash) return slug ? `Back in Copilot's / menu as /${slug}.` : "Back in Copilot's / menu.";
+  if (prev.auto && !prev.slash && !next.auto && next.slash) return slug ? `It runs only with /${slug} now.` : 'It runs only with / now.';
+  if (!prev.auto && prev.slash && next.auto && !next.slash) return 'It runs only on its own now.';
+  if (!next.auto && !next.slash) return 'This skill does not run now.';
+  if (prev.auto && !next.auto) return next.slash ? 'It does not run on its own now. The / command still works.' : 'It does not run on its own now.';
+  if (!prev.auto && next.auto) return 'It runs on its own again.';
+  if (prev.slash && !next.slash) return 'It is not in the / menu now.';
+  if (!prev.slash && next.slash) return 'It is in the / menu again.';
   if (prev.reach !== next.reach)
-    return next.reach === 'everyone' ? 'Everyone can run it with / now.' : `Only ${REACH_LABEL[next.reach].toLowerCase()} can run it with / now.`;
+    return next.reach === 'everyone' ? 'Everyone can use / now.' : next.reach === 'me' ? 'Only you can use / now.' : 'Only the Billing team can use / now.';
   return 'Saved.';
 }
 
@@ -125,7 +124,7 @@ export function StateFrame({ direction, seed }: { direction: Direction; seed: Fr
   const change = (next: StartConfig) => {
     if (status === 'active') {
       seeded.current = false;
-      setToast({ line: changeLine(config, next, slugFor(title), seed.mailboxes), undo: config });
+      setToast({ line: changeLine(config, next, slugFor(title)), undo: config });
     }
     setConfig(next);
   };
