@@ -47,19 +47,37 @@
   border-bottom: 1px solid var(--hairline-soft);
 }
 
-.never {
-  margin: 10px 0 0;
+.notice {
+  margin: 12px 0 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
   font-size: var(--fs-caption);
-  line-height: 17px;
-  color: var(--status-amber);
+  line-height: 18px;
+  color: var(--muted);
+  text-wrap: pretty;
 }
-.never svg {
+.notice svg {
   width: 14px;
   height: 14px;
   flex: none;
+  margin-top: 2px;
+}
+.notice[data-tone='warn'] {
+  color: var(--run-awaiting-ink);
+}
+.notice[data-tone='warn'] svg {
+  color: var(--status-amber);
+}
+.notice[data-tone='quiet'] svg {
+  color: var(--muted-soft);
+}
+.subError {
+  color: var(--run-failed-ink);
+}
+.slug[data-clash] {
+  color: var(--run-failed-ink);
+  background: var(--run-failed-bg);
 }
 
 /* B - "Starts" + the three-way control, above the trigger line */

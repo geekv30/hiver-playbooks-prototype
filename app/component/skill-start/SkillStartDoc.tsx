@@ -6,6 +6,7 @@ import SegmentedControl from '@/components/atoms/SegmentedControl';
 import Dropdown from '@/components/atoms/Dropdown';
 import EditorPane from '@/components/skillstart/EditorPane';
 import HiverSurface from '@/components/skillstart/HiverSurface';
+import TriggerStates from '@/components/skillstart/TriggerStates';
 import { lineToText, normalizeLine, txt } from '@/components/flow01/doc';
 import type { Fragment } from '@/types/playbook';
 import {
@@ -81,7 +82,7 @@ const DIRECTIONS: DirectionDoc[] = [
     pitch:
       'Each way in has its own reach. On its own reaches mailboxes; / reaches people (everyone, a team, or only the author). Copilot checks the open email against each trigger, lists the skills that fit first, and asks before running one that does not.',
     answers: [
-      ['Choices', 'Two switches, each with its own reach. Effectively three modes, plus who can use /.'],
+      ['Choices', 'Two switches, each with its own reach: effectively three modes, and the author picks who can type it.'],
       ['On an email that does not fit', 'Asks first: "This email does not look like that. Run it anyway?"'],
       ['Where / works', 'Anywhere Copilot is, for the people it is shared with.'],
     ],
@@ -212,12 +213,12 @@ export default function SkillStartDoc() {
   return (
     <main className={styles.page}>
       <header className={styles.mast}>
-        <p className={styles.kicker}>Skill editor/skill details and Copilot</p>
+        <p className={styles.kicker}>Skill editor/skill details</p>
         <h1 className={styles.h1}>How a skill starts</h1>
         <p className={styles.standfirst}>
           A skill can start in two ways: on its own, when Hiver AI finds an email or chat that fits its trigger, or by hand, when an
-          agent or admin types /skill-name in Copilot anywhere in Hiver. Three directions for how the author controls that. Each one
-          is live: change the setting on the left and Copilot on the right follows.
+          agent or admin types /skill-name in Copilot anywhere in Hiver. Three directions for how the author controls that in the
+          trigger, and every state the trigger can be in under each one.
         </p>
       </header>
 
@@ -236,6 +237,22 @@ export default function SkillStartDoc() {
         </div>
       </section>
 
+      <section className={styles.states} aria-label="States">
+        <div className={styles.statesHead}>
+          <h2 className={styles.h2}>Every state of the trigger</h2>
+          <p className={styles.para}>
+            Each frame opens in its state and then works: flip the switches, type the trigger, rename the skill in the toolbar,
+            Enable, Pause and Resume.
+          </p>
+        </div>
+        <TriggerStates direction={direction} />
+      </section>
+
+      <details className={styles.copilot}>
+        <summary className={styles.copilotSummary}>
+          <span className={styles.copilotTitle}>What / does in Copilot</span>
+          <span className={styles.copilotSub}>The same setting, seen from an email in Hiver and the admin panel.</span>
+        </summary>
       <section className={styles.play} aria-label="Try it">
         <div className={styles.playBar}>
           <p className={styles.paneLabel}>Skill editor/skill details</p>
@@ -269,6 +286,7 @@ export default function SkillStartDoc() {
           <p className={styles.note}>Matching is scripted in this prototype: each email fits one skill, whatever the trigger says.</p>
         </div>
       </section>
+      </details>
 
       <section className={styles.block}>
         <h2 className={styles.h2}>Side by side</h2>
