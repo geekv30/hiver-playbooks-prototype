@@ -1,0 +1,288 @@
+/* A chat run: the conversation as the spine, each turn's steps folded under
+   the AI agent's line. Two columns throughout - a 20px gutter for who is
+   speaking (or the step rail), then the text - so every message, every step
+   and every reply starts on the same left edge. */
+.chat {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Same caption-over-hairline as the email trace's title, with the span and
+   the expand switch on the right. */
+.head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--log-rule, #eceff6);
+  margin-bottom: 2px;
+}
+.title {
+  margin: 0;
+  font-size: var(--fs-micro);
+  line-height: 14px;
+  font-weight: 500;
+  color: var(--log-head, #a3a3a3);
+}
+.span {
+  margin-left: auto;
+  font-size: var(--fs-micro);
+  line-height: 14px;
+  color: var(--log-soft, #97a3b7);
+  font-variant-numeric: tabular-nums;
+}
+.expandAll {
+  /* Hit area grows inward only: the pane has no right padding, so a negative
+     right margin here overflows it sideways. */
+  padding: 2px 6px;
+  margin: -2px 0;
+  border: 0;
+  border-radius: var(--r-xs);
+  background: none;
+  font: inherit;
+  font-size: var(--fs-micro);
+  line-height: 14px;
+  font-weight: 500;
+  color: var(--log-pick, #343c45);
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap);
+}
+.expandAll:hover {
+  background: var(--surface-soft);
+}
+.expandAll:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* "Skill started" / "Chat ended": a centred label on a hairline. */
+.event {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  font-size: var(--fs-micro);
+  line-height: 14px;
+  color: var(--log-soft, #97a3b7);
+  white-space: nowrap;
+}
+.event::before,
+.event::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--log-rule, #eceff6);
+}
+
+.turn {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.message {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.who {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 20px;
+}
+.customerName {
+  font-size: var(--fs-small);
+  line-height: 19px;
+  letter-spacing: var(--ls-small);
+  font-weight: 500;
+  color: var(--log-ink, #3e4c5a);
+}
+.time {
+  font-size: var(--fs-micro);
+  line-height: 14px;
+  color: var(--log-soft, #97a3b7);
+  font-variant-numeric: tabular-nums;
+}
+
+/* What the customer wrote: a soft filled block, the same fill as a step's
+   output, so "what came in" and "what a step produced" read as quoted
+   material and the AI agent's reply as the page's own text. */
+.customerText {
+  margin: 0 0 0 28px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--trace-box, #f6f8fc);
+  font-size: var(--fs-small);
+  line-height: 19px;
+  letter-spacing: var(--ls-small);
+  color: var(--log-ink, #3e4c5a);
+  overflow-wrap: anywhere;
+}
+
+/* The AI agent's line - its name, and the steps behind its reply. The whole
+   line is the toggle; "N steps" is underlined so it reads as the thing to
+   press, as in the Evaluation playground. */
+.agentLine {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-height: 24px;
+  padding: 2px 6px 2px 0;
+  margin: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font: inherit;
+  font-size: var(--fs-small);
+  line-height: 19px;
+  letter-spacing: var(--ls-small);
+  color: var(--log-ink, #3e4c5a);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap);
+}
+.agentLine:hover {
+  background: var(--surface-soft);
+}
+.agentLine:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.agentMark {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-right: 2px;
+  border-radius: 50%;
+  background: var(--surface-soft, #f2f4f8);
+  color: var(--trace-label, #4d596c);
+}
+.agentMark svg {
+  width: 12px;
+  height: 12px;
+}
+.agentName {
+  font-weight: 500;
+}
+.sep {
+  color: var(--hairline-strong);
+}
+.stepsLink {
+  color: var(--trace-label, #4d596c);
+  text-decoration: underline;
+  text-decoration-color: var(--hairline-strong);
+  text-underline-offset: 3px;
+}
+.agentLine:hover .stepsLink {
+  text-decoration-color: currentColor;
+}
+
+/* A folded turn still says when one of its steps broke, waits or was turned
+   down - in the outcome's colours, as a dot and a few words. */
+.issue {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.issueDot {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
+}
+.issue[data-tone='failed'] {
+  color: var(--run-failed-ink, #97231e);
+}
+.issue[data-tone='failed'] .issueDot {
+  background: var(--run-mark-failed);
+}
+.issue[data-tone='awaiting'] {
+  color: var(--run-awaiting-ink, #8a4515);
+}
+.issue[data-tone='awaiting'] .issueDot {
+  background: var(--run-mark-awaiting);
+}
+.issue[data-tone='declined'] {
+  color: var(--run-declined);
+}
+.issue[data-tone='declined'] .issueDot {
+  background: var(--run-mark-declined);
+}
+
+.chevron {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+  transition: transform var(--d-hover) var(--ease-snap);
+}
+.chevron[data-open] {
+  transform: rotate(180deg);
+}
+
+/* The unfolded steps sit in the text column, the rail lined up under the
+   agent's mark. */
+.steps {
+  padding: 2px 0 4px 6px;
+  animation: stepsIn var(--d-enter, 180ms) var(--ease-snap);
+}
+@keyframes stepsIn {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The reply: the page's own text, no box - what the customer read. */
+/* After unfolded steps, a step's worth of air, so the reply never reads as
+   one more line of the trace. */
+.steps + .reply {
+  margin-top: 8px;
+}
+.reply {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 28px;
+}
+.replyText {
+  margin: 0;
+  font-size: var(--fs-small);
+  line-height: 20px;
+  letter-spacing: var(--ls-small);
+  color: var(--log-ink, #3e4c5a);
+}
+.fallbackNote {
+  margin: 0;
+  font-size: var(--fs-micro);
+  line-height: 14px;
+  color: var(--log-soft, #97a3b7);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .steps {
+    animation: none;
+  }
+  .chevron,
+  .agentLine,
+  .expandAll {
+    transition: none;
+  }
+}

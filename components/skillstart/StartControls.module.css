@@ -1,0 +1,143 @@
+/* How-a-skill-starts controls. They sit in the editor's Trigger section, on its
+   content rail, so they read as part of writing the trigger: no card around
+   them, rows split by the same soft hairline the editor uses. */
+
+.slug {
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: -0.01em;
+  color: var(--ink-soft);
+  padding: 1px 5px;
+  border-radius: var(--r-xs);
+  background: var(--surface-soft);
+}
+
+.switchText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.switchTitle {
+  font-size: var(--fs-small);
+  line-height: 19px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+.switchSub {
+  font-size: var(--fs-caption);
+  line-height: 17px;
+  color: var(--muted);
+}
+
+/* A - two rows under the trigger line */
+.switches {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--hairline-soft);
+}
+.switchRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--hairline-soft);
+}
+
+.notice {
+  margin: 12px 0 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: var(--fs-caption);
+  line-height: 18px;
+  color: var(--muted);
+  text-wrap: pretty;
+}
+.notice svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  margin-top: 2px;
+}
+.notice[data-tone='warn'] {
+  color: var(--run-awaiting-ink);
+}
+.notice[data-tone='warn'] svg {
+  color: var(--status-amber);
+}
+.notice[data-tone='quiet'] svg {
+  color: var(--muted-soft);
+}
+.subError {
+  color: var(--run-failed-ink);
+}
+.slug[data-clash] {
+  color: var(--run-failed-ink);
+  background: var(--run-failed-bg);
+}
+
+/* B - "Starts" + the three-way control, above the trigger line */
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 16px;
+}
+.choiceLabel {
+  flex: none;
+  font-size: var(--fs-small);
+  line-height: 19px;
+  color: var(--muted);
+}
+.help {
+  margin: 12px 0 0;
+  font-size: var(--fs-caption);
+  line-height: 18px;
+  color: var(--muted);
+  text-wrap: pretty;
+}
+
+/* C - two doors, each a row: icon, what starts it + its reach, switch */
+.doors {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--hairline-soft);
+}
+.door {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--hairline-soft);
+}
+.doorIco {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-sm);
+  background: var(--surface-soft);
+  color: var(--body);
+  transition: color var(--d-hover) var(--ease-snap);
+}
+.doorIco svg {
+  width: 15px;
+  height: 15px;
+}
+.door[data-off] .doorIco {
+  color: var(--muted-soft);
+}
+.door[data-off] .switchTitle {
+  color: var(--muted);
+}
+.reach {
+  flex: none;
+}
+.reach[data-hidden] {
+  visibility: hidden;
+}
