@@ -33,8 +33,10 @@
   font-variant-numeric: tabular-nums;
 }
 .expandAll {
+  /* Hit area grows inward only: the pane has no right padding, so a negative
+     right margin here overflows it sideways. */
   padding: 2px 6px;
-  margin: -2px -6px -2px 0;
+  margin: -2px 0;
   border: 0;
   border-radius: var(--r-xs);
   background: none;
