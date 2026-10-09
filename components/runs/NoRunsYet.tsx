@@ -2,7 +2,7 @@
 
 import { RiArrowRightLine } from 'react-icons/ri';
 import type { DeployStatus } from '@/components/flow01/doc';
-import { mailboxSummary } from '@/data/mailboxes';
+import { inboxSummary } from '@/data/inboxes';
 import { formatDayShort, formatTime } from './runsModel';
 import styles from './NoRunsYet.module.css';
 
@@ -10,6 +10,8 @@ import styles from './NoRunsYet.module.css';
 export interface RunsSkill {
   status: DeployStatus;
   mailboxes: string[];
+  /** Chat inboxes it is live on - the chat agent's side. */
+  chatInboxes?: string[];
   /** The trigger, as plain text. Not shown; a skill with none has nothing
    *  to match, so the check-matches link needs it. */
   trigger: string;
@@ -31,7 +33,11 @@ function when(t: number, on = false): string {
 }
 
 function copy(skill: RunsSkill): { title: string; body: string } {
-  const where = mailboxSummary(skill.mailboxes);
+  const chats = skill.chatInboxes ?? [];
+  const where = inboxSummary([...skill.mailboxes, ...chats]);
+  // Name what it is waiting for: emails, chats, or either.
+  const what =
+    chats.length === 0 ? 'no emails' : skill.mailboxes.length === 0 ? 'no chats' : 'nothing in';
   if (skill.status === 'draft') {
     return { title: 'Nothing to see. Yet.', body: 'Enable this skill and its runs show up here.' };
   }
@@ -42,8 +48,8 @@ function copy(skill: RunsSkill): { title: string; body: string } {
     };
   }
   return {
-    title: 'All ears, no emails yet',
-    body: `Watching ${where || 'its mailboxes'}${skill.liveSince ? ` since ${when(skill.liveSince)}` : ''}. The first match lands here.`,
+    title: `All ears, ${what} yet`,
+    body: `Watching ${where || 'its inboxes'}${skill.liveSince ? ` since ${when(skill.liveSince)}` : ''}. The first match lands here.`,
   };
 }
 
@@ -66,7 +72,13 @@ export default function NoRunsYet({
   onCheckMatches?: () => void;
 }) {
   const { title, body } = copy(skill);
-  const canCheck = skill.status === 'active' && skill.trigger.trim() !== '' && onCheckMatches;
+  // Matching emails looks through a mailbox, so a chat-only skill has
+  // nothing to check there.
+  const canCheck =
+    skill.status === 'active' &&
+    skill.trigger.trim() !== '' &&
+    skill.mailboxes.length > 0 &&
+    onCheckMatches;
   return (
     <div className={styles.wrap} data-status={skill.status}>
       <div className={styles.head}>

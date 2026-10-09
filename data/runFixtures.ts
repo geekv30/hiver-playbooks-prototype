@@ -10,7 +10,7 @@
 // Runs surface. Generation is seeded, so every reload shows the same history.
 
 import { RECENT_EMAILS, type SimEmail } from './simFixtures';
-
+import type { Channel } from './inboxes';
 
 // --- Model ------------------------------------------------------------------
 
@@ -22,7 +22,9 @@ export type RunState = 'completed' | 'awaiting' | 'failed' | 'declined';
 /** Step kinds, aligned with the Evaluation trace so one vocabulary covers both. */
 export type RunStepKind = 'thinking' | 'action' | 'condition' | 'reply';
 
-export type RunStepStatus = 'done' | 'failed' | 'skipped';
+/** `held`: a gated action waiting on a person (chat - a live chat cannot hold
+ *  its reply, so what waits is the action). `declined`: that person said no. */
+export type RunStepStatus = 'done' | 'failed' | 'skipped' | 'held' | 'declined';
 
 export interface RunStep {
   id: string;
@@ -57,16 +59,48 @@ export interface RunError {
   message: string;
 }
 
+/** One customer message in a chat run, and what the AI agent did about it. */
+export interface RunTurn {
+  id: string;
+  /** When the customer wrote. */
+  at: number;
+  message: string;
+  /** What the agent did for this message, in order. Ends with the reply step
+   *  when the agent got that far. */
+  steps: RunStep[];
+  /** What the customer received. Absent when the turn broke before a reply. */
+  reply?: string;
+  /** The reply came from the fallback, not from the skill (the turn failed). */
+  fallback?: boolean;
+}
+
+/** How a chat came to an end, separate from how the run turned out. A run can
+ *  complete and the customer still walk away mid-way. */
+export type ChatEnding = 'closed' | 'left' | 'handedOff';
+
 export interface SkillRun {
   id: string;
   skillId: string;
   skillName: string;
+  channel: Channel;
   /** The conversation this ran on. */
   conversationId: string;
-  subject: string;
+  /** Email only - a chat has no subject. */
+  subject?: string;
+  /** The customer: a name, or the generated handle of an anonymous visitor. */
   sender: string;
-  senderEmail: string;
-  mailboxId: string;
+  /** Absent for a chat visitor who never gave one. */
+  senderEmail?: string;
+  /** The shared mailbox or chat inbox it ran in. */
+  inboxId: string;
+  /** Chat only: the turns the skill handled, oldest first. */
+  turns?: RunTurn[];
+  /** Chat only: messages exchanged before the skill picked the chat up. */
+  priorMessages?: number;
+  /** Chat only: how the chat ended. */
+  ending?: ChatEnding;
+  /** Chat only: planned steps the chat never reached (the customer left). */
+  notReached?: string[];
   state: RunState;
   startedAt: number;
   durationMs: number;
@@ -211,11 +245,38 @@ const STEP_TEMPLATE: (Omit<RunStep, 'status' | 'ms'> & { optional?: boolean })[]
     kind: 'thinking',
     text: 'Reading the conversation to confirm the sender and pull out what is being asked.',
   },
-  { id: 's1', kind: 'action', iconKey: 'extract', label: 'Extract details', output: 'customer, order reference, and what they asked for' },
+  {
+    id: 's1',
+    kind: 'action',
+    iconKey: 'extract',
+    label: 'Extract details',
+    output: 'customer, order reference, and what they asked for',
+  },
   { id: 's2', kind: 'action', iconKey: 'tag', label: 'Tag', output: 'needs-reply, support' },
-  { id: 's3', kind: 'action', iconKey: 'contact', label: 'Get contact', output: 'John Doe - hiverhq.com', optional: true },
-  { id: 's4', kind: 'action', iconKey: 'kb', label: 'Search Knowledge Hub', output: '1 matching article', optional: true },
-  { id: 's5', kind: 'action', iconKey: 'clickup', label: 'Create task', output: 'OPS-2213 - Support / Escalations', optional: true },
+  {
+    id: 's3',
+    kind: 'action',
+    iconKey: 'contact',
+    label: 'Get contact',
+    output: 'John Doe - hiverhq.com',
+    optional: true,
+  },
+  {
+    id: 's4',
+    kind: 'action',
+    iconKey: 'kb',
+    label: 'Search Knowledge Hub',
+    output: '1 matching article',
+    optional: true,
+  },
+  {
+    id: 's5',
+    kind: 'action',
+    iconKey: 'clickup',
+    label: 'Create task',
+    output: 'OPS-2213 - Support / Escalations',
+    optional: true,
+  },
   { id: 't2', kind: 'thinking', text: 'Deciding which reply fits this case.' },
   { id: 's6', kind: 'condition', condType: 'if', branch: 'the request matches a known case' },
   { id: 's7', kind: 'reply', iconKey: 'reply', label: 'Reply', suffix: 'draft' },
@@ -226,8 +287,19 @@ const STEP_TEMPLATE: (Omit<RunStep, 'status' | 'ms'> & { optional?: boolean })[]
  *  precisely overrides them here rather than the template being about one case
  *  and wrong for the other seven. */
 const SKILL_OVERRIDES: Record<string, Record<string, Partial<RunStep>>> = {
+  'order-status': {
+    t1: { text: 'Reading the chat to find the order and what the customer wants to know.' },
+    s1: { label: 'Extract order details', output: 'order #61204, shipped yesterday, due Thursday' },
+    s2: { output: 'order-status, chat' },
+    s4: { output: '1 matching article: Tracking your order' },
+    s5: { output: 'OPS-3120 - Logistics / Address changes' },
+    t2: { text: 'Checking whether the order has shipped, to choose the reply.' },
+    s6: { branch: 'the order has not shipped yet' },
+  },
   'api-error-triage': {
-    t1: { text: 'Checking the conversation to confirm the sender and pull the error details before acting.' },
+    t1: {
+      text: 'Checking the conversation to confirm the sender and pull the error details before acting.',
+    },
     s1: { label: 'Summarize error', output: 'summary: 404, not found, 11:34, v1.2.1, southern-S3' },
     s2: { output: 'api-error, support' },
     s4: { output: 'returned: 200 OK' },
@@ -241,7 +313,10 @@ const SKILL_OVERRIDES: Record<string, Record<string, Partial<RunStep>>> = {
     s6: { branch: 'the order is inside the refund window' },
   },
   'shipping-delays': {
-    s1: { label: 'Extract order details', output: 'order #55210, 9 days late, no tracking movement' },
+    s1: {
+      label: 'Extract order details',
+      output: 'order #55210, 9 days late, no tracking movement',
+    },
     s2: { output: 'shipping-delay, escalated' },
     s5: { output: 'OPS-4471 - Logistics / Delays' },
     s6: { branch: 'the delivery is more than five days late' },
@@ -415,6 +490,12 @@ export interface SkillRunSource {
   status: 'active' | 'paused' | 'draft';
   /** Mailboxes this skill is live on. Empty = unassigned. */
   mailboxes: string[];
+  /** Chat inboxes the skill is live on - the chat agent's twin of a mailbox. */
+  chatInboxes?: string[];
+  /** Roughly how many CHAT runs per 30 days, on top of `volume` (email). */
+  chatVolume?: number;
+  /** How its chat runs turn out, when that differs from email. */
+  chatMix?: OutcomeMix;
   /** Mailboxes beyond the two chips the row has room for (the "+N"). */
   moreMailboxes?: number;
   /** Where the row's name links. */
@@ -440,6 +521,12 @@ export interface SkillRunSource {
 
 /** Build one skill's run history. Pure and seeded: same source, same history. */
 export function generateRuns(src: SkillRunSource): SkillRun[] {
+  return [...generateEmailRuns(src), ...generateChatRuns(src)].sort(
+    (a, b) => b.startedAt - a.startedAt,
+  );
+}
+
+function generateEmailRuns(src: SkillRunSource): SkillRun[] {
   if (src.volume === 0 || src.mailboxes.length === 0) return [];
   const rand = rng(hash(src.skillId));
   const now = anchorNow();
@@ -474,7 +561,8 @@ export function generateRuns(src: SkillRunSource): SkillRun[] {
       const mailboxId = src.mailboxes[Math.floor(rand() * src.mailboxes.length)] ?? 'support';
       // Office hours, 9am - 7pm.
       const hour = 9 + Math.floor(rand() * 10);
-      const startedAt = dayStart - (dayStart % DAY) + hour * 3_600_000 + Math.floor(rand() * 3_600_000);
+      const startedAt =
+        dayStart - (dayStart % DAY) + hour * 3_600_000 + Math.floor(rand() * 3_600_000);
       // A run that has not happened yet is not history.
       if (startedAt > now) continue;
 
@@ -506,9 +594,7 @@ export function generateRuns(src: SkillRunSource): SkillRun[] {
           ? (expired ?? reachable[Math.floor(rand() * reachable.length)] ?? FAILURES[0]!)
           : undefined;
       const steps = buildSteps(rand, plan, shape, src.skillId, state, email, failure);
-      const durationMs = steps
-        .filter((s) => s.status !== 'skipped')
-        .reduce((a, s) => a + s.ms, 0);
+      const durationMs = steps.filter((s) => s.status !== 'skipped').reduce((a, s) => a + s.ms, 0);
 
       const applied = steps
         .filter((s) => s.status === 'done' && CHIP_LABEL[s.id])
@@ -530,7 +616,8 @@ export function generateRuns(src: SkillRunSource): SkillRun[] {
         subject: email.subject,
         sender: email.sender,
         senderEmail: SENDER_EMAIL[email.sender] ?? 'customer@example.com',
-        mailboxId,
+        channel: 'email',
+        inboxId: mailboxId,
         state,
         startedAt,
         durationMs,
@@ -540,12 +627,465 @@ export function generateRuns(src: SkillRunSource): SkillRun[] {
         error: failure
           ? { step: failure.step, code: failure.code, message: failure.message }
           : undefined,
-        assignee: state === 'awaiting' ? APPROVERS[Math.floor(rand() * APPROVERS.length)] : undefined,
+        assignee:
+          state === 'awaiting' ? APPROVERS[Math.floor(rand() * APPROVERS.length)] : undefined,
       });
     }
   }
 
   return runs.sort((a, b) => b.startedAt - a.startedAt);
+}
+
+// --- Chat runs -------------------------------------------------------------
+// A chat run is one skill run in one chat: the customer writes, the AI agent
+// does its steps and replies, and that repeats until the chat ends. So a chat
+// run is a short list of TURNS, each with its own steps, under one outcome.
+
+interface ChatScript {
+  turns: { customer: string; reply: string }[];
+}
+
+/** What the customers of each skill say in chat. Generic, swappable. */
+const CHAT_SCRIPTS: Record<string, ChatScript[]> = {
+  'api-error-triage': [
+    {
+      turns: [
+        {
+          customer:
+            'Hi, every call to /v2/orders returns 404 since this morning. We are on SDK 1.2.1.',
+          reply:
+            'Thanks for flagging this. Could you share a request ID from one of the failed calls so I can trace it?',
+        },
+        {
+          customer: 'Sure, req_8f21c. It worked fine yesterday.',
+          reply:
+            'Found it. In 1.2.1 the route moved to /v2/order. Updating the path fixes the 404s.',
+        },
+        {
+          customer: 'Our mobile app is pinned to the old path. Can you keep both working?',
+          reply:
+            'I have raised it with engineering so they can look at keeping the old route. You will get an update here.',
+        },
+      ],
+    },
+    {
+      turns: [
+        {
+          customer: 'Checkout API has been throwing 500s for about 20 minutes. Is something down?',
+          reply:
+            'Sorry about that. Which endpoint are you calling, and when did the first error come in?',
+        },
+        {
+          customer: 'POST /v2/checkout, first one at 10:42.',
+          reply:
+            'Thanks. That matches an incident we are tracking, and a fix is rolling out now. I have added your account to it, so you get the update.',
+        },
+      ],
+    },
+    {
+      turns: [
+        {
+          customer: 'I keep getting 429 too many requests when I sync customer records.',
+          reply: 'That is the rate limit. How many requests do you send per minute during a sync?',
+        },
+        {
+          customer: 'Around 900, all in one burst.',
+          reply:
+            'The limit is 600 a minute. Batching the sync, or adding a short backoff between calls, keeps you under it.',
+        },
+        {
+          customer: 'Can the limit be raised for our plan?',
+          reply:
+            'A higher limit needs a quick review by the team. I have passed your request on, and they will reply here.',
+        },
+      ],
+    },
+  ],
+  'refund-requests': [
+    {
+      turns: [
+        {
+          customer: 'I was charged twice for order #40182. Can I get one of them refunded?',
+          reply:
+            'Sorry about the double charge. Can you confirm the email on the order so I can find it?',
+        },
+        {
+          customer: 'It is under olivia@fernhill.co.',
+          reply:
+            'Thanks, found it. The second charge of $129.00 is refunded to your card. It shows in 3 to 5 days.',
+        },
+      ],
+    },
+    {
+      turns: [
+        {
+          customer: 'The jacket I ordered does not fit. Can I return it for a refund?',
+          reply: 'Of course. Did the order arrive in the last 30 days?',
+        },
+        {
+          customer: 'Yes, I got it last week.',
+          reply:
+            'Then it is inside the refund window. I have started the return, and the label comes by email.',
+        },
+      ],
+    },
+  ],
+  'shipping-delays': [
+    {
+      turns: [
+        {
+          customer: 'My order was due Friday and the tracking has not moved in five days.',
+          reply: 'Sorry for the wait. Could you share the order number?',
+        },
+        {
+          customer: 'It is #55210.',
+          reply:
+            'Thanks. The parcel is stuck at the depot, so I have asked our ops team for a new delivery date. They will update you here.',
+        },
+      ],
+    },
+    {
+      turns: [
+        {
+          customer: 'Where is my parcel? It is two weeks late now.',
+          reply: 'I am sorry. What is the order number, so I can check the tracking?',
+        },
+        {
+          customer: '#55871',
+          reply:
+            'It missed its slot and is now booked for tomorrow morning. I have flagged it, so the team keeps an eye on it.',
+        },
+      ],
+    },
+  ],
+  'welcome-onboarding': [
+    {
+      turns: [
+        {
+          customer: 'We just signed up. How do I get the rest of my team in?',
+          reply:
+            'Welcome aboard! You can invite them from Settings, then Team. How many people are joining?',
+        },
+        {
+          customer: 'About 12.',
+          reply:
+            'Your plan covers that. After they join, connect your inbox. The setup guide shows how.',
+        },
+      ],
+    },
+    {
+      turns: [
+        {
+          customer: 'Hi, is there a guide for setting things up?',
+          reply:
+            'Hi and welcome! The setup guide covers inviting your team and connecting your inbox. Shall I send it here?',
+        },
+        {
+          customer: 'Yes please.',
+          reply: 'Here it is: Getting started with your workspace. Shout if anything is unclear.',
+        },
+      ],
+    },
+  ],
+  'order-status': [
+    {
+      turns: [
+        {
+          customer: 'Hi, where is my order #61204?',
+          reply:
+            'It left our warehouse yesterday and is due on Thursday. Do you want the tracking link?',
+        },
+        {
+          customer: 'Yes please.',
+          reply: 'Here it is. It updates a few times a day, so you can follow it there.',
+        },
+      ],
+    },
+    {
+      turns: [
+        {
+          customer: 'Has my order shipped yet?',
+          reply: 'Happy to check. What is the order number, or the email you ordered with?',
+        },
+        {
+          customer: 'mia.thompson@quillside.co',
+          reply: 'Thanks. Your order is packed and ships today. The tracking link comes by email.',
+        },
+      ],
+    },
+    {
+      turns: [
+        {
+          customer: 'I need to change the delivery address on my order.',
+          reply: 'I can help with that. What is the order number?',
+        },
+        {
+          customer: '#61877, I moved last week.',
+          reply:
+            'The order has not shipped yet, so the address can still change. What is the new address?',
+        },
+        {
+          customer: '22 Harbour Lane, Leeds LS1 4AB.',
+          reply:
+            'Done. The order now goes to 22 Harbour Lane, and the tracking email will show it.',
+        },
+      ],
+    },
+  ],
+};
+
+const CHAT_SCRIPT_DEFAULT: ChatScript[] = [
+  {
+    turns: [
+      {
+        customer: 'Hi, I need some help with my account.',
+        reply: 'Happy to help. What is going on?',
+      },
+      {
+        customer: "I cannot see last week's invoices.",
+        reply: 'Thanks. They are under Billing, then History. I have sent you a direct link too.',
+      },
+    ],
+  },
+];
+
+/** Chat customers who gave their name. The rest are anonymous visitors. */
+const CHAT_NAMES: [string, string][] = [
+  ['Maya Robinson', 'maya@northwind.co'],
+  ['Jordan Kim', 'jordan.kim@brightpath.io'],
+  ['Priya Shah', 'priya@meridiansupply.com'],
+  ['Derek Lane', 'derek.lane@larkstudio.com'],
+  ['Olivia Brown', 'olivia@fernhill.co'],
+  ['Ethan Clark', 'ethan@redwoodlabs.io'],
+  ['Mia Thompson', 'mia.thompson@quillside.co'],
+  ['Lucas Meyer', 'lucas@stonebridge.co'],
+];
+
+/** The name a chat widget gives a visitor who never said who they are. */
+const HANDLE_A = ['winter', 'amber', 'quiet', 'silver', 'north', 'coral', 'maple', 'lunar'];
+const HANDLE_B = ['voice', 'river', 'field', 'harbor', 'falcon', 'meadow', 'stone', 'cloud'];
+
+/** What the customer sees when a step breaks mid-chat. Not the skill's words -
+ *  the chat agent's fallback, which hands the chat to a person. */
+export const CHAT_FALLBACK =
+  'Sorry, I hit a problem on my side. I have passed this to a teammate, who will reply here shortly.';
+
+/** What the customer sees while a gated action waits on a person. */
+const CHAT_HOLDING =
+  'I have asked the team to approve the next step. They will confirm here, and you will get an email too.';
+
+/** A gated action in a live chat waits minutes, not days: the customer is
+ *  still there. Older ones were decided or timed out to a teammate. */
+const CHAT_APPROVAL_EXPIRY_DAYS = 2;
+
+/** Split the plan across the turns, earlier turns taking the extra step. The
+ *  thinking step that decides the reply always stays with its condition. */
+function splitPlan<T extends { id: string }>(plan: T[], n: number): T[][] {
+  const out: T[][] = [];
+  let at = 0;
+  for (let i = 0; i < n; i += 1) {
+    const size = Math.ceil((plan.length - at) / (n - i));
+    out.push(plan.slice(at, at + size));
+    at += size;
+  }
+  for (let i = 0; i < out.length - 1; i += 1) {
+    const chunk = out[i]!;
+    if (chunk.length > 1 && chunk[chunk.length - 1]!.id === 't2') out[i + 1]!.unshift(chunk.pop()!);
+  }
+  return out;
+}
+
+/** The name a step goes by in the trace - kept in step with RunTrace. */
+const stepTitle = (s: { kind: RunStepKind; label?: string }) =>
+  s.kind === 'thinking' ? 'Reasoning' : s.kind === 'condition' ? 'Categorize' : (s.label ?? 'Step');
+
+function generateChatRuns(src: SkillRunSource): SkillRun[] {
+  const inboxes = src.chatInboxes ?? [];
+  const volume = src.chatVolume ?? 0;
+  if (volume === 0 || inboxes.length === 0) return [];
+  // Its own seed, so adding chat never reshuffles a skill's email history.
+  const rand = rng(hash(`${src.skillId}:chat`));
+  const now = anchorNow();
+  const mix = src.chatMix ?? src.mix ?? MIX_DEFAULT;
+  const scripts = CHAT_SCRIPTS[src.skillId] ?? CHAT_SCRIPT_DEFAULT;
+  const shape = src.shape ?? 'full';
+  const overrides = { ...(SHAPE_OVERRIDES[shape] ?? {}), ...(SKILL_OVERRIDES[src.skillId] ?? {}) };
+  const runs: SkillRun[] = [];
+  const firstDay = src.liveForDays ?? RUN_WINDOW_DAYS;
+  const lastDay = src.stoppedDaysAgo ?? 0;
+  let owedWait = mix.awaiting > 0;
+
+  for (let day = RUN_WINDOW_DAYS - 1; day >= 0; day -= 1) {
+    if (day >= firstDay || day < lastDay) continue;
+    const dayStart = now - day * DAY;
+    const weekend = [0, 6].includes(new Date(dayStart).getDay());
+    // Chat runs a little later into the evening than email, and keeps more of
+    // its weekend - people use the widget when they are free.
+    const span = src.liveForDays ?? VOLUME_PERIOD_DAYS;
+    const base = (volume / span) * (weekend ? 0.5 : 1.15);
+    const count = Math.max(0, Math.round(base * (0.45 + rand() * 1.1)));
+
+    for (let i = 0; i < count; i += 1) {
+      const hour = 8 + Math.floor(rand() * 13);
+      const startedAt =
+        dayStart - (dayStart % DAY) + hour * 3_600_000 + Math.floor(rand() * 3_600_000);
+      if (startedAt > now) continue;
+      const ageDays = (now - startedAt) / DAY;
+
+      const script = scripts[Math.floor(rand() * scripts.length)]!;
+      const inboxId = inboxes[Math.floor(rand() * inboxes.length)]!;
+      const known = rand() < 0.62;
+      const [name, email] = known
+        ? CHAT_NAMES[Math.floor(rand() * CHAT_NAMES.length)]!
+        : [
+            `${HANDLE_A[Math.floor(rand() * HANDLE_A.length)]}-${HANDLE_B[Math.floor(rand() * HANDLE_B.length)]}-${100 + Math.floor(rand() * 900)}`,
+            undefined,
+          ];
+
+      let state = pickState(rand, mix);
+      if ((state === 'awaiting' || state === 'declined') && shape === 'triage') state = 'completed';
+      if (state === 'awaiting' && ageDays > CHAT_APPROVAL_EXPIRY_DAYS)
+        state = rand() < 0.75 ? 'completed' : 'declined';
+      // A skill that gates actions shows at least one chat still waiting -
+      // the state this surface most needs to show for chat.
+      if (owedWait && ageDays <= CHAT_APPROVAL_EXPIRY_DAYS && shape !== 'triage') {
+        if (state === 'completed') state = 'awaiting';
+        if (state === 'awaiting') owedWait = false;
+      }
+
+      // The steps, as for email but without the single reply at the end: in a
+      // chat every turn ends in its own reply.
+      const plan = planSteps(rand, shape).filter((t) => t.kind !== 'reply');
+      const gated = state === 'awaiting' || state === 'declined';
+      if (gated && !plan.some((t) => t.id === 's5')) {
+        const s5 = STEP_TEMPLATE.find((t) => t.id === 's5')!;
+        const at = plan.findIndex((t) => t.id === 't2');
+        plan.splice(at >= 0 ? at : plan.length, 0, s5);
+      }
+      const reachable = FAILURES.filter((f) =>
+        plan.some((t) => (overrides[t.id]?.label ?? t.label) === f.step),
+      );
+      const failure =
+        state === 'failed' ? reachable[Math.floor(rand() * reachable.length)] : undefined;
+      if (state === 'failed' && !failure) state = 'completed';
+
+      const chunks = splitPlan(plan, script.turns.length);
+      // A completed chat can still stop short: the customer goes quiet after
+      // one of the agent's questions.
+      const leftAfter =
+        state === 'completed' && script.turns.length > 1 && rand() < 0.16
+          ? 1 + Math.floor(rand() * (script.turns.length - 1))
+          : script.turns.length;
+
+      const priorMessages = rand() < 0.3 ? 2 : 0;
+      let at = startedAt;
+      const turns: RunTurn[] = [];
+      let ending: ChatEnding = 'closed';
+      let stop = false;
+      for (let k = 0; k < leftAfter && !stop; k += 1) {
+        const id = `t${k + 1}`;
+        if (k > 0) at += (45 + Math.floor(rand() * 150)) * 1000;
+        const steps: RunStep[] = chunks[k]!.map((t) => {
+          const step: RunStep = {
+            ...t,
+            ...(overrides[t.id] ?? {}),
+            id: `${id}-${t.id}`,
+            status: 'done',
+            ms: Math.max(
+              70,
+              Math.round((STEP_MS[STEP_TEMPLATE.indexOf(t)] ?? 400) * (0.55 + rand() * 1.1)),
+            ),
+          };
+          delete (step as { optional?: boolean }).optional;
+          return step;
+        });
+        const turn: RunTurn = {
+          id,
+          at,
+          message: script.turns[k]!.customer,
+          steps,
+          reply: script.turns[k]!.reply,
+        };
+
+        const failIdx = failure ? steps.findIndex((s) => s.label === failure.step) : -1;
+        const heldIdx = gated ? steps.findIndex((s) => s.id.endsWith('-s5')) : -1;
+        if (failIdx >= 0) {
+          steps.forEach((s, j) => {
+            if (j > failIdx) {
+              s.status = 'skipped';
+              s.output = undefined;
+            }
+          });
+          steps[failIdx]!.status = 'failed';
+          steps[failIdx]!.error = failure!.message;
+          steps[failIdx]!.output = undefined;
+          turn.reply = CHAT_FALLBACK;
+          turn.fallback = true;
+          ending = 'handedOff';
+          stop = true;
+        } else if (heldIdx >= 0) {
+          steps[heldIdx]!.status = state === 'awaiting' ? 'held' : 'declined';
+          steps[heldIdx]!.output = undefined;
+          turn.reply = CHAT_HOLDING;
+          stop = true;
+        }
+        steps.push({
+          id: `${id}-reply`,
+          kind: 'reply',
+          iconKey: 'reply',
+          label: 'Reply',
+          suffix: turn.fallback ? 'fallback' : 'sent',
+          status: turn.fallback ? 'skipped' : 'done',
+          ms: Math.round(900 + rand() * 900),
+        });
+        turns.push(turn);
+      }
+
+      const notReached =
+        leftAfter < script.turns.length
+          ? chunks
+              .slice(leftAfter)
+              .flat()
+              .filter((t) => t.kind !== 'thinking')
+              .map((t) => stepTitle({ kind: t.kind, label: overrides[t.id]?.label ?? t.label }))
+          : undefined;
+      if (notReached) ending = 'left';
+
+      const steps = turns.flatMap((t) => t.steps);
+      const applied = steps
+        .filter((s) => s.status === 'done' && CHIP_LABEL[s.id.split('-')[1]!] && s.kind !== 'reply')
+        .map((s) => CHIP_LABEL[s.id.split('-')[1]!]!);
+      const external = steps
+        .filter((s) => s.status === 'done' && EXTERNAL_LABEL[s.id.split('-')[1]!])
+        .map((s) => EXTERNAL_LABEL[s.id.split('-')[1]!]!);
+
+      runs.push({
+        id: `run_${src.skillId}_chat_${runs.length + 1}`,
+        skillId: src.skillId,
+        skillName: src.skillName,
+        channel: 'chat',
+        conversationId: `ch${(hash(`${src.skillId}chat${runs.length}`) % 900000) + 100000}`,
+        sender: name,
+        senderEmail: email,
+        inboxId,
+        turns,
+        priorMessages: priorMessages || undefined,
+        ending,
+        notReached: notReached && notReached.length > 0 ? notReached : undefined,
+        state,
+        startedAt,
+        durationMs: steps.filter((s) => s.status !== 'skipped').reduce((a, s) => a + s.ms, 0),
+        steps,
+        applied,
+        external,
+        error: failure
+          ? { step: failure.step, code: failure.code, message: failure.message }
+          : undefined,
+        assignee: gated ? APPROVERS[Math.floor(rand() * APPROVERS.length)] : undefined,
+      });
+    }
+  }
+  return runs;
 }
 
 // --- The seeded skills -----------------------------------------------------
@@ -564,10 +1104,16 @@ export const RUN_SOURCES: SkillRunSource[] = [
     mailboxes: ['support', 'sales'],
     moreMailboxes: 9,
     href: '/api-example',
+    chatInboxes: ['website', 'inapp'],
+    chatVolume: 64,
     lastUpdated: 'Sep 17, 2026',
     volume: 148,
     trigger: 'When a customer reports an API error or a problem with the API.',
-    steps: ['Summarize the error and tag the conversation.', 'Create a bug task for engineering.', 'Draft a reply with the fix or next step.'],
+    steps: [
+      'Summarize the error and tag the conversation.',
+      'Create a bug task for engineering.',
+      'Draft a reply with the fix or next step.',
+    ],
   },
 
   // Healthy. Nothing failing, nothing waiting - the verdict reads "Running
@@ -579,12 +1125,18 @@ export const RUN_SOURCES: SkillRunSource[] = [
     description: 'Checks order context before drafting refund replies',
     status: 'active',
     mailboxes: ['billing', 'refunds'],
+    chatInboxes: ['website'],
+    chatVolume: 30,
+    chatMix: { completed: 1, awaiting: 0, failed: 0, declined: 0 },
     href: '/aops/seed/refund-requests',
     lastUpdated: 'Sep 15, 2026',
     volume: 76,
     mix: { completed: 0.88, awaiting: 0, failed: 0, declined: 0.12 },
     trigger: 'When a customer asks for a refund on an order.',
-    steps: ['Look up the order and check it is inside the refund window.', 'Draft a reply confirming the refund or explaining why not.'],
+    steps: [
+      'Look up the order and check it is inside the refund window.',
+      'Draft a reply confirming the refund or explaining why not.',
+    ],
   },
 
   // High volume, and the cleanest possible history: it only reads and tags, so
@@ -614,12 +1166,18 @@ export const RUN_SOURCES: SkillRunSource[] = [
     description: 'Escalates late deliveries to the ops queue',
     status: 'active',
     mailboxes: ['support'],
+    chatInboxes: ['helpcenter'],
+    chatVolume: 10,
     href: '/aops/seed/shipping-delays',
     lastUpdated: 'Sep 9, 2026',
     volume: 16,
     mix: { completed: 0.62, awaiting: 0.3, failed: 0, declined: 0.08 },
     trigger: 'When a customer says a delivery is late or has not arrived.',
-    steps: ['Pull the order and tracking details.', 'Create a task in the ops queue.', 'Draft a reply with the new delivery date.'],
+    steps: [
+      'Pull the order and tracking details.',
+      'Create a task in the ops queue.',
+      'Draft a reply with the new delivery date.',
+    ],
   },
 
   // Paused, with history. The runs stop dead six days ago, which is the whole
@@ -639,6 +1197,24 @@ export const RUN_SOURCES: SkillRunSource[] = [
     steps: ['Log the request on the product backlog.', 'Draft a reply thanking them.'],
   },
 
+  // Chat only: live on two chat inboxes and no mailbox. Every run is a chat,
+  // so nothing on its Runs page may assume an email.
+  {
+    skillId: 'order-status',
+    skillName: 'Order status questions',
+    description: 'Answers where-is-my-order chats and updates addresses',
+    status: 'active',
+    mailboxes: [],
+    chatInboxes: ['website', 'helpcenter'],
+    href: '/aops/seed/order-status',
+    lastUpdated: 'Sep 24, 2026',
+    volume: 0,
+    chatVolume: 92,
+    mix: { completed: 0.86, awaiting: 0.04, failed: 0.07, declined: 0.03 },
+    trigger: 'When a customer asks where their order is, or wants to change its delivery address.',
+    steps: ['Look up the order and its tracking.', 'Reply with the status, or update the address.'],
+  },
+
   // Enabled four days ago: no history before it existed, so the left of the
   // strip is genuinely empty rather than a quiet stretch.
   {
@@ -647,6 +1223,8 @@ export const RUN_SOURCES: SkillRunSource[] = [
     description: 'Welcomes new customers and shares setup docs',
     status: 'active',
     mailboxes: ['onboarding'],
+    chatInboxes: ['inapp'],
+    chatVolume: 18,
     href: '/aops/seed/welcome-onboarding',
     lastUpdated: 'Sep 18, 2026',
     volume: 26,
@@ -664,6 +1242,7 @@ export const RUN_SOURCES: SkillRunSource[] = [
     description: 'Flags renewals coming up in the next 30 days',
     status: 'active',
     mailboxes: ['success'],
+    chatInboxes: ['website'],
     href: '/aops/seed/contract-renewals',
     lastUpdated: 'Sep 20, 2026',
     volume: 0,
@@ -686,7 +1265,10 @@ export const RUN_SOURCES: SkillRunSource[] = [
     stoppedDaysAgo: 9,
     mix: { completed: 0.8, awaiting: 0.12, failed: 0.04, declined: 0.04 },
     trigger: 'When a customer disputes a charge on their invoice.',
-    steps: ['Pull the invoice and the charge in question.', 'Draft a reply explaining the charge or confirming a credit.'],
+    steps: [
+      'Pull the invoice and the charge in question.',
+      'Draft a reply explaining the charge or confirming a credit.',
+    ],
   },
 
   // Never enabled and unassigned - it has no mailbox to run in.
@@ -733,13 +1315,26 @@ export function liveSpan(skillId: string): { liveSince?: number; pausedAt?: numb
   };
   let liveSince: number | undefined;
   if (src.liveForDays) {
-    liveSince = runs.length > 0 ? runs[runs.length - 1]!.startedAt : dayAgo(src.liveForDays - 1) + 10 * 3_600_000;
+    liveSince =
+      runs.length > 0
+        ? runs[runs.length - 1]!.startedAt
+        : dayAgo(src.liveForDays - 1) + 10 * 3_600_000;
   }
   let pausedAt: number | undefined;
   if (src.status === 'paused' && src.stoppedDaysAgo) {
-    pausedAt = runs.length > 0 ? Math.min(NOW, runs[0]!.startedAt + 3_600_000) : dayAgo(src.stoppedDaysAgo - 1) + 9 * 3_600_000;
+    pausedAt =
+      runs.length > 0
+        ? Math.min(NOW, runs[0]!.startedAt + 3_600_000)
+        : dayAgo(src.stoppedDaysAgo - 1) + 9 * 3_600_000;
   }
   return { liveSince, pausedAt };
+}
+
+/** The chat inboxes a seeded skill is live on. The editor's document only
+ *  holds mailboxes - enabling on chat is not built in the prototype - so the
+ *  seeds carry this for the Runs surfaces. */
+export function chatInboxesFor(skillId: string): string[] {
+  return RUN_SOURCES.find((s) => s.skillId === skillId)?.chatInboxes ?? [];
 }
 
 /** Every run across every skill, newest first. */

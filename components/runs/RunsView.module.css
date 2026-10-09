@@ -35,6 +35,28 @@
     0 4px 14px rgba(52, 60, 69, 0.05);
 }
 
+/* The page header: title left, the range right, on the stage itself - it
+   heads both islands, so it belongs to neither. Same outer width as the
+   islands so its edges line up with theirs. */
+.pageHead {
+  flex: none;
+  width: 100%;
+  max-width: calc(432px + 14px + 888px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 4px 2px 0;
+}
+.pageTitle {
+  margin: 0;
+  font-size: var(--fs-h5);
+  line-height: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--chart-ink, #171717);
+}
+
 .chartIsland {
   padding: 32px 34px 24px;
 }

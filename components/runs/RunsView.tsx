@@ -1,11 +1,11 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { RiArrowRightLine } from 'react-icons/ri';
+import { RiArrowRightLine, RiChat3Line, RiInbox2Line } from 'react-icons/ri';
 import SegmentedControl from '@/components/atoms/SegmentedControl';
 import Dropdown from '@/components/atoms/Dropdown';
 import { NOW, RUN_SOURCES, type RunState, type SkillRun } from '@/data/runFixtures';
-import { mailboxName } from '@/data/mailboxes';
+import { inboxChannel, inboxName } from '@/data/inboxes';
 import RunStateFilter from './RunStateFilter';
 import ActivityStrip, { type OffSpan } from './ActivityStrip';
 import RunList, { type ListEmpty } from './RunList';
@@ -48,14 +48,13 @@ function widenTo(t: number, days: RangeDays): RangeDays | null {
   return ([30, 90] as RangeDays[]).find((d) => d > days && d >= age) ?? null;
 }
 
-
 /** The empty list's headline per outcome - what it looked for, said like a
  *  person would. */
 const NOTHING: Record<RunState, string> = {
   completed: 'Nothing completed',
   awaiting: "Nobody's waiting on approval",
   failed: 'Nothing failed',
-  declined: 'No drafts turned down',
+  declined: 'Nothing turned down',
 };
 
 /** One line about the runs that ARE here, so "0 failed" reads as the fact it
@@ -71,7 +70,7 @@ function noneOf(state: RunState, n: number): string {
     case 'failed':
       return n === 1 ? 'The one run here did not trip.' : `Not one of the ${n} runs here tripped.`;
     case 'declined':
-      return 'Nobody said no to a single draft.';
+      return 'Nobody said no to a thing.';
   }
 }
 
@@ -125,33 +124,68 @@ export default function RunsView({
     () => applyFilter(runs, { ...DEFAULT_FILTER, days: filter.days, skillId: filter.skillId }),
     [runs, filter.days, filter.skillId],
   );
-  // What the filter row counts: the window, through the mailbox pick. The
+  // What the filter row counts: the window, through the inbox pick. The
   // outcome chips must agree with the list they narrow.
   const scopeRuns = useMemo(
-    () => applyFilter(runs, { ...DEFAULT_FILTER, days: filter.days, skillId: filter.skillId, mailboxId: filter.mailboxId }),
-    [runs, filter.days, filter.skillId, filter.mailboxId],
+    () =>
+      applyFilter(runs, {
+        ...DEFAULT_FILTER,
+        days: filter.days,
+        skillId: filter.skillId,
+        inboxIds: filter.inboxIds,
+      }),
+    [runs, filter.days, filter.skillId, filter.inboxIds],
   );
   const listRuns = useMemo(() => applyFilter(runs, filter), [runs, filter]);
 
-  // Only the mailboxes this window actually ran in: a mailbox with no runs
-  // would be a pick that empties the list.
-  // The current pick always stays listed, so narrowing the range under it
-  // leaves the pill naming what it filters rather than falling to a placeholder.
-  const mailboxes = useMemo(() => {
-    const ids = Array.from(new Set(windowRuns.map((r) => r.mailboxId)));
-    if (filter.mailboxId && !ids.includes(filter.mailboxId)) ids.push(filter.mailboxId);
+  // Only the inboxes this window actually ran in: one with no runs would be a
+  // pick that empties the list. The current picks always stay listed, so
+  // narrowing the range under them leaves the pill naming what it filters.
+  // Mailboxes first, then chat inboxes, each marked with its channel.
+  const inboxes = useMemo(() => {
+    const ids = Array.from(new Set([...windowRuns.map((r) => r.inboxId), ...filter.inboxIds]));
     return ids
-      .map((id) => ({ id, label: mailboxName(id) }))
-      .sort((a, b) => a.label.localeCompare(b.label));
-  }, [windowRuns, filter.mailboxId]);
+      .map((id) => ({
+        id,
+        label: inboxName(id),
+        channel: inboxChannel(id),
+        icon: inboxChannel(id) === 'chat' ? <RiChat3Line /> : <RiInbox2Line />,
+      }))
+      .sort((a, b) =>
+        a.channel === b.channel ? a.label.localeCompare(b.label) : a.channel === 'email' ? -1 : 1,
+      );
+  }, [windowRuns, filter.inboxIds]);
+
+  // Mark each run with its channel only where both channels show up: on a
+  // skill that runs in one place the mark would say nothing.
+  const mixed = useMemo(() => new Set(runs.map((r) => r.channel)).size > 1, [runs]);
 
   const selected = listRuns.find((r) => r.id === selectedId) ?? listRuns[0] ?? null;
 
   const narrowed =
     filter.state !== null ||
     filter.day !== null ||
-    filter.mailboxId !== null ||
+    filter.inboxIds.length > 0 ||
     filter.query.trim() !== '';
+
+  // The page's own header: what this is, and the one control that governs
+  // everything under it - the chart, the counts and the log all read the
+  // same window, so the range sits above all of them, not inside one card.
+  const pageHead = (
+    <header className={styles.pageHead}>
+      <h1 className={styles.pageTitle}>Skill runs</h1>
+      {/* A skill that has never run has no window to pick. */}
+      {!(skill && !allSkills && runs.length === 0) && (
+        <SegmentedControl
+          size="sm"
+          tabs={RANGES}
+          active={String(filter.days)}
+          onChange={(id) => setFilter((f) => ({ ...f, days: Number(id) as RangeDays, day: null }))}
+          ariaLabel="Time range"
+        />
+      )}
+    </header>
+  );
 
   if (!isClient) {
     return (
@@ -165,6 +199,7 @@ export default function RunsView({
   if (!allSkills && skill && runs.length === 0) {
     return (
       <div className={styles.view}>
+        {pageHead}
         <section className={`${styles.island} ${styles.zeroIsland}`} aria-label="Runs">
           <NoRunsYet skill={skill} onCheckMatches={onCheckMatches} />
         </section>
@@ -187,7 +222,11 @@ export default function RunsView({
     const newest = runs.length > 0 ? startOfDay(runs[0]!.startedAt) : -Infinity;
     const today = startOfDay(NOW);
     if (skill.liveSince) {
-      off.push({ from: 0, to: Math.min(startOfDay(skill.liveSince), oldest) - 1, label: 'Not live yet' });
+      off.push({
+        from: 0,
+        to: Math.min(startOfDay(skill.liveSince), oldest) - 1,
+        label: 'Not live yet',
+      });
     }
     if (skill.status === 'paused' && skill.pausedAt) {
       const from = Math.min(Math.max(startOfDay(skill.pausedAt), newest + DAY), today);
@@ -199,8 +238,16 @@ export default function RunsView({
    *  and at most two ways out. */
   function emptyFor(): ListEmpty | undefined {
     const setDays = (days: RangeDays) => setFilter((f) => ({ ...f, days, day: null }));
-    const where = filter.mailboxId ? ` in ${mailboxName(filter.mailboxId)}` : '';
-    const when = filter.day !== null ? ` on ${formatDayShort(filter.day)}` : ` in the last ${filter.days} days`;
+    const where =
+      filter.inboxIds.length === 1
+        ? ` in ${inboxName(filter.inboxIds[0]!)}`
+        : filter.inboxIds.length > 1
+          ? ` in these ${filter.inboxIds.length} inboxes`
+          : '';
+    const when =
+      filter.day !== null
+        ? ` on ${formatDayShort(filter.day)}`
+        : ` in the last ${filter.days} days`;
 
     if (!narrowed) {
       // Nothing in this window, but the skill has run before it: say when,
@@ -211,7 +258,9 @@ export default function RunsView({
       return {
         title: `Crickets for ${filter.days} days`,
         body: `Last run: ${formatDayShort(last.startedAt)}${widen ? '.' : ', further back than this page goes.'}`,
-        actions: widen ? [{ label: `Show the last ${widen} days`, onClick: () => setDays(widen) }] : undefined,
+        actions: widen
+          ? [{ label: `Show the last ${widen} days`, onClick: () => setDays(widen) }]
+          : undefined,
       };
     }
 
@@ -238,7 +287,11 @@ export default function RunsView({
         }
       }
       if (others.length === 0 && actions.length === 0) {
-        actions.push({ label: 'Clear filters', onClick: () => setFilter((f) => ({ ...f, state: null, mailboxId: null, day: null, query: '' })) });
+        actions.push({
+          label: 'Clear filters',
+          onClick: () =>
+            setFilter((f) => ({ ...f, state: null, inboxIds: [], day: null, query: '' })),
+        });
       }
       return {
         title: `${NOTHING[state]}${where}${when}`,
@@ -247,28 +300,32 @@ export default function RunsView({
       };
     }
 
-    // Narrowed by mailbox or day alone.
+    // Narrowed by inbox or day alone.
     return {
       title: `No runs${where}${when}`,
       body: filter.day !== null ? 'A quiet day off.' : 'Not a peep from this one.',
       actions: [
-        { label: 'Clear filters', onClick: () => setFilter((f) => ({ ...f, mailboxId: null, day: null, query: '' })) },
+        {
+          label: 'Clear filters',
+          onClick: () => setFilter((f) => ({ ...f, inboxIds: [], day: null, query: '' })),
+        },
       ],
     };
   }
 
   return (
     <div className={styles.view}>
+      {pageHead}
       {quiet !== null && (
         <section className={`${styles.island} ${styles.notice}`} aria-label="Heads up">
           <span className={styles.noticeDot} aria-hidden />
           <p className={styles.noticeText}>
             {/* The date, not "N days": the list's "11 days ago" rounds differently
                 and the two must never disagree. */}
-            <span className={styles.noticeTitle}>Suspiciously quiet.</span> Still on, but nothing since{' '}
-            {formatDayShort(runs[0]!.startedAt)}. Check the trigger or the mailbox.
+            <span className={styles.noticeTitle}>Suspiciously quiet.</span> Still on, but nothing
+            since {formatDayShort(runs[0]!.startedAt)}. Check the trigger, or where it is enabled.
           </p>
-          {onCheckMatches && skill?.trigger.trim() && (
+          {onCheckMatches && skill?.trigger.trim() && skill.mailboxes.length > 0 && (
             <button type="button" className={styles.noticeLink} onClick={onCheckMatches}>
               See what would match
               <RiArrowRightLine aria-hidden />
@@ -283,17 +340,6 @@ export default function RunsView({
           buckets={bucketByDay(windowRuns, filter.days)}
           picked={filter.day}
           onPick={(day) => setFilter((f) => ({ ...f, day: day === null ? null : startOfDay(day) }))}
-          range={
-            <SegmentedControl
-              size="sm"
-              tabs={RANGES}
-              active={String(filter.days)}
-              onChange={(id) =>
-                setFilter((f) => ({ ...f, days: Number(id) as RangeDays, day: null }))
-              }
-              ariaLabel="Time range"
-            />
-          }
         />
       </section>
 
@@ -309,18 +355,19 @@ export default function RunsView({
               ]}
               value={filter.skillId ?? 'all'}
               onChange={(id) =>
-                setFilter((f) => ({ ...f, skillId: id === 'all' ? null : id, mailboxId: null }))
+                setFilter((f) => ({ ...f, skillId: id === 'all' ? null : id, inboxIds: [] }))
               }
               ariaLabel="Filter by skill"
             />
           )}
           <Dropdown
             variant="pill"
-            prefix="Mailbox"
-            options={[{ id: 'all', label: 'All' }, ...mailboxes]}
-            value={filter.mailboxId ?? 'all'}
-            onChange={(id) => setFilter((f) => ({ ...f, mailboxId: id === 'all' ? null : id }))}
-            ariaLabel="Filter by mailbox"
+            prefix="Executed by"
+            multiple
+            options={inboxes.map(({ id, label, icon }) => ({ id, label, icon }))}
+            values={filter.inboxIds}
+            onChange={(ids) => setFilter((f) => ({ ...f, inboxIds: ids }))}
+            ariaLabel="Filter by where it ran"
           />
           <RunStateFilter
             counts={countBy(scopeRuns)}
@@ -351,6 +398,7 @@ export default function RunsView({
                 selectedId={selected?.id ?? null}
                 onSelect={setSelectedId}
                 showSkill={allSkills}
+                showChannel={mixed}
                 filtered={narrowed}
               />
             </div>

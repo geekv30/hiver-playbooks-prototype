@@ -120,6 +120,19 @@ section + section .dayHead { border-top: 1px solid var(--log-rule, #eceff6); }
   white-space: nowrap;
 }
 
+/* The inbox, with its channel ahead of it when the list mixes both. */
+.inbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+.channel {
+  flex: none;
+  width: 14px;
+  height: 14px;
+}
+
 /* Empty + end states */
 .empty {
   display: flex;

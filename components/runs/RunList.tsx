@@ -1,8 +1,10 @@
 'use client';
 
 import type { SkillRun } from '@/data/runFixtures';
-import { mailboxName } from '@/data/mailboxes';
+import { RiChat3Line, RiInbox2Line } from 'react-icons/ri';
+import { inboxName } from '@/data/inboxes';
 import { RunStateDot } from './RunStatePill';
+import CustomerMark from './CustomerMark';
 import { formatDayLabel, formatTime, groupByDay } from './runsModel';
 import styles from './RunList.module.css';
 
@@ -12,6 +14,9 @@ interface Props {
   onSelect: (id: string) => void;
   /** All-skills mode puts the skill name on each row. */
   showSkill?: boolean;
+  /** Mark each row's inbox with its channel - only when both channels are in
+   *  play, where the mark tells two kinds of run apart. */
+  showChannel?: boolean;
   /** True when a filter is narrowing the list - changes what "nothing here" means. */
   filtered?: boolean;
   /** What to say when the list is empty, and the ways out. Written by the
@@ -39,6 +44,7 @@ export default function RunList({
   selectedId,
   onSelect,
   showSkill,
+  showChannel,
   filtered,
   empty,
 }: Props) {
@@ -106,7 +112,13 @@ export default function RunList({
                 <span className={styles.mark}>
                   <RunStateDot state={run.state} />
                 </span>
-                <span className={styles.subject}>{run.subject}</span>
+                {/* An email by its subject; a chat by who it was with - a chat
+                    has no subject, and "(no subject)" on every row says nothing. */}
+                {run.channel === 'chat' ? (
+                  <CustomerMark name={run.sender} className={styles.subject} />
+                ) : (
+                  <span className={styles.subject}>{run.subject}</span>
+                )}
                 <span className={styles.time}>{formatTime(run.startedAt)}</span>
 
                 {/* Across all skills the row names its skill too - with the
@@ -119,7 +131,15 @@ export default function RunList({
                       <span aria-hidden>&middot;</span>
                     </>
                   )}
-                  <span className={styles.skill}>{mailboxName(run.mailboxId)}</span>
+                  <span className={styles.inbox}>
+                    {showChannel &&
+                      (run.channel === 'chat' ? (
+                        <RiChat3Line className={styles.channel} aria-label="Chat" />
+                      ) : (
+                        <RiInbox2Line className={styles.channel} aria-label="Email" />
+                      ))}
+                    <span className={styles.skill}>{inboxName(run.inboxId)}</span>
+                  </span>
                 </span>
               </button>
             );
