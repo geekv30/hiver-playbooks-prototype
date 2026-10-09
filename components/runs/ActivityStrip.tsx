@@ -84,14 +84,7 @@ const LABEL_EVERY_UP_TO = 10;
  * and each column is a filter: pick a day to narrow the list, pick it again to
  * clear. The y-axis carries the scale, so no bar needs a caption to be read.
  */
-export default function ActivityStrip({
-  buckets,
-  picked,
-  onPick,
-  caption = 'full',
-  range,
-  off = [],
-}: Props) {
+export default function ActivityStrip({ buckets, picked, onPick, caption = 'full', range, off = [] }: Props) {
   const [hover, setHover] = useState<number | null>(null);
   const { peak } = peakOf(buckets);
   const ticks = scaleOf(peak);
@@ -159,9 +152,7 @@ export default function ActivityStrip({
             >
               {/* The label only where it fits: a one-day sliver at 90 days
                   carries the shading and the hover readout alone. */}
-              {(sp.last - sp.first + 1) / n >= 0.08 && (
-                <span className={styles.offLabel}>{sp.label}</span>
-              )}
+              {(sp.last - sp.first + 1) / n >= 0.08 && <span className={styles.offLabel}>{sp.label}</span>}
             </span>
           ))}
 
@@ -209,18 +200,20 @@ export default function ActivityStrip({
                   {hover === b.day && (
                     <span className={styles.tip} role="presentation">
                       <span className={styles.tipDay}>{formatDayLabel(b.day)}</span>
-                      {b.counts.total === 0
-                        ? (() => {
-                            const sp = offAt(i);
-                            return sp ? sp.label : 'No runs';
-                          })()
-                        : RUN_STATES.filter((s) => b.counts[s] > 0).map((s) => (
-                            <span key={s} className={styles.tipRow}>
-                              <span className={styles.tipDot} data-state={s} />
-                              <span className={styles.tipN}>{b.counts[s]}</span>
-                              {RUN_STATE_SHORT[s].toLowerCase()}
-                            </span>
-                          ))}
+                      {b.counts.total === 0 ? (
+                        (() => {
+                          const sp = offAt(i);
+                          return sp ? sp.label : 'No runs';
+                        })()
+                      ) : (
+                        RUN_STATES.filter((s) => b.counts[s] > 0).map((s) => (
+                          <span key={s} className={styles.tipRow}>
+                            <span className={styles.tipDot} data-state={s} />
+                            <span className={styles.tipN}>{b.counts[s]}</span>
+                            {RUN_STATE_SHORT[s].toLowerCase()}
+                          </span>
+                        ))
+                      )}
                     </span>
                   )}
                 </button>
