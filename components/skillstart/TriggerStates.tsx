@@ -5,15 +5,15 @@ import { StateFrame, changeLine, type FrameSeed } from './TriggerSection';
 import { DEFAULT_START, EDITED_MAILBOXES, EDITED_NAME, EDITED_TRIGGER, type Direction, type StartConfig } from './model';
 import styles from './TriggerStates.module.css';
 
-const T = () => normalizeLine([txt(EDITED_TRIGGER)]);
-const EMPTY = () => [txt('')];
+export const T = () => normalizeLine([txt(EDITED_TRIGGER)]);
+export const EMPTY = () => [txt('')];
 
 const BOTH: StartConfig = DEFAULT_START.a;
 const SLASH_ONLY: StartConfig = { ...BOTH, auto: false };
 const AUTO_ONLY: StartConfig = { ...BOTH, slash: false };
 const NONE: StartConfig = { ...BOTH, auto: false, slash: false };
 
-const live = (over: Partial<FrameSeed> = {}): FrameSeed => ({
+export const live = (over: Partial<FrameSeed> = {}): FrameSeed => ({
   title: EDITED_NAME,
   status: 'active',
   trigger: T(),
@@ -22,7 +22,7 @@ const live = (over: Partial<FrameSeed> = {}): FrameSeed => ({
   ...over,
 });
 
-interface StateDoc {
+export interface StateDoc {
   id: string;
   title: string;
   when: string;
@@ -155,10 +155,10 @@ const STATES: StateDoc[] = [
 
 /* Every state the trigger section can be in, for one direction: when it
    happens, what it shows, the call to make, and the state itself, live. */
-export default function TriggerStates({ direction }: { direction: Direction }) {
+export default function TriggerStates({ direction, states = STATES }: { direction: Direction; states?: StateDoc[] }) {
   return (
     <ol className={styles.list}>
-      {STATES.map((s, i) => {
+      {states.map((s, i) => {
         const seed = s.seed(direction);
         const shows = typeof s.shows === 'string' ? s.shows : s.shows[direction];
         return (

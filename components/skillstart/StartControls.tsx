@@ -1,13 +1,13 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { RiErrorWarningLine, RiFlashlightLine, RiPauseCircleLine, RiSlashCommands2 } from 'react-icons/ri';
+import { RiErrorWarningLine, RiFlashlightLine, RiHand, RiPauseCircleLine, RiSlashCommands2, RiSparkling2Line } from 'react-icons/ri';
 import Toggle from '@/components/atoms/Toggle';
 import SegmentedControl from '@/components/atoms/SegmentedControl';
 import Dropdown from '@/components/atoms/Dropdown';
 import { mailboxList } from '@/data/mailboxes';
 import type { DeployStatus } from '@/components/flow01/doc';
-import { REACH_LABEL, choiceOf, fromChoice, type Choice, type Reach, type StartConfig } from './model';
+import { REACH_LABEL, choiceOf, fromChoice, fromKind, kindOf, type Choice, type Direction, type Reach, type StartConfig, type TriggerKind } from './model';
 import styles from './StartControls.module.css';
 
 /** Everything the start controls read about the skill. */
@@ -66,7 +66,7 @@ function slashSub(ctx: StartCtx, lead: ReactNode): ReactNode {
 }
 
 /** The one line under the controls that matters most right now, if any. */
-function StateNotice({ ctx, direction }: { ctx: StartCtx; direction: 'a' | 'b' | 'c' }) {
+function StateNotice({ ctx, direction }: { ctx: StartCtx; direction: Direction }) {
   const { config, status } = ctx;
   if (status === 'paused')
     return (
@@ -78,12 +78,12 @@ function StateNotice({ ctx, direction }: { ctx: StartCtx; direction: 'a' | 'b' |
   if (!config.auto && !ctx.hasTrigger)
     return (
       <Notice tone="warn">
-        {direction === 'b'
+        {direction === 'b' || direction === 'd'
           ? 'Write when to use this skill. Copilot shows this text in the / menu.'
           : 'Write a trigger. Copilot shows the trigger in the / menu.'}
       </Notice>
     );
-  if (!config.auto && direction !== 'b')
+  if (!config.auto && direction !== 'b' && direction !== 'd')
     return (
       <Notice tone="quiet" icon={<RiSlashCommands2 aria-hidden />}>
         This skill runs only with <Command slug={ctx.slug} />. Copilot shows the trigger in the / menu.
@@ -226,5 +226,50 @@ export function TwoDoors(ctx: StartCtx) {
         <p className={styles.help}>Copilot shows this skill first on emails that match. On other emails, Copilot asks before the skill runs.</p>
       )}
     </div>
+  );
+}
+
+const KINDS: { id: TriggerKind; label: string; icon: ReactNode }[] = [
+  { id: 'describe', label: 'Describe it', icon: <RiSparkling2Line /> },
+  { id: 'manual', label: 'Manual', icon: <RiHand /> },
+];
+
+/* D - One control under the Trigger label: Describe it or Manual. Describe it
+   runs on its own when a conversation matches, and / works too. Manual runs
+   only with /. There is no "both off" and no "on its own, never with /". */
+export function DescribeOrManual({ config, onChange }: Pick<StartCtx, 'config' | 'onChange'>) {
+  return (
+    <div className={styles.kind}>
+      <SegmentedControl
+        tabs={KINDS}
+        active={kindOf(config)}
+        onChange={(k) => onChange(fromKind(k, config))}
+        ariaLabel="How this skill starts"
+      />
+    </div>
+  );
+}
+
+/** The line under D's trigger text: what the picked option does. */
+export function DescribeOrManualHelp(ctx: StartCtx) {
+  const { config, mailboxes, slug, clash } = ctx;
+  return (
+    <>
+      <p className={styles.help}>
+        {config.auto ? (
+          <>
+            Hiver AI runs this skill when a new email or chat{where(mailboxes)} matches this text. People can also type{' '}
+            <Command slug={slug} clash={clash} /> in Copilot.
+          </>
+        ) : (
+          <>
+            This skill runs only when someone types <Command slug={slug} clash={clash} /> in Copilot. Copilot shows this text in the /
+            menu.
+          </>
+        )}
+      </p>
+      {(clash || !slug) && <p className={styles.help}>{slashSub(ctx, null)}</p>}
+      <StateNotice ctx={ctx} direction="d" />
+    </>
   );
 }

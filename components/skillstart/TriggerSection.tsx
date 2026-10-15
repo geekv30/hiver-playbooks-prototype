@@ -6,7 +6,7 @@ import Toolbar from '@/components/flow01/Toolbar';
 import ed from '@/components/flow01/EditorCanvas.module.css';
 import { lineHasContent, type DeployStatus } from '@/components/flow01/doc';
 import type { Fragment } from '@/types/playbook';
-import { OneChoice, OneChoiceHelp, TwoDoors, TwoSwitches, type StartCtx } from './StartControls';
+import { DescribeOrManual, DescribeOrManualHelp, OneChoice, OneChoiceHelp, TwoDoors, TwoSwitches, type StartCtx } from './StartControls';
 import type { Direction, StartConfig } from './model';
 import styles from './TriggerSection.module.css';
 
@@ -37,6 +37,8 @@ export function TriggerSection({ direction, config, onConfig, status, title, tri
   const ctx: StartCtx = { config, onChange: onConfig, status, mailboxes, slug: slugFor(title), clash, hasTrigger };
   // B: a skill that only runs with / has no trigger, only a line for the / menu.
   const whenToUse = direction === 'b' && !config.auto;
+  // D: the label stays Trigger. Manual changes only what the text is for.
+  const manual = direction === 'd' && !config.auto;
 
   return (
     <>
@@ -46,17 +48,21 @@ export function TriggerSection({ direction, config, onConfig, status, title, tri
           <div className={ed.content}>
             <h2 className={ed.label}>{whenToUse ? 'When to use' : 'Trigger'}</h2>
             {direction === 'b' && <OneChoice config={config} onChange={onConfig} />}
+            {direction === 'd' && <DescribeOrManual config={config} onChange={onConfig} />}
             <div className={ed.triggerLine}>
               <EditorLine
                 fragments={trigger}
-                placeholder={whenToUse ? 'e.g. when someone asks for a refund' : 'e.g. when an email asks for a refund'}
+                placeholder={
+                  whenToUse || manual ? 'e.g. use when someone asks for a refund' : 'e.g. when an email asks for a refund'
+                }
                 onChange={onTrigger}
                 noActions
-                ariaLabel={whenToUse ? 'When to use this skill' : 'When should this skill run'}
+                ariaLabel={whenToUse || manual ? 'When to use this skill' : 'When should this skill run'}
               />
             </div>
             {direction === 'a' && <TwoSwitches {...ctx} />}
             {direction === 'b' && <OneChoiceHelp {...ctx} />}
+            {direction === 'd' && <DescribeOrManualHelp {...ctx} />}
           </div>
         </div>
       </section>

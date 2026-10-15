@@ -8,7 +8,8 @@
 //   3. where / works (and for whom).
 // Matching is scripted here: each email names the one skill it fits.
 
-export type Direction = 'a' | 'b' | 'c';
+/** D is the simple one: one control on the trigger, Describe it or Manual. */
+export type Direction = 'a' | 'b' | 'c' | 'd';
 
 /** Direction C scopes / by people, separately from mailboxes. */
 export type Reach = 'everyone' | 'billing' | 'me';
@@ -26,7 +27,14 @@ export const DEFAULT_START: Record<Direction, StartConfig> = {
   a: { auto: true, slash: true, reach: 'everyone' },
   b: { auto: true, slash: true, reach: 'everyone' },
   c: { auto: true, slash: true, reach: 'everyone' },
+  d: { auto: true, slash: true, reach: 'everyone' },
 };
+
+/** Direction D's two options. Describe it = runs on its own, and / works too.
+ *  Manual = runs only with /. */
+export type TriggerKind = 'describe' | 'manual';
+export const kindOf = (c: StartConfig): TriggerKind => (c.auto ? 'describe' : 'manual');
+export const fromKind = (kind: TriggerKind, prev: StartConfig): StartConfig => ({ ...prev, auto: kind === 'describe', slash: true });
 
 /** Direction B's one choice, mapped onto the two switches. */
 export type Choice = 'auto' | 'both' | 'slash';

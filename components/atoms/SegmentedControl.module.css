@@ -54,6 +54,11 @@
   cursor: pointer;
   transition: color var(--d-hover) var(--ease-snap);
 }
+.ico {
+  display: inline-flex;
+  margin-right: 6px;
+  font-size: 16px;
+}
 .seg:hover:not([data-active]) {
   color: var(--ink-soft);
 }
