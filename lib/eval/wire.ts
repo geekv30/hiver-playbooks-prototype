@@ -173,11 +173,18 @@ export function indexSkill(doc: EditorDoc): StepIndex {
   return { lines, conditions, canReply };
 }
 
+/** What the model sees as a Manual skill's trigger. The chat prompt matches it. */
+export const MANUAL_TRIGGER_WIRE = '(Manual - a teammate starts this skill by hand)';
+
 /** The skill as text, with every id a trace may refer to. */
 export function skillToWire(doc: EditorDoc): string {
   const out: string[] = [];
   out.push(`Skill: ${doc.title}`);
-  out.push(`Trigger: ${lineWire(doc.trigger) || '(empty)'}`);
+  out.push(
+    doc.triggerMode === 'manual'
+      ? `Trigger: ${MANUAL_TRIGGER_WIRE}`
+      : `Trigger: ${lineWire(doc.trigger) || '(empty)'}`,
+  );
   out.push('Steps:');
   let n = 0;
   for (const s of doc.steps) {

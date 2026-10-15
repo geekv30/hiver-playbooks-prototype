@@ -1,0 +1,415 @@
+/* Copilot as it docks beside any Hiver screen: header, thread, composer. The /
+   menu reuses the editor's CommandPalette classes (one palette look in the
+   product); this file only places it above the composer. */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  background: var(--card);
+  border-left: 1px solid var(--hairline-soft);
+}
+
+.head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--hairline-soft);
+  font-size: var(--fs-small);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.thread {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.empty {
+  margin: auto 0;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 8px;
+}
+.emptyTitle {
+  margin: 0;
+  font-size: var(--fs-small);
+  font-weight: 500;
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.emptySub {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: 18px;
+  color: var(--muted);
+}
+.kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border: 1px solid var(--hairline);
+  border-bottom-width: 1.5px;
+  border-radius: var(--r-xs);
+  background: var(--card);
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--body);
+}
+
+/* The person's message: a right-aligned pill, like the editor's Copilot. */
+.user {
+  align-self: flex-end;
+  max-width: 85%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 14px;
+  background: var(--surface-soft);
+  font-size: var(--fs-small);
+  line-height: 19px;
+  color: var(--ink);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 4px 1px 6px;
+  border-radius: var(--r-xs);
+  background: var(--accent-bg);
+  color: var(--accent-hover);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+.user .chip {
+  padding-right: 6px;
+}
+.chipX {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: 3px;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+.chipX:hover {
+  background: rgba(80, 109, 255, 0.14);
+}
+.chipX svg {
+  width: 12px;
+  height: 12px;
+}
+
+.say {
+  margin: 0;
+  font-size: var(--fs-small);
+  line-height: 20px;
+  color: var(--body);
+}
+
+/* A run: no bubble, document-like (assistant messages have no chrome). */
+.run {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: fadeIn var(--d-enter) var(--ease-snap);
+}
+.runHead {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: var(--fs-small);
+  line-height: 19px;
+}
+.runName {
+  font-weight: 600;
+  color: var(--ink);
+}
+.runState {
+  font-size: var(--fs-caption);
+  color: var(--muted);
+}
+.offNote {
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: var(--r-md);
+  background: var(--status-amber-bg);
+  font-size: var(--fs-caption);
+  line-height: 17px;
+  color: var(--run-awaiting-ink);
+}
+.offNote svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-top: 1.5px;
+  color: var(--status-amber);
+}
+.steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.step {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: var(--fs-small);
+  line-height: 19px;
+  color: var(--body);
+  animation: stepIn var(--d-enter) var(--ease-snap);
+}
+.step svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-top: 2.5px;
+  color: var(--status-green);
+}
+.outcome {
+  margin: 0;
+  font-size: var(--fs-small);
+  line-height: 19px;
+  color: var(--muted);
+  animation: fadeIn var(--d-enter) var(--ease-snap);
+}
+
+.draft {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--hairline-soft);
+  border-radius: var(--r-lg);
+  animation: fadeIn var(--d-enter) var(--ease-snap);
+}
+.draftLabel {
+  margin: 0;
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  color: var(--muted);
+}
+.draftText {
+  margin: 0;
+  font-size: var(--fs-small);
+  line-height: 20px;
+  color: var(--ink-soft);
+}
+.use {
+  align-self: flex-start;
+  margin-top: 2px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+  background: var(--card);
+  font-family: var(--font);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap);
+}
+.use:hover:not(:disabled) {
+  background: var(--surface-soft);
+}
+.use[data-used] {
+  border-color: transparent;
+  background: var(--status-green-bg);
+  color: var(--run-mark-completed);
+  cursor: default;
+}
+
+/* C's confirm: asks before running a skill on an email that does not fit. */
+.confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--r-lg);
+  background: var(--surface-soft);
+  animation: fadeIn var(--d-enter) var(--ease-snap);
+}
+.confirmText {
+  margin: 0;
+  font-size: var(--fs-small);
+  line-height: 20px;
+  color: var(--ink-soft);
+}
+.confirmText strong {
+  font-weight: 600;
+  color: var(--ink);
+}
+.confirmActions {
+  display: flex;
+  gap: 8px;
+}
+.btnPrimary,
+.btnGhost {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  font-family: var(--font);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease-snap);
+}
+.btnPrimary {
+  border: none;
+  background: var(--ink);
+  color: #fff;
+}
+.btnPrimary:hover {
+  background: #1f252b;
+}
+.btnGhost {
+  border: 1px solid var(--hairline);
+  background: var(--card);
+  color: var(--ink-soft);
+}
+.btnGhost:hover {
+  background: var(--card);
+  border-color: var(--hairline-strong);
+}
+.confirmDone {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--muted);
+}
+
+/* Composer + the / menu that opens above it */
+.composerWrap {
+  position: relative;
+  flex: none;
+  padding: 12px;
+}
+.menu {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: calc(100% - 8px);
+  z-index: 5;
+  animation: menuIn var(--d-enter) var(--ease-snap);
+}
+.menuRow[data-disabled] {
+  cursor: default;
+}
+.labelOff,
+.labelOff .menuSlug {
+  color: var(--muted-soft);
+}
+.menuSlug {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.composer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 6px 6px 6px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  background: var(--card);
+  box-shadow: 0 1px 2px rgba(52, 60, 69, 0.04);
+  transition:
+    border-color var(--d-hover) var(--ease-snap),
+    box-shadow var(--d-hover) var(--ease-snap);
+}
+.composer:focus-within {
+  border-color: var(--hairline-strong);
+  box-shadow: 0 2px 10px rgba(52, 60, 69, 0.07);
+}
+.input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font);
+  font-size: var(--fs-small);
+  line-height: 20px;
+  letter-spacing: var(--ls-body);
+  color: var(--ink);
+}
+.input::placeholder {
+  color: var(--muted-soft);
+}
+.send {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--surface-card);
+  color: var(--muted-soft);
+  cursor: pointer;
+  transition:
+    background var(--d-hover) var(--ease-snap),
+    color var(--d-hover) var(--ease-snap);
+}
+.send svg {
+  width: 16px;
+  height: 16px;
+}
+.send[data-ready] {
+  background: var(--accent);
+  color: #fff;
+}
+.send[data-ready]:hover {
+  background: var(--accent-hover);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes stepIn {
+  from { opacity: 0; transform: translateX(-4px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes menuIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .run, .step, .outcome, .draft, .confirm, .menu { animation: none; }
+}

@@ -1,0 +1,51 @@
+/* The editor window at review size: the same card, toolbar and content rail as
+   /aops, with tighter outer insets so it sits beside a Hiver screen. */
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  height: 640px;
+  min-width: 0;
+  background: var(--card);
+  border: 1px solid var(--hairline-soft);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow:
+    0 1px 2px rgba(52, 60, 69, 0.04),
+    0 4px 14px rgba(52, 60, 69, 0.05);
+}
+.pane > :first-child {
+  border-bottom: 1px solid var(--hairline-soft);
+}
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.doc {
+  padding: 36px 8px 40px 0;
+}
+
+.section {
+  padding-top: 36px;
+}
+
+.steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.steps > li {
+  min-height: 38px;
+  align-items: center;
+}
+.stepText {
+  margin: 0;
+  padding: 7px 0;
+  font-size: var(--fs-body);
+  line-height: 22px;
+  color: var(--ink-soft);
+}

@@ -176,7 +176,9 @@ export default function RunsView({
 
   // Still switched on, but nothing has run in a week or more: worth saying
   // before anyone reads the chart, because the chart only shows it as absence.
-  const quiet = !allSkills && skill?.status === 'active' ? quietDays(runs) : null;
+  // A Manual skill runs only when someone types its / command, so quiet days
+  // are normal for it, not a sign the trigger or mailbox broke.
+  const quiet = !allSkills && skill?.status === 'active' && !skill.manual ? quietDays(runs) : null;
 
   // The days the skill could not have run, so they are not read as quiet ones.
   const off: OffSpan[] = [];

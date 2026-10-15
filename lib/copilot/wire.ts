@@ -51,7 +51,11 @@ export function docToWire(doc: EditorDoc): string {
   out.push(
     `Replies: ${doc.guardrails.replyAuthority === 'send' ? 'may send directly' : 'drafts only (a person sends)'}`,
   );
-  out.push(`Trigger: ${lineToWire(doc.trigger) || '(empty)'}`);
+  out.push(
+    doc.triggerMode === 'manual'
+      ? 'Trigger: none. This skill is Manual: it runs only when a teammate types its / command in the Assist Agent. Do not set a trigger.'
+      : `Trigger: ${lineToWire(doc.trigger) || '(empty)'}`,
+  );
   out.push('Steps:');
   let n = 0;
   for (const s of doc.steps) {
@@ -281,6 +285,8 @@ export function checkWire(p: WireProposal, doc: EditorDoc): string[] {
   const sources = knownSources(doc);
   p.ops.forEach((o, i) => {
     const where = `op ${i + 1} (${o.op})`;
+    if (o.op === 'setTrigger' && doc.triggerMode === 'manual')
+      errs.push(`${where}: this skill is Manual and has no trigger; do not set one`);
     const needText = () => {
       if (!o.text?.trim()) errs.push(`${where}: missing text`);
       else {

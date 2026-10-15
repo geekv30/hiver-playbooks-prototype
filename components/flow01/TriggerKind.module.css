@@ -1,0 +1,64 @@
+/* Describe it / Manual on the Trigger: the control between the label and the
+   text, with an info icon beside it that opens what each option does. */
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 12px;
+}
+.row > :last-child {
+  margin: 0;
+}
+
+.control {
+  flex: 1;
+  max-width: 360px;
+}
+
+/* Inside the dark info bubble */
+.defs {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.defs dt {
+  font-size: var(--fs-caption);
+  line-height: 18px;
+  font-weight: 500;
+  color: var(--tooltip-ink);
+}
+.defs dd {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: 18px;
+  color: var(--tooltip-muted);
+  text-wrap: pretty;
+}
+.cmd {
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--tooltip-ink);
+}
+
+/* Manual: one line in the trigger text's place, at the text's own size so the
+   section does not read as empty. */
+.manual {
+  margin: 0;
+  font-size: var(--fs-small);
+  line-height: 22px;
+  color: var(--muted);
+  text-wrap: pretty;
+}
+.slug {
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: -0.01em;
+  color: var(--ink-soft);
+  padding: 1px 5px;
+  border-radius: var(--r-xs);
+  background: var(--surface-soft);
+}

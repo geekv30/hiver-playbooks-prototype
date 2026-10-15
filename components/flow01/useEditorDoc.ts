@@ -15,7 +15,7 @@ import {
   emptyDoc,
   newId,
   normalizeLine,
-  lineHasContent,
+  triggerReady,
   lineIsEmpty,
   isCondition,
   makeCondition,
@@ -488,7 +488,7 @@ export function useEditorDoc(initial?: EditorDoc): EditorApi {
   const redo = useCallback(() => dispatch({ type: 'redo' }), []);
 
   const isValid = useMemo(() => {
-    const triggerOk = lineHasContent(state.present.trigger);
+    const triggerOk = triggerReady(state.present);
     const aStepOk = state.present.steps.some((s) => stepHasContent(s));
     return triggerOk && aStepOk;
   }, [state.present]);

@@ -127,6 +127,9 @@ export default function SimulatePanel({
     setDir('back');
     setView('menu');
   };
+  // Matching emails needs the scan. When it goes away under the open view (the
+  // skill switched to Manual), show the menu instead of an empty panel.
+  const shown: EvalView = view === 'matching' && !scan ? 'menu' : view;
 
   return (
     <aside
@@ -141,7 +144,7 @@ export default function SimulatePanel({
       <div className={styles.inner}>
         {/* Floating-only "Evaluate" header on the menu (the docked panel uses the
             SidePanel's persistent Copilot | Evaluation tabs instead). */}
-        {view === 'menu' && !docked && (
+        {shown === 'menu' && !docked && (
           <header className={styles.header}>
             <div className={styles.headerTitle}>
               <RiPlayFill className={styles.headerIcon} />
@@ -153,29 +156,31 @@ export default function SimulatePanel({
           </header>
         )}
 
-        <div className={styles.viewWrap} data-dir={dir ?? undefined} key={view}>
-          {view === 'menu' && (
+        <div className={styles.viewWrap} data-dir={dir ?? undefined} key={shown}>
+          {shown === 'menu' && (
             <EvalMenu
               onOpen={openFlow}
               channel={channel}
               onChannel={setChannel}
               chatWays={chatWays}
               matchFresh={scan?.fresh}
+              // Matching emails needs the canvas scan; a Manual skill has none.
+              showMatching={Boolean(scan)}
               matchIsNew={matchingIsNew}
             />
           )}
 
-          {view === 'pastChats' && doc && live && (
+          {shown === 'pastChats' && doc && live && (
             <PastChats doc={doc} live={live} onExit={toMenu} onRunRecorded={onRunRecorded} onOpenCopilot={onOpenCopilot} />
           )}
-          {view === 'chatScenarios' && doc && live && (
+          {shown === 'chatScenarios' && doc && live && (
             <ChatScenarios doc={doc} live={live} onExit={toMenu} onRunRecorded={onRunRecorded} onOpenCopilot={onOpenCopilot} />
           )}
-          {view === 'chatLive' && doc && live && (
+          {shown === 'chatLive' && doc && live && (
             <ChatLive doc={doc} live={live} onExit={toMenu} onRunRecorded={onRunRecorded} onOpenCopilot={onOpenCopilot} />
           )}
 
-          {view === 'matching' && scan && (
+          {shown === 'matching' && scan && (
             <MatchingEmails
               trigger={trigger}
               mailboxes={mailboxes}
@@ -188,11 +193,11 @@ export default function SimulatePanel({
             />
           )}
 
-          {view === 'recent' && (
+          {shown === 'recent' && (
             <RecentEmails onExit={toMenu} onRunRecorded={onRunRecorded} onOpenCopilot={onOpenCopilot} />
           )}
 
-          {view === 'scenarios' && (
+          {shown === 'scenarios' && (
             <AiScenarios
               hasScenarios={hasScenarios}
               hasTrigger={hasTrigger}
@@ -203,7 +208,7 @@ export default function SimulatePanel({
             />
           )}
 
-          {view === 'custom' && (
+          {shown === 'custom' && (
             <div className={styles.flow}>
               <EvalBackHeader title={EVAL_TITLES.custom} icon={EVAL_ICONS.custom} onBack={toMenu} />
               <CustomEval onRunRecorded={onRunRecorded} onOpenCopilot={onOpenCopilot} />

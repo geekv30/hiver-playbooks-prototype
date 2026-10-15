@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties } from 're
 import { RiFlaskLine, RiPlayFill, RiRefreshLine, RiRestartLine } from 'react-icons/ri';
 import Spinner from '@/components/atoms/Spinner';
 import Button from '@/components/atoms/Button';
-import { lineHasContent } from '@/components/flow01/doc';
+import { triggerReady } from '@/components/flow01/doc';
 import { CHAT_SCENARIOS } from '@/data/chatFixtures';
 import type { ChatScenario } from '@/lib/eval/wire';
 import { LiveCopilotError } from '@/lib/copilot/useLiveCopilot';
@@ -39,7 +39,7 @@ const asCard = (s: ChatScenario) => ({ id: s.id, sender: s.persona, subject: s.g
 export default function ChatScenarios({ doc, live, onExit, onRunRecorded, onOpenCopilot }: ChatFlowProps) {
   const run = useChatRun({ doc, live, onRunRecorded });
   const isLive = live.mode === 'live';
-  const hasTrigger = lineHasContent(doc.trigger);
+  const hasTrigger = triggerReady(doc);
   const sig = docSignature(doc);
 
   // A version the model could not write for opens on the standard set.

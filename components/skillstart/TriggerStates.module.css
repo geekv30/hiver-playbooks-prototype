@@ -1,0 +1,81 @@
+/* The states list: each state is a row, its words on the left and the live
+   section on the right, split by a hairline. */
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--hairline);
+}
+
+.state {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 40px;
+  align-items: start;
+  padding: 32px 0;
+  border-bottom: 1px solid var(--hairline-soft);
+  scroll-margin-top: 24px;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+}
+.n {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: var(--fs-caption);
+  color: var(--muted-soft);
+}
+.title {
+  margin: 0;
+  font-size: var(--fs-h5);
+  line-height: var(--lh-h5);
+  letter-spacing: var(--ls-h5);
+  font-weight: 600;
+  color: var(--ink);
+}
+.when {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.shows {
+  margin: 0;
+  font-size: var(--fs-small);
+  line-height: 1.55;
+  color: var(--muted);
+  text-wrap: pretty;
+}
+.decision {
+  margin: 4px 0 0;
+  font-size: var(--fs-small);
+  line-height: 1.55;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+.tag {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 0 7px;
+  border: 1px solid #fed7aa;
+  border-radius: var(--r-pill);
+  background: #fff7ed;
+  font-size: var(--fs-micro);
+  line-height: 18px;
+  font-weight: 500;
+  color: #c2410c;
+  vertical-align: 1px;
+}
+
+.na {
+  margin: 0;
+  padding-top: 4px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--muted);
+}

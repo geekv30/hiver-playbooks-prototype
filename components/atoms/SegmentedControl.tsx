@@ -1,11 +1,13 @@
 'use client';
 
-import { useRef, type CSSProperties, type KeyboardEvent } from 'react';
+import { useRef, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
 import styles from './SegmentedControl.module.css';
 
 export interface SegTab<T extends string> {
   id: T;
   label: string;
+  /** Optional 16px icon before the label. */
+  icon?: ReactNode;
 }
 
 interface Props<T extends string> {
@@ -70,6 +72,11 @@ export default function SegmentedControl<T extends string>({
           data-active={t.id === active || undefined}
           onClick={() => onChange(t.id)}
         >
+          {t.icon && (
+            <span className={styles.ico} aria-hidden>
+              {t.icon}
+            </span>
+          )}
           {t.label}
         </button>
       ))}

@@ -21,6 +21,7 @@ import GmailBar from './GmailBar';
 import Toolbar from './Toolbar';
 import ChatBar from './ChatBar';
 import EditorLine, { PaletteRequest } from './EditorLine';
+import { TRIGGER_PLACEHOLDER, TriggerKindControl, TriggerManualLine, modeChangeLine, slugFor } from './TriggerKind';
 import CommandPalette from './CommandPalette';
 import ConditionBlock from './condition/ConditionBlock';
 import ColdStartModal from './ColdStartModal';
@@ -67,6 +68,7 @@ import {
   isCondition,
   applyDocPatch,
   emptyDoc,
+  triggerReady,
   type EditorDoc,
   type DocPatchOp,
 } from './doc';
@@ -88,7 +90,6 @@ interface FocusReq {
   token: number;
 }
 
-const TRIGGER_PLACEHOLDER = 'e.g. when an email reports an API error';
 
 /** Runs -> editor handoff: open Evaluation on Matching emails on arrival. */
 const OPEN_MATCHING_KEY = 'hiver.playbooks.openMatching';
@@ -342,6 +343,11 @@ export default function EditorCanvas({
   // type. It lives here, not in the flow, because the Evaluation tab's count badge
   // and Copilot's handoff message both read it.
   const triggerText = useMemo(() => lineToText(doc.trigger), [doc.trigger]);
+  // Manual: the skill runs only with its / command in the Assist Agent, so
+  // nothing waits on a trigger - not Enable, not AI scenarios - and nothing
+  // matches emails on its own (no background scan, no Matching emails).
+  const manual = doc.triggerMode === 'manual';
+  const triggerOk = triggerReady(doc);
   const scan = useTriggerScan(triggerText);
   // Runs - the skill's execution history. A MODE of this page rather than a
   // third companion tab: Copilot and Evaluation are authoring tools that sit
@@ -423,6 +429,8 @@ export default function EditorCanvas({
   const autoScanned = useRef<string | null>(null);
   useEffect(() => {
     if (scan.state.phase !== 'idle' || scan.state.cleared) return;
+    // A Manual skill never runs on its own, so there is nothing to match.
+    if (doc.triggerMode === 'manual') return;
     const trigger = triggerText.trim();
     if (!trigger || autoScanned.current === trigger) return;
     const first = doc.mailboxes[0];
@@ -430,7 +438,7 @@ export default function EditorCanvas({
     autoScanned.current = trigger;
     scan.start(first);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scan.state.phase, scan.state.cleared, triggerText, doc.mailboxes]);
+  }, [scan.state.phase, scan.state.cleared, triggerText, doc.mailboxes, doc.triggerMode]);
 
   // The cold-start "draft with AI" modal shows on a fresh, empty canvas (no
   // initialDoc); the pre-seeded /api-example demo skips it. See ColdStartPhase above.
@@ -495,6 +503,32 @@ export default function EditorCanvas({
     // Give an actionable toast (Undo) longer to live.
     hintTimer.current = setTimeout(() => setHint(null), action ? 5200 : 2600);
   }, []);
+
+  // Describe it / Manual. On a live skill the change applies at once, so the
+  // toast says what changed and offers Undo, the way Pause does.
+  const changeTriggerMode = useCallback(
+    (mode: EditorDoc['triggerMode']) => {
+      const prev = docRef.current.triggerMode;
+      if (mode === prev) return;
+      api.setTriggerMode(mode);
+      if (mode === 'manual') {
+        // Nothing matches on its own any more: stop a background match in flight.
+        scan.cancel();
+      } else if (!lineHasContent(docRef.current.trigger)) {
+        // Back to Describe it with nothing written: land in the trigger to type.
+        requestFocus('trigger', false);
+      } else {
+        // The trigger line remounts: an old focus request must not pull the caret in.
+        setFocusReq((r) => (r?.key === 'trigger' ? null : r));
+      }
+      if (docRef.current.status === 'active')
+        showHint(modeChangeLine(mode, slugFor(docRef.current.title)), {
+          label: 'Undo',
+          run: () => api.setTriggerMode(prev),
+        });
+    },
+    [api, showHint, requestFocus, scan],
+  );
 
   // --- Enable / pause / resume / settings ------------------------------------
   // Open the modal, seeding its LOCAL draft from the doc. Commit applies the
@@ -752,7 +786,7 @@ export default function EditorCanvas({
         prev.map((m, i) => (i === index ? { ...m, mailboxChosen: ids } : m)),
       );
       const first = ids[0];
-      if (!first || !lineHasContent(docRef.current.trigger)) return;
+      if (!first || !lineHasContent(docRef.current.trigger) || docRef.current.triggerMode === 'manual') return;
       setCopilotMessages((prev) => [
         ...prev,
         { role: 'assistant', text: '', scan: { mailbox: mailboxName(first) } },
@@ -1608,7 +1642,7 @@ export default function EditorCanvas({
         hideSimulate={companions}
         // Enable is muted+disabled until the skill has a trigger AND a step
         // (Figma 647:39849); then it routes THROUGH the guardrails commit panel.
-        canEnable={lineHasContent(doc.trigger) && doc.steps.some((s) => stepHasContent(s))}
+        canEnable={triggerOk && doc.steps.some((s) => stepHasContent(s))}
         onEnable={requestEnable}
         onSettings={() => openEnable('manage')}
         onPause={pauseAop}
@@ -1634,6 +1668,8 @@ export default function EditorCanvas({
               status: doc.status,
               mailboxes: doc.mailboxes,
               trigger: triggerText,
+              manual,
+              command: slugFor(doc.title),
               liveSince: doc.liveSince ?? seedSpan.liveSince,
               pausedAt: doc.status === 'paused' ? (doc.pausedAt ?? seedSpan.pausedAt) : undefined,
             }}
@@ -1653,6 +1689,8 @@ export default function EditorCanvas({
               tab={panelTab}
               onTab={setPanelTab}
               copilot={{
+                // Nothing to refine in Manual: the trigger is hidden.
+                hiddenStarters: manual ? ['Refine the trigger'] : undefined,
                 messages: copilotMessages,
                 onSend: sendCopilot,
                 onRegenerate: regenerateCopilot,
@@ -1679,9 +1717,10 @@ export default function EditorCanvas({
                 },
                 // The handoff line and the unprompted hint both read the LIVE
                 // scan, so Copilot can never contradict the Evaluation tab.
-                // Absent until a scan exists, and dropped once it is stale.
+                // Absent until a scan exists, and dropped once it is stale. A
+                // Manual skill never runs on its own, so it has no matching row.
                 scanState:
-                  scan.state.mailboxId && scan.state.phase !== 'idle' && !scan.stale
+                  doc.triggerMode !== 'manual' && scan.state.mailboxId && scan.state.phase !== 'idle' && !scan.stale
                     ? {
                         scanning: scan.state.phase === 'scanning',
                         count: scan.state.matches.length,
@@ -1691,14 +1730,14 @@ export default function EditorCanvas({
                     : undefined,
               }}
               sim={{
-                hasScenarios: lineHasContent(doc.trigger),
-                hasTrigger: lineHasContent(doc.trigger),
+                hasScenarios: triggerOk,
+                hasTrigger: triggerOk,
                 onAddTrigger: () => requestFocus('trigger', false),
                 onRunRecorded,
                 onOpenCopilot: () => setPanelTab('copilot'),
                 trigger: triggerText,
                 mailboxes: doc.mailboxes,
-                scan,
+                scan: manual ? undefined : scan,
                 matchingIsNew,
                 onMatchingSeen: () => setMatchingIsNew(false),
                 doc,
@@ -1713,13 +1752,13 @@ export default function EditorCanvas({
           <SimulatePanel
             open={simOpen}
             onClose={() => setSimOpen(false)}
-            hasScenarios={lineHasContent(doc.trigger)}
-            hasTrigger={lineHasContent(doc.trigger)}
+            hasScenarios={triggerOk}
+            hasTrigger={triggerOk}
             onAddTrigger={() => requestFocus('trigger', false)}
             onRunRecorded={onRunRecorded}
             trigger={triggerText}
             mailboxes={doc.mailboxes}
-            scan={scan}
+            scan={manual ? undefined : scan}
             matchingIsNew={matchingIsNew}
             onMatchingSeen={() => setMatchingIsNew(false)}
             doc={doc}
@@ -1737,19 +1776,27 @@ export default function EditorCanvas({
                   <span className={styles.gutter} aria-hidden />
                   <div className={styles.content}>
                     <h2 className={styles.label}>Trigger</h2>
-                    <div className={styles.triggerLine}>
-                      <EditorLine
-                        fragments={doc.trigger}
-                        placeholder={TRIGGER_PLACEHOLDER}
-                        onChange={handleChange({ kind: 'trigger' })}
-                        onEnter={handleEnter({ kind: 'trigger' })}
-                        // The trigger is always handwritten NL - no actions/references,
-                        // no command palette. '@' and '/' type literally (noActions).
-                        noActions
-                        autoFocus={focusFor('trigger')}
-                        ariaLabel="When should this skill run"
-                      />
-                    </div>
+                    <TriggerKindControl mode={doc.triggerMode} onMode={changeTriggerMode} slug={slugFor(doc.title)} />
+                    {/* Manual has no trigger to write: one line takes the text's
+                        place. The text stays on the doc and comes back with
+                        Describe it. */}
+                    {manual ? (
+                      <TriggerManualLine slug={slugFor(doc.title)} />
+                    ) : (
+                      <div className={styles.triggerLine}>
+                        <EditorLine
+                          fragments={doc.trigger}
+                          placeholder={TRIGGER_PLACEHOLDER}
+                          onChange={handleChange({ kind: 'trigger' })}
+                          onEnter={handleEnter({ kind: 'trigger' })}
+                          // The trigger is always handwritten NL - no actions/references,
+                          // no command palette. '@' and '/' type literally (noActions).
+                          noActions
+                          autoFocus={focusFor('trigger')}
+                          ariaLabel="When should this skill run"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               </section>
@@ -2072,6 +2119,7 @@ export default function EditorCanvas({
           onEvaluate={evaluateFromEnable}
           onClose={() => setEnableMode(null)}
           onConfirm={confirmEnable}
+          manual={manual}
         />
       )}
 

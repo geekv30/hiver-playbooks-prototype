@@ -14,6 +14,7 @@ export type { SideTab };
 
 interface CopilotProps {
   messages: CopilotMessage[];
+  hiddenStarters?: string[];
   /** The live model's state and its unlock / turn-off actions. */
   live?: ComponentProps<typeof CopilotPanel>['live'];
   onSend: (text: string) => void;

@@ -119,6 +119,8 @@ interface Props {
   matchFresh?: boolean;
   /** True until the user has opened Matching emails once (the NEW tag). */
   matchIsNew?: boolean;
+  /** False for a Manual skill: it never runs on its own, so nothing "matches". */
+  showMatching?: boolean;
 }
 
 /**
@@ -130,7 +132,16 @@ interface Props {
  * count is Copilot's row to report. What the scan changes here is temporary: a
  * fill while the result is still news, then plain again.
  */
-export default function EvalMenu({ onOpen, channel: picked, onChannel, chatWays = CHAT_WAYS, matchFresh, matchIsNew }: Props) {
+export default function EvalMenu({
+  onOpen,
+  channel: picked,
+  onChannel,
+  chatWays = CHAT_WAYS,
+  matchFresh,
+  matchIsNew,
+  showMatching = true,
+}: Props) {
+  const emailEntries = showMatching ? EVAL_ENTRIES : EVAL_ENTRIES.filter((e) => e.id !== 'matching');
   const chatEntries = CHAT_EVAL_ENTRIES.filter((e) => chatWays.includes(e.id));
   const tabs = chatEntries.length > 0 ? CHANNEL_TABS : CHANNEL_TABS.filter((t) => t.id !== 'chat');
   const channel = tabs.some((t) => t.id === picked) ? picked : 'email';
@@ -142,7 +153,7 @@ export default function EvalMenu({ onOpen, channel: picked, onChannel, chatWays 
       )}
       <div className={styles.cards} key={channel} data-channel={channel}>
         {channel === 'email'
-          ? EVAL_ENTRIES.map((e) => (
+          ? emailEntries.map((e) => (
               <EvalCard
                 key={e.id}
                 icon={EVAL_ICONS[e.id]}
