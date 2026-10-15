@@ -142,8 +142,3 @@
   visibility: hidden;
 }
 
-/* D - the Describe it / Manual control, between the Trigger label and its text */
-.kind {
-  max-width: 400px;
-  margin: 2px 0 14px;
-}

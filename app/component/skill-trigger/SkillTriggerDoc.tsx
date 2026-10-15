@@ -18,7 +18,7 @@ const STATES: StateDoc[] = [
     id: 'empty',
     title: 'New skill, nothing written',
     when: 'Someone clicks New skill and starts from scratch.',
-    shows: 'Describe it is picked. The / command waits for a name.',
+    shows: 'Describe it is picked. The / command comes from the name.',
     seed: () => ({ title: 'Untitled skill', status: 'draft', trigger: EMPTY(), config: DESCRIBE, mailboxes: EDITED_MAILBOXES }),
   },
   {
@@ -39,7 +39,7 @@ const STATES: StateDoc[] = [
     id: 'manual-empty',
     title: 'Manual, nothing written',
     when: 'A new skill set to Manual, before its text is written.',
-    shows: 'An amber line asks when to use the skill. Enable stays off.',
+    shows: 'Enable stays off until the text is written.',
     seed: () => ({ ...live(), status: 'draft', trigger: EMPTY(), config: MANUAL }),
   },
   {
@@ -55,7 +55,7 @@ const STATES: StateDoc[] = [
     id: 'paused',
     title: 'Paused',
     when: 'Someone clicks Pause.',
-    shows: 'A line says the skill does not run. Click Resume to start the skill again.',
+    shows: 'The toolbar shows Paused. Click Resume to start the skill again.',
     decision: 'Should Pause also take the skill out of the / menu?',
     seed: () => live({ status: 'paused' }),
   },
@@ -83,9 +83,19 @@ export default function SkillTriggerDoc() {
           type the / command in Copilot. With Manual, the skill runs only when someone types its / command.
         </p>
         <p className={styles.para}>
-          Directions A, B and C are on <Link href="/component/skill-start" className={styles.peerName}>
+          Try it in the full editor:{' '}
+          <Link href="/aops/seed/refund-requests" className={styles.peerName}>
+            Refund requests (live)
+          </Link>{' '}
+          or{' '}
+          <Link href="/aops/new" className={styles.peerName}>
+            a new skill
+          </Link>
+          . Directions A, B and C are on{' '}
+          <Link href="/component/skill-start" className={styles.peerName}>
             How a skill starts
-          </Link>.
+          </Link>
+          .
         </p>
       </header>
 

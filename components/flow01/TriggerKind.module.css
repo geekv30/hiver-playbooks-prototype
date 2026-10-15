@@ -1,0 +1,26 @@
+/* Describe it / Manual on the Trigger: the control between the label and the
+   text, and one quiet line under the text. */
+
+.control {
+  max-width: 360px;
+  margin: 2px 0 12px;
+}
+
+.hint {
+  margin: 8px 0 0;
+  font-size: var(--fs-caption);
+  line-height: 18px;
+  color: var(--muted);
+  text-wrap: pretty;
+}
+
+.slug {
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: -0.01em;
+  color: var(--ink-soft);
+  padding: 1px 5px;
+  border-radius: var(--r-xs);
+  background: var(--surface-soft);
+}

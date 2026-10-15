@@ -6,16 +6,12 @@ import Toolbar from '@/components/flow01/Toolbar';
 import ed from '@/components/flow01/EditorCanvas.module.css';
 import { lineHasContent, type DeployStatus } from '@/components/flow01/doc';
 import type { Fragment } from '@/types/playbook';
-import { DescribeOrManual, DescribeOrManualHelp, OneChoice, OneChoiceHelp, TwoDoors, TwoSwitches, type StartCtx } from './StartControls';
+import { TRIGGER_ARIA, TRIGGER_PLACEHOLDER, TriggerKindControl, TriggerKindHint, slugFor } from '@/components/flow01/TriggerKind';
+import { OneChoice, OneChoiceHelp, TwoDoors, TwoSwitches, type StartCtx } from './StartControls';
 import type { Direction, StartConfig } from './model';
 import styles from './TriggerSection.module.css';
 
-/** The / command a name gives a skill: "Refund requests" -> "refund-requests". */
-export function slugFor(title: string): string | null {
-  const t = title.trim();
-  if (!t || t === 'Untitled skill') return null;
-  return t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || null;
-}
+export { slugFor };
 
 interface SectionProps {
   direction: Direction;
@@ -37,8 +33,8 @@ export function TriggerSection({ direction, config, onConfig, status, title, tri
   const ctx: StartCtx = { config, onChange: onConfig, status, mailboxes, slug: slugFor(title), clash, hasTrigger };
   // B: a skill that only runs with / has no trigger, only a line for the / menu.
   const whenToUse = direction === 'b' && !config.auto;
-  // D: the label stays Trigger. Manual changes only what the text is for.
-  const manual = direction === 'd' && !config.auto;
+  // D is the editor's own Describe it / Manual (components/flow01/TriggerKind).
+  const mode = config.auto ? 'automatic' : 'manual';
 
   return (
     <>
@@ -48,21 +44,27 @@ export function TriggerSection({ direction, config, onConfig, status, title, tri
           <div className={ed.content}>
             <h2 className={ed.label}>{whenToUse ? 'When to use' : 'Trigger'}</h2>
             {direction === 'b' && <OneChoice config={config} onChange={onConfig} />}
-            {direction === 'd' && <DescribeOrManual config={config} onChange={onConfig} />}
+            {direction === 'd' && (
+              <TriggerKindControl mode={mode} onMode={(m) => onConfig({ ...config, auto: m === 'automatic', slash: true })} />
+            )}
             <div className={ed.triggerLine}>
               <EditorLine
                 fragments={trigger}
                 placeholder={
-                  whenToUse || manual ? 'e.g. use when someone asks for a refund' : 'e.g. when an email asks for a refund'
+                  direction === 'd'
+                    ? TRIGGER_PLACEHOLDER[mode]
+                    : whenToUse
+                      ? 'e.g. when someone asks for a refund'
+                      : 'e.g. when an email asks for a refund'
                 }
                 onChange={onTrigger}
                 noActions
-                ariaLabel={whenToUse || manual ? 'When to use this skill' : 'When should this skill run'}
+                ariaLabel={direction === 'd' ? TRIGGER_ARIA[mode] : whenToUse ? 'When to use this skill' : 'When should this skill run'}
               />
             </div>
             {direction === 'a' && <TwoSwitches {...ctx} />}
             {direction === 'b' && <OneChoiceHelp {...ctx} />}
-            {direction === 'd' && <DescribeOrManualHelp {...ctx} />}
+            {direction === 'd' && <TriggerKindHint mode={mode} slug={slugFor(title)} />}
           </div>
         </div>
       </section>

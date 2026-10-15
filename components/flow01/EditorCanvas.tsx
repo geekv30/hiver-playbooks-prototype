@@ -21,6 +21,7 @@ import GmailBar from './GmailBar';
 import Toolbar from './Toolbar';
 import ChatBar from './ChatBar';
 import EditorLine, { PaletteRequest } from './EditorLine';
+import { TRIGGER_ARIA, TRIGGER_PLACEHOLDER, TriggerKindControl, TriggerKindHint, modeChangeLine, slugFor } from './TriggerKind';
 import CommandPalette from './CommandPalette';
 import ConditionBlock from './condition/ConditionBlock';
 import ColdStartModal from './ColdStartModal';
@@ -88,7 +89,6 @@ interface FocusReq {
   token: number;
 }
 
-const TRIGGER_PLACEHOLDER = 'e.g. when an email reports an API error';
 
 /** Runs -> editor handoff: open Evaluation on Matching emails on arrival. */
 const OPEN_MATCHING_KEY = 'hiver.playbooks.openMatching';
@@ -423,6 +423,8 @@ export default function EditorCanvas({
   const autoScanned = useRef<string | null>(null);
   useEffect(() => {
     if (scan.state.phase !== 'idle' || scan.state.cleared) return;
+    // A Manual skill never runs on its own, so there is nothing to match.
+    if (doc.triggerMode === 'manual') return;
     const trigger = triggerText.trim();
     if (!trigger || autoScanned.current === trigger) return;
     const first = doc.mailboxes[0];
@@ -430,7 +432,7 @@ export default function EditorCanvas({
     autoScanned.current = trigger;
     scan.start(first);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scan.state.phase, scan.state.cleared, triggerText, doc.mailboxes]);
+  }, [scan.state.phase, scan.state.cleared, triggerText, doc.mailboxes, doc.triggerMode]);
 
   // The cold-start "draft with AI" modal shows on a fresh, empty canvas (no
   // initialDoc); the pre-seeded /api-example demo skips it. See ColdStartPhase above.
@@ -495,6 +497,22 @@ export default function EditorCanvas({
     // Give an actionable toast (Undo) longer to live.
     hintTimer.current = setTimeout(() => setHint(null), action ? 5200 : 2600);
   }, []);
+
+  // Describe it / Manual. On a live skill the change applies at once, so the
+  // toast says what changed and offers Undo, the way Pause does.
+  const changeTriggerMode = useCallback(
+    (mode: EditorDoc['triggerMode']) => {
+      const prev = docRef.current.triggerMode;
+      if (mode === prev) return;
+      api.setTriggerMode(mode);
+      if (docRef.current.status === 'active')
+        showHint(modeChangeLine(mode, slugFor(docRef.current.title)), {
+          label: 'Undo',
+          run: () => api.setTriggerMode(prev),
+        });
+    },
+    [api, showHint],
+  );
 
   // --- Enable / pause / resume / settings ------------------------------------
   // Open the modal, seeding its LOCAL draft from the doc. Commit applies the
@@ -752,7 +770,7 @@ export default function EditorCanvas({
         prev.map((m, i) => (i === index ? { ...m, mailboxChosen: ids } : m)),
       );
       const first = ids[0];
-      if (!first || !lineHasContent(docRef.current.trigger)) return;
+      if (!first || !lineHasContent(docRef.current.trigger) || docRef.current.triggerMode === 'manual') return;
       setCopilotMessages((prev) => [
         ...prev,
         { role: 'assistant', text: '', scan: { mailbox: mailboxName(first) } },
@@ -1679,9 +1697,10 @@ export default function EditorCanvas({
                 },
                 // The handoff line and the unprompted hint both read the LIVE
                 // scan, so Copilot can never contradict the Evaluation tab.
-                // Absent until a scan exists, and dropped once it is stale.
+                // Absent until a scan exists, and dropped once it is stale. A
+                // Manual skill never runs on its own, so it has no matching row.
                 scanState:
-                  scan.state.mailboxId && scan.state.phase !== 'idle' && !scan.stale
+                  doc.triggerMode !== 'manual' && scan.state.mailboxId && scan.state.phase !== 'idle' && !scan.stale
                     ? {
                         scanning: scan.state.phase === 'scanning',
                         count: scan.state.matches.length,
@@ -1737,19 +1756,21 @@ export default function EditorCanvas({
                   <span className={styles.gutter} aria-hidden />
                   <div className={styles.content}>
                     <h2 className={styles.label}>Trigger</h2>
+                    <TriggerKindControl mode={doc.triggerMode} onMode={changeTriggerMode} />
                     <div className={styles.triggerLine}>
                       <EditorLine
                         fragments={doc.trigger}
-                        placeholder={TRIGGER_PLACEHOLDER}
+                        placeholder={TRIGGER_PLACEHOLDER[doc.triggerMode]}
                         onChange={handleChange({ kind: 'trigger' })}
                         onEnter={handleEnter({ kind: 'trigger' })}
                         // The trigger is always handwritten NL - no actions/references,
                         // no command palette. '@' and '/' type literally (noActions).
                         noActions
                         autoFocus={focusFor('trigger')}
-                        ariaLabel="When should this skill run"
+                        ariaLabel={TRIGGER_ARIA[doc.triggerMode]}
                       />
                     </div>
+                    <TriggerKindHint mode={doc.triggerMode} slug={slugFor(doc.title)} />
                   </div>
                 </div>
               </section>

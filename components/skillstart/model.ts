@@ -30,11 +30,6 @@ export const DEFAULT_START: Record<Direction, StartConfig> = {
   d: { auto: true, slash: true, reach: 'everyone' },
 };
 
-/** Direction D's two options. Describe it = runs on its own, and / works too.
- *  Manual = runs only with /. */
-export type TriggerKind = 'describe' | 'manual';
-export const kindOf = (c: StartConfig): TriggerKind => (c.auto ? 'describe' : 'manual');
-export const fromKind = (kind: TriggerKind, prev: StartConfig): StartConfig => ({ ...prev, auto: kind === 'describe', slash: true });
 
 /** Direction B's one choice, mapped onto the two switches. */
 export type Choice = 'auto' | 'both' | 'slash';
