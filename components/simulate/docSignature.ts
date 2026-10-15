@@ -27,5 +27,7 @@ export function docSignature(doc: EditorDoc): string {
           .join(',')})`
       : line(s.body),
   );
-  return `${line(doc.trigger)}::${steps.join('::')}`;
+  // The mode changes what the model is told (a Manual skill is never a "no match"),
+  // so switching it makes earlier results stale too.
+  return `${doc.triggerMode}::${line(doc.trigger)}::${steps.join('::')}`;
 }

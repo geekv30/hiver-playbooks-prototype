@@ -68,6 +68,7 @@ import {
   isCondition,
   applyDocPatch,
   emptyDoc,
+  triggerReady,
   type EditorDoc,
   type DocPatchOp,
 } from './doc';
@@ -346,7 +347,7 @@ export default function EditorCanvas({
   // nothing waits on a trigger - not Enable, not AI scenarios - and nothing
   // matches emails on its own (no background scan, no Matching emails).
   const manual = doc.triggerMode === 'manual';
-  const triggerReady = manual || lineHasContent(doc.trigger);
+  const triggerOk = triggerReady(doc);
   const scan = useTriggerScan(triggerText);
   // Runs - the skill's execution history. A MODE of this page rather than a
   // third companion tab: Copilot and Evaluation are authoring tools that sit
@@ -510,15 +511,23 @@ export default function EditorCanvas({
       const prev = docRef.current.triggerMode;
       if (mode === prev) return;
       api.setTriggerMode(mode);
-      // Back to Describe it with nothing written: land in the trigger to type.
-      if (mode === 'automatic' && !lineHasContent(docRef.current.trigger)) requestFocus('trigger', false);
+      if (mode === 'manual') {
+        // Nothing matches on its own any more: stop a background match in flight.
+        scan.cancel();
+      } else if (!lineHasContent(docRef.current.trigger)) {
+        // Back to Describe it with nothing written: land in the trigger to type.
+        requestFocus('trigger', false);
+      } else {
+        // The trigger line remounts: an old focus request must not pull the caret in.
+        setFocusReq((r) => (r?.key === 'trigger' ? null : r));
+      }
       if (docRef.current.status === 'active')
         showHint(modeChangeLine(mode, slugFor(docRef.current.title)), {
           label: 'Undo',
           run: () => api.setTriggerMode(prev),
         });
     },
-    [api, showHint, requestFocus],
+    [api, showHint, requestFocus, scan],
   );
 
   // --- Enable / pause / resume / settings ------------------------------------
@@ -1633,7 +1642,7 @@ export default function EditorCanvas({
         hideSimulate={companions}
         // Enable is muted+disabled until the skill has a trigger AND a step
         // (Figma 647:39849); then it routes THROUGH the guardrails commit panel.
-        canEnable={triggerReady && doc.steps.some((s) => stepHasContent(s))}
+        canEnable={triggerOk && doc.steps.some((s) => stepHasContent(s))}
         onEnable={requestEnable}
         onSettings={() => openEnable('manage')}
         onPause={pauseAop}
@@ -1721,8 +1730,8 @@ export default function EditorCanvas({
                     : undefined,
               }}
               sim={{
-                hasScenarios: triggerReady,
-                hasTrigger: triggerReady,
+                hasScenarios: triggerOk,
+                hasTrigger: triggerOk,
                 onAddTrigger: () => requestFocus('trigger', false),
                 onRunRecorded,
                 onOpenCopilot: () => setPanelTab('copilot'),
@@ -1743,8 +1752,8 @@ export default function EditorCanvas({
           <SimulatePanel
             open={simOpen}
             onClose={() => setSimOpen(false)}
-            hasScenarios={triggerReady}
-            hasTrigger={triggerReady}
+            hasScenarios={triggerOk}
+            hasTrigger={triggerOk}
             onAddTrigger={() => requestFocus('trigger', false)}
             onRunRecorded={onRunRecorded}
             trigger={triggerText}

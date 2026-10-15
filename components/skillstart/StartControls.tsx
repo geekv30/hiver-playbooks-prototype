@@ -7,7 +7,7 @@ import SegmentedControl from '@/components/atoms/SegmentedControl';
 import Dropdown from '@/components/atoms/Dropdown';
 import { mailboxList } from '@/data/mailboxes';
 import type { DeployStatus } from '@/components/flow01/doc';
-import { REACH_LABEL, choiceOf, fromChoice, type Choice, type Direction, type Reach, type StartConfig } from './model';
+import { REACH_LABEL, choiceOf, fromChoice, type Choice, type Reach, type StartConfig } from './model';
 import styles from './StartControls.module.css';
 
 /** Everything the start controls read about the skill. */
@@ -66,7 +66,7 @@ function slashSub(ctx: StartCtx, lead: ReactNode): ReactNode {
 }
 
 /** The one line under the controls that matters most right now, if any. */
-function StateNotice({ ctx, direction }: { ctx: StartCtx; direction: Direction }) {
+function StateNotice({ ctx, direction }: { ctx: StartCtx; direction: 'a' | 'b' | 'c' }) {
   const { config, status } = ctx;
   if (status === 'paused')
     return (
@@ -78,12 +78,12 @@ function StateNotice({ ctx, direction }: { ctx: StartCtx; direction: Direction }
   if (!config.auto && !ctx.hasTrigger)
     return (
       <Notice tone="warn">
-        {direction === 'b' || direction === 'd'
+        {direction === 'b'
           ? 'Write when to use this skill. Copilot shows this text in the / menu.'
           : 'Write a trigger. Copilot shows the trigger in the / menu.'}
       </Notice>
     );
-  if (!config.auto && direction !== 'b' && direction !== 'd')
+  if (!config.auto && direction !== 'b')
     return (
       <Notice tone="quiet" icon={<RiSlashCommands2 aria-hidden />}>
         This skill runs only with <Command slug={ctx.slug} />. Copilot shows the trigger in the / menu.

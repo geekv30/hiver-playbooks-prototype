@@ -301,10 +301,17 @@ export function stepHasContent(step: Step): boolean {
 // layer on once that state exists). See plan 09, flag.
 export function enableBlockers(doc: EditorDoc): string[] {
   const out: string[] = [];
-  if (!lineHasContent(doc.trigger)) out.push('Add a trigger to enable');
+  if (!triggerReady(doc)) out.push('Add a trigger to enable');
   if (!doc.steps.some((s) => stepHasContent(s))) out.push('Add a step to enable');
   if (doc.mailboxes.length === 0) out.push('Pick at least one shared mailbox');
   return out;
+}
+
+// The trigger is "done" when it has text, or when the skill is Manual: a Manual
+// skill runs only with its / command, so it has no trigger to write. The one
+// rule for Enable, validity, evaluation and scenarios.
+export function triggerReady(doc: Pick<EditorDoc, 'trigger' | 'triggerMode'>): boolean {
+  return doc.triggerMode === 'manual' || lineHasContent(doc.trigger);
 }
 
 // A line counts as "empty" when it has no chips/refs and only blank text.
