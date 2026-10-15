@@ -6,8 +6,8 @@ import { modeChangeLine } from '@/components/flow01/TriggerKind';
 import { DEFAULT_START, EDITED_MAILBOXES, type StartConfig } from '@/components/skillstart/model';
 import styles from '../skill-start/page.module.css';
 
-/* Trigger: Describe it or Manual - the simple version of how a skill starts.
-   One control under the Trigger label. Describe it runs on its own when a
+/* Trigger: Automatic or Manual - the simple version of how a skill starts.
+   One control under the Trigger label. Automatic runs on its own when a
    conversation matches, and / works too. Manual runs only with /. */
 
 const DESCRIBE: StartConfig = DEFAULT_START.d;
@@ -18,12 +18,12 @@ const STATES: StateDoc[] = [
     id: 'empty',
     title: 'New skill, nothing written',
     when: 'Someone clicks New skill and starts from scratch.',
-    shows: 'Describe it is picked. The / command comes from the name.',
+    shows: 'Automatic is picked. The / command comes from the name.',
     seed: () => ({ title: 'Untitled skill', status: 'draft', trigger: EMPTY(), config: DESCRIBE, mailboxes: EDITED_MAILBOXES }),
   },
   {
     id: 'describe',
-    title: 'Live, Describe it',
+    title: 'Live, Automatic',
     when: 'Enabled with nothing changed.',
     shows: 'Hiver AI runs the skill when a conversation matches. People can also type the / command in the Assist Agent.',
     seed: () => live({ config: DESCRIBE }),
@@ -78,11 +78,11 @@ export default function SkillTriggerDoc() {
     <main className={styles.page}>
       <header className={styles.mast}>
         <p className={styles.kicker}>Skill editor/skill details</p>
-        <h1 className={styles.h1}>Trigger: Describe it or Manual</h1>
+        <h1 className={styles.h1}>Trigger: Automatic or Manual</h1>
         <p className={styles.standfirst}>
-          One control under Trigger. With Describe it, Hiver AI runs the skill when an email or chat matches the trigger. People
+          One control under Trigger. With Automatic, Hiver AI runs the skill when an email or chat matches the trigger. People
           can also type the / command in the Assist Agent. With Manual, the skill runs only with its / command, so the trigger
-          goes away. The text is kept and comes back with Describe it.
+          goes away. The text is kept and comes back with Automatic.
         </p>
         <p className={styles.para}>
           Try it in the full editor:{' '}
@@ -105,7 +105,7 @@ export default function SkillTriggerDoc() {
         <div className={styles.statesHead}>
           <h2 className={styles.h2}>Every state of the trigger</h2>
           <p className={styles.para}>
-            Each frame opens in its state and then works: pick Describe it or Manual, type the text, rename the skill in the toolbar,
+            Each frame opens in its state and then works: pick Automatic or Manual, type the text, rename the skill in the toolbar,
             Enable, Pause and Resume.
           </p>
         </div>

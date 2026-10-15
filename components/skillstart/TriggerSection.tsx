@@ -33,7 +33,7 @@ export function TriggerSection({ direction, config, onConfig, status, title, tri
   const ctx: StartCtx = { config, onChange: onConfig, status, mailboxes, slug: slugFor(title), clash, hasTrigger };
   // B: a skill that only runs with / has no trigger, only a line for the / menu.
   const whenToUse = direction === 'b' && !config.auto;
-  // D is the editor's own Describe it / Manual (components/flow01/TriggerKind).
+  // D is the editor's own Automatic / Manual (components/flow01/TriggerKind).
   const mode = config.auto ? 'automatic' : 'manual';
 
   return (

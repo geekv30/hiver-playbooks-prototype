@@ -8,7 +8,7 @@
 //   3. where / works (and for whom).
 // Matching is scripted here: each email names the one skill it fits.
 
-/** D is the simple one: one control on the trigger, Describe it or Manual. */
+/** D is the simple one: one control on the trigger, Automatic or Manual. */
 export type Direction = 'a' | 'b' | 'c' | 'd';
 
 /** Direction C scopes / by people, separately from mailboxes. */

@@ -6,12 +6,12 @@ import InfoButton from '@/components/simulate/MatchReasonButton';
 import type { TriggerMode } from './doc';
 import styles from './TriggerKind.module.css';
 
-/* How a skill starts, set on its Trigger: Describe it or Manual.
-   Describe it ('automatic'): Hiver AI runs the skill when a conversation
+/* How a skill starts, set on its Trigger: Automatic or Manual.
+   Automatic ('automatic'): Hiver AI runs the skill when a conversation
    matches the trigger text, and people can also type its / command in the
    Assist Agent. Manual: the skill runs only with its / command, so there is
    no trigger to write. The text is hidden, not deleted: it comes back when
-   the author switches to Describe it again. */
+   the author switches to Automatic again. */
 
 /** The / command a name gives a skill: "Refund requests" -> "refund-requests". */
 export function slugFor(title: string): string | null {
@@ -21,7 +21,7 @@ export function slugFor(title: string): string | null {
 }
 
 const KINDS: { id: TriggerMode; label: string; icon: React.ReactNode }[] = [
-  { id: 'automatic', label: 'Describe it', icon: <RiSparkling2Line /> },
+  { id: 'automatic', label: 'Automatic', icon: <RiSparkling2Line /> },
   { id: 'manual', label: 'Manual', icon: <RiHand /> },
 ];
 
@@ -44,10 +44,10 @@ export function TriggerKindControl({
       <div className={styles.control}>
         <SegmentedControl tabs={KINDS} active={mode} onChange={onMode} ariaLabel="How this skill starts" />
       </div>
-      <InfoButton title="How this skill starts" ariaLabel="How Describe it and Manual work" wide>
+      <InfoButton title="How this skill starts" ariaLabel="How Automatic and Manual work" wide>
         <dl className={styles.defs}>
           <div>
-            <dt>Describe it</dt>
+            <dt>Automatic</dt>
             <dd>
               Hiver AI runs this skill when an email or chat matches the trigger. People can also type {cmd} in the
               Assist Agent.

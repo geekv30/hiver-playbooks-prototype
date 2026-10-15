@@ -12,7 +12,7 @@ interface Props {
   title?: string;
   /** The icon's accessible name. Defaults to the match reason's. */
   ariaLabel?: string;
-  /** Richer content in place of `reason` (the trigger's Describe it / Manual). */
+  /** Richer content in place of `reason` (the trigger's Automatic / Manual). */
   children?: ReactNode;
   /** A wider bubble, for content longer than one reason. */
   wide?: boolean;

@@ -504,7 +504,7 @@ export default function EditorCanvas({
     hintTimer.current = setTimeout(() => setHint(null), action ? 5200 : 2600);
   }, []);
 
-  // Describe it / Manual. On a live skill the change applies at once, so the
+  // Automatic / Manual. On a live skill the change applies at once, so the
   // toast says what changed and offers Undo, the way Pause does.
   const changeTriggerMode = useCallback(
     (mode: EditorDoc['triggerMode']) => {
@@ -515,7 +515,7 @@ export default function EditorCanvas({
         // Nothing matches on its own any more: stop a background match in flight.
         scan.cancel();
       } else if (!lineHasContent(docRef.current.trigger)) {
-        // Back to Describe it with nothing written: land in the trigger to type.
+        // Back to Automatic with nothing written: land in the trigger to type.
         requestFocus('trigger', false);
       } else {
         // The trigger line remounts: an old focus request must not pull the caret in.
@@ -1779,7 +1779,7 @@ export default function EditorCanvas({
                     <TriggerKindControl mode={doc.triggerMode} onMode={changeTriggerMode} slug={slugFor(doc.title)} />
                     {/* Manual has no trigger to write: one line takes the text's
                         place. The text stays on the doc and comes back with
-                        Describe it. */}
+                        Automatic. */}
                     {manual ? (
                       <TriggerManualLine slug={slugFor(doc.title)} />
                     ) : (
