@@ -161,6 +161,8 @@ export default function SimulatePanel({
               onChannel={setChannel}
               chatWays={chatWays}
               matchFresh={scan?.fresh}
+              // Matching emails needs the canvas scan; a Manual skill has none.
+              showMatching={Boolean(scan)}
               matchIsNew={matchingIsNew}
             />
           )}

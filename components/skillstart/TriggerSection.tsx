@@ -6,7 +6,7 @@ import Toolbar from '@/components/flow01/Toolbar';
 import ed from '@/components/flow01/EditorCanvas.module.css';
 import { lineHasContent, type DeployStatus } from '@/components/flow01/doc';
 import type { Fragment } from '@/types/playbook';
-import { TRIGGER_ARIA, TRIGGER_PLACEHOLDER, TriggerKindControl, slugFor } from '@/components/flow01/TriggerKind';
+import { TRIGGER_PLACEHOLDER, TriggerKindControl, TriggerManualLine, modeChangeLine, slugFor } from '@/components/flow01/TriggerKind';
 import { OneChoice, OneChoiceHelp, TwoDoors, TwoSwitches, type StartCtx } from './StartControls';
 import type { Direction, StartConfig } from './model';
 import styles from './TriggerSection.module.css';
@@ -51,21 +51,25 @@ export function TriggerSection({ direction, config, onConfig, status, title, tri
                 slug={slugFor(title)}
               />
             )}
-            <div className={ed.triggerLine}>
-              <EditorLine
-                fragments={trigger}
-                placeholder={
-                  direction === 'd'
-                    ? TRIGGER_PLACEHOLDER[mode]
-                    : whenToUse
-                      ? 'e.g. when someone asks for a refund'
-                      : 'e.g. when an email asks for a refund'
-                }
-                onChange={onTrigger}
-                noActions
-                ariaLabel={direction === 'd' ? TRIGGER_ARIA[mode] : whenToUse ? 'When to use this skill' : 'When should this skill run'}
-              />
-            </div>
+            {direction === 'd' && mode === 'manual' ? (
+              <TriggerManualLine slug={slugFor(title)} />
+            ) : (
+              <div className={ed.triggerLine}>
+                <EditorLine
+                  fragments={trigger}
+                  placeholder={
+                    direction === 'd'
+                      ? TRIGGER_PLACEHOLDER
+                      : whenToUse
+                        ? 'e.g. when someone asks for a refund'
+                        : 'e.g. when an email asks for a refund'
+                  }
+                  onChange={onTrigger}
+                  noActions
+                  ariaLabel={whenToUse ? 'When to use this skill' : 'When should this skill run'}
+                />
+              </div>
+            )}
             {direction === 'a' && <TwoSwitches {...ctx} />}
             {direction === 'b' && <OneChoiceHelp {...ctx} />}
           </div>
@@ -134,7 +138,9 @@ export function StateFrame({ direction, seed }: { direction: Direction; seed: Fr
   const change = (next: StartConfig) => {
     if (status === 'active') {
       seeded.current = false;
-      setToast({ line: changeLine(config, next, slugFor(title)), undo: config });
+      const line =
+        direction === 'd' ? modeChangeLine(next.auto ? 'automatic' : 'manual', slugFor(title)) : changeLine(config, next, slugFor(title));
+      setToast({ line, undo: config });
     }
     setConfig(next);
   };
@@ -148,7 +154,8 @@ export function StateFrame({ direction, seed }: { direction: Direction; seed: Fr
         onTitleChange={setTitle}
         status={status}
         hideSimulate
-        canEnable={lineHasContent(trigger)}
+        // D's Manual has no trigger to write, so nothing here holds Enable back.
+        canEnable={(direction === 'd' && !config.auto) || lineHasContent(trigger)}
         onEnable={() => setStatus('active')}
         onPause={() => setStatus('paused')}
         onResume={() => setStatus('active')}

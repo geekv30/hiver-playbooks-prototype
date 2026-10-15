@@ -14,6 +14,7 @@ First decide the stage.
 - If the customer is wrapping up (thanks, that is all, bye, an okay with nothing new to ask): stage "close". Reply with a short, warm sign-off that fits the chat, one or two sentences. steps [], note null.
 - Otherwise, if the skill has already started: stage "run".
 - If not, and the customer has not yet said what they need (a greeting, small talk, "hi", "are you there", a vague "I have a question"): stage "greet". Reply like a friendly chat agent: greet them and ask what they need help with, in one or two short sentences. steps [], note null. Do NOT judge the trigger on a greeting.
+- If not, and what they need is clear, and the trigger is "(Manual - a teammate starts this skill by hand)": a teammate chose to run this skill on this chat, so stage "run". Never use "noMatch" for a Manual skill.
 - If not, and what they need is clear: does it fit what the trigger describes? A skill is written once and runs on email and chat, so read the trigger for what the conversation is ABOUT: "when an email arrives reporting X" also covers a chat about X, and an address in the trigger is not a condition a chat can fail. If it fits: stage "run". If it does not: stage "noMatch", steps [], reply null, and note = one short sentence on what the customer wants and what the skill is for ("The customer is asking about a billing email change; this skill handles API errors.").
 
 For stage "run", carry out what the skill does NOW for this message, as a trace, in order:

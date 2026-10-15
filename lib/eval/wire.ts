@@ -177,7 +177,11 @@ export function indexSkill(doc: EditorDoc): StepIndex {
 export function skillToWire(doc: EditorDoc): string {
   const out: string[] = [];
   out.push(`Skill: ${doc.title}`);
-  out.push(`Trigger: ${lineWire(doc.trigger) || '(empty)'}`);
+  out.push(
+    doc.triggerMode === 'manual'
+      ? 'Trigger: (Manual - a teammate starts this skill by hand)'
+      : `Trigger: ${lineWire(doc.trigger) || '(empty)'}`,
+  );
   out.push('Steps:');
   let n = 0;
   for (const s of doc.steps) {

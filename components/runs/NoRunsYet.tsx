@@ -13,6 +13,10 @@ export interface RunsSkill {
   /** The trigger, as plain text. Not shown; a skill with none has nothing
    *  to match, so the check-matches link needs it. */
   trigger: string;
+  /** Runs only with its / command in the Assist Agent: nothing "matches". */
+  manual?: boolean;
+  /** The / command (from the name), for a Manual skill's copy. */
+  command?: string | null;
   liveSince?: number;
   pausedAt?: number;
 }
@@ -34,6 +38,18 @@ function copy(skill: RunsSkill): { title: string; body: string } {
   const where = mailboxSummary(skill.mailboxes);
   if (skill.status === 'draft') {
     return { title: 'Nothing to see. Yet.', body: 'Enable this skill and its runs show up here.' };
+  }
+  if (skill.manual) {
+    const cmd = skill.command ? `/${skill.command}` : 'its / command';
+    if (skill.status === 'paused')
+      return {
+        title: 'Clocked out before its first shift',
+        body: `Paused${skill.pausedAt ? ` ${when(skill.pausedAt, true)}` : ''}. Nobody ran it while it was on.`,
+      };
+    return {
+      title: 'On call, not called yet',
+      body: `Live${skill.liveSince ? ` since ${when(skill.liveSince)}` : ''}. When someone types ${cmd} in the Assist Agent, the run shows here.`,
+    };
   }
   if (skill.status === 'paused') {
     return {
@@ -66,7 +82,7 @@ export default function NoRunsYet({
   onCheckMatches?: () => void;
 }) {
   const { title, body } = copy(skill);
-  const canCheck = skill.status === 'active' && skill.trigger.trim() !== '' && onCheckMatches;
+  const canCheck = skill.status === 'active' && !skill.manual && skill.trigger.trim() !== '' && onCheckMatches;
   return (
     <div className={styles.wrap} data-status={skill.status}>
       <div className={styles.head}>

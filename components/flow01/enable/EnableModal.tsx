@@ -26,7 +26,8 @@ type Phase = 'form' | 'enabling' | 'success';
  *  review (readiness checks against that selection). manage stays single-step. */
 type Step = 'setup' | 'review';
 /** The go-live surface tabs (Figma 1854:14203): AI Agents = the skill runs
- *  autonomously; AI Copilot = it assists teammates. Directional - both tabs
+ *  autonomously; Assist Agent (was "AI Copilot") = it assists teammates. A
+ *  Manual skill opens on Assist Agent: it runs only with / there. Directional - both tabs
  *  pick over the same shared-mailbox selection for now. */
 type Surface = 'agents' | 'copilot';
 
@@ -53,6 +54,8 @@ interface Props {
   onClose: () => void;
   /** commit: go live (fired after the success moment). manage: save changes. */
   onConfirm: () => void;
+  /** The trigger is set to Manual: the skill runs only with / in the Assist Agent. */
+  manual?: boolean;
 }
 
 const ENABLING_MS = 720;
@@ -64,7 +67,7 @@ const prefersReduced = () =>
 /** The go-live success moment: a check that draws in, the skill name, and the
  *  mailbox chips it went live on (staggered). Motion is the transitions.dev
  *  success-check + texts-reveal on our tokens. */
-function SuccessView({ name, mailboxes }: { name: string; mailboxes: string[] }) {
+function SuccessView({ name, mailboxes, manual }: { name: string; mailboxes: string[]; manual?: boolean }) {
   const shown = mailboxes.slice(0, 6);
   return (
     <div className={styles.success}>
@@ -75,7 +78,11 @@ function SuccessView({ name, mailboxes }: { name: string; mailboxes: string[] })
       <h2 className={styles.successTitle}>
         <span className={styles.successName}>{name}</span> is live
       </h2>
-      <p className={styles.successSub}>Now running on {mailboxSummary(mailboxes)}.</p>
+      <p className={styles.successSub}>
+        {manual
+          ? `Ready in the Assist Agent on ${mailboxSummary(mailboxes)}.`
+          : `Now running on ${mailboxSummary(mailboxes)}.`}
+      </p>
       <div className={styles.successChips}>
         {shown.map((id, i) => (
           <span key={id} className={styles.mbChip} style={{ '--i': i } as CSSProperties}>
@@ -149,6 +156,7 @@ export default function EnableModal({
   onEvaluate,
   onClose,
   onConfirm,
+  manual,
 }: Props) {
   const [phase, setPhase] = useState<Phase>('form');
   const [step, setStep] = useState<Step>('setup');
@@ -157,7 +165,7 @@ export default function EnableModal({
   const [dir, setDir] = useState<'fwd' | 'back'>('fwd');
   const [settled, setSettled] = useState(false);
   const [query, setQuery] = useState('');
-  const [surface, setSurface] = useState<Surface>('agents');
+  const [surface, setSurface] = useState<Surface>(manual ? 'copilot' : 'agents');
   const nameRef = useRef<HTMLInputElement>(null);
   const stepBodyRef = useRef<HTMLDivElement>(null);
   const dialogEl = useRef<HTMLElement | null>(null);
@@ -172,9 +180,10 @@ export default function EnableModal({
     setDir('fwd');
     setSettled(false);
     setQuery('');
-    setSurface('agents');
+    // A Manual skill runs only with / in the Assist Agent: open on that tab.
+    setSurface(manual ? 'copilot' : 'agents');
     requestAnimationFrame(() => nameRef.current?.focus());
-  }, [open]);
+  }, [open, manual]);
 
   useEffect(() => () => timers.current.forEach((t) => window.clearTimeout(t)), []);
 
@@ -267,7 +276,7 @@ export default function EnableModal({
       {(requestClose) => (
         <>
         {phase === 'success' ? (
-          <SuccessView name={liveName} mailboxes={selected} />
+          <SuccessView name={liveName} mailboxes={selected} manual={manual} />
         ) : (
           <>
             <header className={styles.head}>
@@ -286,7 +295,7 @@ export default function EnableModal({
                 <Verdict checks={checks} settled={settled} />
                 <span className={styles.reviewScope}>
                   Checked against {mailboxSummary(selected)} ·{' '}
-                  {surface === 'agents' ? 'AI Agents' : 'AI Copilot'}
+                  {surface === 'agents' ? 'AI Agents' : 'Assist Agent'}
                 </span>
                 <div className={styles.reviewList}>
                   <ReadinessReview
@@ -351,7 +360,7 @@ export default function EnableModal({
                     <span className={styles.tabIcon} aria-hidden>
                       <SparkleIcon />
                     </span>
-                    AI Copilot
+                    Assist Agent
                   </button>
                   {/* Sliding active-tab underline: two equal tabs, offset = one width. */}
                   <span

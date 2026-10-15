@@ -90,6 +90,8 @@ export interface CopilotMessage {
 interface Props {
   open: boolean;
   onClose: () => void;
+  /** Starter labels to leave out (a Manual skill has no trigger to refine). */
+  hiddenStarters?: string[];
   /** Rendered inside the docked SidePanel: drop the floating slot/header chrome
    *  (the SidePanel provides the card + the Copilot|Simulate tab header). */
   docked?: boolean;
@@ -372,7 +374,9 @@ export default function CopilotPanel({
   onOpenEvaluation,
   scanState,
   live,
+  hiddenStarters,
 }: Props) {
+  const starters = hiddenStarters?.length ? STARTERS.filter((s) => !hiddenStarters.includes(s.label)) : STARTERS;
   const [value, setValue] = useState('');
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const convoRef = useRef<HTMLDivElement>(null);
@@ -644,7 +648,7 @@ export default function CopilotPanel({
                 </div>
               </div>
               <ul className={styles.starters}>
-                {STARTERS.map((s, i) => (
+                {starters.map((s, i) => (
                   <li
                     key={s.label}
                     className={styles.starterReveal}
@@ -668,7 +672,7 @@ export default function CopilotPanel({
                 {scanState && (
                   <li
                     className={styles.starterReveal}
-                    style={{ '--i': STARTERS.length } as CSSProperties}
+                    style={{ '--i': starters.length } as CSSProperties}
                   >
                     <CopilotScanNote
                       state={scanState}

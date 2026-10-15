@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import TriggerStates, { EMPTY, live, type StateDoc } from '@/components/skillstart/TriggerStates';
-import { changeLine } from '@/components/skillstart/TriggerSection';
+import { modeChangeLine } from '@/components/flow01/TriggerKind';
 import { DEFAULT_START, EDITED_MAILBOXES, type StartConfig } from '@/components/skillstart/model';
 import styles from '../skill-start/page.module.css';
 
@@ -25,21 +25,21 @@ const STATES: StateDoc[] = [
     id: 'describe',
     title: 'Live, Describe it',
     when: 'Enabled with nothing changed.',
-    shows: 'Hiver AI runs the skill when a conversation matches. People can also type the / command.',
+    shows: 'Hiver AI runs the skill when a conversation matches. People can also type the / command in the Assist Agent.',
     seed: () => live({ config: DESCRIBE }),
   },
   {
     id: 'manual',
     title: 'Live, Manual',
     when: 'The author picks Manual.',
-    shows: 'The skill runs only with /. The text stays, and Copilot shows the text in the / menu.',
+    shows: 'The trigger goes away. One line says what people type in the Assist Agent.',
     seed: () => live({ config: MANUAL }),
   },
   {
     id: 'manual-empty',
-    title: 'Manual, nothing written',
-    when: 'A new skill set to Manual, before its text is written.',
-    shows: 'Enable stays off until the text is written.',
+    title: 'Manual, new skill',
+    when: 'A new skill set to Manual before anything is written.',
+    shows: 'There is no trigger to write. Enable waits only for a step.',
     seed: () => ({ ...live(), status: 'draft', trigger: EMPTY(), config: MANUAL }),
   },
   {
@@ -49,7 +49,7 @@ const STATES: StateDoc[] = [
     shows: 'The change applies at once. A message shows what changed, with Undo.',
     decision: 'Apply at once with Undo (as here), or hold changes until a Save?',
     seed: () =>
-      live({ config: MANUAL, toast: { line: changeLine(DESCRIBE, MANUAL, 'refund-requests'), undo: DESCRIBE } }),
+      live({ config: MANUAL, toast: { line: modeChangeLine('manual', 'refund-requests'), undo: DESCRIBE } }),
   },
   {
     id: 'paused',
@@ -62,7 +62,7 @@ const STATES: StateDoc[] = [
 ];
 
 const LEFT_OUT: [string, string][] = [
-  ['On its own, never with /', 'Every skill that runs on its own is also in the / menu. Claude Code and Front also start with both on.'],
+  ['On its own, never with /', 'Every skill that runs on its own is also in the Assist Agent / menu. Claude Code and Front also start with both on.'],
   ['Both off', 'One option is always picked. To stop a skill, click Pause.'],
   ['A Who menu for /', 'There is no setting per person. Question 2 below decides where / works.'],
 ];
@@ -70,6 +70,7 @@ const LEFT_OUT: [string, string][] = [
 const QUESTIONS = [
   'If someone types /refund on an email that does not match, should the skill run anyway, warn them first, or not run?',
   'Does a Manual skill still need mailboxes, or can any agent or admin use it anywhere in Hiver once it is published?',
+  'With no trigger, the / menu shows only skill names. Is that enough, or does a Manual skill need a short "When to use" line?',
 ];
 
 export default function SkillTriggerDoc() {
@@ -79,8 +80,9 @@ export default function SkillTriggerDoc() {
         <p className={styles.kicker}>Skill editor/skill details</p>
         <h1 className={styles.h1}>Trigger: Describe it or Manual</h1>
         <p className={styles.standfirst}>
-          One control under Trigger. With Describe it, Hiver AI runs the skill when an email or chat matches the text. People can also
-          type the / command in Copilot. With Manual, the skill runs only when someone types its / command.
+          One control under Trigger. With Describe it, Hiver AI runs the skill when an email or chat matches the trigger. People
+          can also type the / command in the Assist Agent. With Manual, the skill runs only with its / command, so the trigger
+          goes away. The text is kept and comes back with Describe it.
         </p>
         <p className={styles.para}>
           Try it in the full editor:{' '}

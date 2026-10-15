@@ -42,3 +42,23 @@
   font-size: 11px;
   color: var(--tooltip-ink);
 }
+
+/* Manual: one line in the trigger text's place, at the text's own size so the
+   section does not read as empty. */
+.manual {
+  margin: 0;
+  font-size: var(--fs-small);
+  line-height: 22px;
+  color: var(--muted);
+  text-wrap: pretty;
+}
+.slug {
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: -0.01em;
+  color: var(--ink-soft);
+  padding: 1px 5px;
+  border-radius: var(--r-xs);
+  background: var(--surface-soft);
+}

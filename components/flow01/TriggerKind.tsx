@@ -8,9 +8,10 @@ import styles from './TriggerKind.module.css';
 
 /* How a skill starts, set on its Trigger: Describe it or Manual.
    Describe it ('automatic'): Hiver AI runs the skill when a conversation
-   matches the text, and people can also type its / command in Copilot.
-   Manual: the skill runs only with its / command, and the text is what
-   Copilot shows in the / menu. */
+   matches the trigger text, and people can also type its / command in the
+   Assist Agent. Manual: the skill runs only with its / command, so there is
+   no trigger to write. The text is hidden, not deleted: it comes back when
+   the author switches to Describe it again. */
 
 /** The / command a name gives a skill: "Refund requests" -> "refund-requests". */
 export function slugFor(title: string): string | null {
@@ -24,15 +25,7 @@ const KINDS: { id: TriggerMode; label: string; icon: React.ReactNode }[] = [
   { id: 'manual', label: 'Manual', icon: <RiHand /> },
 ];
 
-export const TRIGGER_PLACEHOLDER: Record<TriggerMode, string> = {
-  automatic: 'e.g. when an email reports an API error',
-  manual: 'e.g. use for emails that report an API error',
-};
-
-export const TRIGGER_ARIA: Record<TriggerMode, string> = {
-  automatic: 'When should this skill run',
-  manual: 'When to use this skill',
-};
+export const TRIGGER_PLACEHOLDER = 'e.g. when an email reports an API error';
 
 /* The control, with an info icon beside it. The icon opens (on click) what
    each option does, so the trigger itself carries no extra lines. */
@@ -45,7 +38,7 @@ export function TriggerKindControl({
   onMode: (m: TriggerMode) => void;
   slug: string | null;
 }) {
-  const cmd = slug ? <code className={styles.cmd}>/{slug}</code> : 'its / command';
+  const cmd = slug ? <code className={styles.cmd}>/{slug}</code> : '/ and the skill name';
   return (
     <div className={styles.row}>
       <div className={styles.control}>
@@ -56,13 +49,14 @@ export function TriggerKindControl({
           <div>
             <dt>Describe it</dt>
             <dd>
-              Hiver AI runs this skill when an email or chat matches the trigger. People can also type {cmd} in Copilot.
+              Hiver AI runs this skill when an email or chat matches the trigger. People can also type {cmd} in the
+              Assist Agent.
             </dd>
           </div>
           <div>
             <dt>Manual</dt>
             <dd>
-              This skill runs only when someone types {cmd} in Copilot. Copilot shows the trigger text in the / menu.
+              This skill runs only when someone types {cmd} in the Assist Agent. There is no trigger to write.
             </dd>
           </div>
         </dl>
@@ -71,9 +65,24 @@ export function TriggerKindControl({
   );
 }
 
+/** In Manual, the one line that takes the trigger text's place. */
+export function TriggerManualLine({ slug }: { slug: string | null }) {
+  return (
+    <p className={styles.manual}>
+      {slug ? (
+        <>
+          This skill runs only when someone types <code className={styles.slug}>/{slug}</code> in the Assist Agent.
+        </>
+      ) : (
+        <>This skill runs only when someone types / and the skill name in the Assist Agent.</>
+      )}
+    </p>
+  );
+}
+
 /** The toast line after a change on a live skill. */
 export function modeChangeLine(mode: TriggerMode, slug: string | null): string {
   return mode === 'manual'
-    ? `This skill now runs only with ${slug ? `/${slug}` : 'its / command'}.`
+    ? `This skill now runs only with ${slug ? `/${slug}` : 'its / command'} in the Assist Agent.`
     : 'This skill runs on its own again.';
 }
