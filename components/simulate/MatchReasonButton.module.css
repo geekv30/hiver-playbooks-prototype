@@ -70,6 +70,11 @@
   background: var(--tooltip-bg);
   box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.18);
 }
+.bubble[data-wide] {
+  width: 300px;
+  gap: 8px;
+  padding: 12px 14px;
+}
 .title {
   margin: 0;
   font-size: var(--fs-small); /* 13px */

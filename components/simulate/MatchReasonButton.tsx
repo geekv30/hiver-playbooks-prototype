@@ -1,13 +1,21 @@
 'use client';
 
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { RiInformationLine } from 'react-icons/ri';
 import styles from './MatchReasonButton.module.css';
 
 interface Props {
   /** Why the trigger matched this email, in plain words. */
-  reason: string;
+  reason?: string;
+  /** The bubble's heading. Defaults to the match reason's. */
+  title?: string;
+  /** The icon's accessible name. Defaults to the match reason's. */
+  ariaLabel?: string;
+  /** Richer content in place of `reason` (the trigger's Describe it / Manual). */
+  children?: ReactNode;
+  /** A wider bubble, for content longer than one reason. */
+  wide?: boolean;
 }
 
 // Room the bubble needs under the icon before it flips above instead.
@@ -52,7 +60,13 @@ interface Anchor {
  * Closes on Escape (focus returns to the icon), a click anywhere else, or any
  * scroll/resize - a fixed bubble must not drift away from its card.
  */
-export default function MatchReasonButton({ reason }: Props) {
+export default function MatchReasonButton({
+  reason,
+  title = 'Why it matched',
+  ariaLabel = 'Why this email matched',
+  children,
+  wide,
+}: Props) {
   const [anchor, setAnchor] = useState<Anchor | null>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
   const tipRef = useRef<HTMLDivElement>(null);
@@ -123,7 +137,7 @@ export default function MatchReasonButton({ reason }: Props) {
         ref={btnRef}
         type="button"
         className={styles.btn}
-        aria-label="Why this email matched"
+        aria-label={ariaLabel}
         aria-expanded={open}
         aria-controls={open ? tipId : undefined}
         data-open={open || undefined}
@@ -152,9 +166,9 @@ export default function MatchReasonButton({ reason }: Props) {
             onMouseDown={(e) => e.stopPropagation()}
           >
             {!above && <span className={styles.arrow} aria-hidden />}
-            <div className={styles.bubble}>
-              <p className={styles.title}>Why it matched</p>
-              <p className={styles.reason}>{reason}</p>
+            <div className={styles.bubble} data-wide={wide || undefined}>
+              <p className={styles.title}>{title}</p>
+              {children ?? <p className={styles.reason}>{reason}</p>}
             </div>
             {above && <span className={styles.arrow} data-down aria-hidden />}
           </div>,

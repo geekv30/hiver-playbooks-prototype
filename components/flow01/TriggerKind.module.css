@@ -1,26 +1,44 @@
 /* Describe it / Manual on the Trigger: the control between the label and the
-   text, and one quiet line under the text. */
+   text, with an info icon beside it that opens what each option does. */
 
-.control {
-  max-width: 360px;
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 2px 0 12px;
 }
-
-.hint {
-  margin: 8px 0 0;
-  font-size: var(--fs-caption);
-  line-height: 18px;
-  color: var(--muted);
-  text-wrap: pretty;
+.row > :last-child {
+  margin: 0;
 }
 
-.slug {
+.control {
+  flex: 1;
+  max-width: 360px;
+}
+
+/* Inside the dark info bubble */
+.defs {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.defs dt {
+  font-size: var(--fs-caption);
+  line-height: 18px;
+  font-weight: 500;
+  color: var(--tooltip-ink);
+}
+.defs dd {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: 18px;
+  color: var(--tooltip-muted);
+  text-wrap: pretty;
+}
+.cmd {
   white-space: nowrap;
   font-family: var(--mono);
-  font-size: 12px;
-  letter-spacing: -0.01em;
-  color: var(--ink-soft);
-  padding: 1px 5px;
-  border-radius: var(--r-xs);
-  background: var(--surface-soft);
+  font-size: 11px;
+  color: var(--tooltip-ink);
 }

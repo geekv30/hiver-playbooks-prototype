@@ -21,7 +21,7 @@ import GmailBar from './GmailBar';
 import Toolbar from './Toolbar';
 import ChatBar from './ChatBar';
 import EditorLine, { PaletteRequest } from './EditorLine';
-import { TRIGGER_ARIA, TRIGGER_PLACEHOLDER, TriggerKindControl, TriggerKindHint, modeChangeLine, slugFor } from './TriggerKind';
+import { TRIGGER_ARIA, TRIGGER_PLACEHOLDER, TriggerKindControl, modeChangeLine, slugFor } from './TriggerKind';
 import CommandPalette from './CommandPalette';
 import ConditionBlock from './condition/ConditionBlock';
 import ColdStartModal from './ColdStartModal';
@@ -1756,7 +1756,7 @@ export default function EditorCanvas({
                   <span className={styles.gutter} aria-hidden />
                   <div className={styles.content}>
                     <h2 className={styles.label}>Trigger</h2>
-                    <TriggerKindControl mode={doc.triggerMode} onMode={changeTriggerMode} />
+                    <TriggerKindControl mode={doc.triggerMode} onMode={changeTriggerMode} slug={slugFor(doc.title)} />
                     <div className={styles.triggerLine}>
                       <EditorLine
                         fragments={doc.trigger}
@@ -1770,7 +1770,6 @@ export default function EditorCanvas({
                         ariaLabel={TRIGGER_ARIA[doc.triggerMode]}
                       />
                     </div>
-                    <TriggerKindHint mode={doc.triggerMode} slug={slugFor(doc.title)} />
                   </div>
                 </div>
               </section>

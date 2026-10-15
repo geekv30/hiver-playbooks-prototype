@@ -6,7 +6,7 @@ import Toolbar from '@/components/flow01/Toolbar';
 import ed from '@/components/flow01/EditorCanvas.module.css';
 import { lineHasContent, type DeployStatus } from '@/components/flow01/doc';
 import type { Fragment } from '@/types/playbook';
-import { TRIGGER_ARIA, TRIGGER_PLACEHOLDER, TriggerKindControl, TriggerKindHint, slugFor } from '@/components/flow01/TriggerKind';
+import { TRIGGER_ARIA, TRIGGER_PLACEHOLDER, TriggerKindControl, slugFor } from '@/components/flow01/TriggerKind';
 import { OneChoice, OneChoiceHelp, TwoDoors, TwoSwitches, type StartCtx } from './StartControls';
 import type { Direction, StartConfig } from './model';
 import styles from './TriggerSection.module.css';
@@ -45,7 +45,11 @@ export function TriggerSection({ direction, config, onConfig, status, title, tri
             <h2 className={ed.label}>{whenToUse ? 'When to use' : 'Trigger'}</h2>
             {direction === 'b' && <OneChoice config={config} onChange={onConfig} />}
             {direction === 'd' && (
-              <TriggerKindControl mode={mode} onMode={(m) => onConfig({ ...config, auto: m === 'automatic', slash: true })} />
+              <TriggerKindControl
+                mode={mode}
+                onMode={(m) => onConfig({ ...config, auto: m === 'automatic', slash: true })}
+                slug={slugFor(title)}
+              />
             )}
             <div className={ed.triggerLine}>
               <EditorLine
@@ -64,7 +68,6 @@ export function TriggerSection({ direction, config, onConfig, status, title, tri
             </div>
             {direction === 'a' && <TwoSwitches {...ctx} />}
             {direction === 'b' && <OneChoiceHelp {...ctx} />}
-            {direction === 'd' && <TriggerKindHint mode={mode} slug={slugFor(title)} />}
           </div>
         </div>
       </section>

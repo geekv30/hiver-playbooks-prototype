@@ -2,6 +2,7 @@
 
 import { RiHand, RiSparkling2Line } from 'react-icons/ri';
 import SegmentedControl from '@/components/atoms/SegmentedControl';
+import InfoButton from '@/components/simulate/MatchReasonButton';
 import type { TriggerMode } from './doc';
 import styles from './TriggerKind.module.css';
 
@@ -33,25 +34,40 @@ export const TRIGGER_ARIA: Record<TriggerMode, string> = {
   manual: 'When to use this skill',
 };
 
-export function TriggerKindControl({ mode, onMode }: { mode: TriggerMode; onMode: (m: TriggerMode) => void }) {
+/* The control, with an info icon beside it. The icon opens (on click) what
+   each option does, so the trigger itself carries no extra lines. */
+export function TriggerKindControl({
+  mode,
+  onMode,
+  slug,
+}: {
+  mode: TriggerMode;
+  onMode: (m: TriggerMode) => void;
+  slug: string | null;
+}) {
+  const cmd = slug ? <code className={styles.cmd}>/{slug}</code> : 'its / command';
   return (
-    <div className={styles.control}>
-      <SegmentedControl tabs={KINDS} active={mode} onChange={onMode} ariaLabel="How this skill starts" />
+    <div className={styles.row}>
+      <div className={styles.control}>
+        <SegmentedControl tabs={KINDS} active={mode} onChange={onMode} ariaLabel="How this skill starts" />
+      </div>
+      <InfoButton title="How this skill starts" ariaLabel="How Describe it and Manual work" wide>
+        <dl className={styles.defs}>
+          <div>
+            <dt>Describe it</dt>
+            <dd>
+              Hiver AI runs this skill when an email or chat matches the trigger. People can also type {cmd} in Copilot.
+            </dd>
+          </div>
+          <div>
+            <dt>Manual</dt>
+            <dd>
+              This skill runs only when someone types {cmd} in Copilot. Copilot shows the trigger text in the / menu.
+            </dd>
+          </div>
+        </dl>
+      </InfoButton>
     </div>
-  );
-}
-
-/** The one line under the trigger text: what the picked option does. */
-export function TriggerKindHint({ mode, slug }: { mode: TriggerMode; slug: string | null }) {
-  const cmd = slug ? <code className={styles.slug}>/{slug}</code> : 'its / command';
-  return (
-    <p className={styles.hint}>
-      {mode === 'automatic' ? (
-        <>Hiver AI runs this skill when an email or chat matches. People can also type {cmd} in Copilot.</>
-      ) : (
-        <>This skill runs only when someone types {cmd} in Copilot.</>
-      )}
-    </p>
   );
 }
 
