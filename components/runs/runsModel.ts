@@ -176,13 +176,6 @@ export function trendPct(runs: SkillRun[], days: number): number | null {
   return Math.round(((now - prev) / prev) * 100);
 }
 
-/** What a run is called in a list or a heading: an email by its subject, a
- *  chat by the customer - a chat has no subject, and "(no subject)" on every
- *  row says nothing. */
-export function runTitle(run: SkillRun): string {
-  return run.channel === 'chat' ? run.sender : (run.subject ?? '(no subject)');
-}
-
 /** "3 replies over 6 min" - how long a chat run lasted, from the customer's
  *  first message to the agent's last reply. */
 export function chatSpan(run: SkillRun): string | null {

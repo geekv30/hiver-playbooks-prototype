@@ -64,7 +64,11 @@ function Clamp({ children, className }: { children: string; className?: string }
  */
 export function StepRail({ run, steps }: { run: SkillRun; steps: RunStep[] }) {
   const ran = steps.filter((s) => s.status !== 'skipped');
-  const skippedTail = steps.filter((s) => s.status === 'skipped' && s.kind !== 'reply');
+  // A chat turn's reply is told apart in the conversation (the fallback), so
+  // only an email run lists its undrafted reply among the steps that did not run.
+  const skippedTail = steps.filter(
+    (s) => s.status === 'skipped' && (s.kind !== 'reply' || run.channel === 'email'),
+  );
   const last = ran.length - 1;
 
   return (

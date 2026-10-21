@@ -41,7 +41,7 @@ function copy(skill: RunsSkill): { title: string; body: string } {
   const where = inboxSummary([...skill.mailboxes, ...chats]);
   // Name what it is waiting for: emails, chats, or either.
   const what =
-    chats.length === 0 ? 'no emails' : skill.mailboxes.length === 0 ? 'no chats' : 'nothing in';
+    chats.length === 0 ? 'no emails' : skill.mailboxes.length === 0 ? 'no chats' : 'nothing';
   if (skill.status === 'draft') {
     return { title: 'Nothing to see. Yet.', body: 'Enable this skill and its runs show up here.' };
   }

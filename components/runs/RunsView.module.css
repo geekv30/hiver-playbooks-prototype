@@ -48,6 +48,10 @@
   gap: 16px;
   padding: 4px 2px 0;
 }
+/* With no title (All skill runs) the range still sits on the right. */
+.pageHead > :last-child {
+  margin-left: auto;
+}
 .pageTitle {
   margin: 0;
   font-size: var(--fs-h5);

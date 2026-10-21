@@ -90,8 +90,8 @@ const RANGES = [
  * and the log island is exactly one stage tall, so scrolling past the chart
  * hands over to a list and a detail that each scroll on their own.
  *
- * The period control sits with the chart: it is the one control that changes
- * what the plot draws. It still governs the list and the counts, so this
+ * The period control sits in the page header, above both islands: it changes
+ * what the plot draws and also governs the list and the counts, so this
  * surface keeps the state. The mailbox and outcome filters narrow the log only,
  * so the chart never moves under the controls used to read it.
  *
@@ -173,7 +173,8 @@ export default function RunsView({
   // same window, so the range sits above all of them, not inside one card.
   const pageHead = (
     <header className={styles.pageHead}>
-      <h1 className={styles.pageTitle}>Skill runs</h1>
+      {/* All skill runs has its own page title above this. */}
+      {!allSkills && <h1 className={styles.pageTitle}>Skill runs</h1>}
       {/* A skill that has never run has no window to pick. */}
       {!(skill && !allSkills && runs.length === 0) && (
         <SegmentedControl

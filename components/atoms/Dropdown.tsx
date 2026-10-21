@@ -127,7 +127,8 @@ export default function Dropdown(props: Props) {
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setActive((i) => Math.max(i - 1, 0));
-    } else if (e.key === 'Enter') {
+    } else if (e.key === 'Enter' || (multi && e.key === ' ')) {
+      // Space ticks a checkbox row and keeps the menu open, like a checkbox.
       e.preventDefault();
       const o = rows[active];
       if (o) pick(o.id);
