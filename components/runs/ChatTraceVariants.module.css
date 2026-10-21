@@ -1,0 +1,121 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--log-rule, #eceff6);
+}
+.title {
+  margin: 0;
+  font-size: var(--fs-micro);
+  line-height: 14px;
+  font-weight: 500;
+  color: var(--log-head, #a3a3a3);
+}
+.span {
+  margin-left: auto;
+  font-size: var(--fs-micro);
+  line-height: 14px;
+  color: var(--log-soft, #97a3b7);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.said {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.who {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.label {
+  font-size: var(--fs-micro);
+  line-height: 14px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--log-head, #a3a3a3);
+}
+.name {
+  font-size: var(--fs-small);
+  line-height: 19px;
+  font-weight: 500;
+  color: var(--log-ink, #3e4c5a);
+}
+.time {
+  font-size: var(--fs-micro);
+  color: var(--log-soft, #97a3b7);
+}
+.text {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--trace-box, #f6f8fc);
+  font-size: var(--fs-small);
+  line-height: 19px;
+  color: var(--log-ink, #3e4c5a);
+}
+.rail {
+  padding-left: 4px;
+}
+.fallback {
+  margin: 0;
+  padding-left: 18px;
+  font-size: var(--fs-small);
+  line-height: 19px;
+  color: var(--detail-muted, #6f7c90);
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 8px;
+  background: var(--surface-soft, #f2f4f8);
+  align-self: flex-start;
+}
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font: inherit;
+  font-size: var(--fs-small);
+  color: var(--muted);
+  cursor: pointer;
+}
+.tab[aria-selected='true'] {
+  background: var(--card);
+  color: var(--ink);
+  font-weight: 500;
+  box-shadow: 0 1px 2px rgba(52, 60, 69, 0.08);
+}
+.tabDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.tabDot[data-tone='failed'] {
+  background: var(--run-mark-failed);
+}
+.tabDot[data-tone='awaiting'] {
+  background: var(--run-mark-awaiting);
+}
+.tabDot[data-tone='declined'] {
+  background: var(--run-mark-declined);
+}

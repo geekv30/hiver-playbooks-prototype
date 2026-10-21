@@ -44,7 +44,7 @@ import SimulatePanel from '@/components/simulate/SimulatePanel';
 import type { EvalChannel } from '@/components/simulate/EvalMenu';
 import RunsView from '@/components/runs/RunsView';
 import { useIsClient } from '@/components/runs/useIsClient';
-import { liveSpan, runsForSkill } from '@/data/runFixtures';
+import { chatInboxesFor, liveSpan, runsForSkill } from '@/data/runFixtures';
 import { SEEDED_EDITS } from '@/lib/seedSkills';
 import { type CopilotMessage, type CopilotProposalData } from './copilot/CopilotPanel';
 import SidePanel, { type SideTab } from './copilot/SidePanel';
@@ -1667,6 +1667,7 @@ export default function EditorCanvas({
             skill={{
               status: doc.status,
               mailboxes: doc.mailboxes,
+              chatInboxes: skillId ? chatInboxesFor(skillId) : [],
               trigger: triggerText,
               manual,
               command: slugFor(doc.title),

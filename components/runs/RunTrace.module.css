@@ -39,6 +39,8 @@
 
 .step[data-status='done'] .dot { background: var(--run-completed); }
 .step[data-status='failed'] .dot { background: var(--run-failed); }
+.step[data-status='held'] .dot { background: var(--run-awaiting); }
+.step[data-status='declined'] .dot { background: var(--run-declined); }
 .step[data-status='skipped'] .dot {
   background: none;
   box-shadow: inset 0 0 0 1px var(--hairline-strong);
