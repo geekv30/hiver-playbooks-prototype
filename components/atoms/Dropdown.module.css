@@ -115,6 +115,30 @@
   color: var(--ink);
   font-weight: 500;
 }
+.optionLabel {
+  flex: 1;
+  min-width: 0;
+}
+/* Multi: checkbox, mark, label - left-aligned, a gap between each. Checked
+   rows keep the regular weight; the box carries the state. */
+.option[data-multi] {
+  justify-content: flex-start;
+  gap: 10px;
+}
+.option[data-multi][aria-selected='true'] {
+  font-weight: 400;
+}
+.optionIcon {
+  flex: none;
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+}
+.optionIcon svg {
+  width: 16px;
+  height: 16px;
+}
 .optionCheck {
   flex: none;
   width: 16px;

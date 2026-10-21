@@ -32,8 +32,8 @@ export interface RunFilter {
   day: number | null;
   /** All-skills mode: narrow to one skill. */
   skillId: string | null;
-  /** Narrow to the runs in one shared mailbox. */
-  mailboxId: string | null;
+  /** Narrow to the runs in these mailboxes and chat inboxes. Empty = all. */
+  inboxIds: string[];
 }
 
 export const DEFAULT_FILTER: RunFilter = {
@@ -42,7 +42,7 @@ export const DEFAULT_FILTER: RunFilter = {
   query: '',
   day: null,
   skillId: null,
-  mailboxId: null,
+  inboxIds: [],
 };
 
 const DAY = 86_400_000;
@@ -59,11 +59,12 @@ export function applyFilter(runs: SkillRun[], f: RunFilter): SkillRun[] {
   return runs.filter((r) => {
     if (r.startedAt < cutoff) return false;
     if (f.skillId && r.skillId !== f.skillId) return false;
-    if (f.mailboxId && r.mailboxId !== f.mailboxId) return false;
+    if (f.inboxIds.length > 0 && !f.inboxIds.includes(r.inboxId)) return false;
     if (f.state && r.state !== f.state) return false;
     if (f.day !== null && startOfDay(r.startedAt) !== f.day) return false;
     if (q) {
-      const hay = `${r.subject} ${r.sender} ${r.senderEmail} ${r.conversationId} ${r.error?.code ?? ''}`;
+      const said = r.turns?.map((t) => t.message).join(' ') ?? '';
+      const hay = `${r.subject ?? ''} ${said} ${r.sender} ${r.senderEmail ?? ''} ${r.conversationId} ${r.error?.code ?? ''}`;
       if (!hay.toLowerCase().includes(q)) return false;
     }
     return true;
@@ -173,6 +174,23 @@ export function trendPct(runs: SkillRun[], days: number): number | null {
   const prev = runs.filter((r) => r.startedAt >= prevStart && r.startedAt < start).length;
   if (prev === 0) return null;
   return Math.round(((now - prev) / prev) * 100);
+}
+
+/** What a run is called in a list or a heading: an email by its subject, a
+ *  chat by the customer - a chat has no subject, and "(no subject)" on every
+ *  row says nothing. */
+export function runTitle(run: SkillRun): string {
+  return run.channel === 'chat' ? run.sender : (run.subject ?? '(no subject)');
+}
+
+/** "3 replies over 6 min" - how long a chat run lasted, from the customer's
+ *  first message to the agent's last reply. */
+export function chatSpan(run: SkillRun): string | null {
+  const turns = run.turns;
+  if (!turns || turns.length === 0) return null;
+  const n = turns.filter((t) => t.reply).length;
+  const mins = Math.max(1, Math.round((turns[turns.length - 1]!.at - turns[0]!.at) / 60_000 + 1));
+  return `${n} ${n === 1 ? 'reply' : 'replies'} over ${mins} min`;
 }
 
 // --- Formatting -------------------------------------------------------------

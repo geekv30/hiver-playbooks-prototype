@@ -8,6 +8,7 @@ import OutcomeBar from '@/components/runs/OutcomeBar';
 import { countBy } from '@/components/runs/runsModel';
 import { NOW, RUN_SOURCES, runsForSkill, runsInLastDays } from '@/data/runFixtures';
 import { mailboxName } from '@/data/mailboxes';
+import { inboxName } from '@/data/inboxes';
 import { useIsClient } from '@/components/runs/useIsClient';
 import Badge from '@/components/atoms/Badge';
 import Table, { type TableColumn } from '@/components/atoms/Table';
@@ -46,12 +47,25 @@ interface AopRow {
 /** Chips shown before the "+N" (the column has room for two). */
 const MAILBOX_CHIPS = 2;
 
+/** The chips for where a seeded skill runs. A skill on both channels shows
+ *  one of each before the "+N", so its chat side is never hidden behind the
+ *  count; a chat-only skill shows its chat inboxes rather than "Unassigned". */
+function seedChips(s: (typeof RUN_SOURCES)[number]): { names: string[]; more?: number } {
+  const chats = s.chatInboxes ?? [];
+  const order =
+    s.mailboxes.length > 0 && chats.length > 0
+      ? [s.mailboxes[0]!, chats[0]!, ...s.mailboxes.slice(1), ...chats.slice(1)]
+      : [...s.mailboxes, ...chats];
+  const more = (s.moreMailboxes ?? 0) + Math.max(0, order.length - MAILBOX_CHIPS);
+  return { names: order.slice(0, MAILBOX_CHIPS).map(inboxName), more: more || undefined };
+}
+
 const SEED_ROWS: AopRow[] = RUN_SOURCES.map((s) => ({
   id: s.skillId,
   name: s.skillName,
   status: s.status,
-  mailboxes: s.mailboxes.map(mailboxName),
-  more: s.moreMailboxes,
+  mailboxes: seedChips(s).names,
+  more: seedChips(s).more,
   lastUpdated: s.lastUpdated,
   href: s.href,
   saved: false,
@@ -172,15 +186,14 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
         // that went quiet this month shows 0 over an empty rule, beside its real
         // last run.
         if (row.status === 'draft') return <NotLive />;
-        if (runsForSkill(row.id).length === 0) return <span className={styles.soft}>No runs yet</span>;
+        if (runsForSkill(row.id).length === 0)
+          return <span className={styles.soft}>No runs yet</span>;
         const runs = runsInLastDays(row.id, 30);
         return (
           <button
             type="button"
             className={`${styles.history} ${styles.historyBtn}`}
-            onClick={() =>
-              router.push(`${row.href}/runs`)
-            }
+            onClick={() => router.push(`${row.href}/runs`)}
             aria-label={`${runs.length} runs in the last 30 days for ${row.name}`}
           >
             <span className={styles.historyN}>{runs.length}</span>
@@ -225,7 +238,10 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
       <span />
       {/* The prompt below is the AI path, so this is the manual one - a blank
           canvas, not the draft-with-AI modal again. */}
-      <Link href={`/aops/new?start=blank${empty ? '&ws=empty' : ''}`} className={shellStyles.secondaryBtn}>
+      <Link
+        href={`/aops/new?start=blank${empty ? '&ws=empty' : ''}`}
+        className={shellStyles.secondaryBtn}
+      >
         Create from scratch
       </Link>
     </>
@@ -260,7 +276,9 @@ export default function AopListPage({ empty }: { empty?: boolean }) {
       >
         {!isClient ? null : showEmpty ? (
           <SkillsEmptyHero
-            onSubmit={({ prompt, starter, fileName }) => router.push(newSkillHref(workspace, prompt, starter?.id, fileName))}
+            onSubmit={({ prompt, starter, fileName }) =>
+              router.push(newSkillHref(workspace, prompt, starter?.id, fileName))
+            }
           />
         ) : (
           <Table
