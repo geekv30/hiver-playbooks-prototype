@@ -8,6 +8,7 @@ import { normalizeLine, txt } from '@/components/flow01/doc';
 import { modeChangeLine, slashChangeLine } from '@/components/flow01/TriggerKind';
 import { isStartUi, type StartUi } from '@/components/flow01/startUi';
 import StartFrame, { type StartSeed } from '@/components/skillstart/StartFrame';
+import { LONG_TRIGGERS } from '@/components/skillstart/longTriggers';
 import list from '@/components/skillstart/TriggerStates.module.css';
 import styles from './page.module.css';
 
@@ -17,7 +18,7 @@ import styles from './page.module.css';
    full editor and in the frames below; all of them share one renderer
    (components/flow01/TriggerStart). */
 
-const TRIGGER = 'When a customer asks for a refund on an order.';
+const TRIGGER = LONG_TRIGGERS['refund-requests']!;
 const SLUG = 'refund-requests';
 
 const live = (over: Partial<StartSeed> = {}): StartSeed => ({

@@ -4,6 +4,8 @@ import type { Metadata } from 'next';
 import EditorCanvas from '@/components/flow01/EditorCanvas';
 import { START_UIS, isStartUi } from '@/components/flow01/startUi';
 import { seedDoc } from '@/lib/seedSkills';
+import { normalizeLine, txt } from '@/components/flow01/doc';
+import { LONG_TRIGGERS } from '@/components/skillstart/longTriggers';
 
 export const metadata: Metadata = {
   title: 'Skill editor, start option · Hiver',
@@ -22,8 +24,10 @@ export function generateStaticParams() {
 
 export default async function Page({ params }: { params: Promise<{ ui: string; skill: string }> }) {
   const { ui, skill } = await params;
-  const doc = SKILLS.includes(skill) ? seedDoc(skill) : null;
-  if (!isStartUi(ui) || !doc) notFound();
+  const seeded = SKILLS.includes(skill) ? seedDoc(skill) : null;
+  if (!isStartUi(ui) || !seeded) notFound();
+  // A full trigger, so each layout is tried with real, wrapping text.
+  const doc = { ...seeded, trigger: normalizeLine([txt(LONG_TRIGGERS[skill] ?? '')]) };
   return (
     <Suspense fallback={null}>
       <EditorCanvas key={`${ui}-${skill}`} initialDoc={doc} companions startUi={ui} />
