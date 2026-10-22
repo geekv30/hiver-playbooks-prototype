@@ -1,0 +1,179 @@
+/* The trigger section's start layouts (TriggerStart). Everything sits on the
+   editor's content rail, at the editor's type sizes. No cards: the choices are
+   rows, and the picked one opens its content under its label. */
+
+/* ---------- Radio group (options 1 and 2) ---------- */
+.group {
+  display: flex;
+}
+.group[data-layout='row'] {
+  flex-direction: row;
+  align-items: center;
+  gap: 24px;
+}
+.group[data-layout='stack'] {
+  flex-direction: column;
+  gap: 20px;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  align-self: flex-start;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: var(--font);
+  color: var(--muted);
+  cursor: pointer;
+  transition: color var(--d-hover) var(--ease-snap);
+}
+.choice:hover,
+.item[data-on] > .choice {
+  color: var(--ink);
+}
+.choice:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--r-xs);
+}
+.choiceLabel {
+  font-size: var(--fs-small);
+  line-height: 19px;
+  font-weight: 500;
+  letter-spacing: var(--ls-small);
+}
+
+/* Option 1: the choices are the section's headings, at the label size. */
+.group[data-layout='stack'] .choiceLabel {
+  font-size: var(--fs-h5);
+  line-height: 24px;
+  letter-spacing: -0.011em;
+}
+
+/* The picked block's content, aligned to its label text (16px radio + 10px gap). */
+.body {
+  padding: 10px 0 0 26px;
+  min-width: 0;
+  animation: bodyIn var(--d-enter) var(--ease-snap);
+}
+.subLabel {
+  margin: 0 0 6px;
+  font-size: var(--fs-caption);
+  line-height: 18px;
+  font-weight: 500;
+  color: var(--muted);
+}
+@keyframes bodyIn {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Option 2: the radios on one row with the info icon. */
+.radioRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 2px 0 14px;
+}
+
+/* ---------- Option 3: chips ---------- */
+.chipsLine {
+  transition: color var(--d-hover) var(--ease-snap);
+}
+.chipsLine[data-off] [contenteditable] {
+  color: var(--muted);
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 10px 0 8px;
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--r-pill);
+  background: transparent;
+  font-family: var(--font);
+  font-size: var(--fs-small);
+  font-weight: 500;
+  line-height: 19px;
+  letter-spacing: var(--ls-small);
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    background var(--d-hover) var(--ease-snap),
+    border-color var(--d-hover) var(--ease-snap),
+    color var(--d-hover) var(--ease-snap);
+}
+.chip:hover {
+  color: var(--ink-soft);
+  border-color: var(--muted-soft);
+}
+.chip[data-on] {
+  border-style: solid;
+  border-color: var(--hairline-strong);
+  background: var(--surface-soft);
+  color: var(--ink-soft);
+}
+.chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.chipIco {
+  display: inline-flex;
+  font-size: 14px;
+}
+.chipMono {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: -0.01em;
+}
+
+.warn {
+  margin: 10px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-caption);
+  line-height: 18px;
+  color: var(--run-awaiting-ink);
+}
+.warn svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: var(--status-amber);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .body {
+    animation: none;
+  }
+  .choice,
+  .chip,
+  .chipsLine {
+    transition: none;
+  }
+}

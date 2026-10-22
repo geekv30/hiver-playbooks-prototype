@@ -80,9 +80,17 @@ export function TriggerManualLine({ slug }: { slug: string | null }) {
   );
 }
 
-/** The toast line after a change on a live skill. */
-export function modeChangeLine(mode: TriggerMode, slug: string | null): string {
-  return mode === 'manual'
-    ? `This skill now runs only with ${slug ? `/${slug}` : 'its / command'} in the Assist Agent.`
-    : 'This skill runs on its own again.';
+/** The toast line after a change on a live skill. `slash` false = the chips
+ *  layout has / turned off too, so Manual means the skill does not run. */
+export function modeChangeLine(mode: TriggerMode, slug: string | null, slash = true): string {
+  if (mode === 'manual')
+    return slash ? `This skill now runs only with ${slug ? `/${slug}` : 'its / command'} in the Assist Agent.` : 'This skill does not run now.';
+  return 'This skill runs on its own again.';
+}
+
+/** The toast line after turning / on or off (chips layout). */
+export function slashChangeLine(on: boolean, slug: string | null, auto: boolean): string {
+  const cmd = slug ? `/${slug}` : 'The / command';
+  if (!on && !auto) return 'This skill does not run now.';
+  return on ? `${cmd} is on in the Assist Agent.` : `${cmd} is off in the Assist Agent.`;
 }

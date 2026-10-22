@@ -42,6 +42,10 @@ export interface EditorDoc {
   steps: Step[];
   status: DeployStatus;
   triggerMode: TriggerMode;
+  /** Whether people can start the skill with its / command in the Assist
+   *  Agent. Absent = on. Only the chips layout (option 3 on
+   *  /component/skill-start) can turn it off; a Manual skill always has it. */
+  slash?: boolean;
   mailboxes: string[];
   guardrails: Guardrails;
   /** When the skill first went live (Enable; Resume keeps it). Runs reads it
@@ -312,6 +316,17 @@ export function enableBlockers(doc: EditorDoc): string[] {
 // rule for Enable, validity, evaluation and scenarios.
 export function triggerReady(doc: Pick<EditorDoc, 'trigger' | 'triggerMode'>): boolean {
   return doc.triggerMode === 'manual' || lineHasContent(doc.trigger);
+}
+
+/** People can start it with its / command in the Assist Agent. On unless the
+ *  chips layout turned it off. */
+export function slashOn(doc: Pick<EditorDoc, 'slash'>): boolean {
+  return doc.slash !== false;
+}
+
+/** Some way in is on: it runs on its own, or people can start it with /. */
+export function startable(doc: Pick<EditorDoc, 'triggerMode' | 'slash'>): boolean {
+  return doc.triggerMode === 'automatic' || slashOn(doc);
 }
 
 // A line counts as "empty" when it has no chips/refs and only blank text.

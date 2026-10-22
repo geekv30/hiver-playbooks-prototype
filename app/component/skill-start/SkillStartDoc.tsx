@@ -1,214 +1,241 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { RiExternalLinkLine } from 'react-icons/ri';
 import SegmentedControl from '@/components/atoms/SegmentedControl';
-import Dropdown from '@/components/atoms/Dropdown';
-import EditorPane from '@/components/skillstart/EditorPane';
-import HiverSurface from '@/components/skillstart/HiverSurface';
-import TriggerStates from '@/components/skillstart/TriggerStates';
-import { lineToText, normalizeLine, txt } from '@/components/flow01/doc';
-import type { Fragment } from '@/types/playbook';
-import {
-  DEFAULT_START,
-  EDITED_ID,
-  EDITED_MAILBOXES,
-  EDITED_NAME,
-  EDITED_SLUG,
-  EDITED_TRIGGER,
-  OTHER_SKILLS,
-  PEOPLE,
-  type Direction,
-  type Person,
-  type Skill,
-  type StartConfig,
-  type Surface,
-} from '@/components/skillstart/model';
+import { normalizeLine, txt } from '@/components/flow01/doc';
+import { modeChangeLine, slashChangeLine } from '@/components/flow01/TriggerKind';
+import { isStartUi, type StartUi } from '@/components/flow01/startUi';
+import StartFrame, { type StartSeed } from '@/components/skillstart/StartFrame';
+import list from '@/components/skillstart/TriggerStates.module.css';
 import styles from './page.module.css';
 
-/* How a skill starts - three directions for one question: should a skill start
-   on its own, with /skill-name in Copilot, or both, and who decides. Each
-   direction is live: change the control on the skill editor/skill details page
-   on the left, and Copilot on the right follows. */
+/* How a skill starts - the options review. One choice (does the skill start on
+   its own, or only when someone types its / command in the Assist Agent), four
+   layouts for it: today's tabs and three options. Every option is live in the
+   full editor and in the frames below; all of them share one renderer
+   (components/flow01/TriggerStart). */
 
-interface DirectionDoc {
-  id: Direction;
-  tab: string;
-  name: string;
-  pitch: string;
-  answers: [string, string][];
-  tries: string[];
+const TRIGGER = 'When a customer asks for a refund on an order.';
+const SLUG = 'refund-requests';
+
+const live = (over: Partial<StartSeed> = {}): StartSeed => ({
+  title: 'Refund requests',
+  status: 'active',
+  trigger: normalizeLine([txt(TRIGGER)]),
+  mode: 'automatic',
+  ...over,
+});
+
+interface StateDoc {
+  id: string;
+  title: string;
+  when: string;
+  seed: StartSeed;
+  decision?: string;
 }
 
-const DIRECTIONS: DirectionDoc[] = [
+const COMMON: StateDoc[] = [
+  { id: 'automatic', title: 'Live, Automatic', when: 'Enabled with nothing changed.', seed: live() },
+  { id: 'manual', title: 'Live, Manual', when: 'The author picks Manual.', seed: live({ mode: 'manual' }) },
   {
-    id: 'a',
-    tab: 'A. Two switches',
-    name: 'Two switches',
-    pitch:
-      'Two switches. One switch lets the skill run on its own. The other lets people run it with / in Copilot. Both are on at the start.',
-    answers: [
-      ['Choices', 'Two switches. Both are on at the start. If both are off, a warning shows.'],
-      ['On an email that does not match', 'The skill runs. Copilot says that the email does not match.'],
-      ['Where / works', 'Only in the mailboxes of the skill.'],
-    ],
-    tries: [
-      'Open Lena’s email about her billing address, type /refund and press Enter twice. It runs, finds nothing to refund, and says the email does not fit.',
-      'Open Marco’s email. It is in Support, so Refund requests is not in the / menu.',
-      'Turn off "Runs on its own". Priya’s email no longer shows a run, and /refund-requests still works there.',
-    ],
+    id: 'new',
+    title: 'New skill',
+    when: 'Someone starts a skill from scratch.',
+    seed: { title: 'Untitled skill', status: 'draft', trigger: [txt('')], mode: 'automatic' },
   },
   {
-    id: 'b',
-    tab: 'B. One choice',
-    name: 'One choice',
-    pitch:
-      'One choice with three options: On its own, Either way, Only with /. With "Only with /", the trigger becomes "When to use". People see that text in the / menu.',
-    answers: [
-      ['Choices', 'Three options. One is always picked. The default is Either way.'],
-      ['On an email that does not match', 'The skill runs. There is no check.'],
-      ['Where / works', 'In all of Hiver. Mailboxes apply only when it runs on its own.'],
-    ],
-    tries: [
-      'Pick "Only with /". Trigger becomes "When to use", and editing that line changes the / menu.',
-      'Open Marco’s email in Support. Refund requests is in the menu: / works anywhere.',
-      'Run it on Lena’s email. It runs without a word about the fit.',
-    ],
-  },
-  {
-    id: 'c',
-    tab: 'C. Two doors',
-    name: 'Two doors',
-    pitch:
-      'Two switches, and each has its own reach. Mailboxes limit where it runs on its own. A Who menu limits who can use /. Copilot shows matching skills first. On other emails, Copilot asks first.',
-    answers: [
-      ['Choices', 'Two switches. Each has its own reach.'],
-      ['On an email that does not match', 'Copilot asks first: "Run it anyway?"'],
-      ['Where / works', 'In all of Hiver, for the people you pick.'],
-    ],
-    tries: [
-      'Type / on Priya’s email. Refund requests is listed under "Fits this email".',
-      'Run it on Lena’s email. Copilot asks before it runs.',
-      'Set Who to Billing team, then view as Sam from Support. It is gone from his menu.',
-    ],
+    id: 'changed',
+    title: 'Just changed on a live skill',
+    when: 'The author picks Manual while the skill is live.',
+    seed: live({ mode: 'manual', toast: modeChangeLine('manual', SLUG) }),
+    decision: 'Apply at once with Undo (as here), or hold changes until a Save?',
   },
 ];
 
-const COMPARE: { row: string; a: string; b: string; c: string }[] = [
+const CHIP_STATES: StateDoc[] = [
+  { id: 'automatic', title: 'Live, both on', when: 'Enabled with nothing changed.', seed: live() },
   {
-    row: 'What the author sets',
-    a: 'Two switches',
-    b: 'One choice of three',
-    c: 'Two switches, each with a reach',
+    id: 'manual',
+    title: 'Live, / only',
+    when: 'The author turns off Automatic. The trigger stays and dims.',
+    seed: live({ mode: 'manual' }),
   },
   {
-    row: 'Default',
-    a: 'Both on',
-    b: 'Either way',
-    c: 'Both on, / for everyone',
+    id: 'auto-only',
+    title: 'Live, Automatic only',
+    when: 'The author keeps the skill out of the Assist Agent.',
+    seed: live({ slash: false }),
   },
   {
-    row: 'Trigger of a skill that only runs with /',
-    a: 'Stays the trigger, shown in the / menu',
-    b: 'Becomes "When to use", shown in the / menu',
-    c: 'Stays the trigger, used to suggest it',
+    id: 'none',
+    title: 'Both off',
+    when: 'The author turns off both chips.',
+    seed: live({ mode: 'manual', slash: false }),
+    decision: 'Allow it with a warning (as here), or stop the last chip from turning off and point to Pause?',
   },
   {
-    row: '/ on an email that does not fit',
-    a: 'Runs, then says so',
-    b: 'Runs, no check',
-    c: 'Asks first',
+    id: 'new',
+    title: 'New skill',
+    when: 'Someone starts a skill from scratch.',
+    seed: { title: 'Untitled skill', status: 'draft', trigger: [txt('')], mode: 'automatic' },
   },
   {
-    row: 'Where / works',
-    a: 'The skill’s mailboxes',
-    b: 'Anywhere',
-    c: 'Anywhere, for chosen people',
+    id: 'changed',
+    title: 'Just changed on a live skill',
+    when: 'The author turns off the / chip while the skill is live.',
+    seed: live({ slash: false, toast: slashChangeLine(false, SLUG, true) }),
+  },
+];
+
+interface OptionDoc {
+  id: StartUi;
+  tab: string;
+  name: string;
+  pitch: string;
+  good: string[];
+  watch: string[];
+  closest: string;
+  states: StateDoc[];
+}
+
+const OPTIONS: OptionDoc[] = [
+  {
+    id: 'tabs',
+    tab: 'Today',
+    name: 'Today: tabs',
+    pitch:
+      'Automatic and Manual are two tabs under the Trigger label. Manual hides the trigger. This is what ships. People did not understand what the tabs mean.',
+    good: ['Small. It adds one row to the editor.', 'Manual hides what does not apply.'],
+    watch: ['Tabs usually switch between views, not settings, so the choice does not read as a setting.'],
+    closest: 'Cursor rule types (one choice of several).',
+    states: COMMON,
   },
   {
-    row: 'Closest to',
-    a: 'Front Copilot skills, Claude Code',
-    b: 'Cursor rules, Slack workflows',
-    c: 'Pylon skills, Intercom Fin',
+    id: 'blocks',
+    tab: 'Option 1',
+    name: 'Option 1: two blocks',
+    pitch:
+      'Two choices, and each one holds its own content. Automatic holds the trigger. Manual with / holds the / command. Only the picked choice opens.',
+    good: [
+      'The trigger sits inside Automatic, so it is clear that the trigger is what Automatic runs on.',
+      'The label "Manual with /" says how people start it.',
+    ],
+    watch: [
+      'The section starts with a choice, not with the trigger.',
+      'Automatic does not say that people can also type the / command.',
+    ],
+    closest: 'Cursor rules: each rule type opens its own fields.',
+    states: COMMON,
+  },
+  {
+    id: 'radio',
+    tab: 'Option 2',
+    name: 'Option 2: radio buttons',
+    pitch:
+      'Automatic and Manual are two radio buttons under the Trigger label. The trigger shows only for Automatic. The i explains both.',
+    good: [
+      'Radio buttons are the standard control for "pick one of two".',
+      'The layout is the same as today, so nothing else on the page moves.',
+    ],
+    watch: ['The two words must carry the meaning. The i holds the rest.'],
+    closest: 'Standard form pattern. Cursor uses the same one-of-several choice.',
+    states: COMMON,
+  },
+  {
+    id: 'chips',
+    tab: 'Option 3',
+    name: 'Option 3: chips',
+    pitch:
+      'The trigger comes first. Under it, one small chip for each way in: Automatic and the / command. Each chip turns on and off on its own.',
+    good: [
+      'The trigger stays the first thing in the section.',
+      'A skill can run on its own, with /, or both, and the chips show which.',
+    ],
+    watch: [
+      'Both chips can be off. Then the skill does not run, and a warning line says so.',
+      'With Automatic off, the trigger stays on screen but does not start the skill.',
+    ],
+    closest: 'Intercom Fin procedures (the text first, its limits under it). Front (two separate checkboxes).',
+    states: CHIP_STATES,
+  },
+];
+
+const COMPARE: { row: string; cells: Record<StartUi, string> }[] = [
+  {
+    row: 'What the author sees first',
+    cells: { tabs: 'The tabs', blocks: 'The Automatic choice', radio: 'The radio buttons', chips: 'The trigger text' },
+  },
+  {
+    row: 'What the author can set',
+    cells: {
+      tabs: 'Automatic (also /) or Manual',
+      blocks: 'Automatic (also /) or Manual',
+      radio: 'Automatic (also /) or Manual',
+      chips: 'Automatic, /, both, or neither',
+    },
+  },
+  {
+    row: 'The trigger in Manual',
+    cells: { tabs: 'Hidden', blocks: 'Hidden in the closed Automatic block', radio: 'Hidden', chips: 'Stays, dimmed' },
+  },
+  {
+    row: 'Control',
+    cells: { tabs: 'Tabs', blocks: 'Radio rows', radio: 'Radio buttons', chips: 'On/off chips' },
+  },
+  {
+    row: 'Can it end up not running?',
+    cells: { tabs: 'No', blocks: 'No', radio: 'No', chips: 'Yes, with a warning' },
   },
 ];
 
 const PEERS: { name: string; does: string; href: string }[] = [
   {
-    name: 'Claude Code',
-    does: 'Two settings per skill: one stops it from starting on its own, one hides it from the / menu. Both ways are on by default, and the skill’s description is the line the / menu shows.',
-    href: 'https://code.claude.com/docs/en/skills',
-  },
-  {
-    name: 'Front',
-    does: 'Copilot’s New skill dialog has two checkboxes: "Pin as quick action" and "Use automatically".',
-    href: 'https://help.front.com/en/articles/4848832',
-  },
-  {
-    name: 'Pylon',
-    does: 'Skills are "Reusable and shareable AI workflows that humans or agents can run": with / in its Assist agent, or on their own. Scoped to the org, teams or people.',
-    href: 'https://docs.usepylon.com/pylon-docs/llms-full.txt',
-  },
-  {
     name: 'Intercom Fin',
-    does: 'A procedure starts from what the customer says, from an event, or by a teammate in the Inbox. Teammate-started workflows skip audience rules.',
+    does: '"When to use this procedure" is a text field (256 characters). Under it, "Audience targeting" limits the procedure by Channels and Audiences. A newer "When to trigger" section adds event triggers: "Website element click" and "API call".',
     href: 'https://www.intercom.com/help/en/articles/13449439-building-fin-procedures',
   },
   {
+    name: 'Front',
+    does: 'Copilot\'s New skill dialog has two separate checkboxes: "Use automatically" and "Pin as quick action".',
+    href: 'https://help.front.com/en/articles/4848832',
+  },
+  {
+    name: 'Claude Code',
+    does: 'Two separate settings per skill: one stops the model from starting it, one hides it from the / menu. Both ways are on by default.',
+    href: 'https://code.claude.com/docs/en/skills',
+  },
+  {
     name: 'Cursor',
-    does: 'One choice per rule: "Always Apply", "Apply Intelligently", "Apply to Specific Files" or "Apply Manually".',
+    does: 'One choice per rule: "Always Apply", "Apply Intelligently", "Apply to Specific Files" or "Apply Manually". Each choice shows its own fields.',
     href: 'https://cursor.com/docs/context/rules',
   },
   {
     name: 'Zendesk, Ada, Gorgias, Decagon',
-    does: 'Automatic only. The AI picks the procedure; agents cannot start one by name.',
+    does: 'Automatic only. The AI picks the procedure. Agents cannot start one by name.',
     href: 'https://support.zendesk.com/hc/en-us/articles/9041911005850',
   },
 ];
 
 const QUESTIONS = [
-  'Should the author get two options (on its own and with /, or with / only) or three (adding "on its own only, never with /")?',
-  'If someone types /refund on an email that does not look like a refund case, should the skill run anyway, warn them first, or not run? And for a skill that only runs with /, is its trigger a check before it runs, or just a short description that helps people pick it from the / list?',
-  'Does a skill that only runs with / still need to be turned on for specific mailboxes, or can any agent or admin use it anywhere in Hiver once it is published?',
+  'If someone types /refund on an email that does not match, should the skill run anyway, warn them first, or not run?',
+  'Does a Manual skill still need mailboxes, or can any agent or admin use it anywhere in Hiver once it is published?',
+  'With no trigger, the / menu shows only skill names. Is that enough, or does a Manual skill need a short "When to use" line?',
+  'Option 3 only: should a skill be allowed to run on its own but never with / ?',
 ];
-
-const SURFACES: { id: Surface; label: string }[] = [
-  { id: 'email', label: 'Email' },
-  { id: 'admin', label: 'Admin panel' },
-];
-const PERSON_OPTIONS = PEOPLE.map((p) => ({ id: p.id, label: `${p.name}, ${p.team}` }));
-
-const isDirection = (v: string | null): v is Direction => v === 'a' || v === 'b' || v === 'c';
 
 export default function SkillStartDoc() {
-  // The direction lives in the URL (?d=b) so a link opens on it. replaceState
-  // is picked up by useSearchParams, so the URL is the only copy.
+  // The option lives in the URL (?o=chips) so a link opens on it.
   const params = useSearchParams();
-  const d = params.get('d');
-  const direction: Direction = isDirection(d) ? d : 'a';
-  const [configs, setConfigs] = useState<Record<Direction, StartConfig>>(DEFAULT_START);
-  const [trigger, setTrigger] = useState<Fragment[]>(() => normalizeLine([txt(EDITED_TRIGGER)]));
-  const [surface, setSurface] = useState<Surface>('email');
-  const [convId, setConvId] = useState('refund');
-  const [personId, setPersonId] = useState<Person['id']>('maya');
-
-  const choose = (next: Direction) => {
+  const o = params.get('o');
+  const active: StartUi = isStartUi(o) ? o : 'tabs';
+  const doc = OPTIONS.find((x) => x.id === active)!;
+  const choose = (next: StartUi) => {
     const url = new URL(window.location.href);
-    url.searchParams.set('d', next);
+    url.searchParams.set('o', next);
     window.history.replaceState(null, '', url);
   };
-
-  const config = configs[direction];
-  const triggerText = lineToText(trigger).trim();
-  const skills: Skill[] = useMemo(
-    () => [
-      { id: EDITED_ID, name: EDITED_NAME, slug: EDITED_SLUG, trigger: triggerText || 'No trigger yet', mailboxes: EDITED_MAILBOXES, start: config },
-      ...OTHER_SKILLS,
-    ],
-    [triggerText, config],
-  );
-  const person = PEOPLE.find((p) => p.id === personId)!;
-  const doc = DIRECTIONS.find((d) => d.id === direction)!;
 
   return (
     <main className={styles.page}>
@@ -216,77 +243,84 @@ export default function SkillStartDoc() {
         <p className={styles.kicker}>Skill editor/skill details</p>
         <h1 className={styles.h1}>How a skill starts</h1>
         <p className={styles.standfirst}>
-          A skill can start in two ways: on its own, when Hiver AI finds an email or chat that fits its trigger, or by hand, when an
-          agent or admin types /skill-name in Copilot anywhere in Hiver. Three directions for how the author controls that in the
-          trigger, and every state the trigger can be in under each one.
+          A skill starts in one of two ways. Automatic: Hiver AI runs the skill when an email or chat matches its trigger.
+          Manual: the skill runs only when someone types its / command in the Assist Agent. Today the editor shows this choice
+          as tabs, and people did not understand them. Here are three other layouts for the same choice. Each one works: open it
+          in the full editor, or try its states below.
         </p>
       </header>
 
-      <section className={styles.picker} aria-label="Direction">
-        <SegmentedControl tabs={DIRECTIONS.map((d) => ({ id: d.id, label: d.tab }))} active={direction} onChange={choose} ariaLabel="Direction" />
-        <div className={styles.brief} key={direction}>
+      <section className={styles.picker} aria-label="Option">
+        <SegmentedControl tabs={OPTIONS.map((x) => ({ id: x.id, label: x.tab }))} active={active} onChange={choose} ariaLabel="Option" />
+        <div className={styles.brief} key={active}>
+          <h2 className={styles.h2}>{doc.name}</h2>
           <p className={styles.pitch}>{doc.pitch}</p>
+          <div className={styles.openRow}>
+            <Link className={styles.openLink} href={`/component/skill-start/editor/${active}/refund-requests`} target="_blank">
+              Open a live skill in the full editor
+              <RiExternalLinkLine aria-hidden />
+            </Link>
+            <Link className={styles.openLink} href={`/component/skill-start/editor/${active}/nps-followups`} target="_blank">
+              Open a draft
+              <RiExternalLinkLine aria-hidden />
+            </Link>
+          </div>
           <dl className={styles.answers}>
-            {doc.answers.map(([k, v]) => (
-              <div key={k} className={styles.answer}>
-                <dt>{k}</dt>
-                <dd>{v}</dd>
-              </div>
-            ))}
+            <div className={styles.answer}>
+              <dt>What works</dt>
+              <dd>
+                {doc.good.map((g) => (
+                  <span key={g} className={styles.point}>
+                    {g}
+                  </span>
+                ))}
+              </dd>
+            </div>
+            <div className={styles.answer}>
+              <dt>What to watch</dt>
+              <dd>
+                {doc.watch.map((g) => (
+                  <span key={g} className={styles.point}>
+                    {g}
+                  </span>
+                ))}
+              </dd>
+            </div>
+            <div className={styles.answer}>
+              <dt>Closest to</dt>
+              <dd>{doc.closest}</dd>
+            </div>
           </dl>
         </div>
       </section>
 
       <section className={styles.states} aria-label="States">
         <div className={styles.statesHead}>
-          <h2 className={styles.h2}>Every state of the trigger</h2>
+          <h2 className={styles.h2}>States</h2>
           <p className={styles.para}>
-            Each frame opens in its state and then works: flip the switches, type the trigger, rename the skill in the toolbar,
-            Enable, Pause and Resume.
+            Each frame opens in its state and then works: change the choice, type the trigger, rename the skill, Enable, Pause
+            and Resume.
           </p>
         </div>
-        <TriggerStates direction={direction} />
+        <ol className={list.list} key={active}>
+          {doc.states.map((s, i) => (
+            <li key={s.id} id={`state-${s.id}`} className={list.state}>
+              <div className={list.text}>
+                <p className={list.n}>{String(i + 1).padStart(2, '0')}</p>
+                <h3 className={list.title}>{s.title}</h3>
+                <p className={list.when}>{s.when}</p>
+                {s.decision && (
+                  <p className={list.decision}>
+                    <span className={list.tag}>Decision</span>
+                    {s.decision}
+                  </p>
+                )}
+              </div>
+              <StartFrame ui={active} seed={s.seed} />
+            </li>
+          ))}
+        </ol>
       </section>
-
-      <details className={styles.copilot}>
-        <summary className={styles.copilotSummary}>
-          <span className={styles.copilotTitle}>What / does in Copilot</span>
-          <span className={styles.copilotSub}>The same setting, seen from an email in Hiver and the admin panel.</span>
-        </summary>
-      <section className={styles.play} aria-label="Try it">
-        <div className={styles.playBar}>
-          <p className={styles.paneLabel}>Skill editor/skill details</p>
-          <div className={styles.playControls}>
-            {direction === 'c' && (
-              <Dropdown variant="pill" prefix="Viewing as" options={PERSON_OPTIONS} value={personId} onChange={(id) => setPersonId(id as Person['id'])} ariaLabel="Viewing as" />
-            )}
-            <div className={styles.surfaceSwitch}>
-              <SegmentedControl size="sm" tabs={SURFACES} active={surface} onChange={setSurface} ariaLabel="Where Copilot is" />
-            </div>
-          </div>
-        </div>
-        <div className={styles.panes}>
-          <EditorPane
-            direction={direction}
-            config={config}
-            onConfig={(next) => setConfigs((prev) => ({ ...prev, [direction]: next }))}
-            trigger={trigger}
-            onTrigger={setTrigger}
-          />
-          <HiverSurface direction={direction} surface={surface} convId={convId} onConv={setConvId} skills={skills} person={person} />
-        </div>
-        <div className={styles.tries}>
-          <p className={styles.triesHead}>Try this</p>
-          <ol className={styles.triesList}>
-            {doc.tries.map((t) => (
-              <li key={t}>{t}</li>
-            ))}
-            <li>Switch to Admin panel. There is no conversation there, so every skill is listed but cannot run. That is the same in all three directions, and a question of its own.</li>
-          </ol>
-          <p className={styles.note}>Matching is scripted in this prototype: each email fits one skill, whatever the trigger says.</p>
-        </div>
-      </section>
-      </details>
 
       <section className={styles.block}>
         <h2 className={styles.h2}>Side by side</h2>
@@ -295,9 +329,9 @@ export default function SkillStartDoc() {
             <thead>
               <tr>
                 <th />
-                {DIRECTIONS.map((d) => (
-                  <th key={d.id} data-current={d.id === direction || undefined}>
-                    {d.tab}
+                {OPTIONS.map((x) => (
+                  <th key={x.id} data-current={x.id === active || undefined}>
+                    {x.name}
                   </th>
                 ))}
               </tr>
@@ -306,9 +340,11 @@ export default function SkillStartDoc() {
               {COMPARE.map((r) => (
                 <tr key={r.row}>
                   <th scope="row">{r.row}</th>
-                  <td data-current={direction === 'a' || undefined}>{r.a}</td>
-                  <td data-current={direction === 'b' || undefined}>{r.b}</td>
-                  <td data-current={direction === 'c' || undefined}>{r.c}</td>
+                  {OPTIONS.map((x) => (
+                    <td key={x.id} data-current={x.id === active || undefined}>
+                      {r.cells[x.id]}
+                    </td>
+                  ))}
                 </tr>
               ))}
             </tbody>
@@ -318,11 +354,6 @@ export default function SkillStartDoc() {
 
       <section className={styles.block}>
         <h2 className={styles.h2}>What the peer set does</h2>
-        <p className={styles.para}>
-          The products closest to this (Claude Code, Front, Pylon) treat &ldquo;can the AI start it&rdquo; and &ldquo;can a person start
-          it&rdquo; as two separate settings, both on by default. None of them warns or asks when a person starts a skill on something
-          it does not fit: the person counts as the trigger. So C&apos;s confirm, and A&apos;s note, are our own proposals.
-        </p>
         <ul className={styles.peers}>
           {PEERS.map((p) => (
             <li key={p.name}>
@@ -342,6 +373,17 @@ export default function SkillStartDoc() {
             <li key={q}>{q}</li>
           ))}
         </ol>
+        <p className={styles.para}>
+          Earlier directions (A, B and C) are on{' '}
+          <Link href="/component/skill-start/earlier" className={styles.peerName}>
+            How a skill starts, earlier directions
+          </Link>
+          . Every state of today&apos;s tabs is on{' '}
+          <Link href="/component/skill-trigger" className={styles.peerName}>
+            Trigger: Automatic or Manual
+          </Link>
+          .
+        </p>
       </section>
     </main>
   );

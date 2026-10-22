@@ -21,7 +21,8 @@ import GmailBar from './GmailBar';
 import Toolbar from './Toolbar';
 import ChatBar from './ChatBar';
 import EditorLine, { PaletteRequest } from './EditorLine';
-import { TRIGGER_PLACEHOLDER, TriggerKindControl, TriggerManualLine, modeChangeLine, slugFor } from './TriggerKind';
+import { TRIGGER_PLACEHOLDER, modeChangeLine, slashChangeLine, slugFor } from './TriggerKind';
+import TriggerStart, { type StartUi } from './TriggerStart';
 import CommandPalette from './CommandPalette';
 import ConditionBlock from './condition/ConditionBlock';
 import ColdStartModal from './ColdStartModal';
@@ -69,6 +70,8 @@ import {
   applyDocPatch,
   emptyDoc,
   triggerReady,
+  slashOn,
+  startable,
   type EditorDoc,
   type DocPatchOp,
 } from './doc';
@@ -234,6 +237,9 @@ interface Props {
    *  the two mutually-exclusive right-hand panels (docked workspace). /canvas sets
    *  this; /api-example (the bare worked example) does not. */
   companions?: boolean;
+  /** Which layout the Trigger's start choice uses. 'tabs' ships; the others
+   *  are the options shown on /component/skill-start. */
+  startUi?: StartUi;
   /** Start every connector unauthenticated, so adding one inserts a "setup needed"
    *  tag and clicking it runs the connection flow (the /connector-setup route).
    *  Omit (default) to treat all connectors as already connected. */
@@ -273,6 +279,7 @@ export default function EditorCanvas({
   connectorsStartUnauthed,
   handoff,
   persist,
+  startUi = 'tabs',
 }: Props) {
   const router = useRouter();
   // A seeded skill picks up where this visit left it (see SEEDED_EDITS). The
@@ -522,12 +529,25 @@ export default function EditorCanvas({
         setFocusReq((r) => (r?.key === 'trigger' ? null : r));
       }
       if (docRef.current.status === 'active')
-        showHint(modeChangeLine(mode, slugFor(docRef.current.title)), {
+        showHint(modeChangeLine(mode, slugFor(docRef.current.title), slashOn(docRef.current)), {
           label: 'Undo',
           run: () => api.setTriggerMode(prev),
         });
     },
     [api, showHint, requestFocus, scan],
+  );
+
+  // The / command on or off (the chips layout only). Live: at once, with Undo.
+  const changeSlash = useCallback(
+    (on: boolean) => {
+      api.setSlash(on);
+      if (docRef.current.status === 'active')
+        showHint(slashChangeLine(on, slugFor(docRef.current.title), docRef.current.triggerMode === 'automatic'), {
+          label: 'Undo',
+          run: () => api.setSlash(!on),
+        });
+    },
+    [api, showHint],
   );
 
   // --- Enable / pause / resume / settings ------------------------------------
@@ -1642,7 +1662,7 @@ export default function EditorCanvas({
         hideSimulate={companions}
         // Enable is muted+disabled until the skill has a trigger AND a step
         // (Figma 647:39849); then it routes THROUGH the guardrails commit panel.
-        canEnable={triggerOk && doc.steps.some((s) => stepHasContent(s))}
+        canEnable={triggerOk && startable(doc) && doc.steps.some((s) => stepHasContent(s))}
         onEnable={requestEnable}
         onSettings={() => openEnable('manage')}
         onPause={pauseAop}
@@ -1776,28 +1796,33 @@ export default function EditorCanvas({
                 <div className={styles.row}>
                   <span className={styles.gutter} aria-hidden />
                   <div className={styles.content}>
-                    <h2 className={styles.label}>Trigger</h2>
-                    <TriggerKindControl mode={doc.triggerMode} onMode={changeTriggerMode} slug={slugFor(doc.title)} />
-                    {/* Manual has no trigger to write: one line takes the text's
-                        place. The text stays on the doc and comes back with
-                        Automatic. */}
-                    {manual ? (
-                      <TriggerManualLine slug={slugFor(doc.title)} />
-                    ) : (
-                      <div className={styles.triggerLine}>
-                        <EditorLine
-                          fragments={doc.trigger}
-                          placeholder={TRIGGER_PLACEHOLDER}
-                          onChange={handleChange({ kind: 'trigger' })}
-                          onEnter={handleEnter({ kind: 'trigger' })}
-                          // The trigger is always handwritten NL - no actions/references,
-                          // no command palette. '@' and '/' type literally (noActions).
-                          noActions
-                          autoFocus={focusFor('trigger')}
-                          ariaLabel="When should this skill run"
-                        />
-                      </div>
-                    )}
+                    {/* How the skill starts, in the layout this editor was asked
+                        for (tabs ships). Manual has no trigger to write except in
+                        the chips layout; the text stays on the doc either way. */}
+                    <TriggerStart
+                      ui={startUi}
+                      mode={doc.triggerMode}
+                      onMode={changeTriggerMode}
+                      slash={slashOn(doc)}
+                      onSlash={changeSlash}
+                      slug={slugFor(doc.title)}
+                      labelClass={styles.label}
+                      line={
+                        <div className={styles.triggerLine}>
+                          <EditorLine
+                            fragments={doc.trigger}
+                            placeholder={TRIGGER_PLACEHOLDER}
+                            onChange={handleChange({ kind: 'trigger' })}
+                            onEnter={handleEnter({ kind: 'trigger' })}
+                            // The trigger is always handwritten NL - no actions/references,
+                            // no command palette. '@' and '/' type literally (noActions).
+                            noActions
+                            autoFocus={focusFor('trigger')}
+                            ariaLabel="When should this skill run"
+                          />
+                        </div>
+                      }
+                    />
                   </div>
                 </div>
               </section>

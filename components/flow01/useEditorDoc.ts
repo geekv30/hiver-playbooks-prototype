@@ -150,6 +150,8 @@ export interface EditorApi {
   setMailboxes: (ids: string[]) => void;
   /** Set how the skill is triggered (automatic vs manual). */
   setTriggerMode: (mode: EditorDoc['triggerMode']) => void;
+  /** Turn the / command in the Assist Agent on or off (chips layout only). */
+  setSlash: (on: boolean) => void;
   /** Go live: status -> 'active'. */
   enable: () => void;
   /** Stop: status -> 'paused' (instant; undoable). */
@@ -243,6 +245,13 @@ export function useEditorDoc(initial?: EditorDoc): EditorApi {
   const setTriggerMode = useCallback(
     (mode: EditorDoc['triggerMode']) => {
       commit({ ...docRef.current, triggerMode: mode }, null);
+    },
+    [commit],
+  );
+
+  const setSlash = useCallback(
+    (on: boolean) => {
+      commit({ ...docRef.current, slash: on }, null);
     },
     [commit],
   );
@@ -503,6 +512,7 @@ export function useEditorDoc(initial?: EditorDoc): EditorApi {
     setGuardrails,
     setMailboxes,
     setTriggerMode,
+    setSlash,
     enable,
     pause,
     loadDoc,
