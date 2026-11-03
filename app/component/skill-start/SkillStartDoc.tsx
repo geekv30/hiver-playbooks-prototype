@@ -14,7 +14,8 @@ import styles from './page.module.css';
 
 /* How a skill starts - the options review. One choice (does the skill start on
    its own, or only when someone types its / command in the Assist Agent), four
-   layouts for it: today's tabs and three options. Every option is live in the
+   layouts for it: the tabs it started with and three options; option 2 (radio
+   buttons) ships. Every option is live in the
    full editor and in the frames below; all of them share one renderer
    (components/flow01/TriggerStart). */
 
@@ -104,10 +105,10 @@ interface OptionDoc {
 const OPTIONS: OptionDoc[] = [
   {
     id: 'tabs',
-    tab: 'Today',
-    name: 'Today: tabs',
+    tab: 'Before: tabs',
+    name: 'Before: tabs',
     pitch:
-      'Automatic and Manual are two tabs under the Trigger label. Manual hides the trigger. This is what ships. People did not understand what the tabs mean.',
+      'Automatic and Manual were two tabs under the Trigger label. Manual hides the trigger. People did not understand what the tabs mean, so option 2 replaced them.',
     good: ['Small. It adds one row to the editor.', 'Manual hides what does not apply.'],
     watch: ['Tabs usually switch between views, not settings, so the choice does not read as a setting.'],
     closest: 'Cursor rule types (one choice of several).',
@@ -132,13 +133,13 @@ const OPTIONS: OptionDoc[] = [
   },
   {
     id: 'radio',
-    tab: 'Option 2',
-    name: 'Option 2: radio buttons',
+    tab: 'Option 2 (shipped)',
+    name: 'Option 2: radio buttons (shipped)',
     pitch:
       'Automatic and Manual are two radio buttons under the Trigger label. The trigger shows only for Automatic. The i explains both.',
     good: [
       'Radio buttons are the standard control for "pick one of two".',
-      'The layout is the same as today, so nothing else on the page moves.',
+      'The layout is the same as the tabs it replaced, so nothing else on the page moves.',
     ],
     watch: ['The two words must carry the meaning. The i holds the rest.'],
     closest: 'Standard form pattern. Cursor uses the same one-of-several choice.',
@@ -230,7 +231,7 @@ export default function SkillStartDoc() {
   // The option lives in the URL (?o=chips) so a link opens on it.
   const params = useSearchParams();
   const o = params.get('o');
-  const active: StartUi = isStartUi(o) ? o : 'tabs';
+  const active: StartUi = isStartUi(o) ? o : 'radio';
   const doc = OPTIONS.find((x) => x.id === active)!;
   const choose = (next: StartUi) => {
     const url = new URL(window.location.href);
@@ -245,9 +246,9 @@ export default function SkillStartDoc() {
         <h1 className={styles.h1}>How a skill starts</h1>
         <p className={styles.standfirst}>
           A skill starts in one of two ways. Automatic: Hiver AI runs the skill when an email or chat matches its trigger.
-          Manual: the skill runs only when someone types its / command in the Assist Agent. Today the editor shows this choice
-          as tabs, and people did not understand them. Here are three other layouts for the same choice. Each one works: open it
-          in the full editor, or try its states below.
+          Manual: the skill runs only when someone types its / command in the Assist Agent. The editor first showed this
+          choice as tabs, and people did not understand them. Option 2, radio buttons, now ships. The tabs and options 1 and 3
+          stay here for reference. Each one works: open it in the full editor, or try its states below.
         </p>
       </header>
 
@@ -379,7 +380,7 @@ export default function SkillStartDoc() {
           <Link href="/component/skill-start/earlier" className={styles.peerName}>
             How a skill starts, earlier directions
           </Link>
-          . Every state of today&apos;s tabs is on{' '}
+          . Every state of the tabs is on{' '}
           <Link href="/component/skill-trigger" className={styles.peerName}>
             Trigger: Automatic or Manual
           </Link>

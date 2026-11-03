@@ -237,7 +237,7 @@ interface Props {
    *  the two mutually-exclusive right-hand panels (docked workspace). /canvas sets
    *  this; /api-example (the bare worked example) does not. */
   companions?: boolean;
-  /** Which layout the Trigger's start choice uses. 'tabs' ships; the others
+  /** Which layout the Trigger's start choice uses. 'radio' ships (option 2); the others
    *  are the options shown on /component/skill-start. */
   startUi?: StartUi;
   /** Start every connector unauthenticated, so adding one inserts a "setup needed"
@@ -279,7 +279,7 @@ export default function EditorCanvas({
   connectorsStartUnauthed,
   handoff,
   persist,
-  startUi = 'tabs',
+  startUi = 'radio',
 }: Props) {
   const router = useRouter();
   // A seeded skill picks up where this visit left it (see SEEDED_EDITS). The

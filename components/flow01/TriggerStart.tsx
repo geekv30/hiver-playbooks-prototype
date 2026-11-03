@@ -10,9 +10,10 @@ import kind from './TriggerKind.module.css';
 import styles from './TriggerStart.module.css';
 
 /* The Trigger section of the skill editor, in one of four layouts for the same
-   choice (how a skill starts). The editor ships 'tabs'; the other three are
-   the options on /component/skill-start, each live in the full editor:
-     tabs   - today: Automatic / Manual tabs under the Trigger label.
+   choice (how a skill starts). The editor ships 'radio' (option 2); the other
+   three stay on /component/skill-start for reference, each live in the full
+   editor:
+     tabs   - before: Automatic / Manual tabs under the Trigger label.
      blocks - option 1: two choices, the trigger lives inside Automatic.
      radio  - option 2: Automatic / Manual radio buttons under the label.
      chips  - option 3: the trigger first, then on/off chips for each way in.
