@@ -303,3 +303,34 @@
   font-size: 14px;
   color: var(--muted);
 }
+
+/* Options review: the brief's links into the full editor, and the bullet-free
+   points in its answers row. */
+.openRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+.openLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-small);
+  font-weight: 500;
+  color: var(--accent);
+  text-decoration: none;
+}
+.openLink:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.openLink svg {
+  width: 14px;
+  height: 14px;
+}
+.point {
+  display: block;
+}
+.point + .point {
+  margin-top: 6px;
+}

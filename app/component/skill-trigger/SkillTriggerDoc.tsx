@@ -94,8 +94,8 @@ export default function SkillTriggerDoc() {
             a new skill
           </Link>
           . Directions A, B and C are on{' '}
-          <Link href="/component/skill-start" className={styles.peerName}>
-            How a skill starts
+          <Link href="/component/skill-start/earlier" className={styles.peerName}>
+            How a skill starts, earlier directions
           </Link>
           .
         </p>
