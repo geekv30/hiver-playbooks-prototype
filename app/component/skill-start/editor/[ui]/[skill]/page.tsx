@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 // The options on /component/skill-start, each in the full editor. A live skill
 // and a draft, so Enable, Pause and the toasts all show. Review only: the
-// shipped editor (/aops/...) keeps the tabs.
+// shipped editor (/aops/...) uses option 2, radio buttons (EditorCanvas's default).
 const SKILLS = ['refund-requests', 'nps-followups'];
 export const dynamicParams = false;
 

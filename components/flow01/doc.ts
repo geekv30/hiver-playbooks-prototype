@@ -44,7 +44,8 @@ export interface EditorDoc {
   triggerMode: TriggerMode;
   /** Whether people can start the skill with its / command in the Assist
    *  Agent. Absent = on. Only the chips layout (option 3 on
-   *  /component/skill-start) can turn it off; a Manual skill always has it. */
+   *  /component/skill-start) can turn it off. With Automatic off too, the
+   *  skill does not run at all (see startable). */
   slash?: boolean;
   mailboxes: string[];
   guardrails: Guardrails;

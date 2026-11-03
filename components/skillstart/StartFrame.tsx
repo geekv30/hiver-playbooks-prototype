@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import EditorLine from '@/components/flow01/EditorLine';
 import Toolbar from '@/components/flow01/Toolbar';
 import ed from '@/components/flow01/EditorCanvas.module.css';
-import { lineHasContent, type DeployStatus, type TriggerMode } from '@/components/flow01/doc';
+import { startable, triggerReady, type DeployStatus, type TriggerMode } from '@/components/flow01/doc';
 import { TRIGGER_PLACEHOLDER, modeChangeLine, slashChangeLine, slugFor } from '@/components/flow01/TriggerKind';
 import TriggerStart, { type StartUi } from '@/components/flow01/TriggerStart';
 import type { Fragment } from '@/types/playbook';
@@ -19,6 +19,8 @@ export interface StartSeed {
   slash?: boolean;
   /** Open on the toast a live change shows. */
   toast?: string;
+  /** What that toast's Undo puts back: the mode (default) or the / command. */
+  toastUndo?: 'mode' | 'slash';
 }
 
 const TOAST_MS = 6000;
@@ -32,7 +34,15 @@ export default function StartFrame({ ui, seed }: { ui: StartUi; seed: StartSeed 
   const [mode, setMode] = useState(seed.mode);
   const [slash, setSlash] = useState(seed.slash ?? true);
   const [toast, setToast] = useState<{ line: string; undo: () => void } | null>(
-    seed.toast ? { line: seed.toast, undo: () => setMode(seed.mode === 'manual' ? 'automatic' : 'manual') } : null,
+    seed.toast
+      ? {
+          line: seed.toast,
+          undo:
+            seed.toastUndo === 'slash'
+              ? () => setSlash(!(seed.slash ?? true))
+              : () => setMode(seed.mode === 'manual' ? 'automatic' : 'manual'),
+        }
+      : null,
   );
   const seeded = useRef(Boolean(seed.toast));
 
@@ -59,8 +69,9 @@ export default function StartFrame({ ui, seed }: { ui: StartUi; seed: StartSeed 
     setSlash(on);
     say(slashChangeLine(on, slug, mode === 'automatic'), () => setSlash(!on));
   };
-  const ready = mode === 'manual' || lineHasContent(trigger);
-  const runs = mode === 'automatic' || slash;
+  // The editor's own Enable rule (doc.ts), so the frames never disagree with it.
+  const ready = triggerReady({ trigger, triggerMode: mode });
+  const runs = startable({ triggerMode: mode, slash });
 
   return (
     <div className={styles.frame}>

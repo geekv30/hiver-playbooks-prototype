@@ -1797,7 +1797,7 @@ export default function EditorCanvas({
                   <span className={styles.gutter} aria-hidden />
                   <div className={styles.content}>
                     {/* How the skill starts, in the layout this editor was asked
-                        for (tabs ships). Manual has no trigger to write except in
+                        for (radio ships). Manual has no trigger to write except in
                         the chips layout; the text stays on the doc either way. */}
                     <TriggerStart
                       ui={startUi}

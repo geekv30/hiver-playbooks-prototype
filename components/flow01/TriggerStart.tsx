@@ -5,7 +5,7 @@ import { RiAddLine, RiCheckLine, RiErrorWarningLine } from 'react-icons/ri';
 import Radio from '@/components/atoms/Radio';
 import InfoButton from '@/components/simulate/MatchReasonButton';
 import type { TriggerMode } from './doc';
-import { TriggerKindControl, TriggerManualLine } from './TriggerKind';
+import { Cmd, StartInfo, TriggerKindControl, TriggerManualLine } from './TriggerKind';
 import kind from './TriggerKind.module.css';
 import styles from './TriggerStart.module.css';
 
@@ -50,12 +50,6 @@ export default function TriggerStart(p: Props) {
   );
 }
 
-/** The / command inside a sentence: the slug, or a stand-in before a name.
- *  `onDark` for the info bubble; the page style everywhere else. */
-function Cmd({ slug, onDark }: { slug: string | null; onDark?: boolean }) {
-  return slug ? <code className={onDark ? kind.cmd : kind.slug}>/{slug}</code> : <>/ and the skill name</>;
-}
-
 /* ---------- A radio group: roving focus, arrow keys, one always picked ------ */
 
 interface RadioItem {
@@ -78,6 +72,9 @@ function RadioGroup({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const onKey = (e: KeyboardEvent<HTMLDivElement>) => {
+    // Only the radios move the choice. In option 1 the trigger field sits inside
+    // the group, and its arrow keys must move the caret, not the choice.
+    if ((e.target as HTMLElement).getAttribute('role') !== 'radio') return;
     const i = items.findIndex((it) => it.id === value);
     let next = i;
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (i + 1) % items.length;
@@ -109,29 +106,6 @@ function RadioGroup({
         );
       })}
     </div>
-  );
-}
-
-/** The click-open explanation of both ways in, shared by tabs and radio. */
-export function StartInfo({ slug }: { slug: string | null }) {
-  return (
-    <InfoButton title="How this skill starts" ariaLabel="How Automatic and Manual work" wide>
-      <dl className={kind.defs}>
-        <div>
-          <dt>Automatic</dt>
-          <dd>
-            Hiver AI runs this skill when an email or chat matches the trigger. People can also type <Cmd slug={slug} onDark /> in the
-            Assist Agent.
-          </dd>
-        </div>
-        <div>
-          <dt>Manual</dt>
-          <dd>
-            This skill runs only when someone types <Cmd slug={slug} onDark /> in the Assist Agent. There is no trigger to write.
-          </dd>
-        </div>
-      </dl>
-    </InfoButton>
   );
 }
 
@@ -198,7 +172,7 @@ function ToggleChip({ on, onToggle, label, mono }: { on: boolean; onToggle: () =
 
 function Chips({ mode, onMode, slash, onSlash, slug, line, labelClass }: Props) {
   const auto = mode === 'automatic';
-  const both = !auto && !slash;
+  const neither = !auto && !slash;
   return (
     <>
       <h2 className={labelClass}>Trigger</h2>
@@ -228,7 +202,7 @@ function Chips({ mode, onMode, slash, onSlash, slug, line, labelClass }: Props) 
           </dl>
         </InfoButton>
       </div>
-      {both && (
+      {neither && (
         <p className={styles.warn} role="status">
           <RiErrorWarningLine aria-hidden />
           <span>

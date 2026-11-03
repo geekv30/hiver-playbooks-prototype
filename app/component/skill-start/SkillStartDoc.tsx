@@ -87,7 +87,7 @@ const CHIP_STATES: StateDoc[] = [
     id: 'changed',
     title: 'Just changed on a live skill',
     when: 'The author turns off the / chip while the skill is live.',
-    seed: live({ slash: false, toast: slashChangeLine(false, SLUG, true) }),
+    seed: live({ slash: false, toast: slashChangeLine(false, SLUG, true), toastUndo: 'slash' }),
   },
 ];
 
