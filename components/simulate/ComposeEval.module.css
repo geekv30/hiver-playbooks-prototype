@@ -73,6 +73,26 @@
   color: var(--muted);
   user-select: none;
 }
+.rows {
+  display: flex;
+  flex-direction: column;
+}
+.rows[data-revealed] {
+  animation: rowsIn var(--d-enter) var(--ease-snap) backwards;
+}
+@keyframes rowsIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+.rowOptional {
+  flex: none;
+  font-size: var(--fs-caption); /* 12px */
+  line-height: 16px;
+  color: var(--muted-soft);
+  user-select: none;
+}
 .rowInput {
   flex: 1;
   min-width: 0;
@@ -149,6 +169,45 @@
 .attach:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
+}
+.addHeaders {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 8px 0 6px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  font-family: var(--font);
+  font-size: var(--fs-small); /* 13px */
+  line-height: 20px;
+  letter-spacing: var(--ls-small);
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    background var(--d-hover) var(--ease-snap),
+    color var(--d-hover) var(--ease-snap);
+}
+.addHeaders:hover {
+  background: var(--surface-soft);
+  color: var(--ink-soft);
+}
+.addHeaders svg {
+  width: 15px;
+  height: 15px;
+}
+.addHeaders:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.optionalNote {
+  margin: 0;
+  padding: 0 4px;
+  font-size: var(--fs-caption); /* 12px */
+  line-height: 16px;
+  color: var(--muted);
 }
 .toolbarNote {
   margin-left: 6px;
@@ -277,8 +336,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .rows[data-revealed] {
+    animation: none;
+  }
   .card,
   .attach,
+  .addHeaders,
   .startBtn,
   .secondaryBtn {
     transition: none;

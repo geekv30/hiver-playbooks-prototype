@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ClipboardEvent, type KeyboardEvent } from 'react';
-import { RiAttachment2, RiSendPlaneFill, RiStopCircleLine } from 'react-icons/ri';
+import { RiAddLine, RiAttachment2, RiSendPlaneFill, RiStopCircleLine } from 'react-icons/ri';
 import type { SimEmail, SimStatusKind } from '@/data/simFixtures';
 import { useSimRun } from './useSimRun';
 import { SIM_DRAFT } from './traceFixture';
@@ -31,7 +31,14 @@ interface Props {
   onRunRecorded?: (statuses: SimStatusKind[]) => void;
   /** Open Copilot to fix a caught gap (Fix with Copilot). */
   onOpenCopilot?: () => void;
+  /** How the card says From and Subject are optional (review options):
+   *  tag - "Optional" at the end of each row; placeholder - the field's
+   *  placeholder reads "Optional"; reveal - the rows hide behind "Add sender
+   *  and subject"; note - one line under the card; none - no cue. */
+  optionalCue?: OptionalCue;
 }
+
+export type OptionalCue = 'none' | 'tag' | 'placeholder' | 'reveal' | 'note';
 
 /**
  * ComposeEval - write or edit a test email, then evaluate it (Figma 1752:21176 /
@@ -49,6 +56,7 @@ export default function ComposeEval({
   seed,
   onRunRecorded,
   onOpenCopilot,
+  optionalCue = 'none',
 }: Props) {
   const [from, setFrom] = useState(seed?.sender ?? '');
   const [subject, setSubject] = useState(seed?.subject ?? '');
@@ -56,6 +64,14 @@ export default function ComposeEval({
   const [sentBody, setSentBody] = useState<string | null>(null);
   const [sent, setSent] = useState<{ from: string; subject: string; files: Attachment[] }>({ from: '', subject: '', files: [] });
   const att = useAttachments({ tooBig: 'over 10 MB. Each file can be up to 10 MB.', tooMany: `An email can carry ${MAX_FILES} files.` });
+  // reveal: the rows start hidden unless a scenario already fills them.
+  const [headersOpen, setHeadersOpen] = useState(optionalCue !== 'reveal' || !!seed?.sender || !!seed?.subject);
+  const fromRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (optionalCue === 'reveal' && headersOpen && !from) fromRef.current?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [headersOpen]);
+  const tag = optionalCue === 'tag' ? <span className={styles.rowOptional}>Optional</span> : null;
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const pickerRef = useRef<HTMLInputElement>(null);
 
@@ -185,27 +201,34 @@ export default function ComposeEval({
               onPaste={onCardPaste}
               onKeyDown={onCardKeyDown}
             >
-              <label className={styles.row}>
-                <span className={styles.rowLabel}>From</span>
-                <input
-                  className={styles.rowInput}
-                  value={from}
-                  onChange={(e) => setFrom(e.target.value)}
-                  placeholder="Name or email"
-                  autoComplete="off"
-                  spellCheck={false}
-                />
-              </label>
-              <label className={styles.row}>
-                <span className={styles.rowLabel}>Subject</span>
-                <input
-                  className={styles.rowInput}
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  placeholder="Add a subject"
-                  autoComplete="off"
-                />
-              </label>
+              {headersOpen && (
+                <div className={styles.rows} data-revealed={optionalCue === 'reveal' || undefined}>
+                  <label className={styles.row}>
+                    <span className={styles.rowLabel}>From</span>
+                    <input
+                      ref={fromRef}
+                      className={styles.rowInput}
+                      value={from}
+                      onChange={(e) => setFrom(e.target.value)}
+                      placeholder={optionalCue === 'placeholder' ? 'Optional' : 'Name or email'}
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+                    {tag}
+                  </label>
+                  <label className={styles.row}>
+                    <span className={styles.rowLabel}>Subject</span>
+                    <input
+                      className={styles.rowInput}
+                      value={subject}
+                      onChange={(e) => setSubject(e.target.value)}
+                      placeholder={optionalCue === 'placeholder' ? 'Optional' : 'Add a subject'}
+                      autoComplete="off"
+                    />
+                    {tag}
+                  </label>
+                </div>
+              )}
               <textarea
                 ref={bodyRef}
                 className={styles.input}
@@ -234,10 +257,17 @@ export default function ComposeEval({
                   <RiAttachment2 aria-hidden />
                 </button>
                 {att.full && <span className={styles.toolbarNote}>{MAX_FILES} files is the limit</span>}
+                {!headersOpen && (
+                  <button type="button" className={styles.addHeaders} onClick={() => setHeadersOpen(true)}>
+                    <RiAddLine aria-hidden />
+                    <span>Sender and subject</span>
+                  </button>
+                )}
                 <FilePicker inputRef={pickerRef} onFiles={att.add} />
               </div>
             </div>
             <AttachmentError className={styles.error} error={att.error} />
+            {optionalCue === 'note' && <p className={styles.optionalNote}>From and Subject are optional.</p>}
           </div>
         </div>
       )}
