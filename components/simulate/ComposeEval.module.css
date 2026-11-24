@@ -111,7 +111,7 @@
   color: var(--muted-soft);
 }
 
-.chips {
+.card .chips {
   padding: 8px 12px 0;
 }
 .toolbar {
@@ -150,7 +150,7 @@
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
-.error {
+.fieldWrap .error {
   padding: 0 4px;
 }
 
