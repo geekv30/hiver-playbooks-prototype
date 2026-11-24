@@ -60,6 +60,9 @@ export function useAttachments(copy: Copy) {
   const [files, setFiles] = useState<Attachment[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
+  // Enter / leave fire for every child crossed; count them (Safari gives drag
+  // events no relatedTarget, so a contains() check flickers there).
+  const depth = useRef(0);
   const filesRef = useRef(files);
   useEffect(() => {
     filesRef.current = files;
@@ -115,27 +118,35 @@ export function useAttachments(copy: Copy) {
     e.preventDefault();
     add(e.clipboardData.files);
   };
-  const onDrag = (e: DragEvent, over: boolean) => {
-    if (!Array.from(e.dataTransfer.types).includes('Files')) return;
-    e.preventDefault();
-    setDragging(over);
-  };
+  const isFiles = (e: DragEvent) => Array.from(e.dataTransfer.types).includes('Files');
   /** Spread on the drop target. */
   const dropProps = {
-    onDragOver: (e: DragEvent) => onDrag(e, true),
-    onDragEnter: (e: DragEvent) => onDrag(e, true),
+    onDragOver: (e: DragEvent) => {
+      if (isFiles(e)) e.preventDefault();
+    },
+    onDragEnter: (e: DragEvent) => {
+      if (!isFiles(e)) return;
+      e.preventDefault();
+      depth.current += 1;
+      setDragging(true);
+    },
     onDragLeave: (e: DragEvent) => {
-      // Leaving for a child of the target is not leaving.
-      if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
-      onDrag(e, false);
+      if (!isFiles(e)) return;
+      depth.current = Math.max(0, depth.current - 1);
+      if (depth.current === 0) setDragging(false);
     },
     onDrop: (e: DragEvent) => {
-      onDrag(e, false);
+      if (!isFiles(e)) return;
+      e.preventDefault();
+      depth.current = 0;
+      setDragging(false);
       if (e.dataTransfer.files.length) add(e.dataTransfer.files);
     },
   };
 
-  return { files, error, dragging, full: files.length >= MAX_FILES, add, remove, take, onPaste, dropProps };
+  const clearError = () => setError(null);
+
+  return { files, error, dragging, full: files.length >= MAX_FILES, add, remove, take, clearError, onPaste, dropProps };
 }
 
 /** A hidden file picker; open it with `ref.current.click()`. */

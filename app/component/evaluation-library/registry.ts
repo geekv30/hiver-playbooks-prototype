@@ -57,7 +57,7 @@ export const LIBRARY: LibGroup[] = [
       { name: 'ConversationModal', file: 'components/simulate/ConversationModal.tsx', what: 'The full email behind a recent conversation.', channel: 'email' },
       { name: 'AiScenarios + ScenariosEmpty', file: 'components/simulate/AiScenarios.tsx', what: 'Scenario emails to pick from; the pick opens in an editable email.', channel: 'email' },
       { name: 'ComposeEval + CustomEval', file: 'components/simulate/ComposeEval.tsx', what: 'One email card: From, Subject, body and files. Edit a scenario\'s email or write your own, then evaluate it.', channel: 'email' },
-      { name: 'attachments', file: 'components/simulate/attachments.tsx', what: 'Files shared by the chat and email composers: picker, drop, paste, 5 files of 10 MB, chips, the error line.', channel: 'email' },
+      { name: 'attachments', file: 'components/simulate/attachments.tsx', what: 'Files shared by the chat and email composers: picker, drop, paste, 5 files of 10 MB, chips, the error line.', channel: 'both' },
       { name: 'PickableEmailCard', file: 'components/simulate/PickableEmailCard.tsx', what: 'One selectable conversation row (a real radio). Past chats and chat scenarios reuse it.', channel: 'both' },
       { name: 'EmailCard', file: 'components/simulate/EmailCard.tsx', what: 'An evaluated email: its head, the outcome, the trace.', channel: 'email' },
       { name: 'RunOutcome + StatusPill', file: 'components/simulate/RunOutcome.tsx', what: 'The result pill and next step (Redo, Fix with Copilot, Retry, Approve / Decline).', channel: 'email' },

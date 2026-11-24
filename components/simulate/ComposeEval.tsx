@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ClipboardEvent, type KeyboardEvent } from 'react';
 import { RiAttachment2, RiSendPlaneFill, RiStopCircleLine } from 'react-icons/ri';
 import type { SimEmail, SimStatusKind } from '@/data/simFixtures';
 import { useSimRun } from './useSimRun';
@@ -59,8 +59,9 @@ export default function ComposeEval({
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const pickerRef = useRef<HTMLInputElement>(null);
 
-  // The body grows with its text, then scrolls.
-  useEffect(() => {
+  // The body grows with its text, then scrolls. Measured before paint, so a
+  // long pre-filled scenario opens at its height instead of jumping to it.
+  useLayoutEffect(() => {
     const el = bodyRef.current;
     if (!el) return;
     el.style.height = 'auto';
@@ -83,7 +84,9 @@ export default function ComposeEval({
             },
           ]
         : [],
-    [sentBody, sent, seed],
+    // The strings, not the `sent` object: a new object with the same values
+    // must not reset the run.
+    [sentBody, sent.from, sent.subject, seed],
   );
   const { phase, runs, start, stop } = useSimRun(emails, onRunRecorded);
   const run = runs['compose'];
@@ -100,14 +103,27 @@ export default function ComposeEval({
     setDecision(null);
   }, [run?.status]);
 
+  // Stop takes the Start button's place; a double-click on Start must not stop.
+  const startedAt = useRef(0);
   const startEval = () => {
-    if (!body.trim() || running) return;
+    if (!body.trim() || running || sentBody !== null) return;
+    startedAt.current = Date.now();
+    att.clearError();
     setSent({ from: from.trim(), subject: subject.trim(), files: att.files });
     setSentBody(body);
   };
   const stopEval = () => {
+    if (Date.now() - startedAt.current < 500) return;
     stop();
     setSentBody(null);
+  };
+  // Anywhere on the card: paste files, Cmd/Ctrl+Enter starts.
+  const onCardPaste = (e: ClipboardEvent) => att.onPaste(e);
+  const onCardKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      startEval();
+    }
   };
 
   const status = run?.status;
@@ -158,10 +174,17 @@ export default function ComposeEval({
           </article>
         </div>
       ) : (
-        <div className={styles.editScroll}>
+        // The whole edit area takes a drop, so a file released beside the card
+        // is attached instead of opened by the browser (losing the email).
+        <div className={styles.editScroll} {...att.dropProps}>
           <div className={styles.spacer} aria-hidden />
           <div className={styles.fieldWrap}>
-            <div className={styles.card} data-dragging={att.dragging || undefined} {...att.dropProps}>
+            <div
+              className={styles.card}
+              data-dragging={att.dragging || undefined}
+              onPaste={onCardPaste}
+              onKeyDown={onCardKeyDown}
+            >
               <label className={styles.row}>
                 <span className={styles.rowLabel}>From</span>
                 <input
@@ -188,13 +211,6 @@ export default function ComposeEval({
                 className={styles.input}
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
-                onPaste={att.onPaste}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                    e.preventDefault();
-                    startEval();
-                  }
-                }}
                 placeholder={att.dragging ? 'Drop files to attach them' : placeholder}
                 aria-label="Email body to evaluate"
               />
@@ -212,11 +228,12 @@ export default function ComposeEval({
                   className={styles.attach}
                   onClick={() => pickerRef.current?.click()}
                   aria-label="Attach files"
-                  title={att.full ? `Up to ${MAX_FILES} files` : 'Attach files'}
+                  title="Attach files"
                   disabled={att.full}
                 >
                   <RiAttachment2 aria-hidden />
                 </button>
+                {att.full && <span className={styles.toolbarNote}>{MAX_FILES} files is the limit</span>}
                 <FilePicker inputRef={pickerRef} onFiles={att.add} />
               </div>
             </div>

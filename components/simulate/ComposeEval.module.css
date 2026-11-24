@@ -150,6 +150,12 @@
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
+.toolbarNote {
+  margin-left: 6px;
+  font-size: var(--fs-caption); /* 12px */
+  line-height: 16px;
+  color: var(--muted);
+}
 .fieldWrap .error {
   padding: 0 4px;
 }
