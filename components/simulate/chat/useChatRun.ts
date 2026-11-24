@@ -13,6 +13,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { EditorDoc } from '@/components/flow01/doc';
 import type { SimStatusKind } from '@/data/simFixtures';
+import type { Attachment } from '../attachments';
 import { findAction } from '@/data/library';
 import type { LiveCopilot } from '@/lib/copilot/useLiveCopilot';
 import { LiveCopilotError } from '@/lib/copilot/useLiveCopilot';
@@ -48,14 +49,7 @@ export type RatingItem = { kind: 'rating'; id: string; score: number; comment: s
 
 /** A file the customer attached. The playground shows it in the chat; the
  *  agent is told its name, not its contents. */
-export interface ChatAttachment {
-  id: string;
-  name: string;
-  size: number;
-  type: string;
-  /** An object URL, for an image's thumbnail; null for other files. */
-  url: string | null;
-}
+export type ChatAttachment = Attachment;
 
 export type CustomerItem = { kind: 'customer'; id: string; text: string; attachments?: ChatAttachment[] };
 
