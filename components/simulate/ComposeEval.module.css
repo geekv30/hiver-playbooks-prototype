@@ -1,6 +1,7 @@
-/* ComposeEval - edit an email, then evaluate it. Edit state bottom-anchors the
-   field (Figma 1752:21176: a flex-1 spacer above the card), with a clear gap to
-   the bordered CTA. Result state top-anchors a quoted email + trace. */
+/* ComposeEval - write or edit a test email, then evaluate it. Edit state
+   bottom-anchors one email card (Figma 1752:21176: a flex-1 spacer above it),
+   with a clear gap to the bordered CTA. Result state top-anchors a quoted email
+   + trace. */
 
 .compose {
   display: flex;
@@ -10,30 +11,91 @@
 }
 
 /* Edit state --------------------------------------------------------------- */
-/* Flexible spacer pushes the editable card toward the bottom (never resting on
-   the CTA). */
+/* The edit area scrolls on its own when the panel is short, so the card never
+   pushes the footer. A flexible spacer bottom-anchors the card. */
+.editScroll {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
 .spacer {
   flex: 1;
-  min-height: 24px;
+  min-height: 16px;
 }
 .fieldWrap {
   flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   padding: 0 18px 16px;
 }
-.field {
+
+/* One email card: header rows, body, files, toolbar. Hairlines inside, one
+   border outside. */
+.card {
+  display: flex;
+  flex-direction: column;
   border: 1px solid var(--hairline-soft);
   border-radius: 10px;
   background: var(--card);
-  padding: 12px 16px 14px; /* Figma 1752:21303 */
   overflow: hidden;
-  transition: border-color var(--d-hover) var(--ease-snap);
+  transition:
+    border-color var(--d-hover) var(--ease-snap),
+    background var(--d-hover) var(--ease-snap);
 }
-.field:focus-within {
+.card:focus-within {
   border-color: var(--hairline-strong);
 }
+.card[data-dragging] {
+  border-color: var(--accent);
+  border-style: dashed;
+  background: var(--accent-bg);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 40px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--hairline-soft);
+  cursor: text;
+}
+.rowLabel {
+  flex: none;
+  width: 52px;
+  font-size: var(--fs-small); /* 13px */
+  line-height: 20px;
+  letter-spacing: var(--ls-small);
+  color: var(--muted);
+  user-select: none;
+}
+.rowInput {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font);
+  font-size: var(--fs-body); /* 14px */
+  line-height: 20px;
+  letter-spacing: var(--ls-body);
+  color: var(--ink);
+}
+.rowInput::placeholder {
+  color: var(--muted-soft);
+}
+
 .input {
+  display: block;
   width: 100%;
-  height: 172px; /* card ~= 198px incl. padding, matching Figma's scroll region */
+  height: 120px; /* grows with the text up to 240px, then scrolls */
+  padding: 12px 16px 8px;
   resize: none;
   border: none;
   outline: none;
@@ -47,6 +109,55 @@
 }
 .input::placeholder {
   color: var(--muted-soft);
+}
+
+.card .chips {
+  padding: 8px 12px 0;
+}
+.toolbar {
+  display: flex;
+  align-items: center;
+  padding: 6px 8px 8px;
+}
+.attach {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    background var(--d-hover) var(--ease-snap),
+    color var(--d-hover) var(--ease-snap);
+}
+.attach:hover:not(:disabled) {
+  background: var(--surface-soft);
+  color: var(--ink-soft);
+}
+.attach:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.attach svg {
+  width: 17px;
+  height: 17px;
+}
+.attach:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.toolbarNote {
+  margin-left: 6px;
+  font-size: var(--fs-caption); /* 12px */
+  line-height: 16px;
+  color: var(--muted);
+}
+.fieldWrap .error {
+  padding: 0 4px;
 }
 
 /* Result state ------------------------------------------------------------- */
@@ -68,12 +179,22 @@
   border-radius: 10px;
   background: var(--card);
 }
+.resultHead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
 .resultSubject {
   font-size: var(--fs-small); /* 13px */
   font-weight: 500;
   line-height: 19px;
   letter-spacing: var(--ls-small);
   color: var(--ink-soft);
+}
+.resultFrom {
+  font-size: var(--fs-caption); /* 12px */
+  line-height: 16px;
+  color: var(--muted);
 }
 .resultBody {
   margin: 0;
@@ -156,7 +277,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .field,
+  .card,
+  .attach,
   .startBtn,
   .secondaryBtn {
     transition: none;
