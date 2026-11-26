@@ -1,7 +1,23 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ClipboardEvent, type KeyboardEvent } from 'react';
-import { RiAttachment2, RiSendPlaneFill, RiStopCircleLine } from 'react-icons/ri';
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ClipboardEvent,
+  type KeyboardEvent,
+} from 'react';
+import {
+  RiAddLine,
+  RiAttachment2,
+  RiSendPlaneFill,
+  RiStopCircleLine,
+  RiSubtractLine,
+} from 'react-icons/ri';
 import type { SimEmail, SimStatusKind } from '@/data/simFixtures';
 import { useSimRun } from './useSimRun';
 import { SIM_DRAFT } from './traceFixture';
@@ -31,13 +47,22 @@ interface Props {
   onRunRecorded?: (statuses: SimStatusKind[]) => void;
   /** Open Copilot to fix a caught gap (Fix with Copilot). */
   onOpenCopilot?: () => void;
+  /** How the card says From and Subject are optional. The app uses tag (the
+   *  pick); the rest stay for the review page /component/optional-fields.
+   *  tag - "Optional" at the end of each empty row; placeholder - the field's
+   *  placeholder reads "Optional"; reveal - the rows hide behind a "Sender and
+   *  subject" toggle in the toolbar; note - one line under the card; none - no cue. */
+  optionalCue?: OptionalCue;
 }
+
+export type OptionalCue = 'none' | 'tag' | 'placeholder' | 'reveal' | 'note';
 
 /**
  * ComposeEval - write or edit a test email, then evaluate it (Figma 1752:21176 /
  * 1769:19480). One email card: From and Subject rows, the body, files (paperclip,
  * drop on the card, or paste), all bottom-anchored above Start Evaluation. From
- * and Subject can stay empty; a scenario pre-fills them. On start the email moves
+ * and Subject can stay empty (an empty row says "Optional"); a scenario
+ * pre-fills them. Both wrap, so a long value stays readable. On start the email moves
  * into a quoted result that streams the trace and resolves to an outcome (pill +
  * action). Approve resolves an approval run to passed; Decline holds it. Files are
  * UI only. (The trace is the scripted illustrative run.)
@@ -49,14 +74,114 @@ export default function ComposeEval({
   seed,
   onRunRecorded,
   onOpenCopilot,
+  optionalCue = 'tag',
 }: Props) {
   const [from, setFrom] = useState(seed?.sender ?? '');
   const [subject, setSubject] = useState(seed?.subject ?? '');
   const [body, setBody] = useState(initialBody);
   const [sentBody, setSentBody] = useState<string | null>(null);
-  const [sent, setSent] = useState<{ from: string; subject: string; files: Attachment[] }>({ from: '', subject: '', files: [] });
-  const att = useAttachments({ tooBig: 'over 10 MB. Each file can be up to 10 MB.', tooMany: `An email can carry ${MAX_FILES} files.` });
+  const [sent, setSent] = useState<{ from: string; subject: string; files: Attachment[] }>({
+    from: '',
+    subject: '',
+    files: [],
+  });
+  const att = useAttachments({
+    tooBig: 'over 10 MB. Each file can be up to 10 MB.',
+    tooMany: `An email can carry ${MAX_FILES} files.`,
+  });
+  // reveal: the rows start hidden unless a scenario already fills them.
+  const [headersOpen, setHeadersOpen] = useState(
+    optionalCue !== 'reveal' || !!seed?.sender || !!seed?.subject,
+  );
+  const fromRef = useRef<HTMLTextAreaElement>(null);
+  const subjectRef = useRef<HTMLTextAreaElement>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
+  // Opening moves focus to From; closing hands it back to the body. Only after
+  // a click (not on mount), so a pre-filled scenario keeps its focus alone.
+  const toggledHeaders = useRef(false);
+  // The rows slide in only right after a click reveals them, not when they
+  // mount again (after Stop evaluation, or with a scenario's values).
+  const [animateRows, setAnimateRows] = useState(false);
+  useEffect(() => {
+    if (!toggledHeaders.current) return;
+    if (headersOpen && !from) fromRef.current?.focus();
+    else if (!headersOpen) bodyRef.current?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [headersOpen]);
+  const toggleHeaders = () => {
+    toggledHeaders.current = true;
+    setAnimateRows(!headersOpen);
+    setHeadersOpen(!headersOpen);
+  };
+  // The cue is for an empty field; once there is a value it only takes room.
+  // Blank space counts as empty: it is trimmed away when the email is sent.
+  // The word is a description, not part of the field's name, so a screen reader
+  // reads "From" and then "Optional" (and the name does not change on typing).
+  const cueId = useId();
+  const tagFor = (value: string, id: string) =>
+    optionalCue === 'tag' && !value.trim() ? (
+      <span id={id} className={styles.rowOptional}>
+        Optional
+      </span>
+    ) : null;
+  // From and Subject are one line of text, but they wrap so a long address or
+  // subject stays readable (up to 4 lines, then they scroll). Enter goes to the
+  // next field instead of a new line; pasted line breaks become spaces.
+  const sizeRows = useCallback(() => {
+    for (const el of [fromRef.current, subjectRef.current]) {
+      if (!el) continue;
+      el.style.height = 'auto';
+      el.style.height = `${Math.min(el.scrollHeight, 80)}px`;
+    }
+  }, []);
+  useLayoutEffect(sizeRows, [from, subject, headersOpen, sentBody, sizeRows]);
+  // A new width (panel resize) or the web font arriving changes where the text
+  // wraps, so measure again then. Only width: our own height change must not
+  // loop back here.
+  const rowsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = rowsRef.current;
+    if (!el) return;
+    let width = el.clientWidth;
+    const ro = new ResizeObserver(() => {
+      if (el.clientWidth === width) return;
+      width = el.clientWidth;
+      sizeRows();
+    });
+    ro.observe(el);
+    document.fonts?.ready.then(sizeRows).catch(() => {});
+    return () => ro.disconnect();
+  }, [headersOpen, sentBody, sizeRows]);
+  const oneLine = (v: string) => v.replace(/[\r\n]+/g, ' ');
+  const onRowKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    // keyCode 229: Safari ends an IME composition before this keydown, so the
+    // Enter that confirms a Japanese / Chinese / Korean word has isComposing
+    // false. It must not jump to the next field.
+    if (
+      e.key !== 'Enter' ||
+      e.metaKey ||
+      e.ctrlKey ||
+      e.nativeEvent.isComposing ||
+      e.keyCode === 229
+    )
+      return;
+    e.preventDefault();
+    (e.currentTarget === fromRef.current ? subjectRef.current : bodyRef.current)?.focus();
+  };
+  // Pasted text with line breaks: put it in as one line at the caret, and keep
+  // the caret after it (rewriting the value in onChange would jump it to the end).
+  const onRowPaste = (e: ClipboardEvent<HTMLTextAreaElement>, set: (v: string) => void) => {
+    if (e.clipboardData.files.length > 0) return; // files: the card attaches them
+    const text = e.clipboardData.getData('text');
+    if (!/[\r\n]/.test(text)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const el = e.currentTarget;
+    const insert = oneLine(text);
+    const caret = el.selectionStart + insert.length;
+    set(el.value.slice(0, el.selectionStart) + insert + el.value.slice(el.selectionEnd));
+    requestAnimationFrame(() => el.setSelectionRange(caret, caret));
+  };
   const pickerRef = useRef<HTMLInputElement>(null);
 
   // The body grows with its text, then scrolls. Measured before paint, so a
@@ -109,7 +234,13 @@ export default function ComposeEval({
     if (!body.trim() || running || sentBody !== null) return;
     startedAt.current = Date.now();
     att.clearError();
-    setSent({ from: from.trim(), subject: subject.trim(), files: att.files });
+    // Hidden rows keep what was typed (open them again and it is back), but
+    // the email goes without it.
+    setSent({
+      from: headersOpen ? from.trim() : '',
+      subject: headersOpen ? subject.trim() : '',
+      files: att.files,
+    });
     setSentBody(body);
   };
   const stopEval = () => {
@@ -170,7 +301,12 @@ export default function ComposeEval({
               )
             )}
             <div className={styles.divider} aria-hidden />
-            <RunTrace stepStatus={run!.steps} stepMs={run!.durations} outcome={traceOutcome} draft={replyDraft} />
+            <RunTrace
+              stepStatus={run!.steps}
+              stepMs={run!.durations}
+              outcome={traceOutcome}
+              draft={replyDraft}
+            />
           </article>
         </div>
       ) : (
@@ -185,27 +321,54 @@ export default function ComposeEval({
               onPaste={onCardPaste}
               onKeyDown={onCardKeyDown}
             >
-              <label className={styles.row}>
-                <span className={styles.rowLabel}>From</span>
-                <input
-                  className={styles.rowInput}
-                  value={from}
-                  onChange={(e) => setFrom(e.target.value)}
-                  placeholder="Name or email"
-                  autoComplete="off"
-                  spellCheck={false}
-                />
-              </label>
-              <label className={styles.row}>
-                <span className={styles.rowLabel}>Subject</span>
-                <input
-                  className={styles.rowInput}
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  placeholder="Add a subject"
-                  autoComplete="off"
-                />
-              </label>
+              {headersOpen && (
+                <div
+                  ref={rowsRef}
+                  className={styles.rows}
+                  data-revealed={(optionalCue === 'reveal' && animateRows) || undefined}
+                  onAnimationEnd={() => setAnimateRows(false)}
+                >
+                  <label className={styles.row}>
+                    <span className={styles.rowLabel}>From</span>
+                    <textarea
+                      ref={fromRef}
+                      rows={1}
+                      className={styles.rowInput}
+                      value={from}
+                      onChange={(e) => setFrom(oneLine(e.target.value))}
+                      onKeyDown={onRowKeyDown}
+                      onPaste={(e) => onRowPaste(e, setFrom)}
+                      aria-label="From"
+                      aria-describedby={
+                        optionalCue === 'tag' && !from.trim() ? `${cueId}-from` : undefined
+                      }
+                      placeholder={optionalCue === 'placeholder' ? 'Optional' : 'Name or email'}
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+                    {tagFor(from, `${cueId}-from`)}
+                  </label>
+                  <label className={styles.row}>
+                    <span className={styles.rowLabel}>Subject</span>
+                    <textarea
+                      ref={subjectRef}
+                      rows={1}
+                      className={styles.rowInput}
+                      value={subject}
+                      onChange={(e) => setSubject(oneLine(e.target.value))}
+                      onKeyDown={onRowKeyDown}
+                      onPaste={(e) => onRowPaste(e, setSubject)}
+                      aria-label="Subject"
+                      aria-describedby={
+                        optionalCue === 'tag' && !subject.trim() ? `${cueId}-subject` : undefined
+                      }
+                      placeholder={optionalCue === 'placeholder' ? 'Optional' : 'Add a subject'}
+                      autoComplete="off"
+                    />
+                    {tagFor(subject, `${cueId}-subject`)}
+                  </label>
+                </div>
+              )}
               <textarea
                 ref={bodyRef}
                 className={styles.input}
@@ -233,11 +396,28 @@ export default function ComposeEval({
                 >
                   <RiAttachment2 aria-hidden />
                 </button>
-                {att.full && <span className={styles.toolbarNote}>{MAX_FILES} files is the limit</span>}
+                {att.full && (
+                  <span className={styles.toolbarNote}>{MAX_FILES} files is the limit</span>
+                )}
+                {optionalCue === 'reveal' && (
+                  <button
+                    type="button"
+                    className={styles.addHeaders}
+                    onClick={toggleHeaders}
+                    aria-pressed={headersOpen}
+                    title={headersOpen ? 'Hide sender and subject' : 'Show sender and subject'}
+                  >
+                    {headersOpen ? <RiSubtractLine aria-hidden /> : <RiAddLine aria-hidden />}
+                    <span>Sender and subject</span>
+                  </button>
+                )}
                 <FilePicker inputRef={pickerRef} onFiles={att.add} />
               </div>
             </div>
             <AttachmentError className={styles.error} error={att.error} />
+            {optionalCue === 'note' && (
+              <p className={styles.optionalNote}>From and Subject are optional.</p>
+            )}
           </div>
         </div>
       )}

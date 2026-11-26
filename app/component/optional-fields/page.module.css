@@ -1,0 +1,121 @@
+/* Options side by side: a short note over each, the real card beneath at the
+   Evaluation panel's width. */
+.page {
+  min-height: 100vh;
+  padding: 56px 32px 96px;
+  background: var(--surface-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+.mast {
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.kicker {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  color: var(--muted);
+}
+.h1 {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-weight: 500;
+  color: var(--ink);
+}
+.standfirst {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 40px 32px;
+}
+.option {
+  width: 388px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 112px;
+}
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.key {
+  flex: none;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-sm);
+  background: var(--card);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+.h2 {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: 20px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.pick {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: var(--accent-bg);
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--accent);
+}
+.how,
+.tradeoff {
+  margin: 0;
+  font-size: var(--fs-small);
+  line-height: 19px;
+  color: var(--body);
+}
+.tradeoff {
+  color: var(--muted);
+}
+
+/* The Evaluation panel's body: white, bordered, fixed height so the card
+   bottom-anchors as it does in the app. */
+.frame {
+  height: 560px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  background: var(--card);
+}
+
+@media (max-width: 480px) {
+  .page {
+    padding: 32px 16px 64px;
+  }
+  .option {
+    width: 100%;
+  }
+}
