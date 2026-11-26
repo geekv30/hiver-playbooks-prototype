@@ -57,10 +57,10 @@
 
 .row {
   display: flex;
-  align-items: center;
+  align-items: flex-start; /* a wrapped value grows the row; the label stays on line one */
   gap: 12px;
-  height: 40px;
-  padding: 0 16px;
+  min-height: 40px;
+  padding: 10px 16px;
   border-bottom: 1px solid var(--hairline-soft);
   cursor: text;
 }
@@ -89,15 +89,20 @@
 .rowOptional {
   flex: none;
   font-size: var(--fs-caption); /* 12px */
-  line-height: 16px;
+  line-height: 20px;
   color: var(--muted-soft);
   user-select: none;
 }
 .rowInput {
+  display: block;
   flex: 1;
   min-width: 0;
-  height: 100%;
+  height: 20px; /* one line; grows with the text up to 4 lines, then scrolls */
+  scrollbar-width: thin;
   padding: 0;
+  resize: none;
+  overflow-y: auto;
+  overflow-wrap: anywhere; /* a long address breaks instead of hiding */
   border: none;
   outline: none;
   background: transparent;
@@ -246,6 +251,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  overflow-wrap: anywhere; /* a long subject or address wraps, as it did in the card */
 }
 .resultSubject {
   font-size: var(--fs-small); /* 13px */

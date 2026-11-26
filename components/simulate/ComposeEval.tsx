@@ -66,7 +66,8 @@ export default function ComposeEval({
   const att = useAttachments({ tooBig: 'over 10 MB. Each file can be up to 10 MB.', tooMany: `An email can carry ${MAX_FILES} files.` });
   // reveal: the rows start hidden unless a scenario already fills them.
   const [headersOpen, setHeadersOpen] = useState(optionalCue !== 'reveal' || !!seed?.sender || !!seed?.subject);
-  const fromRef = useRef<HTMLInputElement>(null);
+  const fromRef = useRef<HTMLTextAreaElement>(null);
+  const subjectRef = useRef<HTMLTextAreaElement>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   // Opening moves focus to From; closing hands it back to the body. Only after
   // a click (not on mount), so a pre-filled scenario keeps its focus alone.
@@ -81,7 +82,25 @@ export default function ComposeEval({
     toggledHeaders.current = true;
     setHeadersOpen((open) => !open);
   };
-  const tag = optionalCue === 'tag' ? <span className={styles.rowOptional}>Optional</span> : null;
+  // The cue is for an empty field; once there is a value it only takes room.
+  const tag = (value: string) =>
+    optionalCue === 'tag' && !value ? <span className={styles.rowOptional}>Optional</span> : null;
+  // From and Subject are one line of text, but they wrap so a long address or
+  // subject stays readable (up to 4 lines, then they scroll). Enter goes to the
+  // next field instead of a new line; pasted line breaks become spaces.
+  useLayoutEffect(() => {
+    for (const el of [fromRef.current, subjectRef.current]) {
+      if (!el) continue;
+      el.style.height = 'auto';
+      el.style.height = `${Math.min(el.scrollHeight, 80)}px`;
+    }
+  }, [from, subject, headersOpen, sentBody]);
+  const oneLine = (v: string) => v.replace(/[\r\n]+/g, ' ');
+  const onRowKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key !== 'Enter' || e.metaKey || e.ctrlKey || e.nativeEvent.isComposing) return;
+    e.preventDefault();
+    (e.currentTarget === fromRef.current ? subjectRef.current : bodyRef.current)?.focus();
+  };
   const pickerRef = useRef<HTMLInputElement>(null);
 
   // The body grows with its text, then scrolls. Measured before paint, so a
@@ -216,27 +235,32 @@ export default function ComposeEval({
                 <div className={styles.rows} data-revealed={optionalCue === 'reveal' || undefined}>
                   <label className={styles.row}>
                     <span className={styles.rowLabel}>From</span>
-                    <input
+                    <textarea
                       ref={fromRef}
+                      rows={1}
                       className={styles.rowInput}
                       value={from}
-                      onChange={(e) => setFrom(e.target.value)}
+                      onChange={(e) => setFrom(oneLine(e.target.value))}
+                      onKeyDown={onRowKeyDown}
                       placeholder={optionalCue === 'placeholder' ? 'Optional' : 'Name or email'}
                       autoComplete="off"
                       spellCheck={false}
                     />
-                    {tag}
+                    {tag(from)}
                   </label>
                   <label className={styles.row}>
                     <span className={styles.rowLabel}>Subject</span>
-                    <input
+                    <textarea
+                      ref={subjectRef}
+                      rows={1}
                       className={styles.rowInput}
                       value={subject}
-                      onChange={(e) => setSubject(e.target.value)}
+                      onChange={(e) => setSubject(oneLine(e.target.value))}
+                      onKeyDown={onRowKeyDown}
                       placeholder={optionalCue === 'placeholder' ? 'Optional' : 'Add a subject'}
                       autoComplete="off"
                     />
-                    {tag}
+                    {tag(subject)}
                   </label>
                 </div>
               )}

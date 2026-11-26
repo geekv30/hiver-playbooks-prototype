@@ -29,8 +29,8 @@ const OPTIONS: Option[] = [
     key: 'A',
     cue: 'tag',
     name: '"Optional" at the end of the row',
-    how: 'A quiet grey word at the right of each row. It stays while you type.',
-    tradeoff: 'Always visible and easy to scan. Adds a word to each row.',
+    how: 'A quiet grey word at the right of each empty row. When you type, the word goes and the text gets the full width.',
+    tradeoff: 'Easy to scan before you type. Unlike B, the hint for what to type stays.',
     pick: true,
   },
   {
