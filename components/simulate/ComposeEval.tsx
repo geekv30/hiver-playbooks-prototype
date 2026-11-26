@@ -31,8 +31,9 @@ interface Props {
   onRunRecorded?: (statuses: SimStatusKind[]) => void;
   /** Open Copilot to fix a caught gap (Fix with Copilot). */
   onOpenCopilot?: () => void;
-  /** How the card says From and Subject are optional (review options):
-   *  tag - "Optional" at the end of each row; placeholder - the field's
+  /** How the card says From and Subject are optional. The app uses tag (the
+   *  pick); the rest stay for the review page /component/optional-fields.
+   *  tag - "Optional" at the end of each empty row; placeholder - the field's
    *  placeholder reads "Optional"; reveal - the rows hide behind a "Sender and
    *  subject" toggle in the toolbar; note - one line under the card; none - no cue. */
   optionalCue?: OptionalCue;
@@ -44,7 +45,8 @@ export type OptionalCue = 'none' | 'tag' | 'placeholder' | 'reveal' | 'note';
  * ComposeEval - write or edit a test email, then evaluate it (Figma 1752:21176 /
  * 1769:19480). One email card: From and Subject rows, the body, files (paperclip,
  * drop on the card, or paste), all bottom-anchored above Start Evaluation. From
- * and Subject can stay empty; a scenario pre-fills them. On start the email moves
+ * and Subject can stay empty (an empty row says "Optional"); a scenario
+ * pre-fills them. Both wrap, so a long value stays readable. On start the email moves
  * into a quoted result that streams the trace and resolves to an outcome (pill +
  * action). Approve resolves an approval run to passed; Decline holds it. Files are
  * UI only. (The trace is the scripted illustrative run.)
@@ -56,7 +58,7 @@ export default function ComposeEval({
   seed,
   onRunRecorded,
   onOpenCopilot,
-  optionalCue = 'none',
+  optionalCue = 'tag',
 }: Props) {
   const [from, setFrom] = useState(seed?.sender ?? '');
   const [subject, setSubject] = useState(seed?.subject ?? '');

@@ -19,10 +19,10 @@ interface Option {
 
 const OPTIONS: Option[] = [
   {
-    key: 'Today',
+    key: 'Before',
     cue: 'none',
     name: 'No cue',
-    how: 'What is live now. Only the body is required, but nothing on the card says so.',
+    how: 'What shipped first. Only the body is required, but nothing on the card said so.',
     tradeoff: 'From and Subject read as fields you must fill.',
   },
   {
@@ -63,8 +63,8 @@ export default function OptionalFieldsReview() {
         <p className={styles.kicker}>Evaluation · Custom email</p>
         <h1 className={styles.h1}>Show that From and Subject are optional</h1>
         <p className={styles.standfirst}>
-          Only the body is required to start an evaluation. Four ways to say so, next to the card as it is today. Each
-          frame is the real component: type in it, attach files, run it.
+          Only the body is required to start an evaluation. Four ways to say so, next to the card as it first shipped. A is
+          live. Each frame is the real component: type in it, attach files, run it.
         </p>
       </header>
 
@@ -77,7 +77,7 @@ export default function OptionalFieldsReview() {
                 <h2 id={`opt-${o.key}`} className={styles.h2}>
                   {o.name}
                 </h2>
-                {o.pick && <span className={styles.pick}>Recommended</span>}
+                {o.pick && <span className={styles.pick}>Live</span>}
               </div>
               <p className={styles.how}>{o.how}</p>
               <p className={styles.tradeoff}>{o.tradeoff}</p>
