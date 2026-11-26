@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ClipboardEvent, type KeyboardEvent } from 'react';
-import { RiAddLine, RiAttachment2, RiSendPlaneFill, RiStopCircleLine } from 'react-icons/ri';
+import { RiAddLine, RiAttachment2, RiSendPlaneFill, RiStopCircleLine, RiSubtractLine } from 'react-icons/ri';
 import type { SimEmail, SimStatusKind } from '@/data/simFixtures';
 import { useSimRun } from './useSimRun';
 import { SIM_DRAFT } from './traceFixture';
@@ -33,8 +33,8 @@ interface Props {
   onOpenCopilot?: () => void;
   /** How the card says From and Subject are optional (review options):
    *  tag - "Optional" at the end of each row; placeholder - the field's
-   *  placeholder reads "Optional"; reveal - the rows hide behind "Add sender
-   *  and subject"; note - one line under the card; none - no cue. */
+   *  placeholder reads "Optional"; reveal - the rows hide behind a "Sender and
+   *  subject" toggle in the toolbar; note - one line under the card; none - no cue. */
   optionalCue?: OptionalCue;
 }
 
@@ -67,12 +67,21 @@ export default function ComposeEval({
   // reveal: the rows start hidden unless a scenario already fills them.
   const [headersOpen, setHeadersOpen] = useState(optionalCue !== 'reveal' || !!seed?.sender || !!seed?.subject);
   const fromRef = useRef<HTMLInputElement>(null);
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+  // Opening moves focus to From; closing hands it back to the body. Only after
+  // a click (not on mount), so a pre-filled scenario keeps its focus alone.
+  const toggledHeaders = useRef(false);
   useEffect(() => {
-    if (optionalCue === 'reveal' && headersOpen && !from) fromRef.current?.focus();
+    if (!toggledHeaders.current) return;
+    if (headersOpen && !from) fromRef.current?.focus();
+    else if (!headersOpen) bodyRef.current?.focus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [headersOpen]);
+  const toggleHeaders = () => {
+    toggledHeaders.current = true;
+    setHeadersOpen((open) => !open);
+  };
   const tag = optionalCue === 'tag' ? <span className={styles.rowOptional}>Optional</span> : null;
-  const bodyRef = useRef<HTMLTextAreaElement>(null);
   const pickerRef = useRef<HTMLInputElement>(null);
 
   // The body grows with its text, then scrolls. Measured before paint, so a
@@ -125,7 +134,9 @@ export default function ComposeEval({
     if (!body.trim() || running || sentBody !== null) return;
     startedAt.current = Date.now();
     att.clearError();
-    setSent({ from: from.trim(), subject: subject.trim(), files: att.files });
+    // Hidden rows keep what was typed (open them again and it is back), but
+    // the email goes without it.
+    setSent({ from: headersOpen ? from.trim() : '', subject: headersOpen ? subject.trim() : '', files: att.files });
     setSentBody(body);
   };
   const stopEval = () => {
@@ -257,9 +268,15 @@ export default function ComposeEval({
                   <RiAttachment2 aria-hidden />
                 </button>
                 {att.full && <span className={styles.toolbarNote}>{MAX_FILES} files is the limit</span>}
-                {!headersOpen && (
-                  <button type="button" className={styles.addHeaders} onClick={() => setHeadersOpen(true)}>
-                    <RiAddLine aria-hidden />
+                {optionalCue === 'reveal' && (
+                  <button
+                    type="button"
+                    className={styles.addHeaders}
+                    onClick={toggleHeaders}
+                    aria-pressed={headersOpen}
+                    title={headersOpen ? 'Remove sender and subject' : 'Add sender and subject'}
+                  >
+                    {headersOpen ? <RiSubtractLine aria-hidden /> : <RiAddLine aria-hidden />}
                     <span>Sender and subject</span>
                   </button>
                 )}

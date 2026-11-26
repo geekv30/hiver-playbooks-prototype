@@ -44,7 +44,7 @@ const OPTIONS: Option[] = [
     key: 'C',
     cue: 'reveal',
     name: 'Hidden until asked for',
-    how: 'The card starts with only the body. "Sender and subject" in the toolbar adds the rows.',
+    how: 'The card starts with only the body. "Sender and subject" in the toolbar shows the rows. Click it again to hide them.',
     tradeoff: 'The strongest signal that they are extra. Fewer people will find them.',
   },
   {

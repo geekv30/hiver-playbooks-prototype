@@ -194,6 +194,10 @@
   background: var(--surface-soft);
   color: var(--ink-soft);
 }
+.addHeaders[aria-pressed='true'] {
+  background: var(--surface-soft);
+  color: var(--ink-soft);
+}
 .addHeaders svg {
   width: 15px;
   height: 15px;
